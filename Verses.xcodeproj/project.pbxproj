@@ -7,6 +7,7 @@
 	objects = {
 
 /* Begin PBXBuildFile section */
+		C8162C41669040DC8133B818 /* libPods.a in Frameworks */ = {isa = PBXBuildFile; fileRef = D73101404F8346B5A1AF319B /* libPods.a */; };
 		F2021B391802908C008B1BAE /* Foundation.framework in Frameworks */ = {isa = PBXBuildFile; fileRef = F2021B381802908C008B1BAE /* Foundation.framework */; };
 		F2021B3B1802908C008B1BAE /* CoreGraphics.framework in Frameworks */ = {isa = PBXBuildFile; fileRef = F2021B3A1802908C008B1BAE /* CoreGraphics.framework */; };
 		F2021B3D1802908C008B1BAE /* UIKit.framework in Frameworks */ = {isa = PBXBuildFile; fileRef = F2021B3C1802908C008B1BAE /* UIKit.framework */; };
@@ -26,6 +27,11 @@
 		F2021B661802908C008B1BAE /* CoreData.framework in Frameworks */ = {isa = PBXBuildFile; fileRef = F2021B3E1802908C008B1BAE /* CoreData.framework */; };
 		F2021B6E1802908C008B1BAE /* InfoPlist.strings in Resources */ = {isa = PBXBuildFile; fileRef = F2021B6C1802908C008B1BAE /* InfoPlist.strings */; };
 		F2021B701802908C008B1BAE /* VersesTests.m in Sources */ = {isa = PBXBuildFile; fileRef = F2021B6F1802908C008B1BAE /* VersesTests.m */; };
+		F2021B7B18029626008B1BAE /* XXLoginController.m in Sources */ = {isa = PBXBuildFile; fileRef = F2021B7A18029626008B1BAE /* XXLoginController.m */; };
+		F2021B7E1802965C008B1BAE /* XXUser.m in Sources */ = {isa = PBXBuildFile; fileRef = F2021B7D1802965C008B1BAE /* XXUser.m */; };
+		F2021B81180296A8008B1BAE /* XXStory.m in Sources */ = {isa = PBXBuildFile; fileRef = F2021B80180296A8008B1BAE /* XXStory.m */; };
+		F2021B84180296B2008B1BAE /* XXContribution.m in Sources */ = {isa = PBXBuildFile; fileRef = F2021B83180296B2008B1BAE /* XXContribution.m */; };
+		F2021B87180296C3008B1BAE /* XXTag.m in Sources */ = {isa = PBXBuildFile; fileRef = F2021B86180296C3008B1BAE /* XXTag.m */; };
 /* End PBXBuildFile section */
 
 /* Begin PBXContainerItemProxy section */
@@ -39,6 +45,8 @@
 /* End PBXContainerItemProxy section */
 
 /* Begin PBXFileReference section */
+		8BA29E3B4C4140D4AB44C270 /* Pods.xcconfig */ = {isa = PBXFileReference; includeInIndex = 1; lastKnownFileType = text.xcconfig; name = Pods.xcconfig; path = Pods/Pods.xcconfig; sourceTree = "<group>"; };
+		D73101404F8346B5A1AF319B /* libPods.a */ = {isa = PBXFileReference; explicitFileType = archive.ar; includeInIndex = 0; path = libPods.a; sourceTree = BUILT_PRODUCTS_DIR; };
 		F2021B351802908C008B1BAE /* Verses.app */ = {isa = PBXFileReference; explicitFileType = wrapper.application; includeInIndex = 0; path = Verses.app; sourceTree = BUILT_PRODUCTS_DIR; };
 		F2021B381802908C008B1BAE /* Foundation.framework */ = {isa = PBXFileReference; lastKnownFileType = wrapper.framework; name = Foundation.framework; path = System/Library/Frameworks/Foundation.framework; sourceTree = SDKROOT; };
 		F2021B3A1802908C008B1BAE /* CoreGraphics.framework */ = {isa = PBXFileReference; lastKnownFileType = wrapper.framework; name = CoreGraphics.framework; path = System/Library/Frameworks/CoreGraphics.framework; sourceTree = SDKROOT; };
@@ -63,6 +71,20 @@
 		F2021B6B1802908C008B1BAE /* VersesTests-Info.plist */ = {isa = PBXFileReference; lastKnownFileType = text.plist.xml; path = "VersesTests-Info.plist"; sourceTree = "<group>"; };
 		F2021B6D1802908C008B1BAE /* en */ = {isa = PBXFileReference; lastKnownFileType = text.plist.strings; name = en; path = en.lproj/InfoPlist.strings; sourceTree = "<group>"; };
 		F2021B6F1802908C008B1BAE /* VersesTests.m */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.objc; path = VersesTests.m; sourceTree = "<group>"; };
+		F2021B7918029626008B1BAE /* XXLoginController.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = XXLoginController.h; sourceTree = "<group>"; };
+		F2021B7A18029626008B1BAE /* XXLoginController.m */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.objc; path = XXLoginController.m; sourceTree = "<group>"; };
+		F2021B7C1802965C008B1BAE /* XXUser.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = XXUser.h; sourceTree = "<group>"; };
+		F2021B7D1802965C008B1BAE /* XXUser.m */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.objc; path = XXUser.m; sourceTree = "<group>"; };
+		F2021B7F180296A8008B1BAE /* XXStory.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = XXStory.h; sourceTree = "<group>"; };
+		F2021B80180296A8008B1BAE /* XXStory.m */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.objc; path = XXStory.m; sourceTree = "<group>"; };
+		F2021B82180296B2008B1BAE /* XXContribution.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = XXContribution.h; sourceTree = "<group>"; };
+		F2021B83180296B2008B1BAE /* XXContribution.m */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.objc; path = XXContribution.m; sourceTree = "<group>"; };
+		F2021B85180296C3008B1BAE /* XXTag.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = XXTag.h; sourceTree = "<group>"; };
+		F2021B86180296C3008B1BAE /* XXTag.m */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.objc; path = XXTag.m; sourceTree = "<group>"; };
+		F2021B881802A2CE008B1BAE /* Constants.h */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.h; path = Constants.h; sourceTree = "<group>"; };
+		F28976D21807B73D00B9E8A5 /* SystemConfiguration.framework */ = {isa = PBXFileReference; lastKnownFileType = wrapper.framework; name = SystemConfiguration.framework; path = System/Library/Frameworks/SystemConfiguration.framework; sourceTree = SDKROOT; };
+		F28976D41807B74300B9E8A5 /* MobileCoreServices.framework */ = {isa = PBXFileReference; lastKnownFileType = wrapper.framework; name = MobileCoreServices.framework; path = System/Library/Frameworks/MobileCoreServices.framework; sourceTree = SDKROOT; };
+		F28976D61807B74800B9E8A5 /* QuartzCore.framework */ = {isa = PBXFileReference; lastKnownFileType = wrapper.framework; name = QuartzCore.framework; path = System/Library/Frameworks/QuartzCore.framework; sourceTree = SDKROOT; };
 /* End PBXFileReference section */
 
 /* Begin PBXFrameworksBuildPhase section */
@@ -74,6 +96,7 @@
 				F2021B3F1802908C008B1BAE /* CoreData.framework in Frameworks */,
 				F2021B3D1802908C008B1BAE /* UIKit.framework in Frameworks */,
 				F2021B391802908C008B1BAE /* Foundation.framework in Frameworks */,
+				C8162C41669040DC8133B818 /* libPods.a in Frameworks */,
 			);
 			runOnlyForDeploymentPostprocessing = 0;
 		};
@@ -98,6 +121,7 @@
 				F2021B691802908C008B1BAE /* VersesTests */,
 				F2021B371802908C008B1BAE /* Frameworks */,
 				F2021B361802908C008B1BAE /* Products */,
+				8BA29E3B4C4140D4AB44C270 /* Pods.xcconfig */,
 			);
 			sourceTree = "<group>";
 		};
@@ -113,11 +137,15 @@
 		F2021B371802908C008B1BAE /* Frameworks */ = {
 			isa = PBXGroup;
 			children = (
+				F28976D61807B74800B9E8A5 /* QuartzCore.framework */,
+				F28976D41807B74300B9E8A5 /* MobileCoreServices.framework */,
+				F28976D21807B73D00B9E8A5 /* SystemConfiguration.framework */,
 				F2021B381802908C008B1BAE /* Foundation.framework */,
 				F2021B3A1802908C008B1BAE /* CoreGraphics.framework */,
 				F2021B3C1802908C008B1BAE /* UIKit.framework */,
 				F2021B3E1802908C008B1BAE /* CoreData.framework */,
 				F2021B621802908C008B1BAE /* XCTest.framework */,
+				D73101404F8346B5A1AF319B /* libPods.a */,
 			);
 			name = Frameworks;
 			sourceTree = "<group>";
@@ -127,12 +155,23 @@
 			children = (
 				F2021B491802908C008B1BAE /* XXAppDelegate.h */,
 				F2021B4A1802908C008B1BAE /* XXAppDelegate.m */,
+				F2021B7C1802965C008B1BAE /* XXUser.h */,
+				F2021B7D1802965C008B1BAE /* XXUser.m */,
+				F2021B7F180296A8008B1BAE /* XXStory.h */,
+				F2021B80180296A8008B1BAE /* XXStory.m */,
+				F2021B82180296B2008B1BAE /* XXContribution.h */,
+				F2021B83180296B2008B1BAE /* XXContribution.m */,
+				F2021B85180296C3008B1BAE /* XXTag.h */,
+				F2021B86180296C3008B1BAE /* XXTag.m */,
 				F2021B4C1802908C008B1BAE /* Main_iPhone.storyboard */,
 				F2021B4F1802908C008B1BAE /* Main_iPad.storyboard */,
 				F2021B551802908C008B1BAE /* XXMasterViewController.h */,
 				F2021B561802908C008B1BAE /* XXMasterViewController.m */,
+				F2021B7918029626008B1BAE /* XXLoginController.h */,
+				F2021B7A18029626008B1BAE /* XXLoginController.m */,
 				F2021B581802908C008B1BAE /* XXDetailViewController.h */,
 				F2021B591802908C008B1BAE /* XXDetailViewController.m */,
+				F2021B881802A2CE008B1BAE /* Constants.h */,
 				F2021B5B1802908C008B1BAE /* Images.xcassets */,
 				F2021B521802908C008B1BAE /* Verses.xcdatamodeld */,
 				F2021B411802908C008B1BAE /* Supporting Files */,
@@ -176,9 +215,11 @@
 			isa = PBXNativeTarget;
 			buildConfigurationList = F2021B731802908C008B1BAE /* Build configuration list for PBXNativeTarget "Verses" */;
 			buildPhases = (
+				FCAB6796F19C45378E3788B6 /* Check Pods Manifest.lock */,
 				F2021B311802908C008B1BAE /* Sources */,
 				F2021B321802908C008B1BAE /* Frameworks */,
 				F2021B331802908C008B1BAE /* Resources */,
+				8A614957F8B2496F9BB4CD2B /* Copy Pods Resources */,
 			);
 			buildRules = (
 			);
@@ -263,15 +304,53 @@
 		};
 /* End PBXResourcesBuildPhase section */
 
+/* Begin PBXShellScriptBuildPhase section */
+		8A614957F8B2496F9BB4CD2B /* Copy Pods Resources */ = {
+			isa = PBXShellScriptBuildPhase;
+			buildActionMask = 2147483647;
+			files = (
+			);
+			inputPaths = (
+			);
+			name = "Copy Pods Resources";
+			outputPaths = (
+			);
+			runOnlyForDeploymentPostprocessing = 0;
+			shellPath = /bin/sh;
+			shellScript = "\"${SRCROOT}/Pods/Pods-resources.sh\"\n";
+			showEnvVarsInLog = 0;
+		};
+		FCAB6796F19C45378E3788B6 /* Check Pods Manifest.lock */ = {
+			isa = PBXShellScriptBuildPhase;
+			buildActionMask = 2147483647;
+			files = (
+			);
+			inputPaths = (
+			);
+			name = "Check Pods Manifest.lock";
+			outputPaths = (
+			);
+			runOnlyForDeploymentPostprocessing = 0;
+			shellPath = /bin/sh;
+			shellScript = "diff \"${PODS_ROOT}/../Podfile.lock\" \"${PODS_ROOT}/Manifest.lock\" > /dev/null\nif [[ $? != 0 ]] ; then\n    cat << EOM\nerror: The sandbox is not in sync with the Podfile.lock. Run 'pod install' or update your CocoaPods installation.\nEOM\n    exit 1\nfi\n";
+			showEnvVarsInLog = 0;
+		};
+/* End PBXShellScriptBuildPhase section */
+
 /* Begin PBXSourcesBuildPhase section */
 		F2021B311802908C008B1BAE /* Sources */ = {
 			isa = PBXSourcesBuildPhase;
 			buildActionMask = 2147483647;
 			files = (
 				F2021B4B1802908C008B1BAE /* XXAppDelegate.m in Sources */,
+				F2021B7B18029626008B1BAE /* XXLoginController.m in Sources */,
 				F2021B541802908C008B1BAE /* Verses.xcdatamodeld in Sources */,
 				F2021B571802908C008B1BAE /* XXMasterViewController.m in Sources */,
+				F2021B87180296C3008B1BAE /* XXTag.m in Sources */,
+				F2021B84180296B2008B1BAE /* XXContribution.m in Sources */,
 				F2021B5A1802908C008B1BAE /* XXDetailViewController.m in Sources */,
+				F2021B81180296A8008B1BAE /* XXStory.m in Sources */,
+				F2021B7E1802965C008B1BAE /* XXUser.m in Sources */,
 				F2021B471802908C008B1BAE /* main.m in Sources */,
 			);
 			runOnlyForDeploymentPostprocessing = 0;
@@ -406,6 +485,7 @@
 		};
 		F2021B741802908C008B1BAE /* Debug */ = {
 			isa = XCBuildConfiguration;
+			baseConfigurationReference = 8BA29E3B4C4140D4AB44C270 /* Pods.xcconfig */;
 			buildSettings = {
 				ASSETCATALOG_COMPILER_APPICON_NAME = AppIcon;
 				ASSETCATALOG_COMPILER_LAUNCHIMAGE_NAME = LaunchImage;
@@ -419,6 +499,7 @@
 		};
 		F2021B751802908C008B1BAE /* Release */ = {
 			isa = XCBuildConfiguration;
+			baseConfigurationReference = 8BA29E3B4C4140D4AB44C270 /* Pods.xcconfig */;
 			buildSettings = {
 				ASSETCATALOG_COMPILER_APPICON_NAME = AppIcon;
 				ASSETCATALOG_COMPILER_LAUNCHIMAGE_NAME = LaunchImage;
@@ -491,6 +572,7 @@
 				F2021B751802908C008B1BAE /* Release */,
 			);
 			defaultConfigurationIsVisible = 0;
+			defaultConfigurationName = Release;
 		};
 		F2021B761802908C008B1BAE /* Build configuration list for PBXNativeTarget "VersesTests" */ = {
 			isa = XCConfigurationList;
@@ -499,6 +581,7 @@
 				F2021B781802908C008B1BAE /* Release */,
 			);
 			defaultConfigurationIsVisible = 0;
+			defaultConfigurationName = Release;
 		};
 /* End XCConfigurationList section */
 
