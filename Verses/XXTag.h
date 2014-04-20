@@ -10,4 +10,9 @@
 
 @interface XXTag : NSObject
 
+@property (strong, nonatomic) NSString *identifier;
+@property (strong, nonatomic) NSString *title;
+
+- (id)initWithDictionary:(NSDictionary *)dictionary;
+
 @end

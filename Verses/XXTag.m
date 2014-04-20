@@ -10,4 +10,24 @@
 
 @implementation XXTag
 
+- (void)setValue:(id)value forKey:(NSString *)key {
+    if ([key isEqualToString:@"id"]) {
+        self.identifier = [value stringValue];
+    } else if ([key isEqualToString:@"title"]) {
+        self.title = value;
+    }
+}
+
+- (id)initWithDictionary:(NSDictionary *)dictionary {
+    if (self = [super init]) {
+        [self setValuesForKeysWithDictionary:dictionary];
+    }
+    
+    return self;
+}
+
+- (void)setValuesForKeysWithDictionary:(NSDictionary *)keyedValues {
+    [super setValuesForKeysWithDictionary:keyedValues];
+}
+
 @end

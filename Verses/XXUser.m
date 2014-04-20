@@ -7,20 +7,59 @@
 //
 
 #import "XXUser.h"
+#import <SDWebImage/UIButton+WebCache.h>
 
 @implementation XXUser
 
 - (void)setValue:(id)value forKey:(NSString *)key {
     if ([key isEqualToString:@"id"]) {
-        self.identifier = [value stringValue];
+        self.identifier = value;
     } else if ([key isEqualToString:@"email"]) {
         self.email = value;
+    } else if ([key isEqualToString:@"first_name"]) {
+        self.firstName = value;
+    } else if ([key isEqualToString:@"last_name"]) {
+        self.lastName = value;
     } else if ([key isEqualToString:@"pen_name"]) {
         self.penName = value;
     } else if ([key isEqualToString:@"location"]) {
         self.location = value;
     } else if([key isEqualToString:@"authentication_token"]) {
         self.authToken = value;
+    } else if([key isEqualToString:@"pic_medium_url"]) {
+        self.picMediumUrl = value;
+    } else if([key isEqualToString:@"pic_small_url"]) {
+        self.picSmallUrl = value;
+        [self downloadImageWithURL:[NSURL URLWithString:value] completionBlock:^(BOOL succeeded, UIImage *image) {
+            self.thumbImage = image;
+        }];
+    } else if([key isEqualToString:@"pic_thumb_url"]) {
+        self.picThumbUrl = value;
+        [self downloadImageWithURL:[NSURL URLWithString:value] completionBlock:^(BOOL succeeded, UIImage *image) {
+            self.thumbImage = image;
+        }];
+    } else if ([key isEqualToString:@"story_count"]) {
+        self.storyCount = value;
+    } else if ([key isEqualToString:@"contact_count"]) {
+        self.contactCount = value;
+    } else if ([key isEqualToString:@"push_subscribe"]) {
+        self.pushSubscribe = [value boolValue];
+    } else if ([key isEqualToString:@"push_invitations"]) {
+        self.pushInvitations = [value boolValue];
+    } else if ([key isEqualToString:@"push_daily"]) {
+        self.pushDaily = [value boolValue];
+    } else if ([key isEqualToString:@"push_circle_publish"]) {
+        self.pushCirclePublish = [value boolValue];
+    } else if ([key isEqualToString:@"push_weekly"]) {
+        self.pushWeekly = [value boolValue];
+    } else if ([key isEqualToString:@"push_permissions"]) {
+        self.pushPermissions = [value boolValue];
+    } else if ([key isEqualToString:@"push_feedbacks"]) {
+        self.pushFeedbacks = [value boolValue];
+    } else if ([key isEqualToString:@"push_bookmarks"]) {
+        self.pushBookmarks = [value boolValue];
+    } else if ([key isEqualToString:@"public_stories"]) {
+        self.stories = [Utilities storiesFromJSONArray:value];
     }
 }
 
@@ -36,6 +75,22 @@
 
 - (void)setValuesForKeysWithDictionary:(NSDictionary *)keyedValues {
     [super setValuesForKeysWithDictionary:keyedValues];
+}
+
+- (void)downloadImageWithURL:(NSURL *)url completionBlock:(void (^)(BOOL succeeded, UIImage *image))completionBlock
+{
+    NSMutableURLRequest *request = [NSMutableURLRequest requestWithURL:url];
+    [NSURLConnection sendAsynchronousRequest:request
+                                       queue:[NSOperationQueue mainQueue]
+                           completionHandler:^(NSURLResponse *response, NSData *data, NSError *error) {
+                               if ( !error )
+                               {
+                                   UIImage *image = [[UIImage alloc] initWithData:data];
+                                   completionBlock(YES,image);
+                               } else{
+                                   completionBlock(NO,nil);
+                               }
+                           }];
 }
 
 

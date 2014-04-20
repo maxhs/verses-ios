@@ -11,4 +11,12 @@
 
 @interface XXContribution : NSObject
 
+@property (strong, nonatomic) NSString *identifier;
+@property (strong, nonatomic) NSString *body;
+@property (strong, nonatomic) XXUser *user;
+@property (strong, nonatomic) NSArray *photos;
+@property BOOL allowFeedback;
+
+- (id) initWithDictionary:(NSDictionary*)dictionary;
+
 @end

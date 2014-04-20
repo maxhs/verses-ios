@@ -10,30 +10,48 @@ PODS:
     - AFNetworking/Reachability
     - AFNetworking/Security
     - AFNetworking/Serialization
+  - AFNetworking/NSURLSession (2.0.0):
+    - AFNetworking/Reachability
+    - AFNetworking/Security
+    - AFNetworking/Serialization
   - AFNetworking/Reachability (2.0.0)
   - AFNetworking/Security (2.0.0)
   - AFNetworking/Serialization (2.0.0)
   - AFNetworking/UIKit (2.0.0):
     - AFNetworking/NSURLConnection
-  - SDWebImage (3.4):
+  - DTCoreText (1.6.10):
+    - DTFoundation/Core (~> 1.6.1)
+    - DTFoundation/DTHTMLParser (~> 1.6.1)
+    - DTFoundation/UIKit (~> 1.6.1)
+  - DTFoundation/Core (1.6.2)
+  - DTFoundation/DTHTMLParser (1.6.2):
+    - DTFoundation/Core
+  - DTFoundation/UIKit (1.6.2):
+    - DTFoundation/Core
+  - MagicalRecord (2.2):
+    - MagicalRecord/Core
+  - MagicalRecord/Core (2.2)
+  - Mixpanel (2.3.4)
+  - MSDynamicsDrawerViewController (1.0.1)
+  - SDWebImage (3.6):
     - SDWebImage/Core
-  - SDWebImage/Core (3.4)
-  - SIAlertView (1.2)
-  - SVProgressHUD (0.9)
-  - SWRevealViewController (1.0.5)
+  - SDWebImage/Core (3.6)
 
 DEPENDENCIES:
   - AFNetworking
-  - SDWebImage (~> 3.4)
-  - SIAlertView
-  - SVProgressHUD
-  - SWRevealViewController (~> 1.0.4)
+  - DTCoreText
+  - MagicalRecord
+  - Mixpanel
+  - MSDynamicsDrawerViewController
+  - SDWebImage
 
 SPEC CHECKSUMS:
   AFNetworking: 3fa983b1beaba69566a3374612511e2a6e3fe845
-  SDWebImage: 366188f04c019bfd712d45e3b36aa52070f4abd8
-  SIAlertView: fd188f66278761f4ff069f517c3deb2be16ecdcc
-  SVProgressHUD: 03d4845ec8e64591726428a08236c6a5489d45f8
-  SWRevealViewController: c1698d78b22191af3cd23df4144c3e17e253bb78
+  DTCoreText: 39e316024954ef7e86c7fbfb5f0eee991f7211f1
+  DTFoundation: 7c69990fa3cb7655cafa95ab59c3fcea014460f0
+  MagicalRecord: 95d49d74ef752cd52f6ad87bcb474817fc3978cf
+  Mixpanel: 16e6f1d5f8aeb9282ee864e169557de0bd9549df
+  MSDynamicsDrawerViewController: f2d14503f6f92f8dec250fdc503d7fed2587a638
+  SDWebImage: 7eb273e54ca8a2e506ad9bd5e80c35b2a4d7c95e
 
-COCOAPODS: 0.26.2
+COCOAPODS: 0.30.0

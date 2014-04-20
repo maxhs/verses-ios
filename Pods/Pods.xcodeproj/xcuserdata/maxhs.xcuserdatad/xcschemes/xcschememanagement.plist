@@ -9,22 +9,32 @@
 			<key>isShown</key>
 			<false/>
 		</dict>
+		<key>Pods-DTCoreText.xcscheme</key>
+		<dict>
+			<key>isShown</key>
+			<false/>
+		</dict>
+		<key>Pods-DTFoundation.xcscheme</key>
+		<dict>
+			<key>isShown</key>
+			<false/>
+		</dict>
+		<key>Pods-MSDynamicsDrawerViewController.xcscheme</key>
+		<dict>
+			<key>isShown</key>
+			<false/>
+		</dict>
+		<key>Pods-MagicalRecord.xcscheme</key>
+		<dict>
+			<key>isShown</key>
+			<false/>
+		</dict>
+		<key>Pods-Mixpanel.xcscheme</key>
+		<dict>
+			<key>isShown</key>
+			<false/>
+		</dict>
 		<key>Pods-SDWebImage.xcscheme</key>
-		<dict>
-			<key>isShown</key>
-			<false/>
-		</dict>
-		<key>Pods-SIAlertView.xcscheme</key>
-		<dict>
-			<key>isShown</key>
-			<false/>
-		</dict>
-		<key>Pods-SVProgressHUD.xcscheme</key>
-		<dict>
-			<key>isShown</key>
-			<false/>
-		</dict>
-		<key>Pods-SWRevealViewController.xcscheme</key>
 		<dict>
 			<key>isShown</key>
 			<false/>
@@ -37,32 +47,42 @@
 	</dict>
 	<key>SuppressBuildableAutocreation</key>
 	<dict>
-		<key>1C7D6D3803034DE8B0A2BC3A</key>
+		<key>0700218EE5D2447D80ED7A17</key>
 		<dict>
 			<key>primary</key>
 			<true/>
 		</dict>
-		<key>31EB4A0F02324F25976E0753</key>
+		<key>4B12CF0B07D8459E92BBECBB</key>
 		<dict>
 			<key>primary</key>
 			<true/>
 		</dict>
-		<key>69628C08FAC345BC81AD60C6</key>
+		<key>50B82048DF7548658057561E</key>
 		<dict>
 			<key>primary</key>
 			<true/>
 		</dict>
-		<key>C6E4BC8D29DC48248D9AE48D</key>
+		<key>80080508C21942288F0FDFA9</key>
 		<dict>
 			<key>primary</key>
 			<true/>
 		</dict>
-		<key>D090E3DD31954DD78AC9E972</key>
+		<key>BBD32C2F5F63496B80882E37</key>
 		<dict>
 			<key>primary</key>
 			<true/>
 		</dict>
-		<key>DBF2E04CC4A144DFB73BBD5E</key>
+		<key>C725C431E537483B9539227D</key>
+		<dict>
+			<key>primary</key>
+			<true/>
+		</dict>
+		<key>D68BE6655DC74690833E44AA</key>
+		<dict>
+			<key>primary</key>
+			<true/>
+		</dict>
+		<key>F3D1B805580F42369A9413E7</key>
 		<dict>
 			<key>primary</key>
 			<true/>
