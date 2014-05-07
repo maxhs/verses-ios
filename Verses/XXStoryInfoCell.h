@@ -13,8 +13,6 @@
 @property (weak, nonatomic) IBOutlet UILabel *storyTitle;
 @property (weak, nonatomic) IBOutlet UILabel *viewsLabel;
 @property (weak, nonatomic) IBOutlet UILabel *lastUpdatedAt;
-@property (weak, nonatomic) IBOutlet UIButton *bookmarkButton;
-@property (weak, nonatomic) IBOutlet UIButton *editButton;
 @property CGFloat cellHeight;
 - (void)configureForStory:(XXStory*)story;
 @end

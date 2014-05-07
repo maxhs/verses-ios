@@ -9,7 +9,6 @@
 #import "XXTutorialPage.h"
 
 @implementation XXTutorialPage {
-    CGRect screen;
     CGFloat width;
     CGFloat height;
 }
@@ -18,11 +17,9 @@
 {
     self = [super initWithFrame:frame];
     if (self) {
-        screen = [UIScreen mainScreen].bounds;
-        width = screen.size.width;
-        height = screen.size.height;
-        self.containerView = [[UIView alloc] initWithFrame:frame];
-        [self addSubview:self.containerView];
+        width = frame.size.width;
+        height = frame.size.height;
+        self.arrowImageView.autoresizingMask = UIViewAutoresizingFlexibleBottomMargin;
     }
     return self;
 }
@@ -43,7 +40,8 @@
     [self.desc setNumberOfLines:0];
     [self.desc setFont:[UIFont fontWithName:kSourceSansProLight size:18]];
     [self.desc setBackgroundColor:[UIColor clearColor]];
-    [self.containerView addSubview:self.desc];
+    [self.desc setUserInteractionEnabled:NO];
+    [self addSubview:self.desc];
 }
 
 -(void)initExplanation:(NSString*)string withFrame:(CGRect)frame{
@@ -65,6 +63,7 @@
     [self.title setTextColor:[UIColor blackColor]];
     [self.title setFont:[UIFont fontWithName:kCrimsonRoman size:40]];
     [self.title setBackgroundColor:[UIColor clearColor]];
+    [self.title setUserInteractionEnabled:NO];
     [self addSubview:self.title];
 }
 

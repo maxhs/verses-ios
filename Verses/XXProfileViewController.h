@@ -9,9 +9,11 @@
 #import <UIKit/UIKit.h>
 #import "XXStory.h"
 #import "XXUser.h"
+#import "XXStoryInfoViewController.h"
 
 @interface XXProfileViewController : UIViewController <UITableViewDataSource, UITableViewDelegate>
 
 @property (weak, nonatomic) IBOutlet UITableView *tableView;
 @property (strong, nonatomic) XXUser *user;
+@property (strong, nonatomic) XXStoryInfoViewController *storyInfoVc;
 @end

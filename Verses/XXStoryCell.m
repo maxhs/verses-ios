@@ -53,6 +53,8 @@
         [self.titleLabel setFont:[UIFont fontWithName:kSourceSansProSemibold size:25]];
         [self.authorPhoto setHidden:YES];
         [self.authorLabel setHidden:YES];
+        
+        self.infoLabel.transform = CGAffineTransformMakeTranslation(0, 6);
     }
     /*if (story.owner.picSmallUrl.length){
         self.authorLabel.transform = CGAffineTransformMakeTranslation(-44, 0);

@@ -9,6 +9,7 @@
 #import "XXWriteViewController.h"
 #import "XXStoriesViewController.h"
 #import "XXWritingCell.h"
+#import "XXWritingTitleCell.h"
 #import "XXTextView.h"
 #import "XXContribution.h"
 #import "XXWelcomeViewController.h"
@@ -20,12 +21,13 @@
 #import "XXMyStoriesViewController.h"
 #import "XXCircle.h"
 #import <DTCoreText/DTCoreText.h>
+#import "UIFontDescriptor+CrimsonText.h"
+#import "UIFontDescriptor+SourceSansPro.h"
 
-@interface XXWriteViewController () <UITextFieldDelegate, UITextViewDelegate, UIGestureRecognizerDelegate, UIAlertViewDelegate> {
+@interface XXWriteViewController () <UITextFieldDelegate, UITextViewDelegate, UIGestureRecognizerDelegate, UIAlertViewDelegate, TextViewDelegate, UITextInputDelegate> {
     NSArray *sidebarImageArray;
     UITextField *titleTextField;
-    UITextView *bodyTextView;
-    CGRect screen;
+    XXTextView *bodyTextView;
     CGFloat width;
     CGFloat height;
     AFHTTPRequestOperationManager *manager;
@@ -40,12 +42,15 @@
     UITapGestureRecognizer *optionsTap;
     UIImage *blurredSnapshotImage;
     UIImageView *blurredImageView;
-    UIStoryboard *storyboard;
     NSMutableArray *_collaborators;
     NSMutableArray *_circleCollaborators;
     UIColor *textColor;
     UIInterfaceOrientation currentOrientation;
     UIImageView *navBarShadowView;
+    NSString *_selectedText;
+    UITextRange *_selectedRange;
+    UIBarButtonItem *leftBarButtonItem;
+    XXTextStorage *_textStorage;
 }
 
 @end
@@ -61,21 +66,17 @@
     }
     
     [super viewDidLoad];
-    manager = [AFHTTPRequestOperationManager manager];
-    screen = [UIScreen mainScreen].bounds;
-    width = screen.size.width;
-    height = screen.size.height;
-    [[NSNotificationCenter defaultCenter] addObserver:self
-                                             selector:@selector(willShowKeyboard:)
-                                                 name:UIKeyboardWillShowNotification object:nil];
+    manager = [(XXAppDelegate*)[UIApplication sharedApplication].delegate manager];
+    width = screenWidth();
+    height = screenHeight();
     [[NSNotificationCenter defaultCenter] addObserver:self
                                              selector:@selector(willHideKeyboard)
                                                  name:UIKeyboardWillHideNotification object:nil];
-    self.tableView.pagingEnabled = YES;
     publishButton = [[UIBarButtonItem alloc] initWithTitle:@"   PUBLISH   " style:UIBarButtonItemStylePlain target:self action:@selector(confirmPublish)];
     doneButton = [[UIBarButtonItem alloc] initWithBarButtonSystemItem:UIBarButtonSystemItemDone target:self action:@selector(doneEditing)];
     optionsButton = [[UIBarButtonItem alloc] initWithTitle:@"   OPTIONS   " style:UIBarButtonItemStylePlain target:self action:@selector(showOptions)];
 
+    //setup controls has lots of story logic in it
     [self setupControls];
     [self offsetOptions];
     [self.draftLabel setFont:[UIFont fontWithName:kSourceSansProLight size:18]];
@@ -116,24 +117,18 @@
     optionsTap.numberOfTapsRequired = 1;
     optionsTap.delegate = self;
     [self.optionsContainerView addGestureRecognizer:optionsTap];
+    
+    //set left bar button item
     if (self.navigationController.viewControllers.firstObject == self){
-        UIBarButtonItem *cancelButton = [[UIBarButtonItem alloc]initWithImage:[UIImage imageNamed:@"blackX"] style:UIBarButtonItemStylePlain target:self action:@selector(back)];
-        self.navigationItem.leftBarButtonItem = cancelButton;
+        leftBarButtonItem = [[UIBarButtonItem alloc]initWithImage:[UIImage imageNamed:@"blackX"] style:UIBarButtonItemStylePlain target:self action:@selector(back)];
     } else {
-        UIBarButtonItem *backButton;
         if ([[NSUserDefaults standardUserDefaults] boolForKey:kDarkBackground]){
-            backButton = [[UIBarButtonItem alloc] initWithImage:[UIImage imageNamed:@"whiteBack"] style:UIBarButtonItemStylePlain target:self action:@selector(pop)];
+            leftBarButtonItem = [[UIBarButtonItem alloc] initWithImage:[UIImage imageNamed:@"whiteBack"] style:UIBarButtonItemStylePlain target:self action:@selector(pop)];
         } else {
-            backButton = [[UIBarButtonItem alloc] initWithImage:[UIImage imageNamed:@"back"] style:UIBarButtonItemStylePlain target:self action:@selector(pop)];
+            leftBarButtonItem = [[UIBarButtonItem alloc] initWithImage:[UIImage imageNamed:@"back"] style:UIBarButtonItemStylePlain target:self action:@selector(pop)];
         }
-        self.navigationItem.leftBarButtonItem = backButton;
     }
-
-    if ([[UIDevice currentDevice] userInterfaceIdiom] == UIUserInterfaceIdiomPhone){
-        storyboard = [UIStoryboard storyboardWithName:@"Main_iPhone" bundle:nil];
-    } else {
-        storyboard = [UIStoryboard storyboardWithName:@"Main_iPad" bundle:nil];
-    }
+    self.navigationItem.leftBarButtonItem = leftBarButtonItem;
     
     _collaborators = [NSMutableArray array];
     if (_story.collaborators.count){
@@ -150,6 +145,8 @@
     navBarShadowView = [Utilities findNavShadow:self.navigationController.navigationBar];
     [[NSNotificationCenter defaultCenter] addObserver:self selector:@selector(addCollaborators:) name:@"Collaborators" object:nil];
     [[NSNotificationCenter defaultCenter] addObserver:self selector:@selector(addCircleCollaborators:) name:@"CircleCollaborators" object:nil];
+    
+    [self.tableView setContentInset:UIEdgeInsetsMake(56, 0, 0, 0)];
 }
 
 - (void)pop{
@@ -157,7 +154,8 @@
 }
 
 - (void)setupControls {
-    if (_story.identifier){
+    
+    if (_story.contributions.count){
         saveButton = [[UIBarButtonItem alloc] initWithTitle:@"   SAVE   " style:UIBarButtonItemStylePlain target:self action:@selector(save)];
         self.navigationItem.rightBarButtonItems = @[saveButton,optionsButton];
         if ([_story.owner.identifier isEqualToNumber:[[NSUserDefaults standardUserDefaults] objectForKey:kUserDefaultsId]]){
@@ -168,6 +166,7 @@
             [self.doneOptionsButton setFrame:doneRect];
             [self.deleteButton setHidden:YES];
         }
+        
         [self setupStoryBooleans];
     } else {
         _story = [[XXStory alloc] init];
@@ -295,6 +294,13 @@
 
 - (void)willAnimateRotationToInterfaceOrientation:(UIInterfaceOrientation)toInterfaceOrientation duration:(NSTimeInterval)duration {
     currentOrientation = toInterfaceOrientation;
+    if (UIInterfaceOrientationIsPortrait(toInterfaceOrientation)){
+        width = screenWidth();
+        height = screenHeight();
+    } else {
+        width = screenHeight();
+        height = screenWidth();
+    }
     [self.tableView reloadData];
 }
 
@@ -364,6 +370,7 @@
         [self.collaborateButton setTitleColor:textColor forState:UIControlStateNormal];
         [self.doneOptionsButton.layer setBorderColor:textColor.CGColor];
         [self.doneOptionsButton setTitleColor:textColor forState:UIControlStateNormal];
+        bodyTextView.keyboardAppearance = UIKeyboardAppearanceDark;
     } else {
         [self.view setBackgroundColor:[UIColor whiteColor]];
         textColor = [UIColor blackColor];
@@ -371,6 +378,7 @@
         [self.collaborateButton setTitleColor:[UIColor darkGrayColor] forState:UIControlStateNormal];
         [self.doneOptionsButton.layer setBorderColor:[UIColor darkGrayColor].CGColor];
         [self.doneOptionsButton setTitleColor:[UIColor darkGrayColor] forState:UIControlStateNormal];
+        bodyTextView.keyboardAppearance = UIKeyboardAppearanceDefault;
     }
     [self.draftLabel setTextColor:textColor];
     [self.privateLabel setTextColor:textColor];
@@ -387,6 +395,7 @@
             self.view.transform = CGAffineTransformIdentity;
         }];
     }
+    [self createTextViewWithOrientation:self.interfaceOrientation];
 }
 
 - (void)prepareStory{
@@ -438,7 +447,6 @@
 }
 - (void)addCircleCollaborators:(NSNotification*)notification{
     _circleCollaborators = [notification.userInfo objectForKey:@"circleCollaborators"];
-    NSLog(@"should be adding circle collaborators: %@",notification.userInfo);
 }
 
 - (void)save{
@@ -453,8 +461,6 @@
     
     if (bodyTextView.text.length && ![bodyTextView.text isEqualToString:kStoryPlaceholder]){
         [parameters setObject:[bodyTextView.attributedText htmlFragment] forKey:@"contribution[body]"];
-        NSLog(@"html fragment: %@",[bodyTextView.attributedText htmlFragment]);
-        //NSLog(@"html string: %@",[bodyTextView.attributedText htmlString]);
     }
     if (titleTextField.text.length && ![titleTextField.text isEqualToString:kTitlePlaceholder]) {
         [parameters setObject:titleTextField.text forKey:@"story[title]"];
@@ -538,7 +544,7 @@
 }
 
 - (void)showStory {
-    XXStoryViewController *vc = [storyboard instantiateViewControllerWithIdentifier:@"Story"];
+    XXStoryViewController *vc = [[self storyboard] instantiateViewControllerWithIdentifier:@"Story"];
     [vc setStory:_story];
     XXAppDelegate *delegate = [UIApplication sharedApplication].delegate;
     [vc setStories:delegate.menuViewController.stories];
@@ -588,11 +594,11 @@
 }
 
 - (IBAction)collaborate {
-    XXCollaborateViewController *vc = [storyboard instantiateViewControllerWithIdentifier:@"Collaborate"];
+    XXCollaborateViewController *vc = [[self storyboard] instantiateViewControllerWithIdentifier:@"Collaborate"];
     [vc setModal:YES];
     [vc setTitle:@"Collaborate"];
     [vc setCollaborators:_collaborators];
-    [vc setCollaborators:_circleCollaborators];
+    [vc setCircleCollaborators:_circleCollaborators];
     UINavigationController *nav = [[UINavigationController alloc] initWithRootViewController:vc];
     if ([[NSUserDefaults standardUserDefaults] boolForKey:kDarkBackground]){
         [UIView animateWithDuration:.23 animations:^{
@@ -614,51 +620,116 @@
 
 - (NSInteger)tableView:(UITableView *)tableView numberOfRowsInSection:(NSInteger)section
 {
-    if (section == 0) return 1;
-    else return 0;
+    return 1;
 }
 
 - (UITableViewCell *)tableView:(UITableView *)tableView cellForRowAtIndexPath:(NSIndexPath *)indexPath
 {
     if (indexPath.section == 0) {
-        XXWritingCell *cell = (XXWritingCell *)[tableView dequeueReusableCellWithIdentifier:@"WritingCell"];
+        XXWritingTitleCell *cell = (XXWritingTitleCell *)[tableView dequeueReusableCellWithIdentifier:@"WritingTitleCell"];
         if (cell == nil) {
-            cell = [[[NSBundle mainBundle] loadNibNamed:@"XXWritingCell" owner:nil options:nil] lastObject];
+            cell = [[[NSBundle mainBundle] loadNibNamed:@"XXWritingTitleCell" owner:nil options:nil] lastObject];
         }
-        if (_story){
-            [cell configure:_story withOrientation:self.interfaceOrientation];
-        }
+        [cell configure:_story withOrientation:self.interfaceOrientation];
         
         if ([[NSUserDefaults standardUserDefaults] boolForKey:kDarkBackground] && !_story.title.length){
             [cell.titleTextField setText:kTitlePlaceholder];
             cell.titleTextField.keyboardAppearance = UIKeyboardAppearanceDark;
-            cell.textView.keyboardAppearance = UIKeyboardAppearanceDark;
         } else {
             cell.titleTextField.keyboardAppearance = UIKeyboardAppearanceDefault;
-            cell.textView.keyboardAppearance = UIKeyboardAppearanceDefault;
         }
+        
+        
         titleTextField = cell.titleTextField;
         [titleTextField setDelegate:self];
         [titleTextField setTextColor:textColor];
         
-        bodyTextView = cell.textView;
-        bodyTextView.delegate = self;
-        if (bodyTextView.text.length && ![bodyTextView.text isEqualToString:kStoryPlaceholder]){
-            [bodyTextView setTextColor:textColor];
-        }
-        
         return cell;
     } else {
-        return nil;
+        XXWritingCell *cell = (XXWritingCell *)[tableView dequeueReusableCellWithIdentifier:@"WritingCell"];
+        if (cell == nil) {
+            cell = [[[NSBundle mainBundle] loadNibNamed:@"XXWritingCell" owner:nil options:nil] lastObject];
+        }
+        
+        if (bodyTextView){
+            if ([[NSUserDefaults standardUserDefaults] boolForKey:kDarkBackground] && !_story.title.length){
+                bodyTextView.keyboardAppearance = UIKeyboardAppearanceDark;
+            } else {
+                bodyTextView.keyboardAppearance = UIKeyboardAppearanceDefault;
+            }
+            if ([bodyTextView.text isEqualToString:kStoryPlaceholder]){
+                [bodyTextView setTextColor:[UIColor lightGrayColor]];
+            } else {
+                
+            }
+            [cell addSubview:bodyTextView];
+            NSLog(@"body text view? %@",bodyTextView);
+            [bodyTextView.boldButton addTarget:self action:@selector(boldText) forControlEvents:UIControlEventTouchUpInside];
+            [bodyTextView.italicsButton addTarget:self action:@selector(italicText) forControlEvents:UIControlEventTouchUpInside];
+            [bodyTextView.underlineButton addTarget:self action:@selector(underlineText) forControlEvents:UIControlEventTouchUpInside];
+            [bodyTextView.headerButton addTarget:self action:@selector(headline) forControlEvents:UIControlEventTouchUpInside];
+            [bodyTextView.footnoteButton addTarget:self action:@selector(footnote) forControlEvents:UIControlEventTouchUpInside];
+            bodyTextView.keyboardEnabled = NO;
+            bodyTextView.selectable = YES;
+            bodyTextView.delegate = self;
+        }
+        return cell;
+    }
+}
+
+- (void)createTextViewWithOrientation:(UIInterfaceOrientation)orientation {
+    NSString *storyBody = @"";
+    if (_story && _story.contributions.count){
+        for (XXContribution *contribution in _story.contributions) {
+            if (contribution.body.length) storyBody = [storyBody stringByAppendingString:contribution.body];
+        }
+        
+        NSDictionary* attributes = @{NSFontAttributeName:[UIFont fontWithDescriptor:[UIFontDescriptor preferredCrimsonTextFontDescriptorWithTextStyle:UIFontTextStyleBody] size:0],
+                                     /*NSParagraphStyleAttributeName:paragraphStyle,
+                                     NSForegroundColorAttributeName:textColor,*/
+                                     NSDocumentTypeDocumentAttribute:NSHTMLTextDocumentType,
+                                     };
+        NSMutableAttributedString* attrString = [[NSMutableAttributedString alloc] initWithData:[storyBody dataUsingEncoding:NSUTF32StringEncoding] options:attributes documentAttributes:nil error:nil];
+        [attrString beginEditing];
+        [attrString addAttributes:attributes range:NSMakeRange(0, attrString.length)];
+        [attrString endEditing];
+        _textStorage = [XXTextStorage new];
+        [_textStorage appendAttributedString:attrString];
+        
+        NSLayoutManager *layoutManager = [[NSLayoutManager alloc] init];
+        
+        CGRect bodyRect = [attrString boundingRectWithSize:CGSizeMake(screenWidth()-10, CGFLOAT_MAX)
+                                                   options:(NSStringDrawingUsesLineFragmentOrigin|NSStringDrawingUsesFontLeading)
+                                                   context:nil];
+        NSLog(@"height of bodyrect: %f",bodyRect.size.height);
+        CGSize containerSize = CGSizeMake(bodyRect.size.width,  CGFLOAT_MAX);
+        NSTextContainer *container = [[NSTextContainer alloc] initWithSize:containerSize];
+        container.widthTracksTextView = YES;
+        [layoutManager addTextContainer:container];
+        [_textStorage addLayoutManager:layoutManager];
+        
+        bodyTextView = [[XXTextView alloc] initWithFrame:bodyRect textContainer:container];
+        bodyTextView.keyboardEnabled = YES;
+        bodyTextView.selectable = YES;
+        bodyTextView.userInteractionEnabled = YES;
+        
+        [bodyTextView setupButtons];
+        [bodyTextView setScrollEnabled:NO];
+    } else {
+        storyBody = kStoryPlaceholder;
     }
 }
 
 - (CGFloat)tableView:(UITableView *)tableView heightForRowAtIndexPath:(NSIndexPath *)indexPath {
     switch (indexPath.section) {
         case 0:
-            return screen.size.height;
+            return 56;
             break;
-            
+        case 1:
+        {
+            return bodyTextView.frame.size.height;
+        }
+            break;
         default:
             return 0;
             break;
@@ -667,7 +738,7 @@
 
 -(void)tableView:(UITableView *)tableView willDisplayCell:(UITableViewCell *)cell forRowAtIndexPath:(NSIndexPath *)indexPath
 {
-    if([indexPath row] == ((NSIndexPath*)[[tableView indexPathsForVisibleRows] lastObject]).row && tableView == self.tableView){
+    if(indexPath.section == tableView.numberOfSections && indexPath.row == ((NSIndexPath*)[[tableView indexPathsForVisibleRows] lastObject]).row){
         //end of loading
         [ProgressHUD dismiss];
     }
@@ -676,20 +747,6 @@
 
 #pragma mark - UITextViewDelegate Methods
 
-- (void)willShowKeyboard:(NSNotification *)notification {
-    self.tableView.pagingEnabled = NO;
-    /*CGSize keyboardSize = [[[notification userInfo] objectForKey:UIKeyboardFrameBeginUserInfoKey] CGRectValue].size;
-    UIEdgeInsets contentInsets = UIEdgeInsetsMake(44.0, 0.0, keyboardSize.height, 0.0);
-    self.tableView.contentInset = contentInsets;
-    self.tableView.scrollIndicatorInsets = contentInsets;
-    CGRect aRect = self.view.frame;
-    aRect.size.height -= keyboardSize.height;
-    if (!CGRectContainsPoint(aRect, addCommentTextView.frame.origin) ) {
-        CGPoint scrollPoint = CGPointMake(0.0, addCommentTextView.frame.origin.y - (keyboardSize.height-45));
-        [self.tableView setContentOffset:scrollPoint animated:YES];
-    }*/
-}
-
 -(void)doneEditing {
     [self.view endEditing:YES];
     if (_story.identifier){
@@ -697,7 +754,43 @@
     } else {
         self.navigationItem.rightBarButtonItems = @[saveButton,publishButton,optionsButton];
     }
-    self.tableView.pagingEnabled = YES;
+}
+
+- (void)willHideKeyboard {
+}
+
+/*- (BOOL)textField:(UITextField *)textField shouldChangeCharactersInRange:(NSRange)range replacementString:(NSString *)string{
+    if ([string isEqualToString:@"\n"]) {
+        if (textField.text.length) {
+            [self doneEditing];
+        }
+        [textField resignFirstResponder];
+        return NO;
+    }
+    return YES;
+}*/
+
+- (void)textFieldDidBeginEditing:(UITextField *)textField {
+    self.navigationItem.rightBarButtonItems = nil;
+    self.navigationItem.rightBarButtonItem = doneButton;
+    if ([textField.text isEqual:kTitlePlaceholder]){
+        textField.text = @"";
+    }
+    self.navigationItem.leftBarButtonItem = nil;
+    if ([[NSUserDefaults standardUserDefaults] boolForKey:kDarkBackground]){
+        textField.keyboardAppearance = UIKeyboardAppearanceDark;
+        [textField setTextColor:textColor];
+    } else {
+        textField.keyboardAppearance = UIKeyboardAppearanceDefault;
+    }
+}
+
+- (void)textFieldDidEndEditing:(UITextField *)textField {
+    if (![textField.text isEqual:kTitlePlaceholder] && textField.text.length > 0){
+        NSLog(@"textfield text should be reset");
+        _story.title = textField.text;
+    }
+    self.navigationItem.leftBarButtonItem = leftBarButtonItem;
 }
 
 - (void)textViewDidBeginEditing:(UITextView *)textView {
@@ -712,6 +805,12 @@
                                                         @"pen_name":[[NSUserDefaults standardUserDefaults] objectForKey:kUserDefaultsPenName]
                                                         }];
     }
+    self.navigationItem.leftBarButtonItem = nil;
+    if ([[NSUserDefaults standardUserDefaults] boolForKey:kDarkBackground]){
+        textView.keyboardAppearance = UIKeyboardAppearanceDark;
+    } else {
+        textView.keyboardAppearance = UIKeyboardAppearanceDefault;
+    }
 }
 
 - (void)textViewDidEndEditing:(UITextView *)textView{
@@ -719,34 +818,92 @@
         textView.text = kStoryPlaceholder;
         textView.textColor = [UIColor lightGrayColor];
     }
-}
-- (void)willHideKeyboard {
-    self.tableView.scrollEnabled = YES;
+    self.navigationItem.leftBarButtonItem = leftBarButtonItem;
 }
 
-- (BOOL)textField:(UITextField *)textField shouldChangeCharactersInRange:(NSRange)range replacementString:(NSString *)string{
-    if ([string isEqualToString:@"\n"]) {
-        if (textField.text.length) {
-            [self doneEditing];
+- (void)boldText {
+    [bodyTextView toggleBoldface:nil];
+}
+
+- (void)italicText {
+    [bodyTextView toggleItalics:nil];
+}
+
+- (void)underlineText {
+    [bodyTextView toggleUnderline:nil];
+}
+
+- (void)headline {
+    if (_selectedText.length){
+        NSRange selectionRange = [self selectedRangeForText:_selectedRange];
+        NSMutableAttributedString *attrString = [bodyTextView.textStorage attributedSubstringFromRange:[self selectedRangeForText:_selectedRange]].mutableCopy;
+        UIFontDescriptor *currentFontDescriptor = [[bodyTextView.textStorage attributesAtIndex:selectionRange.location effectiveRange:NULL][NSFontAttributeName] fontDescriptor];
+        CGFloat fontSize = [currentFontDescriptor.fontAttributes[UIFontDescriptorSizeAttribute] floatValue];
+        
+        [attrString beginEditing];
+        if (fontSize < 25.f){
+            [attrString addAttribute:NSFontAttributeName value:[UIFont fontWithDescriptor:[[UIFontDescriptor preferredSourceSansProFontDescriptorWithTextStyle:UIFontTextStyleSubheadline] fontDescriptorWithSymbolicTraits:UIFontDescriptorTraitBold] size:0] range:NSMakeRange((0), attrString.length)];
+            [bodyTextView.textStorage replaceCharactersInRange:selectionRange withAttributedString:attrString];
+        } else if (fontSize > 25.f && fontSize < 30.f){
+            [attrString addAttribute:NSFontAttributeName value:[UIFont fontWithDescriptor:[[UIFontDescriptor preferredSourceSansProFontDescriptorWithTextStyle:UIFontTextStyleHeadline] fontDescriptorWithSymbolicTraits:UIFontDescriptorTraitBold] size:0] range:NSMakeRange((0), attrString.length)];
+            [bodyTextView.textStorage replaceCharactersInRange:selectionRange withAttributedString:attrString];
+        } else {
+            [attrString addAttribute:NSFontAttributeName value:[UIFont fontWithDescriptor:[UIFontDescriptor preferredCrimsonTextFontDescriptorWithTextStyle:UIFontTextStyleBody] size:0] range:NSMakeRange((0), attrString.length)];
+            [bodyTextView.textStorage replaceCharactersInRange:selectionRange withAttributedString:attrString];
         }
-        [textField resignFirstResponder];
-        return NO;
-    }
-    return YES;
-}
-
-- (void)textFieldDidBeginEditing:(UITextField *)textField {
-    self.navigationItem.rightBarButtonItems = nil;
-    self.navigationItem.rightBarButtonItem = doneButton;
-    if ([textField.text isEqual:kTitlePlaceholder]){
-        textField.text = @"";
+        
+        [attrString endEditing];
     }
 }
 
-- (void)textFieldDidEndEditing:(UITextField *)textField {
-    if ([textField.text isEqual:@""]){
-        textField.text = kTitlePlaceholder;
+- (void)footnote {
+    if (_selectedText.length){
+        NSRange selectionRange = [self selectedRangeForText:_selectedRange];
+        NSMutableAttributedString *attrString = [bodyTextView.textStorage attributedSubstringFromRange:[self selectedRangeForText:_selectedRange]].mutableCopy;
+        
+        [attrString beginEditing];
+        [attrString addAttribute:NSFontAttributeName value:[UIFont fontWithDescriptor:[UIFontDescriptor preferredCrimsonTextFontDescriptorWithTextStyle:UIFontTextStyleFootnote] size:0] range:NSMakeRange((0), attrString.length)];
+        [bodyTextView.textStorage replaceCharactersInRange:selectionRange withAttributedString:attrString];
+        
+        [attrString endEditing];
     }
+}
+
+- (NSRange) selectedRangeForText:(UITextRange*)selectedRange
+{
+    UITextPosition* beginning = bodyTextView.beginningOfDocument;
+    UITextPosition* selectionStart = selectedRange.start;
+    UITextPosition* selectionEnd = selectedRange.end;
+    const NSInteger location = [bodyTextView offsetFromPosition:beginning toPosition:selectionStart];
+    const NSInteger length = [bodyTextView offsetFromPosition:selectionStart toPosition:selectionEnd];
+    return NSMakeRange(location, length);
+}
+
+- (void)textViewDidChangeSelection:(UITextView *)textView {
+    _selectedRange = [textView selectedTextRange];
+    _selectedText = [textView textInRange:_selectedRange];
+    //NSLog(@"selected text from write view: %@",_selectedText);
+    if (!_selectedText.length) {
+        [self resignFirstResponder];
+        _selectedText = nil;
+        _selectedRange = nil;
+    }
+}
+
+- (void)textWillChange:(id<UITextInput>)textInput {
+    NSLog(@"text will change: %@",textInput);
+}
+
+- (void)textDidChange:(id<UITextInput>)textInput {
+    NSLog(@"text did change: %@",textInput);
+}
+
+- (void)selectionDidChange:(id<UITextInput>)textInput {
+    NSLog(@"selection did change: %@",textInput);
+}
+
+- (void)selectionWillChange:(id<UITextInput>)textInput {
+    NSLog(@"selection will change: %@",textInput);
 }
 
 - (void)viewWillDisappear:(BOOL)animated {

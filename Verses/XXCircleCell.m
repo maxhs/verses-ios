@@ -31,43 +31,43 @@
     // Configure the view for the selected state
 }
 - (void)configureCell:(XXCircle*)circle withTextColor:(UIColor *)textColor {
-    [self.circleName setText:circle.name];
-    [self.circleName setFont:[UIFont fontWithName:kCrimsonRoman size:23]];
-    [self.circleName setTextColor:textColor];
-    [self.infoLabel setText:circle.titles];
-    [self.infoLabel setFont:[UIFont fontWithName:kSourceSansProRegular size:15]];
-    [self.infoLabel setTextColor:textColor];
-    
-    if (circle.circleDescription.length) {
-        [self.descriptionTextView setText:circle.circleDescription];
-        [self.descriptionTextView setFont:[UIFont fontWithName:kCrimsonRoman size:15]];
-        [self.descriptionTextView setTextColor:textColor];
+    [_circleName setText:circle.name];
+    [_circleName setFont:[UIFont fontWithName:kCrimsonRoman size:24]];
+    [_circleName setTextColor:textColor];
+    if (circle.titles.length){
+        [_infoLabel setText:circle.titles];
+        [_infoLabel setFont:[UIFont fontWithName:kSourceSansProRegular size:15]];
+        [_infoLabel setTextColor:textColor];
     } else {
-        [self.descriptionTextView setText:@""];
+        [_infoLabel setText:@"No stories..."];
+        [_infoLabel setFont:[UIFont fontWithName:kSourceSansProItalic size:15]];
+        if ([[NSUserDefaults standardUserDefaults] boolForKey:kDarkBackground]){
+            [_infoLabel setTextColor:textColor];
+        } else {
+            [_infoLabel setTextColor:[UIColor lightGrayColor]];
+        }
     }
     
     if (circle.unreadCommentCount == 0){
-        [self.unreadLabel setText:@""];
-        [self.unreadLabel setHidden:YES];
+        [_unreadLabel setText:@""];
+        [_unreadLabel setHidden:YES];
     } else {
-        [self.unreadLabel setText:[NSString stringWithFormat:@"%d",circle.unreadCommentCount]];
-        [self.unreadLabel setHidden:NO];
-        CGRect unreadFrame = self.unreadLabel.frame;
+        [_unreadLabel setText:[NSString stringWithFormat:@"%d",circle.unreadCommentCount]];
+        [_unreadLabel setHidden:NO];
+        CGRect unreadFrame = _unreadLabel.frame;
         if (unreadFrame.origin.x <= 5.f){
-            CGRect expectedSize = [self.circleName.text boundingRectWithSize:self.circleName.frame.size options:NSStringDrawingUsesLineFragmentOrigin attributes:@{NSFontAttributeName:self.circleName.font} context:nil];
+            CGRect expectedSize = [_circleName.text boundingRectWithSize:_circleName.frame.size options:NSStringDrawingUsesLineFragmentOrigin attributes:@{NSFontAttributeName:_circleName.font} context:nil];
             unreadFrame.origin.x += expectedSize.size.width;
-            [self.unreadLabel setFrame:unreadFrame];
-            [self.unreadLabel setBackgroundColor:[UIColor redColor]];
-            [self.unreadLabel setTextColor:[UIColor whiteColor]];
-            [self.unreadLabel setFont:[UIFont fontWithName:kSourceSansProRegular size:14]];
-            [self.unreadLabel.layer setBackgroundColor:[UIColor clearColor].CGColor];
-            self.unreadLabel.layer.cornerRadius = self.unreadLabel.frame.size.height/2;
-            self.unreadLabel.layer.rasterizationScale = [UIScreen mainScreen].scale;
-            self.unreadLabel.layer.shouldRasterize = YES;
-            [self.unreadLabel setTextAlignment:NSTextAlignmentCenter];
+            [_unreadLabel setFrame:unreadFrame];
+            [_unreadLabel setBackgroundColor:[UIColor redColor]];
+            [_unreadLabel setTextColor:[UIColor whiteColor]];
+            [_unreadLabel setFont:[UIFont fontWithName:kSourceSansProRegular size:14]];
+            [_unreadLabel.layer setBackgroundColor:[UIColor clearColor].CGColor];
+            _unreadLabel.layer.cornerRadius = _unreadLabel.frame.size.height/2;
+            [_unreadLabel setTextAlignment:NSTextAlignmentCenter];
         }
-        
-       
+        _unreadLabel.layer.rasterizationScale = [UIScreen mainScreen].scale;
+        _unreadLabel.layer.shouldRasterize = YES;
     }
 }
 

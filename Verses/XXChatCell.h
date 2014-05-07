@@ -19,6 +19,7 @@ typedef enum {
 
 @property (strong, nonatomic) UIColor *senderColor;
 @property (strong, nonatomic) UIColor *myColor;
-@property (strong, nonatomic) UIImage *senderImage;
+@property (strong, nonatomic) UIButton *deleteButton;
+@property (strong, nonatomic) UILabel *timestamp;
 -(void)drawCell:(XXComment*)comment withTextColor:(UIColor*)textColor;
 @end

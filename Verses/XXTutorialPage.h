@@ -10,7 +10,7 @@
 @class XXTutorialPage;
 
 @interface XXTutorialPage : UIView
-@property (strong, nonatomic) UIView *containerView;
+@property (strong, nonatomic) UIImageView *screenshotImageView;
 @property (strong, nonatomic) UIImageView *arrowImageView;
 @property (strong, nonatomic) UILabel *title;
 @property (strong, nonatomic) UILabel *explanation;

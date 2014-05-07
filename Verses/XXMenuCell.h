@@ -9,7 +9,8 @@
 #import <UIKit/UIKit.h>
 
 @interface XXMenuCell : UITableViewCell
-@property (weak, nonatomic) IBOutlet UIButton *firstButton;
+@property (weak, nonatomic) IBOutlet UIImageView *menuImage;
+@property (weak, nonatomic) IBOutlet UILabel *menuLabel;
 @property (weak, nonatomic) IBOutlet UILabel *alertLabel;
 - (void)configureAlert:(NSInteger)alertCount;
 @end

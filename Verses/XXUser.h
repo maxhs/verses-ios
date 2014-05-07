@@ -19,6 +19,7 @@
 @property (strong, nonatomic) NSString *location;
 @property (strong, nonatomic) NSString *picMediumUrl;
 @property (strong, nonatomic) NSString *picSmallUrl;
+@property (strong, nonatomic) UIImage *userImage;
 @property (strong, nonatomic) NSString *picThumbUrl;
 @property (strong, nonatomic) NSNumber *storyCount;
 @property (strong, nonatomic) NSNumber *contactCount;
@@ -27,6 +28,7 @@
 @property (strong, nonatomic) NSArray *stories;
 @property BOOL pushBookmarks;
 @property BOOL pushCirclePublish;
+@property BOOL pushCircleComments;
 @property BOOL pushDaily;
 @property BOOL pushPermissions;
 @property BOOL pushInvitations;

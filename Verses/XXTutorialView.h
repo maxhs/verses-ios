@@ -8,8 +8,7 @@
 
 #import <UIKit/UIKit.h>
 
-@interface XXTutorialView : UIView <UIScrollViewDelegate>
-@property (nonatomic, assign) id<UIScrollViewDelegate> delegate;
+@interface XXTutorialView : UIView <UIScrollViewDelegate,UIGestureRecognizerDelegate>
 @property (strong, nonatomic) UIScrollView *scrollView;
 -(void)showInView:(UIView*)view animateDuration:(CGFloat)duration withBackgroundImage:(UIImage*)image;
 @end

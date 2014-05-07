@@ -13,5 +13,6 @@
 @property (weak, nonatomic) IBOutlet UILabel *userLabel;
 @property (weak, nonatomic) IBOutlet UILabel *timestampLabel;
 @property (weak, nonatomic) IBOutlet UILabel *commentLabel;
+
 -(void)configureComment:(XXComment*)comment;
 @end

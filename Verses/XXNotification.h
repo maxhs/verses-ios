@@ -9,6 +9,7 @@
 #import <Foundation/Foundation.h>
 #import "XXUser.h"
 #import "XXContribution.h"
+#import "XXCircle.h"
 #import "XXPhoto.h"
 
 @interface XXNotification : NSObject
@@ -24,6 +25,10 @@
 @property (nonatomic, strong) NSString * createdTime;
 @property (nonatomic, strong) NSNumber * storyId;
 @property (nonatomic, strong) NSString * storyTitle;
+@property (nonatomic, strong) XXCircle *circle;
+@property (nonatomic, strong) NSString *type;
+@property (nonatomic, strong) XXUser *targetUser;
+@property (strong, nonatomic) NSNumber *epochTime;
 
 - (id) initWithDictionary:(NSDictionary*)dictionary;
 

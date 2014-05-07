@@ -2,7 +2,7 @@
 //  User.m
 //  Verses
 //
-//  Created by Max Haines-Stiles on 3/16/14.
+//  Created by Max Haines-Stiles on 5/2/14.
 //  Copyright (c) 2014 Verses. All rights reserved.
 //
 
@@ -11,13 +11,28 @@
 
 @implementation User
 
+@dynamic contactCount;
 @dynamic email;
 @dynamic identifier;
 @dynamic location;
 @dynamic penName;
-@dynamic picThumb;
 @dynamic picSmall;
+@dynamic picThumb;
 @dynamic storyCount;
-@dynamic contactCount;
+@dynamic pushBookmarks;
+@dynamic pushCirclePublish;
+@dynamic pushCircleComments;
+@dynamic pushDaily;
+@dynamic pushPermissions;
+@dynamic pushInvitations;
+@dynamic pushSubscribe;
+@dynamic pushWeekly;
+@dynamic pushFeedbacks;
+@dynamic thumbImage;
+@dynamic picLarge;
+@dynamic firstName;
+@dynamic lastName;
+@dynamic ownedStory;
+@dynamic stories;
 
 @end

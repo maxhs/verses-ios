@@ -33,7 +33,7 @@
 {
     [super viewDidLoad];
     screen = [UIScreen mainScreen].bounds;
-    manager = [AFHTTPRequestOperationManager manager];
+    manager = [(XXAppDelegate*)[UIApplication sharedApplication].delegate manager];
     [self loadContacts];
     if (self.modal){
         cancelButton = [[UIBarButtonItem alloc] initWithImage:[UIImage imageNamed:@"blackX"] style:UIBarButtonItemStylePlain target:self action:@selector(dismissView)];
@@ -100,7 +100,7 @@
     if (loading){
         return 0;
     } else {
-        if (self.modal){
+        if (self.modal && !self.manageContacts){
             return 2;
         } else {
             return 1;
@@ -127,7 +127,7 @@
 
 - (UITableViewCell *)tableView:(UITableView *)tableView cellForRowAtIndexPath:(NSIndexPath *)indexPath
 {
-    if (indexPath.section == 0 && self.modal){
+    if (indexPath.section == 0 && self.modal && !self.manageContacts){
         if (_contacts.count){
             XXContactCell *cell = (XXContactCell *)[tableView dequeueReusableCellWithIdentifier:@"ContactCell"];
             if (cell == nil) {
@@ -137,11 +137,13 @@
             [cell configureCircle:circle];
             [cell.locationLabel setTextColor:textColor];
             [cell.nameLabel setTextColor:textColor];
-            if (_circleCollaborators && [_circleCollaborators containsObject:circle.identifier]){
-                cell.accessoryType = UITableViewCellAccessoryCheckmark;
-            } else {
-                cell.accessoryType = UITableViewCellAccessoryNone;
-            }
+            cell.accessoryType = UITableViewCellAccessoryNone;
+            [_circleCollaborators enumerateObjectsUsingBlock:^(id obj, NSUInteger idx, BOOL *stop) {
+                if ([(NSNumber*)obj isEqualToNumber:circle.identifier]){
+                    cell.accessoryType = UITableViewCellAccessoryCheckmark;
+                    *stop = YES;
+                }
+            }];
             return cell;
         } else {
             static NSString *CellIdentifier = @"NothingCell";
@@ -171,10 +173,16 @@
             [cell configureContact:contact];
             [cell.locationLabel setTextColor:textColor];
             [cell.nameLabel setTextColor:textColor];
-            if (_collaborators && [_collaborators containsObject:contact.identifier]){
-                cell.accessoryType = UITableViewCellAccessoryCheckmark;
+            cell.accessoryType = UITableViewCellAccessoryNone;
+            if (self.manageContacts){
+                cell.selectionStyle = UITableViewCellSelectionStyleNone;
             } else {
-                cell.accessoryType = UITableViewCellAccessoryNone;
+                [_collaborators enumerateObjectsUsingBlock:^(id obj, NSUInteger idx, BOOL *stop) {
+                    if ([(NSNumber*)obj isEqualToNumber:contact.identifier]){
+                        cell.accessoryType = UITableViewCellAccessoryCheckmark;
+                        *stop = YES;
+                    }
+                }];
             }
             return cell;
         } else {
@@ -221,7 +229,7 @@
     } else {
         [backgroundToolbar setBarStyle:UIBarStyleDefault];
         [backgroundToolbar setBackgroundColor:[UIColor colorWithWhite:0 alpha:.025]];
-        [headerLabel setTextColor:[UIColor darkGrayColor]];
+        [headerLabel setTextColor:[UIColor blackColor]];
     }
     
     if (IDIOM == IPAD){
@@ -231,17 +239,21 @@
     }
     
     [headerLabel setTextAlignment:NSTextAlignmentCenter];
-    switch (section) {
-        case 0:
-            [headerLabel setText:@"CIRCLES"];
-            break;
-        case 1:
-            [headerLabel setText:@"CONTACTS"];
-            break;
+    if (!self.manageContacts){
+        switch (section) {
+            case 0:
+                [headerLabel setText:@"CIRCLES"];
+                break;
+            case 1:
+                [headerLabel setText:@"CONTACTS"];
+                break;
 
-        default:
-            [headerLabel setText:@""];
-            break;
+            default:
+                [headerLabel setText:@""];
+                break;
+        }
+    } else {
+        [headerLabel setText:@"CONTACTS"];
     }
     [backgroundToolbar addSubview:headerLabel];
     [headerLabel setFrame:backgroundToolbar.frame];
@@ -333,7 +345,9 @@
 // Override to support conditional editing of the table view.
 - (BOOL)tableView:(UITableView *)tableView canEditRowAtIndexPath:(NSIndexPath *)indexPath
 {
-    if (self.modal){
+    if (self.manageContacts){
+        return YES;
+    } else if (self.modal){
         return NO;
     } else {
         return YES;
@@ -364,31 +378,5 @@
     [[NSNotificationCenter defaultCenter] postNotificationName:@"CircleCollaborators" object:nil userInfo:@{@"circleCollaborators":_circleCollaborators}];
 }
 
-/*
-// Override to support rearranging the table view.
-- (void)tableView:(UITableView *)tableView moveRowAtIndexPath:(NSIndexPath *)fromIndexPath toIndexPath:(NSIndexPath *)toIndexPath
-{
-}
-*/
-
-/*
-// Override to support conditional rearranging of the table view.
-- (BOOL)tableView:(UITableView *)tableView canMoveRowAtIndexPath:(NSIndexPath *)indexPath
-{
-    // Return NO if you do not want the item to be re-orderable.
-    return YES;
-}
-*/
-
-/*
-#pragma mark - Navigation
-
-// In a storyboard-based application, you will often want to do a little preparation before navigation
-- (void)prepareForSegue:(UIStoryboardSegue *)segue sender:(id)sender
-{
-    // Get the new view controller using [segue destinationViewController].
-    // Pass the selected object to the new view controller.
-}
-*/
 
 @end

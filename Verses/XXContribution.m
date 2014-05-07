@@ -13,7 +13,7 @@
 
 - (void)setValue:(id)value forKey:(NSString *)key {
     if ([key isEqualToString:@"id"]) {
-        self.identifier = [value stringValue];
+        self.identifier = value;
     } else if ([key isEqualToString:@"user"]) {
         self.user = [[XXUser alloc] initWithDictionary:value];
     } else if ([key isEqualToString:@"body"]) {
@@ -22,6 +22,8 @@
         self.photos = [Utilities photosFromJSONArray:value];
     } else if ([key isEqualToString:@"allow_feedback"]) {
         self.allowFeedback = [value boolValue];
+    } else if ([key isEqualToString:@"word_count"]) {
+        self.wordCount = value;
     }
 }
 

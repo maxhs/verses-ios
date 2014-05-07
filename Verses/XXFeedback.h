@@ -13,7 +13,7 @@
 #import "XXContribution.h"
 
 @interface XXFeedback : NSObject
-@property (strong, nonatomic) NSString *identifier;
+@property (strong, nonatomic) NSNumber *identifier;
 @property (strong, nonatomic) NSString *snippet;
 @property (strong, nonatomic) XXUser *user;
 @property (strong, nonatomic) XXStory *story;

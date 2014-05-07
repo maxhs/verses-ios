@@ -30,7 +30,6 @@
 }
 
 - (void)configure:(XXFeedback*)feedback textColor:(UIColor*)color{
-    [self.titleLabel setText:feedback.story.title];
     [self.titleLabel setTextColor:color];
     [self.titleLabel setFont:[UIFont fontWithName:kCrimsonRoman size:27]];
     [self.messageLabel setText:[feedback.comments.firstObject body]];

@@ -25,23 +25,26 @@
 #import "XXSearchCell.h"
 #import "XXBookmarksViewController.h"
 #import "XXStoriesViewController.h"
+#import "XXCircleDetailViewController.h"
+#import "XXProfileViewController.h"
 
-@interface XXMenuViewController () <UIAlertViewDelegate,UISearchDisplayDelegate,UISearchBarDelegate> {
+@interface XXMenuViewController () <UIAlertViewDelegate,UISearchDisplayDelegate,UISearchBarDelegate, UIPopoverControllerDelegate> {
     AFHTTPRequestOperationManager *manager;
     BOOL loggedIn;
+    BOOL loading;
+    BOOL canLoadMore;
+    BOOL searching;
     User *savedUser;
     NSMutableArray *notifications;
-    CGRect screen;
     NSIndexPath *indexPathForDeletion;
-    UIStoryboard *storyboard;
     NSMutableArray *_searchResults;
     NSMutableArray *_filteredResults;
     CGRect searchRect;
-    BOOL searching;
     NSDateFormatter *_monthFormatter;
     NSDateFormatter *_timeFormatter;
     UIButton *_loginButton;
     NSInteger _circleAlertCount;
+    NSAttributedString *searchPlaceholder;
 }
 
 @end
@@ -50,33 +53,27 @@
 @synthesize stories = _stories;
 - (void)viewDidLoad
 {
-    if (!manager) {
-        manager = [AFHTTPRequestOperationManager manager];
-        manager.requestSerializer = [AFJSONRequestSerializer serializer];
-    }
+    manager = [(XXAppDelegate*)[UIApplication sharedApplication].delegate manager];
     [[UIApplication sharedApplication] setStatusBarHidden:YES];
     [self.view setBackgroundColor:[UIColor clearColor]];
     _filteredResults = [NSMutableArray array];
     notifications = [NSMutableArray array];
     self.tableView.backgroundColor = [UIColor clearColor];
     self.tableView.separatorColor = [UIColor colorWithWhite:1.0 alpha:0.05];
-    [super viewDidLoad];
-    [[NSNotificationCenter defaultCenter] addObserver:self selector:@selector(loginSuccessful) name:@"LoginSuccessful" object:nil];
-    screen = [UIScreen mainScreen].bounds;
-    if ([[UIDevice currentDevice] userInterfaceIdiom] == UIUserInterfaceIdiomPhone){
-        storyboard = [UIStoryboard storyboardWithName:@"Main_iPhone" bundle:nil];
-    } else {
-        storyboard = [UIStoryboard storyboardWithName:@"Main_iPad" bundle:nil];
-    }
+
     searching = NO;
     [self.searchBar setPlaceholder:@"Search stories"];
-    self.searchBar.searchBarStyle = UISearchBarStyleMinimal;
+    self.tableView.tableHeaderView = self.searchBar;
     _monthFormatter = [[NSDateFormatter alloc] init];
     [_monthFormatter setLocale:[NSLocale currentLocale]];
-    [_monthFormatter setDateFormat:@"MMM, d"];
+    [_monthFormatter setDateFormat:@"MMM d"];
     _timeFormatter = [[NSDateFormatter alloc] init];
     [_timeFormatter setLocale:[NSLocale currentLocale]];
-    [_timeFormatter setDateFormat:@"hh:mm a"];
+    [_timeFormatter setDateFormat:@"h:mm a"];
+    
+    [super viewDidLoad];
+    
+    searchPlaceholder = [[NSAttributedString alloc] initWithString:@"Search stories" attributes:@{ NSForegroundColorAttributeName : [UIColor whiteColor] }];
 }
 
 - (void)viewWillAppear:(BOOL)animated {
@@ -88,20 +85,56 @@
         self.tableView.scrollEnabled = YES;
         [self loadNotifications];
         self.tableView.rowHeight = 56;
+        [self.searchBar setHidden:NO];
     } else {
+        [self.searchBar setHidden:YES];
         savedUser = nil;
-        self.tableView.rowHeight = screen.size.height;
+        self.tableView.rowHeight = screenHeight();
         self.tableView.scrollEnabled = NO;
         loggedIn = NO;
-        [self.tableView reloadData];
     }
+    
+    [self.tableView reloadData];
+    [self.searchBar setImage:[UIImage imageNamed:@"whiteSearchIcon"] forSearchBarIcon:UISearchBarIconSearch state:UIControlStateNormal];
+    
     if ([[NSUserDefaults standardUserDefaults] boolForKey:kDarkBackground]){
-        [self.searchDisplayController.searchResultsTableView setBackgroundColor:[UIColor colorWithWhite:0 alpha:.77]];
-
+        for (id subview in [self.searchBar.subviews.firstObject subviews]){
+            if ([subview isKindOfClass:[UITextField class]]){
+                UITextField *searchTextField = (UITextField*)subview;
+                [searchTextField setKeyboardAppearance:UIKeyboardAppearanceDark];
+                [searchTextField setBackgroundColor:[UIColor clearColor]];
+                searchTextField.layer.borderColor = [UIColor colorWithWhite:1 alpha:.9].CGColor;
+                searchTextField.layer.borderWidth = 1.f;
+                searchTextField.layer.cornerRadius = 14.f;
+                searchTextField.clipsToBounds = YES;
+                searchTextField.attributedPlaceholder = searchPlaceholder;
+                break;
+            }
+        }
     } else {
-        
-        [self.searchDisplayController.searchResultsTableView setBackgroundColor:[UIColor clearColor]];
-        [self.searchDisplayController.searchResultsTableView setBackgroundView:[[UIImageView alloc] initWithImage:[UIImage imageNamed:@"blue"]]];
+        for (id subview in [self.searchBar.subviews.firstObject subviews]){
+            if ([subview isKindOfClass:[UITextField class]]){
+                UITextField *searchTextField = (UITextField*)subview;
+                [searchTextField setKeyboardAppearance:UIKeyboardAppearanceDefault];
+                [searchTextField setBackgroundColor:[UIColor clearColor]];
+                searchTextField.layer.borderColor = [UIColor colorWithWhite:1 alpha:.9].CGColor;
+                searchTextField.layer.borderWidth = 1.f;
+                searchTextField.layer.cornerRadius = 14.f;
+                searchTextField.clipsToBounds = YES;
+                searchTextField.attributedPlaceholder = searchPlaceholder;
+                break;
+            }
+        }
+    }
+    
+    if (UIInterfaceOrientationIsPortrait(self.interfaceOrientation)){
+        [self.tableView setFrame:CGRectMake(0, 0, screenWidth()-screenWidth()*1/8, screenHeight())];
+    } else {
+        if (IDIOM == IPAD){
+            [self.tableView setFrame:CGRectMake(0, 0, screenHeight()*.66, screenHeight())];
+        } else {
+            [self.tableView setFrame:CGRectMake(0, 0, screenHeight()/2, screenHeight())];
+        }
     }
     
     if (self.tableView.alpha < 1.0){
@@ -110,29 +143,67 @@
         }];
     }
     [self loadCirclesAlert];
-    if (!searching)[super viewWillAppear:animated];
+    
+    canLoadMore = YES;
+    [super viewWillAppear:animated];
     [[UIApplication sharedApplication] setApplicationIconBadgeNumber:0];
 }
 
+/*- (void)willAnimateRotationToInterfaceOrientation:(UIInterfaceOrientation)toInterfaceOrientation duration:(NSTimeInterval)duration {
+    if (UIInterfaceOrientationIsPortrait(self.interfaceOrientation)){
+        [self.tableView setFrame:CGRectMake(0, 0, screenWidth()-screenWidth()*1/8, screenHeight())];
+    } else {
+        [self.tableView setFrame:CGRectMake(0, 0, screenHeight()/2, screenHeight())];
+    }
+}*/
+
 - (void)loadCirclesAlert {
-    [manager GET:[NSString stringWithFormat:@"%@/circles/alert",kAPIBaseUrl] parameters:@{@"user_id":[[NSUserDefaults standardUserDefaults] objectForKey:kUserDefaultsId]} success:^(AFHTTPRequestOperation *operation, id responseObject) {
-        //NSLog(@"circle alert response: %@",responseObject);
-        _circleAlertCount = [[responseObject objectForKeyedSubscript:@"count"] integerValue];
-        [self.tableView reloadSections:[NSIndexSet indexSetWithIndex:0] withRowAnimation:UITableViewRowAnimationFade];
-    } failure:^(AFHTTPRequestOperation *operation, NSError *error) {
-        NSLog(@"Failure getting circle alerts: %@",error.description);
-    }];
+    if (loggedIn){
+        [manager GET:[NSString stringWithFormat:@"%@/circles/alert",kAPIBaseUrl] parameters:@{@"user_id":[[NSUserDefaults standardUserDefaults] objectForKey:kUserDefaultsId]} success:^(AFHTTPRequestOperation *operation, id responseObject) {
+            //NSLog(@"circle alert response: %@",responseObject);
+            _circleAlertCount = [[responseObject objectForKeyedSubscript:@"count"] integerValue];
+            if (self.tableView.visibleCells)[self.tableView reloadSections:[NSIndexSet indexSetWithIndex:0] withRowAnimation:UITableViewRowAnimationFade];
+            else [self.tableView reloadData];
+        } failure:^(AFHTTPRequestOperation *operation, NSError *error) {
+            NSLog(@"Failure getting circle alerts: %@",error.description);
+        }];
+    }
 }
 
 - (void)loadNotifications {
-    [manager.requestSerializer setValue:[[NSUserDefaults standardUserDefaults] objectForKey:kUserDefaultsAuthToken] forHTTPHeaderField:@"Authorization"];
-    [manager GET:[NSString stringWithFormat:@"%@/notifications",kAPIBaseUrl] parameters:@{@"user_id":[[NSUserDefaults standardUserDefaults] objectForKey:kUserDefaultsId]} success:^(AFHTTPRequestOperation *operation, id responseObject) {
-        //NSLog(@"success fetching user notifications: %@",responseObject);
-        notifications = [[Utilities notificationsFromJSONArray:[responseObject objectForKey:@"notifications"]] mutableCopy];
-        [self.tableView reloadData];
-    } failure:^(AFHTTPRequestOperation *operation, NSError *error) {
-        NSLog(@"Failure getting user notifications: %@",error.description);
-    }];
+    if (loggedIn){
+        [manager.requestSerializer setValue:[[NSUserDefaults standardUserDefaults] objectForKey:kUserDefaultsAuthToken] forHTTPHeaderField:@"Authorization"];
+        [manager GET:[NSString stringWithFormat:@"%@/notifications",kAPIBaseUrl] parameters:@{@"user_id":[[NSUserDefaults standardUserDefaults] objectForKey:kUserDefaultsId],@"count":@"30"} success:^(AFHTTPRequestOperation *operation, id responseObject) {
+            //NSLog(@"success fetching user notifications: %@",responseObject);
+            notifications = [[Utilities notificationsFromJSONArray:[responseObject objectForKey:@"notifications"]] mutableCopy];
+            [self.tableView reloadData];
+        } failure:^(AFHTTPRequestOperation *operation, NSError *error) {
+            NSLog(@"Failure getting user notifications: %@",error.description);
+        }];
+    }
+}
+
+- (void)loadMoreNotifications {
+    loading = YES;
+    XXNotification *lastNotification = notifications.lastObject;
+    if (lastNotification){
+        [manager GET:[NSString stringWithFormat:@"%@/stories",kAPIBaseUrl] parameters:@{@"before_date":lastNotification.epochTime, @"count":@"30"} success:^(AFHTTPRequestOperation *operation, id responseObject) {
+            //NSLog(@"more notificaitons response: %@",responseObject);
+            NSArray *newNotificaitons = [Utilities notificationsFromJSONArray:[responseObject objectForKey:@"notifications"]];
+            [_stories addObjectsFromArray:newNotificaitons];
+            if (newNotificaitons.count < 30) {
+                canLoadMore = NO;
+                NSLog(@"can't load more, we now have %i notifications", notifications.count);
+            }
+            [ProgressHUD dismiss];
+            loading = NO;
+            [self.tableView reloadData];
+        } failure:^(AFHTTPRequestOperation *operation, NSError *error) {
+            
+        }];
+    } else {
+        [self loadNotifications];
+    }
 }
 
 - (void)didReceiveMemoryWarning
@@ -148,16 +219,8 @@
     if (searching){
         return 1;
     } else if (loggedIn) {
-        [self.searchDisplayController.searchBar setHidden:NO];
-        CGRect rect = self.tableView.frame;
-        rect.origin.y = 44;
-        [self.tableView setFrame:rect];
         return 2;
     } else {
-        [self.searchDisplayController.searchBar setHidden:YES];
-        CGRect rect = self.tableView.frame;
-        rect.origin.y = 0;
-        [self.tableView setFrame:rect];
         return 1;
     }
 }
@@ -217,7 +280,7 @@
             if (cell == nil) {
                 cell = [[[NSBundle mainBundle] loadNibNamed:@"XXMenuCell" owner:nil options:nil] lastObject];
             }
-            [cell.firstButton.titleLabel setFont:[UIFont fontWithName:kSourceSansProSemibold size:18]];
+            
             if (indexPath.row == 3) [cell configureAlert:_circleAlertCount];
             else [cell configureAlert:0];
             UIView *selectedBackgroundView = [[UIView alloc] initWithFrame:cell.frame];
@@ -227,43 +290,43 @@
             switch (indexPath.row) {
                 case 0:
                 {
-                    [cell.firstButton setTitle:@"Browse" forState:UIControlStateNormal];
-                    [cell.firstButton addTarget:self action:@selector(goHome) forControlEvents:UIControlEventTouchUpInside];
+                    [cell.menuImage setImage:[UIImage imageNamed:@"menuBrowse"]];
+                    [cell.menuLabel setText:@"Browse"];
                     return cell;
                 }
                     break;
                 case 1:
                 {
-                    [cell.firstButton setTitle:@"Write" forState:UIControlStateNormal];
-                    [cell.firstButton addTarget:self action:@selector(goWrite) forControlEvents:UIControlEventTouchUpInside];
+                    [cell.menuImage setImage:[UIImage imageNamed:@"menuPencil"]];
+                    [cell.menuLabel setText:@"Write"];
                     return cell;
                 }
                     break;
                 case 2:
                 {
-                    [cell.firstButton setTitle:@"My Stories" forState:UIControlStateNormal];
-                    [cell.firstButton addTarget:self action:@selector(goToMyStories) forControlEvents:UIControlEventTouchUpInside];
+                    [cell.menuImage setImage:[UIImage imageNamed:@"menuMy"]];
+                    [cell.menuLabel setText:@"My Work"];
                     return cell;
                 }
                     break;
                 case 3:
                 {
-                    [cell.firstButton setTitle:@"Writing Circles" forState:UIControlStateNormal];
-                    [cell.firstButton addTarget:self action:@selector(goToCircles) forControlEvents:UIControlEventTouchUpInside];
+                    [cell.menuImage setImage:[UIImage imageNamed:@"menuCircles"]];
+                    [cell.menuLabel setText:@"Writing Circles"];
                     return cell;
                 }
                     break;
                 case 4:
                 {
-                    [cell.firstButton setTitle:@"Bookmarks" forState:UIControlStateNormal];
-                    [cell.firstButton addTarget:self action:@selector(goToBookmarks) forControlEvents:UIControlEventTouchUpInside];
+                    [cell.menuImage setImage:[UIImage imageNamed:@"menuBookmarks"]];
+                    [cell.menuLabel setText:@"Bookmarks"];
                     return cell;
                 }
                     break;
                 case 5:
                 {
-                    [cell.firstButton setTitle:@"Settings" forState:UIControlStateNormal];
-                    [cell.firstButton addTarget:self action:@selector(goToSettings) forControlEvents:UIControlEventTouchUpInside];
+                    [cell.menuImage setImage:[UIImage imageNamed:@"menuSettings"]];
+                    [cell.menuLabel setText:@"Settings"];
                     return cell;
                 }
                     break;
@@ -295,7 +358,7 @@
             [_loginButton setBackgroundColor:[UIColor clearColor]];
             [cell addSubview:_loginButton];
         }
-        [_loginButton setFrame:CGRectMake(0, 0, self.tableView.frame.size.width, self.tableView.frame.size.height)];
+        [_loginButton setFrame:CGRectMake(0, 0, screenWidth()*.975, screenHeight()-self.searchBar.frame.size.height*3)];
         [_loginButton setAutoresizingMask:UIViewAutoresizingFlexibleWidth];
         [_loginButton setAutoresizingMask:UIViewAutoresizingFlexibleHeight];
         [_loginButton setAutoresizingMask:UIViewAutoresizingFlexibleRightMargin];
@@ -317,17 +380,12 @@
     [self performSegueWithIdentifier:@"Login" sender:nil];
 }
 
-- (void)loginSuccessful {
-    NSLog(@"Login successful from Menu");
-    [self.revealViewController setFrontViewPosition:FrontViewPositionLeft animated:YES];
-}
-
 - (void)goHome {
     if ([[(UINavigationController*)self.dynamicsDrawerViewController.paneViewController viewControllers].lastObject isKindOfClass:[XXWelcomeViewController class]]){
         [self.dynamicsDrawerViewController setPaneState:MSDynamicsDrawerPaneStateClosed inDirection:MSDynamicsDrawerDirectionLeft animated:YES allowUserInterruption:YES completion:nil];
     } else {
         [ProgressHUD show:@"Fetching the latest..."];
-        XXWelcomeViewController *vc = [storyboard instantiateViewControllerWithIdentifier:@"Welcome"];
+        XXWelcomeViewController *vc = [[self storyboard] instantiateViewControllerWithIdentifier:@"Welcome"];
         UINavigationController *nav = [[UINavigationController alloc] initWithRootViewController:vc];
         [self.dynamicsDrawerViewController setPaneViewController:nav animated:YES completion:^{
             if (_stories.count){
@@ -343,7 +401,7 @@
         [self.dynamicsDrawerViewController setPaneState:MSDynamicsDrawerPaneStateClosed inDirection:MSDynamicsDrawerDirectionLeft animated:YES allowUserInterruption:YES completion:nil];
     } else {
         [ProgressHUD show:@"Getting settings..."];
-        XXSettingsViewController *vc = [storyboard instantiateViewControllerWithIdentifier:@"Settings"];
+        XXSettingsViewController *vc = [[self storyboard] instantiateViewControllerWithIdentifier:@"Settings"];
         [vc setTitle:@"Settings"];
         UINavigationController *nav = [[UINavigationController alloc] initWithRootViewController:vc];
         [self.dynamicsDrawerViewController setPaneViewController:nav animated:YES completion:^{
@@ -356,7 +414,7 @@
         [self.dynamicsDrawerViewController setPaneState:MSDynamicsDrawerPaneStateClosed inDirection:MSDynamicsDrawerDirectionLeft animated:YES allowUserInterruption:YES completion:nil];
     } else {
         [ProgressHUD show:@"Fetching what's featured..."];
-        XXStoriesViewController *vc = [storyboard instantiateViewControllerWithIdentifier:@"Stories"];
+        XXStoriesViewController *vc = [[self storyboard] instantiateViewControllerWithIdentifier:@"Stories"];
         [vc setFeatured:YES];
         UINavigationController *nav = [[UINavigationController alloc] initWithRootViewController:vc];
         [self.dynamicsDrawerViewController setPaneViewController:nav animated:YES completion:nil];
@@ -367,7 +425,7 @@
         [self.dynamicsDrawerViewController setPaneState:MSDynamicsDrawerPaneStateClosed inDirection:MSDynamicsDrawerDirectionLeft animated:YES allowUserInterruption:YES completion:nil];
     } else {
         [ProgressHUD show:@"Grabbing your stories..."];
-        XXMyStoriesViewController *vc = [storyboard instantiateViewControllerWithIdentifier:@"My Stories"];
+        XXMyStoriesViewController *vc = [[self storyboard] instantiateViewControllerWithIdentifier:@"My Stories"];
         UINavigationController *nav = [[UINavigationController alloc] initWithRootViewController:vc];
         [self.dynamicsDrawerViewController setPaneViewController:nav animated:YES completion:nil];
     }
@@ -382,7 +440,7 @@
         }];
     } else {
         [[UIApplication sharedApplication] setStatusBarHidden:YES withAnimation:UIStatusBarAnimationFade];
-        XXWriteViewController *write = [storyboard instantiateViewControllerWithIdentifier:@"Write"];
+        XXWriteViewController *write = [[self storyboard] instantiateViewControllerWithIdentifier:@"Write"];
         UINavigationController *nav = [[UINavigationController alloc] initWithRootViewController:write];
         [self presentViewController:nav animated:YES completion:^{
             //[self.dynamicsDrawerViewController setPaneState:MSDynamicsDrawerPaneStateClosed];
@@ -402,7 +460,7 @@
         [self.dynamicsDrawerViewController setPaneState:MSDynamicsDrawerPaneStateClosed inDirection:MSDynamicsDrawerDirectionLeft animated:YES allowUserInterruption:YES completion:nil];
     } else {
         [ProgressHUD show:@"Drying off your drafts..."];
-        XXDraftsViewController *vc = [storyboard instantiateViewControllerWithIdentifier:@"Drafts"];
+        XXDraftsViewController *vc = [[self storyboard] instantiateViewControllerWithIdentifier:@"Drafts"];
         UINavigationController *nav = [[UINavigationController alloc] initWithRootViewController:vc];
         [self.dynamicsDrawerViewController setPaneDragRevealEnabled:NO forDirection:MSDynamicsDrawerDirectionRight];
         [self.dynamicsDrawerViewController setPaneViewController:nav animated:YES completion:nil];
@@ -415,7 +473,7 @@
         [self.dynamicsDrawerViewController setPaneState:MSDynamicsDrawerPaneStateClosed inDirection:MSDynamicsDrawerDirectionLeft animated:YES allowUserInterruption:YES completion:nil];
     } else {
         [ProgressHUD show:@"Gathering your circles..."];
-        XXCirclesViewController *vc = [storyboard instantiateViewControllerWithIdentifier:@"Circles"];
+        XXCirclesViewController *vc = [[self storyboard] instantiateViewControllerWithIdentifier:@"Circles"];
         UINavigationController *nav = [[UINavigationController alloc] initWithRootViewController:vc];
         [self.dynamicsDrawerViewController setPaneViewController:nav animated:YES completion:nil];
     }
@@ -425,7 +483,7 @@
         [self.dynamicsDrawerViewController setPaneState:MSDynamicsDrawerPaneStateClosed inDirection:MSDynamicsDrawerDirectionLeft animated:YES allowUserInterruption:YES completion:nil];
     } else {
         [ProgressHUD show:@"Fetching your feedback..."];
-        XXFeedbackViewController *vc = [storyboard instantiateViewControllerWithIdentifier:@"Feedback"];
+        XXFeedbackViewController *vc = [[self storyboard] instantiateViewControllerWithIdentifier:@"Feedback"];
         UINavigationController *nav = [[UINavigationController alloc] initWithRootViewController:vc];
         [self.dynamicsDrawerViewController setPaneViewController:nav animated:YES completion:nil];
     }
@@ -435,7 +493,7 @@
         [self.dynamicsDrawerViewController setPaneState:MSDynamicsDrawerPaneStateClosed inDirection:MSDynamicsDrawerDirectionLeft animated:YES allowUserInterruption:YES completion:nil];
     } else {
         [ProgressHUD show:@"Grabbing your bookmarks..."];
-        XXBookmarksViewController *vc = [storyboard instantiateViewControllerWithIdentifier:@"Bookmarks"];
+        XXBookmarksViewController *vc = [[self storyboard] instantiateViewControllerWithIdentifier:@"Bookmarks"];
         UINavigationController *nav = [[UINavigationController alloc] initWithRootViewController:vc];
         [self.dynamicsDrawerViewController setPaneViewController:nav animated:YES completion:nil];
     }
@@ -463,11 +521,11 @@
             } else if (_searchResults.count) {
                 story = [_searchResults objectAtIndex:indexPath.row];
             }
-            XXStoryViewController *vc = [storyboard instantiateViewControllerWithIdentifier:@"Story"];
+            XXStoryViewController *vc = [[self storyboard] instantiateViewControllerWithIdentifier:@"Story"];
             if (story && story.identifier){
                 [ProgressHUD show:@"Fetching story..."];
                 [vc setStories:_stories];
-                [vc setStoryId:story.identifier];
+                [vc setStory:story];
                 UINavigationController *nav = [[UINavigationController alloc] initWithRootViewController:vc];
                 [self.dynamicsDrawerViewController setPaneViewController:nav animated:YES completion:nil];
             }
@@ -501,13 +559,43 @@
             }
         } else if (indexPath.section == 1){
             XXNotification *notification = [notifications objectAtIndex:indexPath.row];
-            XXStoryViewController *vc = [storyboard instantiateViewControllerWithIdentifier:@"Story"];
+            NSLog(@"notification type: %@",notification.type);
             if (notification.storyId){
+                XXStoryViewController *vc = [[self storyboard] instantiateViewControllerWithIdentifier:@"Story"];
                 [ProgressHUD show:@"Fetching story..."];
                 [vc setStories:_stories];
-                [vc setStoryId:notification.storyId];
+                XXStory *storyObject = [[XXStory alloc] init];
+                storyObject.identifier = notification.storyId;
+                NSLog(@"notification story object: %@",storyObject.identifier);
+                [vc setStory:storyObject];
                 UINavigationController *nav = [[UINavigationController alloc] initWithRootViewController:vc];
                 [self.dynamicsDrawerViewController setPaneViewController:nav animated:YES completion:nil];
+            } else if (notification.circle.identifier){
+                [ProgressHUD show:@"Writing circle..."];
+                XXCircleDetailViewController *vc = [[self storyboard] instantiateViewControllerWithIdentifier:@"CircleDetail"];
+                [vc setCircle:notification.circle];
+                [vc setNeedsNavigation:YES];
+                UINavigationController *nav = [[UINavigationController alloc] initWithRootViewController:vc];
+                [self.dynamicsDrawerViewController setPaneViewController:nav animated:YES completion:nil];
+            } else if ([notification.type isEqualToString:kSubscription]){
+                if (IDIOM == IPAD){
+                    XXProfileViewController* vc = [[self storyboard] instantiateViewControllerWithIdentifier:@"Profile"];
+                    [vc setUser:notification.targetUser];
+                    self.popover = [[UIPopoverController alloc] initWithContentViewController:vc];
+                    self.popover.delegate = self;
+                    
+                    XXNotificationCell *cell = (XXNotificationCell*)[self.tableView cellForRowAtIndexPath:indexPath];
+                    NSLog(@"cell: %@",cell);
+                    CGRect displayFrom = CGRectMake(cell.frame.origin.x, cell.frame.origin.y, screenWidth()/2, screenHeight()/2);
+                    [self.popover presentPopoverFromRect:displayFrom inView:self.view permittedArrowDirections:UIPopoverArrowDirectionLeft animated:YES];
+                } else {
+                    XXProfileViewController* vc = [[self storyboard] instantiateViewControllerWithIdentifier:@"Profile"];
+                    [vc setUser:notification.targetUser];
+                    UINavigationController *nav = [[UINavigationController alloc] initWithRootViewController:vc];
+                    [self presentViewController:nav animated:YES completion:^{
+                        
+                    }];
+                }
             }
         }
     }
@@ -524,7 +612,7 @@
             return 54;
         }
     } else {
-        return screen.size.height;
+        return screenHeight();
     }
 }
 
@@ -641,46 +729,46 @@
 
 - (void)scrollViewDidScroll:(UIScrollView *)scrollView
 {
+    CGFloat actualPosition = scrollView.contentOffset.y;
+    CGFloat contentHeight = scrollView.contentSize.height - (screenHeight()*2);
+    if (actualPosition >= contentHeight && !loading && canLoadMore) {
+        NSLog(@"should be loading more. content height: %f actual position: %f",contentHeight,actualPosition);
+        [self loadMoreNotifications];
+    }
+    
     // Fades out top and bottom cells in table view as they leave the screen
-    NSArray *visibleCells = [self.tableView visibleCells];
+   /* NSArray *visibleCells = [self.tableView visibleCells];
     
     if (visibleCells != nil  &&  [visibleCells count] != 0) {       // Don't do anything for empty table view
-        
-        /* Get top and bottom cells */
+    
         UITableViewCell *topCell = [visibleCells objectAtIndex:0];
         UITableViewCell *bottomCell = [visibleCells lastObject];
-        
-        /* Make sure other cells stay opaque */
+    
         // Avoids issues with skipped method calls during rapid scrolling
         for (UITableViewCell *cell in visibleCells) {
             cell.contentView.alpha = 1.0;
         }
-        
-        /* Set necessary constants */
+    
         NSInteger cellHeight = topCell.frame.size.height - 1;   // -1 To allow for typical separator line height
         NSInteger tableViewTopPosition = self.tableView.frame.origin.y;
         NSInteger tableViewBottomPosition = self.tableView.frame.origin.y + self.tableView.frame.size.height;
-        
-        /* Get content offset to set opacity */
+    
         CGRect topCellPositionInTableView = [self.tableView rectForRowAtIndexPath:[self.tableView indexPathForCell:topCell]];
         CGRect bottomCellPositionInTableView = [self.tableView rectForRowAtIndexPath:[self.tableView indexPathForCell:bottomCell]];
         CGFloat topCellPosition = [self.tableView convertRect:topCellPositionInTableView toView:[self.tableView superview]].origin.y;
         CGFloat bottomCellPosition = ([self.tableView convertRect:bottomCellPositionInTableView toView:[self.tableView superview]].origin.y + cellHeight);
-        
-        /* Set opacity based on amount of cell that is outside of view */
-        /*CGFloat modifier = 2.0;*/     /* Increases the speed of fading (1.0 for fully transparent when the cell is entirely off the screen,
-                                     2.0 for fully transparent when the cell is half off the screen, etc) */
+    
+        //CGFloat modifier = 2.0;
         CGFloat topCellOpacity = (1.0f - ((tableViewTopPosition - topCellPosition) / cellHeight) * 1.0);
-        CGFloat bottomCellOpacity = (1.0f - ((bottomCellPosition - tableViewBottomPosition) / cellHeight*2) * 1.0/*modifier*/);
+        CGFloat bottomCellOpacity = (1.0f - ((bottomCellPosition - tableViewBottomPosition) / cellHeight*2) * modifier);
         
-        /* Set cell opacity */
         if (topCell) {
             topCell.contentView.alpha = topCellOpacity;
         }
         if (bottomCell) {
             bottomCell.contentView.alpha = bottomCellOpacity;
         }
-    }
+    }*/
 }
 
 - (void)filterContentForSearchText:(NSString*)searchText scope:(NSString*)scope {

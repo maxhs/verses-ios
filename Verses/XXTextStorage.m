@@ -37,7 +37,6 @@
 - (void)replaceCharactersInRange:(NSRange)range withString:(NSString *)str
 {
     //NSLog(@"replaceCharactersInRange:%@ withString:%@", NSStringFromRange(range), str);
-    
     [self beginEditing];
     [_storage replaceCharactersInRange:range withString:str];
     [self edited:NSTextStorageEditedCharacters | NSTextStorageEditedAttributes range:range

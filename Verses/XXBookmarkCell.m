@@ -31,7 +31,7 @@
 
 - (void)configureBookmark:(XXBookmark*)bookmark {
     [self.bookmarkLabel setText:bookmark.story.title];
-    [self.bookmarkLabel setFont:[UIFont fontWithName:kSourceSansProSemibold size:21]];
-    [self.createdLabel setFont:[UIFont fontWithName:kCrimsonRoman size:18]];
+    [self.bookmarkLabel setFont:[UIFont fontWithName:kSourceSansProSemibold size:23]];
+    [self.createdLabel setFont:[UIFont fontWithName:kCrimsonRoman size:17]];
 }
 @end

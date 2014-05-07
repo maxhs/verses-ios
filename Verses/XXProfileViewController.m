@@ -16,7 +16,6 @@
     AFHTTPRequestOperationManager *manager;
     UIColor *textColor;
     UIBarButtonItem *backButton;
-    XXAppDelegate *delegate;
     UIImageView *navBarShadowView;
 }
 
@@ -57,7 +56,6 @@
             self.tableView.transform = CGAffineTransformIdentity;
         }];
     }
-    
 }
 
 - (void)back {
@@ -67,10 +65,9 @@
 }
 
 - (void)loadUserDetails {
-    [ProgressHUD show:@"Fetching profile..."];
     [manager GET:[NSString stringWithFormat:@"%@/users/%@",kAPIBaseUrl,_user.identifier] parameters:nil success:^(AFHTTPRequestOperation *operation, id responseObject) {
         _user = [[XXUser alloc] initWithDictionary:[responseObject objectForKey:@"user"]];
-        NSLog(@"success getting user details: %@",responseObject);
+        //NSLog(@"success getting user details: %@",responseObject);
         [self.tableView reloadData];
     } failure:^(AFHTTPRequestOperation *operation, NSError *error) {
         NSLog(@"Failed to get user details: %@",error.description);
@@ -111,12 +108,18 @@
         cell.imageButton.backgroundColor = [UIColor clearColor];
         
         if (_user.location.length){
-            [cell.locationLabel setFont:[UIFont fontWithName:kSourceSansProRegular size:18]];
+            [cell.locationLabel setFont:[UIFont fontWithName:kCrimsonItalic size:18]];
             [cell.locationLabel setTextColor:textColor];
             [cell.locationLabel setText:_user.location];
-            [cell.locationLabel setHidden:NO];
+            
         } else {
-            [cell.locationLabel setHidden:YES];
+            if ([[NSUserDefaults standardUserDefaults] boolForKey:kDarkBackground]){
+                [cell.locationLabel setTextColor:textColor];
+            } else {
+                [cell.locationLabel setTextColor:[UIColor lightGrayColor]];
+            }
+            [cell.locationLabel setText:@"No location listed..."];
+            [cell.locationLabel setFont:[UIFont fontWithName:kCrimsonItalic size:18]];
         }
         
         if (_user.picSmallUrl){
@@ -128,6 +131,7 @@
             }];
         } else {
             [cell.imageButton setTitle:@"NO PHOTO" forState:UIControlStateNormal];
+            [cell.imageButton setTitleColor:[UIColor lightGrayColor] forState:UIControlStateNormal];
             [cell.imageButton.titleLabel setFont:[UIFont fontWithName:kSourceSansProLight size:14]];
             [UIView animateWithDuration:.23 animations:^{
                 [cell.imageButton setAlpha:1.0];
@@ -169,7 +173,18 @@
 - (void)tableView:(UITableView *)tableView didSelectRowAtIndexPath:(NSIndexPath *)indexPath {
     if (indexPath.section == 1){
         [tableView deselectRowAtIndexPath:indexPath animated:YES];
-        [self performSegueWithIdentifier:@"Read" sender:indexPath];
+        if (IDIOM == IPAD){
+            XXStory *story = [_user.stories objectAtIndex:indexPath.row];
+            [ProgressHUD show:@"Fetching story..."];
+            _storyInfoVc.storyViewController.story = story;
+            [_storyInfoVc.storyViewController resetWithStory:story];
+            [_storyInfoVc.popover dismissPopoverAnimated:YES];
+            [[(XXAppDelegate*)[UIApplication sharedApplication].delegate dynamicsDrawerViewController] setPaneState:MSDynamicsDrawerPaneStateClosed animated:YES allowUserInterruption:YES completion:^{
+                
+            }];
+        } else {
+            [self performSegueWithIdentifier:@"Read" sender:indexPath];
+        }
     }
     
     [tableView deselectRowAtIndexPath:indexPath animated:YES];
@@ -179,7 +194,7 @@
     if ([segue.identifier isEqualToString:@"Read"]){
         XXStoryViewController *storyVC = [segue destinationViewController];
         XXStory *story = [_user.stories objectAtIndex:indexPath.row];
-        [storyVC setStoryId:story.identifier];
+        [storyVC setStory:story];
         [ProgressHUD show:@"Fetching story..."];
         if ([[NSUserDefaults standardUserDefaults] boolForKey:kDarkBackground]){
             [UIView animateWithDuration:.23 animations:^{
@@ -240,7 +255,7 @@
 
 - (void)viewWillDisappear:(BOOL)animated {
     [super viewWillDisappear:animated];
-    [[UIApplication sharedApplication] setStatusBarHidden:YES withAnimation:UIStatusBarAnimationFade];
+    //[[UIApplication sharedApplication] setStatusBarHidden:YES withAnimation:UIStatusBarAnimationFade];
 }
 
 @end

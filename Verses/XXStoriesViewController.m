@@ -33,7 +33,7 @@
     } else {
         self.title = @"Trending";
     }
-    if (!manager) manager = [AFHTTPRequestOperationManager manager];
+    manager = [(XXAppDelegate*)[UIApplication sharedApplication].delegate manager];
     screen = [UIScreen mainScreen].bounds;
     self.tableView.rowHeight = screen.size.height/2;
     

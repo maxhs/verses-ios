@@ -13,8 +13,8 @@
 
 @interface XXWritingCell : UITableViewCell
 
-@property (weak, nonatomic) IBOutlet UITextField *titleTextField;
-@property (strong, nonatomic) UITextView *textView;
-- (void)configure:(XXStory*)storyInput withOrientation:(UIInterfaceOrientation)orientation;
+@property (strong, nonatomic) XXTextView *textView;
+@property (nonatomic) CGFloat cellHeight;
+@property (strong, nonatomic) UIColor *textColor;
 
 @end

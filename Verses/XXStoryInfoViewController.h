@@ -9,15 +9,14 @@
 #import <UIKit/UIKit.h>
 #import "XXStory.h"
 #import "XXFeedbackCell.h"
+#import "XXStoryViewController.h"
 #import "MSDynamicsDrawerViewController/MSDynamicsDrawerViewController.h"
 
 @interface XXStoryInfoViewController : UIViewController <UITableViewDataSource, UITableViewDelegate>
 
 @property (weak, nonatomic) IBOutlet UITableView *tableView;
-@property (strong, nonatomic) NSMutableArray *feedbacks;
-@property (strong, nonatomic) XXFeedback *feedback;
 @property (strong, nonatomic) XXStory *story;
 @property (nonatomic, weak) MSDynamicsDrawerViewController *dynamicsDrawerViewController;
-@property (nonatomic, assign) MSPaneViewControllerType paneViewControllerType;
 @property (strong, nonatomic) UIPopoverController *popover;
+@property (strong, nonatomic) XXStoryViewController *storyViewController;
 @end

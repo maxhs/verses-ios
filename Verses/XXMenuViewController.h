@@ -16,5 +16,6 @@
 @property (nonatomic, weak) MSDynamicsDrawerViewController *dynamicsDrawerViewController;
 @property (nonatomic, assign) MSPaneViewControllerType paneViewControllerType;
 @property (strong, nonatomic) NSMutableArray *stories;
+@property (strong, nonatomic) UIPopoverController *popover;
 - (void)transitionToViewController:(MSPaneViewControllerType)paneViewControllerType;
 @end

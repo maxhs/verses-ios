@@ -7,7 +7,6 @@
 //
 
 #import <UIKit/UIKit.h>
-#import "XXStory.h"
 #import "XXWelcomeViewController.h"
 
 @interface XXWriteViewController : UIViewController <UITableViewDataSource, UITableViewDelegate, UITextFieldDelegate, UITextViewDelegate>

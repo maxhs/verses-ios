@@ -18,8 +18,6 @@
 
 
 @interface XXStoryInfoViewController () <UITextViewDelegate, UIAlertViewDelegate, UIPopoverControllerDelegate> {
-    XXStoryViewController *storyVC;
-    UIStoryboard *storyboard;
     AFHTTPRequestOperationManager *manager;
     UIButton *cancelFeedback;
     UIButton *sendFeedback;
@@ -30,56 +28,40 @@
     CGFloat infoHeight;
     CGRect screen;
 }
-
 @end
 
 @implementation XXStoryInfoViewController
 @synthesize story = _story;
-@synthesize feedbacks = _feedbacks;
-@synthesize feedback = _feedback;
 
-- (void)viewDidLoad
-{
-    [super viewDidLoad];
+- (void)viewDidLoad {
+    
     [self.tableView setSeparatorStyle:UITableViewCellSeparatorStyleNone];
-    if ([[UIDevice currentDevice] userInterfaceIdiom] == UIUserInterfaceIdiomPhone){
-        storyboard = [UIStoryboard storyboardWithName:@"Main_iPhone" bundle:nil];
-    } else {
-        storyboard = [UIStoryboard storyboardWithName:@"Main_iPad" bundle:nil];
-    }
-    manager = [AFHTTPRequestOperationManager manager];
+    manager = [(XXAppDelegate*)[UIApplication sharedApplication].delegate manager];
     _formatter= [[NSDateFormatter alloc] init];
     [_formatter setLocale:[NSLocale currentLocale]];
-    [_formatter setDateFormat:@"MMM, d  |  HH:mm a"];
+    [_formatter setDateFormat:@"MMM d , h:mm a"];
     screen = [UIScreen mainScreen].bounds;
+    if ([[NSUserDefaults standardUserDefaults] objectForKey:kUserDefaultsId]) signedIn = YES;
+    else signedIn = NO;
+    [super viewDidLoad];
 }
 
 - (void)viewWillAppear:(BOOL)animated {
-    if ([[NSUserDefaults standardUserDefaults] objectForKey:kUserDefaultsId]) signedIn = YES;
-    else signedIn = NO;
-    UINavigationController *nav = (UINavigationController*)self.dynamicsDrawerViewController.paneViewController;
-    if ([nav.viewControllers.lastObject isKindOfClass:[XXStoryViewController class]]){
-        storyVC = (XXStoryViewController*)nav.viewControllers.lastObject;
-        _story = storyVC.story;
-        [self drawStoryInfo];
-    }
-    
+    [[UIApplication sharedApplication] setStatusBarHidden:YES withAnimation:UIStatusBarAnimationFade];
+    _storyViewController = (XXStoryViewController*)[(UINavigationController*)self.dynamicsDrawerViewController.paneViewController viewControllers].lastObject;
+    _story = _storyViewController.story;
     if (self.tableView.alpha != 1.0){
         [UIView animateWithDuration:.23 animations:^{
             [self.tableView setAlpha:1.0];
             self.tableView.transform = CGAffineTransformIdentity;
-            if (storyVC) {
-                storyVC.view.transform = CGAffineTransformIdentity;
-                [storyVC.view setAlpha:1.0];
+            if (_storyViewController) {
+                _storyViewController.view.transform = CGAffineTransformIdentity;
+                [_storyViewController.view setAlpha:1.0];
             }
         }];
     }
-    
-    [super viewWillAppear:animated];
-}
-
-- (void)drawStoryInfo {
     [self.tableView reloadData];
+    [super viewWillAppear:animated];
 }
 
 - (void)didReceiveMemoryWarning
@@ -92,8 +74,8 @@
 
 - (NSInteger)numberOfSectionsInTableView:(UITableView *)tableView
 {
-    if (signedIn && _feedback){
-        return 4;
+    if (signedIn && _story.feedbacks){
+        return 3 + _story.feedbacks.count;
     } else {
         return 3;
     }
@@ -120,7 +102,11 @@
             break;
         case 3:
         {
-            return _feedback.comments.count;
+            int count = 0;
+            for (XXFeedback *feedback in _story.feedbacks){
+                count += feedback.comments.count;
+            }
+            return count;
         }
             break;
             
@@ -140,30 +126,18 @@
         [cell configureForStory:_story];
         infoHeight = cell.cellHeight;
         [cell.lastUpdatedAt setText:[NSString stringWithFormat:@"Last updated: %@",[_formatter stringFromDate:_story.updatedDate]]];
-        [cell.bookmarkButton removeTarget:nil action:NULL forControlEvents:UIControlEventAllEvents];
-        if (signedIn){
-            if (_story.bookmarked){
-                [cell.bookmarkButton addTarget:self action:@selector(destroyBookmark:) forControlEvents:UIControlEventTouchUpInside];
-            } else {
-                [cell.bookmarkButton addTarget:self action:@selector(createBookmark:) forControlEvents:UIControlEventTouchUpInside];
-            }
-        } else {
-            [cell.bookmarkButton addTarget:self action:@selector(confirmLoginPrompt) forControlEvents:UIControlEventTouchUpInside];
-        }
-        
-        if ([_story.owner.identifier isEqualToNumber:[[NSUserDefaults standardUserDefaults] objectForKey:kUserDefaultsId]]){
-            [cell.editButton addTarget:self action:@selector(edit) forControlEvents:UIControlEventTouchUpInside];
-        }
+
         return cell;
     } else if (indexPath.section == 1){
         XXUser *author = [_story.collaborators objectAtIndex:indexPath.row];
-
         XXAuthorInfoCell *cell = (XXAuthorInfoCell *)[tableView dequeueReusableCellWithIdentifier:@"AuthorInfoCell"];
         if (cell == nil) {
             cell = [[[NSBundle mainBundle] loadNibNamed:@"XXAuthorInfoCell" owner:nil options:nil] lastObject];
         }
         [cell configureForAuthor:author];
-        cell.selectionStyle = UITableViewCellSelectionStyleNone;
+        UIView *selectedView = [[UIView alloc] initWithFrame:cell.frame];
+        [selectedView setBackgroundColor:[UIColor colorWithWhite:1 alpha:.5]];
+        cell.selectedBackgroundView = selectedView;
         
         return cell;
         
@@ -196,14 +170,15 @@
         if (cell == nil) {
             cell = [[[NSBundle mainBundle] loadNibNamed:@"XXCommentCell" owner:nil options:nil] lastObject];
         }
-        XXComment *comment = [_feedback.comments objectAtIndex:indexPath.row];
+        XXFeedback *feedback = [_story.feedbacks objectAtIndex:indexPath.section-(self.tableView.numberOfSections-1)];
+        XXComment *comment = [feedback.comments objectAtIndex:indexPath.row];
         [cell configureComment:comment];
-        [cell.timestampLabel setText:[_formatter stringFromDate:comment.createdDate]];
+        [cell.timestampLabel setText:[NSString stringWithFormat:@"- %@  |  %@",comment.user.penName,[_formatter stringFromDate:comment.createdDate]]];
         return cell;
     }
 }
 
-- (void) sendFeedback {
+- (void)sendFeedback {
     if (feedbackTextView.text.length && ![feedbackTextView.text isEqualToString:kFeedbackPlaceholder]){
         [self doneEditing];
         [ProgressHUD show:@"Sending Feedback..."];
@@ -213,8 +188,22 @@
         [parameters setObject:feedbackTextView.text forKey:@"feedback"];
         [manager POST:[NSString stringWithFormat:@"%@/feedbacks",kAPIBaseUrl] parameters:parameters success:^(AFHTTPRequestOperation *operation, id responseObject) {
             NSLog(@"Success sending feedback: %@",responseObject);
-            _feedback = [[XXFeedback alloc] initWithDictionary:[responseObject objectForKey:@"feedback"]];
-            [self.tableView reloadData];
+            XXFeedback *newFeedback = [[XXFeedback alloc] initWithDictionary:[responseObject objectForKey:@"feedback"]];
+            [_story.feedbacks enumerateObjectsUsingBlock:^(XXFeedback *feedback, NSUInteger idx, BOOL *stop) {
+                if ([feedback.identifier isEqualToNumber:newFeedback.identifier]){
+                    [_story.feedbacks replaceObjectAtIndex:idx withObject:newFeedback];
+                    NSLog(@"successfully replaced feedback: %d",feedback.comments.count);
+                    //[self.tableView reloadSections:[NSIndexSet indexSetWithIndexesInRange:NSMakeRange(3, 1)] withRowAnimation:UITableViewRowAnimationFade];
+                    [self.tableView reloadData];
+                    //*stop = YES;
+                } else {
+                    NSLog(@"new feedback");
+                    _story.feedbacks = [NSMutableArray array];
+                    [_story.feedbacks addObject:newFeedback];
+                    //*stop = YES;
+                }
+            }];
+    
             [ProgressHUD dismiss];
             
         } failure:^(AFHTTPRequestOperation *operation, NSError *error) {
@@ -225,7 +214,7 @@
 }
 
 - (void)createBookmark:(UIButton*)button {
-    if (_story && _story.identifier){
+    if (_story && _story.identifier && signedIn){
         [button setImage:[UIImage imageNamed:@"bookmarked"] forState:UIControlStateNormal];
         [manager POST:[NSString stringWithFormat:@"%@/bookmarks",kAPIBaseUrl] parameters:@{@"user_id":[[NSUserDefaults standardUserDefaults] objectForKey:kUserDefaultsId],@"story_id":_story.identifier} success:^(AFHTTPRequestOperation *operation, id responseObject) {
             NSLog(@"Success creating a bookmark: %@",responseObject);
@@ -238,7 +227,7 @@
 }
 
 - (void)destroyBookmark:(UIButton*)button {
-    if (_story && _story.identifier){
+    if (_story && _story.identifier && signedIn){
         [button setImage:[UIImage imageNamed:@"bookmark"] forState:UIControlStateNormal];
         [manager DELETE:[NSString stringWithFormat:@"%@/bookmarks/%@",kAPIBaseUrl,_story.identifier] parameters:@{@"story_id":_story.identifier,@"user_id":[[NSUserDefaults standardUserDefaults] objectForKey:kUserDefaultsId]} success:^(AFHTTPRequestOperation *operation, id responseObject) {
             NSLog(@"success deleting a bookmark: %@",responseObject);
@@ -304,7 +293,7 @@
 }
 
 - (void)edit {
-    XXWriteViewController *vc = [storyboard instantiateViewControllerWithIdentifier:@"Write"];
+    XXWriteViewController *vc = [[self storyboard] instantiateViewControllerWithIdentifier:@"Write"];
     [vc setStory:_story];
     UINavigationController *nav = [[UINavigationController alloc] initWithRootViewController:vc];
     if ([[NSUserDefaults standardUserDefaults] boolForKey:kDarkBackground]){
@@ -323,9 +312,9 @@
     if (indexPath.section == 0){
         return 80;
     } else if (indexPath.section == 1){
-        return 55;
+        return 50;
     } else if (indexPath.section == 2) {
-        return 102;
+        return 110;
     } else {
         return 70;
     }
@@ -334,16 +323,21 @@
     if (!signedIn && indexPath.section == 2){
         [self confirmLoginPrompt];
     } else if (indexPath.section == 1){
+        //[ProgressHUD show:@"Fetching profile..."];
         if (IDIOM == IPAD){
             XXUser *user = [_story.collaborators objectAtIndex:indexPath.row];
             XXProfileViewController* vc = [[self storyboard] instantiateViewControllerWithIdentifier:@"Profile"];
+            
+            [vc setStoryInfoVc:self];
             [vc setUser:user];
             self.popover = [[UIPopoverController alloc] initWithContentViewController:vc];
             self.popover.delegate = self;
             
             XXAuthorInfoCell *cell = (XXAuthorInfoCell*)[self.tableView cellForRowAtIndexPath:indexPath];
-            CGRect displayFrom = CGRectMake(cell.frame.origin.x, 0/*cell.center.y + self.tableView.frame.origin.y - self.tableView.contentOffset.y*/, screen.size.width/2, screen.size.height/2);
-            [self.popover presentPopoverFromRect:displayFrom inView:self.view permittedArrowDirections:UIPopoverArrowDirectionLeft animated:YES];
+            CGRect displayFrom = CGRectMake(cell.frame.origin.x, cell.frame.origin.y, screen.size.width/3, screen.size.height/3);
+            [self.popover presentPopoverFromRect:displayFrom inView:self.view permittedArrowDirections:UIPopoverArrowDirectionAny animated:YES];
+            NSLog(@"profile vc: %@",vc);
+
         } else {
             XXUser *user = [_story.collaborators objectAtIndex:indexPath.row];
             XXProfileViewController* vc = [[self storyboard] instantiateViewControllerWithIdentifier:@"Profile"];
@@ -357,9 +351,9 @@
             [UIView animateWithDuration:.23 animations:^{
                 [self.tableView setAlpha:0.0];
                 self.tableView.transform = CGAffineTransformMakeScale(.8, .8);
-                if (storyVC) {
-                    storyVC.view.transform = CGAffineTransformMakeScale(.8, .8);
-                    [storyVC.view setAlpha:0.0];
+                if (_storyViewController) {
+                    _storyViewController.view.transform = CGAffineTransformMakeScale(.8, .8);
+                    [_storyViewController.view setAlpha:0.0];
                 }
             }];
         }
@@ -373,20 +367,21 @@
 
 - (void)alertView:(UIAlertView *)alertView clickedButtonAtIndex:(NSInteger)buttonIndex {
     if ([[alertView buttonTitleAtIndex:buttonIndex] isEqualToString:@"Login"]){
-        XXLoginController *login = [storyboard instantiateViewControllerWithIdentifier:@"Login"];
+        XXLoginController *login = [[self storyboard] instantiateViewControllerWithIdentifier:@"Login"];
         [self presentViewController:login animated:YES completion:^{
             
         }];
     } else if ([[alertView buttonTitleAtIndex:buttonIndex] isEqualToString:@"Delete"]){
-        [self deleteComment];
+       [self deleteComment];
     }
 }
 
 - (void)deleteComment {
-    XXComment *comment = [_feedback.comments objectAtIndex:indexPathForDeletion.row];
+    XXFeedback *feedback = [_story.feedbacks objectAtIndex:indexPathForDeletion.section-(self.tableView.numberOfSections-1)];
+    XXComment *comment = [feedback.comments objectAtIndex:indexPathForDeletion.row];
     [manager DELETE:[NSString stringWithFormat:@"%@/comments/%@",kAPIBaseUrl,comment.identifier] parameters:nil success:^(AFHTTPRequestOperation *operation, id responseObject) {
-        NSLog(@"Success deleting comment: %@",responseObject);
-        [_feedback.comments removeObject:comment];
+        //NSLog(@"Success deleting comment: %@",responseObject);
+        [feedback.comments removeObject:comment];
         [self.tableView deleteRowsAtIndexPaths:@[indexPathForDeletion] withRowAnimation:UITableViewRowAnimationFade];
     } failure:^(AFHTTPRequestOperation *operation, NSError *error) {
         NSLog(@"Error deleting comment: %@",error.description);
@@ -394,15 +389,11 @@
     }];
 }
 
-- (void)viewDidDisappear:(BOOL)animated {
-    _story = nil;
-    [self.tableView reloadData];
-}
-
 - (BOOL)tableView:(UITableView *)tableView canEditRowAtIndexPath:(NSIndexPath *)indexPath {
     if (indexPath.section == 3){
-        XXComment *comment = [_feedback.comments objectAtIndex:indexPath.row];
-        if ([[[NSUserDefaults standardUserDefaults] objectForKey:kUserDefaultsId] isEqualToNumber:comment.user.identifier]){
+        XXFeedback *feedback = [_story.feedbacks objectAtIndex:indexPath.section-(self.tableView.numberOfSections-1)];
+        XXComment *comment = [feedback.comments objectAtIndex:indexPath.row];
+        if (signedIn && comment.user.identifier && [[[NSUserDefaults standardUserDefaults] objectForKey:kUserDefaultsId] isEqualToNumber:comment.user.identifier]){
             return YES;
         }
     }

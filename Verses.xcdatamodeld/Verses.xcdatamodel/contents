@@ -1,16 +1,44 @@
 <?xml version="1.0" encoding="UTF-8" standalone="yes"?>
-<model userDefinedModelVersionIdentifier="" type="com.apple.IDECoreDataModeler.DataModel" documentVersion="1.0" lastSavedToolsVersion="5064" systemVersion="13C64" minimumToolsVersion="Xcode 4.3" macOSVersion="Automatic" iOSVersion="Automatic">
+<model userDefinedModelVersionIdentifier="" type="com.apple.IDECoreDataModeler.DataModel" documentVersion="1.0" lastSavedToolsVersion="5064" systemVersion="13C1021" minimumToolsVersion="Xcode 4.3" macOSVersion="Automatic" iOSVersion="Automatic">
+    <entity name="Footnote" representedClassName="Footnote" syncable="YES">
+        <attribute name="body" optional="YES" attributeType="String" syncable="YES"/>
+        <attribute name="identifier" optional="YES" attributeType="Integer 64" defaultValueString="0" syncable="YES"/>
+        <relationship name="story" optional="YES" maxCount="1" deletionRule="Nullify" destinationEntity="Story" inverseName="footnotes" inverseEntity="Story" syncable="YES"/>
+    </entity>
+    <entity name="Story" syncable="YES">
+        <attribute name="identifier" optional="YES" attributeType="Integer 64" defaultValueString="0" syncable="YES"/>
+        <relationship name="footnotes" optional="YES" toMany="YES" deletionRule="Nullify" ordered="YES" destinationEntity="Footnote" inverseName="story" inverseEntity="Footnote" syncable="YES"/>
+        <relationship name="owner" optional="YES" maxCount="1" deletionRule="Nullify" destinationEntity="User" inverseName="ownedStory" inverseEntity="User" syncable="YES"/>
+        <relationship name="users" optional="YES" toMany="YES" deletionRule="Nullify" destinationEntity="User" inverseName="stories" inverseEntity="User" syncable="YES"/>
+    </entity>
     <entity name="User" representedClassName="User" syncable="YES">
         <attribute name="contactCount" optional="YES" attributeType="Integer 16" defaultValueString="0" syncable="YES"/>
         <attribute name="email" optional="YES" attributeType="String" syncable="YES"/>
-        <attribute name="identifier" optional="YES" attributeType="Integer 16" defaultValueString="0" syncable="YES"/>
+        <attribute name="firstName" optional="YES" attributeType="String" syncable="YES"/>
+        <attribute name="identifier" optional="YES" attributeType="Integer 64" defaultValueString="0" syncable="YES"/>
+        <attribute name="lastName" optional="YES" attributeType="String" syncable="YES"/>
         <attribute name="location" optional="YES" attributeType="String" syncable="YES"/>
         <attribute name="penName" optional="YES" attributeType="String" syncable="YES"/>
+        <attribute name="picLarge" optional="YES" attributeType="String" syncable="YES"/>
         <attribute name="picSmall" optional="YES" attributeType="String" syncable="YES"/>
         <attribute name="picThumb" optional="YES" attributeType="String" syncable="YES"/>
+        <attribute name="pushBookmarks" optional="YES" attributeType="Boolean" syncable="YES"/>
+        <attribute name="pushCircleComments" optional="YES" attributeType="Boolean" syncable="YES"/>
+        <attribute name="pushCirclePublish" optional="YES" attributeType="Boolean" syncable="YES"/>
+        <attribute name="pushDaily" optional="YES" attributeType="Boolean" syncable="YES"/>
+        <attribute name="pushFeedbacks" optional="YES" attributeType="Boolean" syncable="YES"/>
+        <attribute name="pushInvitations" optional="YES" attributeType="Boolean" syncable="YES"/>
+        <attribute name="pushPermissions" optional="YES" attributeType="Boolean" syncable="YES"/>
+        <attribute name="pushSubscribe" optional="YES" attributeType="Boolean" syncable="YES"/>
+        <attribute name="pushWeekly" optional="YES" attributeType="Boolean" syncable="YES"/>
         <attribute name="storyCount" optional="YES" attributeType="Integer 16" defaultValueString="0" syncable="YES"/>
+        <attribute name="thumbImage" optional="YES" attributeType="Transformable" syncable="YES"/>
+        <relationship name="ownedStory" optional="YES" maxCount="1" deletionRule="Nullify" destinationEntity="Story" inverseName="owner" inverseEntity="Story" syncable="YES"/>
+        <relationship name="stories" optional="YES" toMany="YES" deletionRule="Nullify" ordered="YES" destinationEntity="Story" inverseName="users" inverseEntity="Story" syncable="YES"/>
     </entity>
     <elements>
-        <element name="User" positionX="0" positionY="0" width="128" height="165"/>
+        <element name="User" positionX="0" positionY="0" width="128" height="388"/>
+        <element name="Story" positionX="18" positionY="81" width="128" height="103"/>
+        <element name="Footnote" positionX="36" positionY="90" width="128" height="88"/>
     </elements>
 </model>

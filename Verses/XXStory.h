@@ -12,7 +12,7 @@
 
 @interface XXStory : NSObject
 
-@property (strong, nonatomic) NSArray *contributions;
+@property (strong, nonatomic) NSMutableArray *contributions;
 @property (strong, nonatomic) NSArray *photos;
 @property (strong, nonatomic) NSArray *userPhotos;
 @property (strong, nonatomic) NSMutableArray *tags;
@@ -31,6 +31,7 @@
 @property (strong, nonatomic) NSString *authors;
 @property (strong, nonatomic) NSMutableArray *collaborators;
 @property (strong, nonatomic) NSMutableArray *circles;
+@property (strong, nonatomic) NSMutableArray *feedbacks;
 @property BOOL privateStory;
 @property BOOL saved;
 @property BOOL mystery;

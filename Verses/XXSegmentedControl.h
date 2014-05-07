@@ -1,5 +1,5 @@
 //
-//  XXCircleControl.h
+//  XXSegmentedControl.h
 //  Verses
 //
 //  Created by Max Haines-Stiles on 4/18/14.
@@ -8,19 +8,21 @@
 
 #import <UIKit/UIKit.h>
 
-@protocol XXCircleControlDelegate;
+@protocol XXSegmentedControlDelegate;
 
-@interface XXCircleControl : UIControl <UIBarPositioning, UIAppearance>
+@interface XXSegmentedControl : UIControl <UIBarPositioning, UIAppearance>
 
-@property (nonatomic, weak) id <XXCircleControlDelegate> delegate;
+@property (nonatomic, weak) id <XXSegmentedControlDelegate> delegate;
 @property (nonatomic, retain) NSArray *items;
+@property (nonatomic, strong) UIToolbar *background;
 @property (nonatomic) NSInteger selectedSegmentIndex;
 @property (nonatomic, readonly) NSUInteger numberOfSegments;
-@property (nonatomic, readonly) CGFloat height; //defaultts to 56px
-@property (nonatomic, readwrite) CGFloat selectionIndicatorHeight UI_APPEARANCE_SELECTOR; //default is 2px
-@property (nonatomic, readwrite) CGFloat animationDuration UI_APPEARANCE_SELECTOR; //default is .17 sec
+@property (nonatomic, readonly) CGFloat height;
+@property (nonatomic, readwrite) CGFloat selectionIndicatorHeight UI_APPEARANCE_SELECTOR;
+@property (nonatomic, readwrite) CGFloat animationDuration UI_APPEARANCE_SELECTOR;
 @property (nonatomic, retain) UIFont *font UI_APPEARANCE_SELECTOR;
 @property (nonatomic, readwrite) UIColor *hairlineColor UI_APPEARANCE_SELECTOR;
+@property (nonatomic) BOOL showsNavigationArrow;
 @property (nonatomic) BOOL showsCount;
 @property (nonatomic) BOOL autoAdjustSelectionIndicatorWidth;
 
@@ -30,7 +32,6 @@
 
 - (void)darkBackground;
 - (void)lightBackground;
- //@param segment An index number identifying a segment in the control. It must be a number between 0 and the number of segments (numberOfSegments) minus 1; values exceeding this upper range are pinned to it.
 - (void)setCount:(NSNumber *)count forSegmentAtIndex:(NSUInteger)segment;
 
  //@param enabled YES to enable the specified segment or NO to disable the segment. By default, segments are enabled.
@@ -42,6 +43,6 @@
 
 @end
 
-@protocol XXCircleControlDelegate <UIBarPositioningDelegate>
+@protocol XXSegmentedControlDelegate <UIBarPositioningDelegate>
 
 @end

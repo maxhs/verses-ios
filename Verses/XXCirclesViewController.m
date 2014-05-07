@@ -38,7 +38,7 @@
     [_formatter setDateStyle:NSDateFormatterMediumStyle];
     [_formatter setTimeStyle:NSDateFormatterShortStyle];
     screen = [UIScreen mainScreen].bounds;
-    manager = [AFHTTPRequestOperationManager manager];
+    manager = [(XXAppDelegate*)[UIApplication sharedApplication].delegate manager];
     navBarShadowView = [Utilities findNavShadow:self.navigationController.navigationBar];
     [self.tableView setBackgroundColor:[UIColor clearColor]];
 }
@@ -99,6 +99,7 @@
     XXCollaborateViewController *vc = [[self storyboard] instantiateViewControllerWithIdentifier:@"Collaborate"];
     [vc setTitle:@"Collaborators"];
     [vc setModal:YES];
+    [vc setManageContacts:YES];
     if ([[NSUserDefaults standardUserDefaults] boolForKey:kDarkBackground]){
         [UIView animateWithDuration:.23 animations:^{
             self.navigationController.view.transform = CGAffineTransformMakeScale(.77, .77);
@@ -114,7 +115,7 @@
 
 - (void)loadCircles {
     [manager GET:[NSString stringWithFormat:@"%@/circles",kAPIBaseUrl] parameters:@{@"user_id":[[NSUserDefaults standardUserDefaults] objectForKey:kUserDefaultsId]} success:^(AFHTTPRequestOperation *operation, id responseObject) {
-        NSLog(@"success fetching circles: %@",responseObject);
+        //NSLog(@"success fetching circles: %@",responseObject);
         _circles = [[Utilities circlesFromJSONArray:[responseObject objectForKey:@"circles"]] mutableCopy];
         if (_circles.count == 0){
             [ProgressHUD dismiss];
@@ -157,7 +158,7 @@
 }
 
 -(CGFloat)tableView:(UITableView *)tableView heightForRowAtIndexPath:(NSIndexPath *)indexPath {
-    return 100;
+    return 70;
 }
 
 -(void)tableView:(UITableView *)tableView willDisplayCell:(UITableViewCell *)cell forRowAtIndexPath:(NSIndexPath *)indexPath

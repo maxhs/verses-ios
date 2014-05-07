@@ -28,36 +28,39 @@
 }
 
 - (void)configureCell:(XXNotification*)notification {
-    self.userPhotoButton.imageView.layer.cornerRadius = self.userPhotoButton.frame.size.width/2;
-    [self.userPhotoButton.imageView setBackgroundColor:[UIColor clearColor]];
-    self.userPhotoButton.layer.shouldRasterize = YES;
-    self.userPhotoButton.layer.rasterizationScale = [UIScreen mainScreen].scale;
-    [self.messageLabel setText:notification.message];
-    [self.messageLabel setFont:[UIFont fontWithName:kSourceSansProRegular size:14]];
+
+    [_messageLabel setText:notification.message];
+    [_messageLabel setFont:[UIFont fontWithName:kSourceSansProRegular size:14]];
     XXPhoto *firstPhoto = [notification.photos firstObject];
     if (firstPhoto){
-        CGRect rect = self.messageLabel.frame;
-        CGFloat initialX = self.messageLabel.frame.origin.x;
+        CGRect rect = _messageLabel.frame;
+        CGFloat initialX = _messageLabel.frame.origin.x;
         rect.origin.x = 43;
         rect.size.width -= initialX - 43;
-        [self.messageLabel setFrame:rect];
-        [self.userPhotoButton setImageWithURL:firstPhoto.imageSmallUrl forState:UIControlStateNormal completed:^(UIImage *image, NSError *error, SDImageCacheType cacheType) {
-            [self.userPhotoButton setImage:image forState:UIControlStateNormal];
+        [_messageLabel setFrame:rect];
+        [_userPhotoButton setImageWithURL:firstPhoto.imageSmallUrl forState:UIControlStateNormal completed:^(UIImage *image, NSError *error, SDImageCacheType cacheType) {
+            [_userPhotoButton setImage:image forState:UIControlStateNormal];
             [UIView animateWithDuration:.25 animations:^{
-                [self.userPhotoButton setAlpha:1.0];
+                [_userPhotoButton setAlpha:1.0];
             }];
         }];
     }
-    [self.monthLabel setText:notification.createdMonth];
-    [self.monthLabel setFont:[UIFont fontWithName:kSourceSansProRegular size:12]];
+    [_monthLabel setText:notification.createdMonth];
+    [_monthLabel setFont:[UIFont fontWithName:kSourceSansProRegular size:12]];
     
-    [self.timeLabel setText:notification.createdTime];
-    [self.timeLabel setFont:[UIFont fontWithName:kSourceSansProRegular size:12]];
+    [_timeLabel setText:notification.createdTime];
+    [_timeLabel setFont:[UIFont fontWithName:kSourceSansProRegular size:12]];
     [UIView animateWithDuration:.25 animations:^{
-        [self.messageLabel setAlpha:1.0];
-        [self.timeLabel setAlpha:1.0];
-        [self.monthLabel setAlpha:1.0];
+        [_messageLabel setAlpha:1.0];
+        [_timeLabel setAlpha:1.0];
+        [_monthLabel setAlpha:1.0];
     }];
+    _messageLabel.layer.rasterizationScale = [UIScreen mainScreen].scale;
+    _messageLabel.layer.shouldRasterize = YES;
+    _timeLabel.layer.rasterizationScale = [UIScreen mainScreen].scale;
+    _timeLabel.layer.shouldRasterize = YES;
+    _monthLabel.layer.rasterizationScale = [UIScreen mainScreen].scale;
+    _monthLabel.layer.shouldRasterize = YES;
 }
 
 @end

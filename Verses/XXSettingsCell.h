@@ -11,5 +11,7 @@
 
 @interface XXSettingsCell : UITableViewCell
 @property (weak, nonatomic) IBOutlet UITextField *textField;
+@property (weak, nonatomic) IBOutlet UIButton *imageButton;
+@property (weak, nonatomic) IBOutlet UILabel *imageLabel;
 -(void)configure:(XXUser*)user;
 @end

@@ -6,7 +6,6 @@
 //  Copyright (c) 2014 Verses. All rights reserved.
 //
 
-#import <UIKit/UIKit.h>
 #import "XXFeedbackViewController.h"
 #import "XXFeedback.h"
 

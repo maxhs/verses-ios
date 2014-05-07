@@ -1,0 +1,41 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE plist PUBLIC "-//Apple//DTD PLIST 1.0//EN" "http://www.apple.com/DTDs/PropertyList-1.0.dtd">
+<plist version="1.0">
+<dict>
+	<key>IDESourceControlProjectFavoriteDictionaryKey</key>
+	<false/>
+	<key>IDESourceControlProjectIdentifier</key>
+	<string>8966174C-D6FC-4668-8429-9B99AFA125D3</string>
+	<key>IDESourceControlProjectName</key>
+	<string>Verses</string>
+	<key>IDESourceControlProjectOriginsDictionary</key>
+	<dict>
+		<key>1997818A-EAB4-4BE1-B223-B382E123FCEC</key>
+		<string>https://github.com/maxhs/verses-ios.git</string>
+	</dict>
+	<key>IDESourceControlProjectPath</key>
+	<string>Verses.xcworkspace</string>
+	<key>IDESourceControlProjectRelativeInstallPathDictionary</key>
+	<dict>
+		<key>1997818A-EAB4-4BE1-B223-B382E123FCEC</key>
+		<string>..</string>
+	</dict>
+	<key>IDESourceControlProjectURL</key>
+	<string>https://github.com/maxhs/verses-ios.git</string>
+	<key>IDESourceControlProjectVersion</key>
+	<integer>110</integer>
+	<key>IDESourceControlProjectWCCIdentifier</key>
+	<string>1997818A-EAB4-4BE1-B223-B382E123FCEC</string>
+	<key>IDESourceControlProjectWCConfigurations</key>
+	<array>
+		<dict>
+			<key>IDESourceControlRepositoryExtensionIdentifierKey</key>
+			<string>public.vcs.git</string>
+			<key>IDESourceControlWCCIdentifierKey</key>
+			<string>1997818A-EAB4-4BE1-B223-B382E123FCEC</string>
+			<key>IDESourceControlWCCName</key>
+			<string>Verses-iOS</string>
+		</dict>
+	</array>
+</dict>
+</plist>

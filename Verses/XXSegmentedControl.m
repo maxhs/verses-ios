@@ -1,14 +1,14 @@
 //
-//  XXCircleControl.m
+//  XXSegmentedControl.m
 //  Verses
 //
 //  Created by Max Haines-Stiles on 4/18/14.
 //  Copyright (c) 2014 Verses. All rights reserved.
 //
 
-#import "XXCircleControl.h"
+#import "XXSegmentedControl.h"
 
-@interface XXCircleControl ()
+@interface XXSegmentedControl ()
 @property (nonatomic) BOOL initializing;
 @property (nonatomic, strong) UIView *selectionIndicator;
 @property (nonatomic, strong) UIView *hairline;
@@ -16,7 +16,7 @@
 @property (nonatomic, getter = isTransitioning) BOOL transitioning;
 @end
 
-@implementation XXCircleControl
+@implementation XXSegmentedControl
 @synthesize items = _items;
 @synthesize selectedSegmentIndex = _selectedSegmentIndex;
 @synthesize barPosition = _barPosition;
@@ -27,9 +27,12 @@
     
     if (self = [super init]) {
         self.clipsToBounds = NO;
+        _background = [[UIToolbar alloc] initWithFrame:self.frame];
+        [_background setTranslucent:YES];
+        [self addSubview:_background];
         _selectedSegmentIndex = -1;
         _font = [UIFont fontWithName:kSourceSansProRegular size:15.0];
-        _height = 56.0;
+        _height = 48.0;
         _selectionIndicatorHeight = 2.0;
         _animationDuration = 0.17;
         _showsCount = YES;
@@ -190,12 +193,22 @@
     UIColor *color = [self.colors objectForKey:key];
     
     if (!color) {
-        switch (state) {
-            case UIControlStateNormal:              return [UIColor darkGrayColor];
-            case UIControlStateHighlighted:         return self.tintColor;
-            case UIControlStateDisabled:            return [UIColor lightGrayColor];
-            case UIControlStateSelected:            return self.tintColor;
-            default:                                return self.tintColor;
+        if ([[NSUserDefaults standardUserDefaults] boolForKey:kDarkBackground]){
+            switch (state) {
+                case UIControlStateNormal:              return [UIColor whiteColor];
+                case UIControlStateHighlighted:         return self.tintColor;
+                case UIControlStateDisabled:            return [UIColor lightGrayColor];
+                case UIControlStateSelected:            return self.tintColor;
+                default:                                return self.tintColor;
+            }
+        } else {
+            switch (state) {
+                case UIControlStateNormal:              return [UIColor blackColor];
+                case UIControlStateHighlighted:         return self.tintColor;
+                case UIControlStateDisabled:            return [UIColor lightGrayColor];
+                case UIControlStateSelected:            return self.tintColor;
+                default:                                return self.tintColor;
+            }
         }
     }
     
@@ -269,7 +282,7 @@
     }
 }
 
-- (void)setDelegate:(id<XXCircleControlDelegate>)delegate
+- (void)setDelegate:(id<XXSegmentedControlDelegate>)delegate
 {
     _delegate = delegate;
     _barPosition = [delegate positionForBar:self];
@@ -380,17 +393,19 @@
 }
 
 - (void)darkBackground {
+    [_background setBarStyle:UIBarStyleBlackTranslucent];
     [self setTitleColor:[UIColor whiteColor] forState:UIControlStateNormal];
     [self setTitleColor:self.tintColor forState:UIControlStateHighlighted];
-    [self setTitleColor:[UIColor whiteColor] forState:UIControlStateDisabled];
+    [self setTitleColor:[UIColor lightGrayColor] forState:UIControlStateDisabled];
     [self setTitleColor:self.tintColor forState:UIControlStateSelected];
     [self configureButtonForSegment:0];
 }
 
 - (void)lightBackground {
-    [self setTitleColor:[self titleColorForState:UIControlStateNormal] forState:UIControlStateNormal];
+    [_background setBarStyle:UIBarStyleDefault];
+    [self setTitleColor:[UIColor blackColor] forState:UIControlStateNormal];
     [self setTitleColor:[self titleColorForState:UIControlStateHighlighted] forState:UIControlStateHighlighted];
-    [self setTitleColor:[self titleColorForState:UIControlStateDisabled] forState:UIControlStateDisabled];
+    [self setTitleColor:[UIColor lightGrayColor] forState:UIControlStateDisabled];
     [self setTitleColor:[self titleColorForState:UIControlStateSelected] forState:UIControlStateSelected];
     [self configureButtonForSegment:0];
 }
@@ -429,8 +444,7 @@
             if (state == UIControlStateNormal) {
                 [attributedString addAttribute:NSForegroundColorAttributeName value:color range:NSMakeRange(0, count.length)];
                 [attributedString addAttribute:NSForegroundColorAttributeName value:[color colorWithAlphaComponent:0.5] range:NSMakeRange(count.length, title.length+1)];
-            }
-            else {
+            } else {
                 [attributedString addAttribute:NSForegroundColorAttributeName value:color range:NSMakeRange(0, string.length)];
                 
                 if (state == UIControlStateSelected) {
@@ -569,7 +583,7 @@
     if (_showsCount) {
         [self setCount:[self countForSegmentAtIndex:segment] forSegmentAtIndex:segment];
     } else {
-        if (segment == 0){
+        if (segment == 0 && _showsNavigationArrow){
             if ([[NSUserDefaults standardUserDefaults] boolForKey:kDarkBackground]){
                 [self setTitle:[_items objectAtIndex:segment] withImage:[UIImage imageNamed:@"whiteBack"] forSegmentAtIndex:segment];
             } else {

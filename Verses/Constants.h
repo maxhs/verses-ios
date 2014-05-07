@@ -15,8 +15,7 @@ static inline CGFloat width(UIView *view) { return view.frame.size.width; }
 static inline CGFloat height(UIView *view) { return view.frame.size.height; }
 
 #define OUTLINE ((int) 22)
-#define MAX_BUBBLE_WIDTH ((int) 260)
-
+#define kSeparatorTag 21
 #define kAPIBaseUrl @"https://www.writeverses.com/api/v1"
 
 #define MIXPANEL_TOKEN @"8184fc9baafab30a5c51cceefb90e2d0"
@@ -28,11 +27,13 @@ static inline CGFloat height(UIView *view) { return view.frame.size.height; }
 #define kFeedbackEmail @"feedback@writeverses.com"
 #define kDarkBackground @"darkBackground"
 #define kStoryPaging @"storyPaging"
-#define kNoPreview @"noPreview"
 #define kCommentBody @"CommentBody"
 #define kCommentSize @"CommentSize"
 #define kMessageRuntimeSentBy @"runtimeSentBy"
 #define kMessageSize @"MessageSize"
+
+#define kExistingUser @"existingUser"
+#define kExistingUserWrite @"existingUserWrite"
 
 #define kUserDefaultsId @"userId"
 #define kUserDefaultsPassword @"password"
@@ -49,8 +50,16 @@ static inline CGFloat height(UIView *view) { return view.frame.size.height; }
 
 //String constants
 #define kStoryPlaceholder @"Start your story..."
+#define kSlowRevealPlaceholder @"Add to this slow reveal story..."
 #define kTitlePlaceholder @"Title your story..."
-#define kFeedbackPlaceholder @"Tap to leave feedback..."
+#define kFeedbackPlaceholder @"Leave feedback..."
+
+//Notification constants
+#define kCircleComment @"circle_comment"
+#define kCirclePublish @"circle_publish"
+#define kCircle @"circle"
+#define kSlowPublish @"revealed"
+#define kSubscription @"subscription"
 
 //Font constants
 #define kGotham @"GothamBook"

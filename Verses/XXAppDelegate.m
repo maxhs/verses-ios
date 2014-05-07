@@ -23,7 +23,6 @@
 @interface XXAppDelegate () {
     XXWelcomeViewController *welcome;
     NSTimer *timer;
-    AFHTTPRequestOperationManager *manager;
 }
 
 @property (nonatomic, strong) UIImageView *windowBackground;
@@ -33,10 +32,12 @@
 
 @implementation XXAppDelegate
 
+@synthesize manager = _manager;
+
 - (BOOL)application:(UIApplication *)application didFinishLaunchingWithOptions:(NSDictionary *)launchOptions
 {
     [[UIApplication sharedApplication] registerForRemoteNotificationTypes:(UIRemoteNotificationTypeAlert | UIRemoteNotificationTypeBadge | UIRemoteNotificationTypeSound)];
-    [MagicalRecord setupCoreDataStack];
+    [MagicalRecord setupCoreDataStackWithAutoMigratingSqliteStoreNamed:@"Verses"];
     [Crashlytics startWithAPIKey:@"5c452a0455dfb4bdd2ee98051181f661006365a4"];
     [Mixpanel sharedInstanceWithToken:MIXPANEL_TOKEN];
     
@@ -60,7 +61,7 @@
     }
     
     MSDynamicsDrawerScaleStyler *menuScale = [MSDynamicsDrawerScaleStyler styler];
-    [menuScale setClosedScale:.35];
+    [menuScale setClosedScale:.5];
     // left drawer
     [self.dynamicsDrawerViewController addStylersFromArray:@[menuScale, [MSDynamicsDrawerFadeStyler styler], [MSDynamicsDrawerParallaxStyler styler]] forDirection:MSDynamicsDrawerDirectionLeft];
     self.menuViewController = [self.window.rootViewController.storyboard instantiateViewControllerWithIdentifier:@"Menu"];
@@ -76,11 +77,12 @@
     timer = [NSTimer scheduledTimerWithTimeInterval:5 target:self selector:@selector(transition) userInfo:nil repeats:NO];
     welcome = [self.window.rootViewController.storyboard instantiateViewControllerWithIdentifier:@"Welcome"];
     
-    manager = [AFHTTPRequestOperationManager manager];
-    [manager GET:[NSString stringWithFormat:@"%@/stories",kAPIBaseUrl] parameters:@{@"count":@"5"} success:^(AFHTTPRequestOperation *operation, id responseObject) {
+    _manager = [[AFHTTPRequestOperationManager manager] initWithBaseURL:[NSURL URLWithString:kAPIBaseUrl]];
+    _manager.requestSerializer = [AFJSONRequestSerializer serializer];
+    
+    [_manager GET:[NSString stringWithFormat:@"%@/stories",kAPIBaseUrl] parameters:@{@"count":@"5"} success:^(AFHTTPRequestOperation *operation, id responseObject) {
         [timer invalidate];
         timer = nil;
-        NSLog(@"story count from app delegate %i",[[responseObject objectForKey:@"stories"] count]);
         NSArray *stories = [Utilities storiesFromJSONArray:[responseObject objectForKey:@"stories"]];
         [welcome setStories:[stories mutableCopy]];
         [self.menuViewController setStories:[stories mutableCopy]];
@@ -95,15 +97,22 @@
     [self.window makeKeyAndVisible];
     [self.window addSubview:self.defaultBackground];
     [self.window sendSubviewToBack:self.defaultBackground];
-    
+    [self.window addSubview:self.windowBackground];
+    [self.window sendSubviewToBack:self.windowBackground];
+    [self customizeAppearance];
     return YES;
 }
 
 - (void)transition {
-    UIImageView *screenshot = [[UIImageView alloc] initWithFrame:self.window.frame];
+    UIImageView *screenshot;
+    if (UIInterfaceOrientationIsPortrait([[UIApplication sharedApplication] statusBarOrientation])){
+        screenshot = [[UIImageView alloc] initWithFrame:self.window.frame];
+    } else {
+        screenshot = [[UIImageView alloc] initWithFrame:CGRectMake(0, 0, screenHeight(), screenWidth())];
+    }
     [screenshot setImage:[self blurredSnapshot]];
     [self.window addSubview:screenshot];
-    [self.defaultBackground removeFromSuperview];
+    [_defaultBackground removeFromSuperview];
     UINavigationController *nav = [[UINavigationController alloc] initWithRootViewController:welcome];
     [self.dynamicsDrawerViewController setPaneViewController:nav];
     [UIView animateWithDuration:0.5 animations:^{
@@ -111,9 +120,6 @@
     } completion:^(BOOL finished) {
         [screenshot removeFromSuperview];
     }];
-    [self.window addSubview:self.windowBackground];
-    [self.window sendSubviewToBack:self.windowBackground];
-    [self customizeAppearance];
 }
 
 #pragma mark - XXAppDelegate
@@ -121,8 +127,19 @@
 - (UIImageView *)defaultBackground
 {
     if (!_defaultBackground) {
-        if (UI_USER_INTERFACE_IDIOM() == UIUserInterfaceIdiomPad){
-            _defaultBackground = [[UIImageView alloc] initWithImage:[UIImage imageNamed:@"iPadDefault"]];
+        if (IDIOM == IPAD){
+            if (UIInterfaceOrientationIsPortrait([[UIApplication sharedApplication] statusBarOrientation])){
+                _defaultBackground = [[UIImageView alloc] initWithImage:[UIImage imageNamed:@"iPadDefault"]];
+            } else {
+                _defaultBackground = [[UIImageView alloc] initWithImage:[UIImage imageNamed:@"iPadDefault-Landscape"]];
+                [_defaultBackground setBounds:CGRectMake(0, 0, screenHeight(), screenWidth())];
+                CGAffineTransform translation = CGAffineTransformMakeTranslation(-128, 128);
+                CGAffineTransform rotate = CGAffineTransformMakeRotation(RADIANS(90));
+                _defaultBackground.transform = CGAffineTransformConcat(rotate, translation);
+                
+                NSLog(@"default background: %@",_defaultBackground);
+            }
+            
         } else if ([UIScreen mainScreen].bounds.size.height >= 568) {
             _defaultBackground = [[UIImageView alloc] initWithImage:[UIImage imageNamed:@"Default-568h"]];
         } else {

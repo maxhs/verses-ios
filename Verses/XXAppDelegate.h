@@ -6,10 +6,10 @@
 //  Copyright (c) 2013 Verses. All rights reserved.
 //
 
-#import <UIKit/UIKit.h>
 #import <MSDynamicsDrawerViewController/MSDynamicsDrawerViewController.h>
 #import "XXStoryInfoViewController.h"
 #import "XXMenuViewController.h"
+#import <AFNetworking/AFHTTPRequestOperationManager.h>
 
 @interface XXAppDelegate : UIResponder <UIApplicationDelegate>
 
@@ -17,6 +17,7 @@
 @property (strong, nonatomic) MSDynamicsDrawerViewController *dynamicsDrawerViewController;
 @property (strong, nonatomic) XXStoryInfoViewController *storyInfoViewController;
 @property (strong, nonatomic) XXMenuViewController *menuViewController;
+@property (strong, nonatomic) AFHTTPRequestOperationManager *manager;
 @property BOOL offline;
 - (void)switchBackgroundTheme;
 @end

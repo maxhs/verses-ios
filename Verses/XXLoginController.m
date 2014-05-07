@@ -18,6 +18,9 @@
     AFHTTPRequestOperationManager *manager;
     XXAppDelegate *delegate;
     CGRect screen;
+    CGRect originalLoginButtonFrame;
+    CGRect originalSignupButtonFrame;
+    CGFloat keyboardHeight;
     BOOL smallFormFactor;
 }
 
@@ -40,11 +43,11 @@
     screen = [UIScreen mainScreen].bounds;
 	manager = [AFHTTPRequestOperationManager manager];
     delegate = (XXAppDelegate *)[[UIApplication sharedApplication] delegate];
-    [self.emailTextField setFont:[UIFont fontWithName:kSourceSansProLight size:19]];
-    [self.passwordTextField setFont:[UIFont fontWithName:kSourceSansProLight size:19]];
-    [self.registerEmailTextField setFont:[UIFont fontWithName:kSourceSansProLight size:19]];
-    [self.registerPasswordTextField setFont:[UIFont fontWithName:kSourceSansProLight size:19]];
-    [self.registerPenNameTextField setFont:[UIFont fontWithName:kSourceSansProLight size:19]];
+    [self.emailTextField setFont:[UIFont fontWithName:kSourceSansProLight size:18]];
+    [self.passwordTextField setFont:[UIFont fontWithName:kSourceSansProLight size:18]];
+    [self.registerEmailTextField setFont:[UIFont fontWithName:kSourceSansProLight size:18]];
+    [self.registerPasswordTextField setFont:[UIFont fontWithName:kSourceSansProLight size:18]];
+    [self.registerPenNameTextField setFont:[UIFont fontWithName:kSourceSansProLight size:18]];
     
     [self textFieldTreatment:self.emailTextField];
     [self textFieldTreatment:self.passwordTextField];
@@ -54,30 +57,29 @@
     
     [self.loginButton.titleLabel setFont:[UIFont fontWithName:kSourceSansProLight size:21]];
     [self.loginButton setTitleColor:[UIColor blackColor] forState:UIControlStateNormal];
-    self.loginButton.layer.borderColor = [UIColor darkGrayColor].CGColor;
-    self.loginButton.layer.borderWidth = .5f;
-    self.loginButton.layer.cornerRadius = 14.f;
-    self.loginButton.layer.backgroundColor = [UIColor clearColor].CGColor;
-    [self.loginButton setBackgroundColor:[UIColor whiteColor]];
-    self.loginButton.layer.rasterizationScale = [UIScreen mainScreen].scale;
-    self.loginButton.layer.shouldRasterize = YES;
+    originalLoginButtonFrame = self.loginButton.frame;
     
     [self.signupButton.titleLabel setFont:[UIFont fontWithName:kSourceSansProLight size:21]];
     [self.signupButton setTitleColor:[UIColor blackColor] forState:UIControlStateNormal];
-    self.signupButton.layer.borderColor = [UIColor darkGrayColor].CGColor;
-    self.signupButton.layer.borderWidth = .5f;
-    self.signupButton.layer.cornerRadius = 14.f;
-    self.signupButton.layer.backgroundColor = [UIColor clearColor].CGColor;
-    [self.signupButton setBackgroundColor:[UIColor whiteColor]];
-    self.signupButton.layer.rasterizationScale = [UIScreen mainScreen].scale;
-    self.signupButton.layer.shouldRasterize = YES;
+    originalSignupButtonFrame = self.signupButton.frame;
     
-    if (screen.size.height != 568 && IDIOM != IPAD){
+    if (IDIOM == IPAD){
+        self.signupButton.layer.cornerRadius = 14.f;
+        self.signupButton.layer.backgroundColor = [UIColor clearColor].CGColor;
+        [self.signupButton setBackgroundColor:[UIColor whiteColor]];
+        self.signupButton.layer.rasterizationScale = [UIScreen mainScreen].scale;
+        self.signupButton.layer.shouldRasterize = YES;
+        self.loginButton.layer.cornerRadius = 14.f;
+        self.loginButton.layer.backgroundColor = [UIColor clearColor].CGColor;
+        [self.loginButton setBackgroundColor:[UIColor whiteColor]];
+        self.loginButton.layer.rasterizationScale = [UIScreen mainScreen].scale;
+        self.loginButton.layer.shouldRasterize = YES;
+    } else if (screen.size.height != 568){
         CGRect loginFrame = self.loginContainer.frame;
-        loginFrame.origin.y -= 40;
+        loginFrame.origin.y -= 90;
         [self.loginContainer setFrame:loginFrame];
         CGRect signupFrame = self.signupContainer.frame;
-        signupFrame.origin.y -= 40;
+        signupFrame.origin.y -= 80;
         [self.signupContainer setFrame:signupFrame];
         smallFormFactor = YES;
     }
@@ -85,16 +87,26 @@
     self.loginContainer.transform = CGAffineTransformMakeTranslation(2*screen.size.width, 0);
     self.signupContainer.transform = CGAffineTransformMakeTranslation(-2*screen.size.width, 0);
     
-    [self.forgotPasswordButton.titleLabel setFont:[UIFont fontWithName:kSourceSansProLight size:18]];
+    [self.forgotPasswordButton.titleLabel setFont:[UIFont fontWithName:kSourceSansProLight size:16]];
     UITapGestureRecognizer *tapGesture = [[UITapGestureRecognizer alloc] initWithTarget:self action:@selector(doneEditing)];
     tapGesture.numberOfTapsRequired = 1;
     [self.view addGestureRecognizer:tapGesture];
+    
+    keyboardHeight = 216;
+    [[NSNotificationCenter defaultCenter] addObserver:self selector:@selector(keyboardWillShow:) name:UIKeyboardWillShowNotification object:nil];
+}
+
+- (void)keyboardWillShow:(NSNotification *)notification {
+    NSDictionary *info = [notification userInfo];
+    NSValue *kbFrame = [info objectForKey:UIKeyboardFrameEndUserInfoKey];
+    CGRect keyboardFrame = [kbFrame CGRectValue];
+    keyboardHeight = keyboardFrame.size.height;
 }
 
 - (void)textFieldTreatment:(UITextField*)textField {
-    textField.layer.borderColor = [UIColor colorWithWhite:0 alpha:.2].CGColor;
-    textField.layer.borderWidth = .5f;
-    textField.layer.cornerRadius = 2.f;
+    textField.layer.borderColor = [UIColor colorWithWhite:0 alpha:.23].CGColor;
+    textField.layer.borderWidth = .25f;
+    textField.layer.cornerRadius = 4.f;
     UIView *paddingView = [[UIView alloc] initWithFrame:CGRectMake(0, 0, 7, 20)];
     textField.leftView = paddingView;
     textField.leftViewMode = UITextFieldViewModeAlways;
@@ -106,14 +118,20 @@
     [UIView animateWithDuration:.75 delay:0 usingSpringWithDamping:.5 initialSpringVelocity:.0001 options:UIViewAnimationOptionCurveEaseInOut animations:^{
         self.loginContainer.transform = CGAffineTransformIdentity;
         self.signupContainer.transform = CGAffineTransformMakeTranslation(-2*screen.size.width, 0);
-        self.signupButton.transform = CGAffineTransformMakeTranslation(-screen.size.width, 0);
-        
+        [self.signupButton setFrame:CGRectMake(-screenWidth(), self.signupButton.frame.origin.y, self.signupButton.frame.size.width, self.signupButton.frame.size.height)];
+        self.forgotPasswordButton.transform = CGAffineTransformMakeTranslation(0, screenHeight()/2);
         if (IDIOM == IPAD){
-            self.loginButton.transform = CGAffineTransformMakeTranslation(-60, -57);
+            [self.loginButton setFrame:CGRectMake(screenWidth()/2-self.emailTextField.frame.size.width/2, screenHeight()/2-33, self.emailTextField.frame.size.width, 66)];
         } else {
-            self.logo.transform = CGAffineTransformMakeTranslation(0, -(self.emailTextField.frame.origin.y+87));
-            self.loginButton.transform = CGAffineTransformMakeTranslation(-(screen.size.width/2-self.loginButton.frame.size.width), -38);
+            if (smallFormFactor) {
+                self.logo.transform = CGAffineTransformMakeTranslation(0, -(self.emailTextField.frame.origin.y+100));
+            } else {
+                self.logo.transform = CGAffineTransformMakeTranslation(0, -(self.emailTextField.frame.origin.y+70));
+            }
+            
+            [self.loginButton setFrame:CGRectMake(0, screenHeight()-keyboardHeight-66, screenWidth(), 66)];
         }
+        [self.cancelButton setAlpha:0.0];
     } completion:^(BOOL finished) {
         [self.signupButton removeTarget:nil
                                  action:NULL
@@ -124,7 +142,7 @@
                        forControlEvents:UIControlEventAllEvents];
         [self.loginButton addTarget:self action:@selector(login) forControlEvents:UIControlEventTouchUpInside];
         [self.emailTextField becomeFirstResponder];
-        
+        [self.cancelButton setHidden:YES];
     }];
 }
 
@@ -134,15 +152,21 @@
     [UIView animateWithDuration:.75 delay:0 usingSpringWithDamping:.5 initialSpringVelocity:.0001 options:UIViewAnimationOptionCurveEaseInOut animations:^{
         self.signupContainer.transform = CGAffineTransformIdentity;
         self.loginContainer.transform = CGAffineTransformMakeTranslation(2*screen.size.width, 0);
-        self.loginButton.transform = CGAffineTransformMakeTranslation(screen.size.width, 0);
+        [self.loginButton setFrame:CGRectMake(screenWidth(), self.loginButton.frame.origin.y, self.loginButton.frame.size.width, self.loginButton.frame.size.height)];
+        self.forgotPasswordButton.transform = CGAffineTransformMakeTranslation(0, screenHeight()/2);
         
         if (IDIOM == IPAD){
-            self.signupButton.transform = CGAffineTransformMakeTranslation(60, -48);
+            [self.signupButton setFrame:CGRectMake(screenWidth()/2-self.registerEmailTextField.frame.size.width/2, screenHeight()/2-33, self.registerEmailTextField.frame.size.width, 66)];
         } else {
-            self.logo.transform = CGAffineTransformMakeTranslation(0, -(self.registerEmailTextField.frame.origin.y+83));
-             self.signupButton.transform = CGAffineTransformMakeTranslation(screen.size.width/2-self.signupButton.frame.size.width, -30);
+            if (smallFormFactor){
+                self.logo.transform = CGAffineTransformMakeTranslation(0, -(self.registerEmailTextField.frame.origin.y+70));
+            } else {
+                self.logo.transform = CGAffineTransformMakeTranslation(0, -(self.registerEmailTextField.frame.origin.y+60));
+            }
+            
+            [self.signupButton setFrame:CGRectMake(0, screenHeight()-keyboardHeight-66, screenWidth(), 66)];
         }
-        
+        [self.cancelButton setAlpha:0.0];
         [self.loginButton setTitleColor:[UIColor blackColor] forState:UIControlStateNormal];
     } completion:^(BOOL finished) {
         [self.loginButton removeTarget:nil
@@ -154,30 +178,22 @@
                       forControlEvents:UIControlEventAllEvents];
         [self.signupButton addTarget:self action:@selector(signup) forControlEvents:UIControlEventTouchUpInside];
         [self.registerPenNameTextField becomeFirstResponder];
-        
+        [self.cancelButton setHidden:YES];
     }];
 }
 
 - (void)willRotateToInterfaceOrientation:(UIInterfaceOrientation)toInterfaceOrientation duration:(NSTimeInterval)duration {
-    /*if (toInterfaceOrientation == UIInterfaceOrientationPortrait){
-        [UIView animateWithDuration:duration delay:0 usingSpringWithDamping:.5 initialSpringVelocity:.0001 options:UIViewAnimationOptionCurveEaseInOut animations:^{
-            self.logo.transform = CGAffineTransformIdentity;
-        } completion:^(BOOL finished) {
-            
-        }];
+    if (toInterfaceOrientation == UIInterfaceOrientationPortrait){
+
     } else {
-        [UIView animateWithDuration:duration delay:0 usingSpringWithDamping:.5 initialSpringVelocity:.0001 options:UIViewAnimationOptionCurveEaseInOut animations:^{
-            self.logo.transform = CGAffineTransformMakeTranslation(120, 0);
-        } completion:^(BOOL finished) {
-            
-        }];
-    }*/
+
+    }
 }
 
 - (void)resetButtons {
     [UIView animateWithDuration:.75 delay:0 usingSpringWithDamping:.5 initialSpringVelocity:.0001 options:UIViewAnimationOptionCurveEaseInOut animations:^{
-        self.loginButton.transform = CGAffineTransformIdentity;
-        self.signupButton.transform = CGAffineTransformIdentity;
+        [self.loginButton setFrame:originalLoginButtonFrame];
+        [self.signupButton setFrame:originalSignupButtonFrame];
         self.loginContainer.transform = CGAffineTransformMakeTranslation(2*screen.size.width, 0);
         self.signupContainer.transform = CGAffineTransformMakeTranslation(-2*screen.size.width, 0);
         [self.signupButton setBackgroundColor:[UIColor whiteColor]];
@@ -187,6 +203,7 @@
         self.loginButton.layer.borderColor = [UIColor blackColor].CGColor;
         [self.loginButton setTitleColor:[UIColor blackColor] forState:UIControlStateNormal];
         self.logo.transform = CGAffineTransformIdentity;
+        self.forgotPasswordButton.transform = CGAffineTransformIdentity;
     } completion:^(BOOL finished) {
         [self.signupButton removeTarget:nil
                                  action:NULL
@@ -250,14 +267,12 @@
 }
 
 - (void)textFieldDidBeginEditing:(UITextField *)textField {
-    textField.layer.borderColor = [UIColor colorWithWhite:0 alpha:.35].CGColor;
+    textField.layer.borderColor = [UIColor colorWithWhite:0 alpha:.5].CGColor;
     [textField setTintColor:kElectricBlue];
-    //[textField setFont:[UIFont fontWithName:kSourceSansProRegular size:18]];
 }
 
 - (void)textFieldDidEndEditing:(UITextField *)textField {
-    textField.layer.borderColor = [UIColor colorWithWhite:0 alpha:.2].CGColor;
-    //[textField setFont:[UIFont fontWithName:kSourceSansProRegular size:18]];
+    textField.layer.borderColor = [UIColor colorWithWhite:0 alpha:.23].CGColor;
 }
 
 - (BOOL)textField:(UITextField *)textField shouldChangeCharactersInRange:(NSRange)range replacementString:(NSString *)string {
@@ -285,6 +300,12 @@
 }
 
 - (void)doneEditing {
+    [self.cancelButton setHidden:NO];
+    [UIView animateWithDuration:.23 animations:^{
+        [self.cancelButton setAlpha:1.0];
+    }completion:^(BOOL finished) {
+        
+    }];
     [self resetButtons];
     [self.view endEditing:YES];
 }

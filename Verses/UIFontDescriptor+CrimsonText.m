@@ -57,12 +57,12 @@ NSString *const CrimsonTextBlockquoteStyle = @"CrimsonTextBlockquoteStyle";
                                                      UIContentSizeCategorySmall: @(12),
                                                      UIContentSizeCategoryExtraSmall: @(11),},
                           
-                          UIFontTextStyleFootnote: @{UIContentSizeCategoryExtraExtraExtraLarge: @(17),
-                                                     UIContentSizeCategoryExtraExtraLarge: @(15),
-                                                     UIContentSizeCategoryExtraLarge: @(12),
-                                                     UIContentSizeCategoryLarge: @(12),
-                                                     UIContentSizeCategoryMedium: @(11),
-                                                     UIContentSizeCategorySmall: @(10),
+                          UIFontTextStyleFootnote: @{UIContentSizeCategoryExtraExtraExtraLarge: @(23),
+                                                     UIContentSizeCategoryExtraExtraLarge: @(21),
+                                                     UIContentSizeCategoryExtraLarge: @(19),
+                                                     UIContentSizeCategoryLarge: @(17),
+                                                     UIContentSizeCategoryMedium: @(14),
+                                                     UIContentSizeCategorySmall: @(12),
                                                      UIContentSizeCategoryExtraSmall: @(10),},
                           
                           CrimsonTextBlockquoteStyle: @{UIContentSizeCategoryExtraExtraExtraLarge: @(27),

@@ -11,6 +11,8 @@
 
 @implementation XXUser
 
+@synthesize userImage;
+
 - (void)setValue:(id)value forKey:(NSString *)key {
     if ([key isEqualToString:@"id"]) {
         self.identifier = value;
@@ -50,6 +52,8 @@
         self.pushDaily = [value boolValue];
     } else if ([key isEqualToString:@"push_circle_publish"]) {
         self.pushCirclePublish = [value boolValue];
+    } else if ([key isEqualToString:@"push_circle_comments"]) {
+        self.pushCircleComments = [value boolValue];
     } else if ([key isEqualToString:@"push_weekly"]) {
         self.pushWeekly = [value boolValue];
     } else if ([key isEqualToString:@"push_permissions"]) {

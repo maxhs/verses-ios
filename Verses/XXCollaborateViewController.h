@@ -15,6 +15,7 @@
 @property (strong, nonatomic) NSMutableArray *collaborators;
 @property (strong, nonatomic) NSMutableArray *circleCollaborators;
 @property BOOL modal;
+@property BOOL manageContacts;
 -(IBAction)addContact;
 
 @end

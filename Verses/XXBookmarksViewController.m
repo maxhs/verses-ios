@@ -19,7 +19,6 @@
     NSIndexPath *indexPathForDeletion;
     XXAppDelegate *delegate;
     BOOL loading;
-    CGRect screen;
     UIColor *textColor;
     UIImageView *navBarShadowView;
 }
@@ -31,14 +30,14 @@
 - (void)viewDidLoad
 {
     [super viewDidLoad];
-    manager = [AFHTTPRequestOperationManager manager];
     self.title = @"Bookmarks";
     _formatter = [[NSDateFormatter alloc] init];
     [_formatter setLocale:[NSLocale currentLocale]];
     [_formatter setDateStyle:NSDateFormatterMediumStyle];
     [_formatter setTimeStyle:NSDateFormatterShortStyle];
-    screen = [UIScreen mainScreen].bounds;
+    self.reloadTheme = NO;
     delegate = (XXAppDelegate*)[UIApplication sharedApplication].delegate;
+    manager = delegate.manager;
     [delegate.dynamicsDrawerViewController registerTouchForwardingClass:[XXBookmarkCell class]];
     [self loadBookmarks];
     navBarShadowView = [Utilities findNavShadow:self.navigationController.navigationBar];
@@ -77,12 +76,17 @@
     self.navigationItem.leftBarButtonItem = backButton;
     navBarShadowView.hidden = YES;
     
+    if (self.reloadTheme){
+        NSLog(@"should be resetting theme for bookmarks vc: %@",textColor);
+        loading = NO;
+        [self.tableView reloadData];
+    }
 }
 
 - (void)loadBookmarks {
     loading = YES;
     [manager GET:[NSString stringWithFormat:@"%@/bookmarks",kAPIBaseUrl] parameters:@{@"user_id":[[NSUserDefaults standardUserDefaults]objectForKey:kUserDefaultsId]} success:^(AFHTTPRequestOperation *operation, id responseObject) {
-        NSLog(@"success getting bookmarks: %@",responseObject);
+        //NSLog(@"success getting bookmarks: %@",responseObject);
         _bookmarks = [[Utilities bookmarksFromJSONArray:[responseObject objectForKey:@"bookmarks"]] mutableCopy];
         loading = NO;
         [self.tableView reloadData];
@@ -112,7 +116,7 @@
 
 - (UITableViewCell *)tableView:(UITableView *)tableView cellForRowAtIndexPath:(NSIndexPath *)indexPath
 {
-    if (_bookmarks.count && !loading){
+    if (_bookmarks.count){
         XXBookmarkCell *cell = (XXBookmarkCell *)[tableView dequeueReusableCellWithIdentifier:@"BookmarkCell"];
         if (cell == nil) {
             cell = [[[NSBundle mainBundle] loadNibNamed:@"XXBookmarkCell" owner:nil options:nil] lastObject];
@@ -132,7 +136,7 @@
         [nothingButton setTitleColor:textColor forState:UIControlStateNormal];
         [nothingButton setBackgroundColor:[UIColor clearColor]];
         [cell addSubview:nothingButton];
-        [nothingButton setFrame:CGRectMake(20, 0, screen.size.width-40, screen.size.height-64)];
+        [nothingButton setFrame:CGRectMake(20, 0, screenWidth()-40, screenHeight()-64)];
         cell.backgroundView = [[UIView alloc] initWithFrame:cell.frame];
         [cell.backgroundView setBackgroundColor:[UIColor clearColor]];
         [self.tableView setScrollEnabled:NO];
@@ -144,7 +148,11 @@
     if([indexPath row] == ((NSIndexPath*)[[tableView indexPathsForVisibleRows] lastObject]).row && tableView == self.tableView){
         //end of loading
         [ProgressHUD dismiss];
+        self.reloadTheme = NO;
     }
+    UIView *selectionView = [[UIView alloc] initWithFrame:cell.frame];
+    [selectionView setBackgroundColor:[UIColor colorWithWhite:.9 alpha:.23]];
+    cell.selectedBackgroundView = selectionView;
     cell.backgroundColor = [UIColor clearColor];
 }
 
@@ -152,7 +160,7 @@
     if (_bookmarks.count && !loading){
         return 80;
     } else {
-        return screen.size.height-64;
+        return screenHeight()-64;
     }
 }
 
@@ -165,7 +173,7 @@
     if ([segue.identifier isEqualToString:@"Read"]){
         XXStoryViewController *storyVC = [segue destinationViewController];
         XXStory *story = [(XXBookmark*)[_bookmarks objectAtIndex:indexPath.row] story];
-        [storyVC setStoryId:story.identifier];
+        [storyVC setStory:story];
         [storyVC setStories:delegate.menuViewController.stories];
         [ProgressHUD show:@"Fetching story..."];
         if ([[NSUserDefaults standardUserDefaults] boolForKey:kDarkBackground]){

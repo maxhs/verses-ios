@@ -29,7 +29,7 @@
     } else if ([key isEqualToString:@"circles"]) {
         self.circles = [[Utilities circlesFromJSONArray:value] mutableCopy];
     } else if ([key isEqualToString:@"contributions"]) {
-        self.contributions = [Utilities contributionsFromJSONArray:value];
+        self.contributions = [[Utilities contributionsFromJSONArray:value] mutableCopy];
     } else if ([key isEqualToString:@"tags"]) {
         self.tags = value;
     } else if ([key isEqualToString:@"photos"]) {

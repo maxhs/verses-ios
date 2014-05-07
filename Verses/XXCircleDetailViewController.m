@@ -9,13 +9,14 @@
 #import "XXCircleDetailViewController.h"
 #import "XXChatCell.h"
 #import "XXCircleDetailsCell.h"
-#import "XXCircleControl.h"
+#import "XXSegmentedControl.h"
 #import "XXStoryCell.h"
 #import "XXProfileStoryCell.h"
 #import "XXStoryViewController.h"
+#import "XXCircleNotificationCell.h"
 
-@interface XXCircleDetailViewController () <XXCircleControlDelegate, XXChatDelegate> {
-    XXCircleControl *_circleControl;
+@interface XXCircleDetailViewController () <XXSegmentedControlDelegate, XXChatDelegate> {
+    XXSegmentedControl *_circleControl;
     CGRect screen;
     AFHTTPRequestOperationManager *manager;
     UIColor *textColor;
@@ -23,7 +24,12 @@
     BOOL chat;
     BOOL details;
     BOOL sent;
+    NSDateFormatter *_detailsFormatter;
     NSDateFormatter *_formatter;
+    XXComment *commentForDeletion;
+    NSIndexPath *indexPathForDeletion;
+    UIInterfaceOrientation currentOrientation;
+    NSMutableArray *_notifications;
 }
 
 @end
@@ -37,7 +43,7 @@
 {
     screen = [UIScreen mainScreen].bounds;
     [super viewDidLoad];
-    manager = [AFHTTPRequestOperationManager manager];
+    manager = [(XXAppDelegate*)[UIApplication sharedApplication].delegate manager];
     
     NSString *storyCount;
     if (_circle.stories.count == 1){
@@ -45,49 +51,92 @@
     } else {
         storyCount = [NSString stringWithFormat:@"%i Stories",_circle.stories.count];
     }
-    _circleControl = [[XXCircleControl alloc] initWithItems:@[@"Back",@"Chat",@"Details",storyCount]];
+    _circleControl = [[XXSegmentedControl alloc] initWithItems:@[@"Back",@"Chat",@"Details",storyCount]];
     _circleControl.delegate = self;
     _circleControl.selectedSegmentIndex = 1;
     _circleControl.showsCount = NO;
+    _circleControl.showsNavigationArrow = YES;
     
     [_circleControl addTarget:self action:@selector(selectedSegment:) forControlEvents:UIControlEventValueChanged];
     [self.view addSubview:_circleControl];
     [_circleControl setFrame:CGRectMake(0, 20, 320, 68)];
     
-    _formatter= [[NSDateFormatter alloc] init];
+    _detailsFormatter = [[NSDateFormatter alloc] init];
+    [_detailsFormatter setLocale:[NSLocale currentLocale]];
+    [_detailsFormatter setDateFormat:@"MMM, d  |  h:mm a"];
+    _formatter = [[NSDateFormatter alloc] init];
     [_formatter setLocale:[NSLocale currentLocale]];
-    [_formatter setDateFormat:@"MMM, d  |  h:mm a"];
-    [self loadDetails];
+    [_formatter setDateFormat:@"MMM, d\nh:mm a"];
+    if (_circle.comments.count == 0){
+        NSLog(@"needed to load details for circle");
+        [self loadDetails];
+    } else {
+        [self loadCircleNotifications];
+    }
 }
 
 - (void)loadDetails {
     [manager GET:[NSString stringWithFormat:@"%@/circles/%@",kAPIBaseUrl,_circle.identifier] parameters:@{@"user_id":[[NSUserDefaults standardUserDefaults] objectForKey:kUserDefaultsId]} success:^(AFHTTPRequestOperation *operation, id responseObject) {
         NSLog(@"success getting circle details: %@", responseObject);
+        _circle = [[XXCircle alloc] initWithDictionary:[responseObject objectForKey:@"circle"]];
+        [self.collectionView reloadData];
+        
+        NSString *storyCount;
+        if (_circle.stories.count == 1){
+            storyCount = @"1 Story";
+        } else {
+            storyCount = [NSString stringWithFormat:@"%i Stories",_circle.stories.count];
+        }
+        
+        [_circleControl setTitle:storyCount withImage:nil forSegmentAtIndex:3];
+
+        [self loadCircleNotifications];
+        [ProgressHUD dismiss];
     } failure:^(AFHTTPRequestOperation *operation, NSError *error) {
         NSLog(@"Failed to get cirlce details: %@",error.description);
     }];
 }
 
+- (void)loadCircleNotifications {
+    [manager GET:[NSString stringWithFormat:@"%@/circles/%@/notifications",kAPIBaseUrl,_circle.identifier] parameters:@{@"user_id":[[NSUserDefaults standardUserDefaults] objectForKey:kUserDefaultsId]} success:^(AFHTTPRequestOperation *operation, id responseObject) {
+        //NSLog(@"success getting circle notifications: %@", responseObject);
+        _notifications = [[Utilities notificationsFromJSONArray:[responseObject objectForKey:@"notifications"]] mutableCopy];
+
+    } failure:^(AFHTTPRequestOperation *operation, NSError *error) {
+        NSLog(@"Failed to get circle notifications: %@",error.description);
+    }];
+}
+
 - (void) viewWillAppear:(BOOL)animated {
     [self hideTableView];
+    [[UIApplication sharedApplication] setStatusBarHidden:NO withAnimation:UIStatusBarAnimationFade];
+    currentOrientation = self.interfaceOrientation;
     if (!_chatInput){
         [self setupChat];
         [self.view addSubview:self.collectionView];
-        [self scrollToBottom];
         [self.view addSubview:_chatInput];
     }
+    [self scrollToBottom];
     
+    //show chat by default//
+    [self reset];
     chat = YES;
+    [self hideTableView];
+    //**//
     
     [self.navigationController setNavigationBarHidden:YES animated:NO];
     if ([[NSUserDefaults standardUserDefaults] boolForKey:kDarkBackground]){
         [self.view setBackgroundColor:[UIColor clearColor]];
+        [self.storiesTableView setBackgroundColor:[UIColor clearColor]];
+        [self.detailsTableView setBackgroundColor:[UIColor clearColor]];
         textColor = [UIColor whiteColor];
         [_circleControl darkBackground];
         [_chatInput.bgToolbar setBarStyle:UIBarStyleBlackTranslucent];
         _chatInput.textView.keyboardAppearance = UIKeyboardAppearanceDark;
     } else {
         [self.view setBackgroundColor:[UIColor whiteColor]];
+        [self.storiesTableView setBackgroundColor:[UIColor whiteColor]];
+        [self.detailsTableView setBackgroundColor:[UIColor whiteColor]];
         textColor = [UIColor blackColor];
         [_circleControl lightBackground];
         [_chatInput.bgToolbar setBarStyle:UIBarStyleDefault];
@@ -129,10 +178,14 @@
                                                object:nil];
 }
 
-- (void)selectedSegment:(XXCircleControl*)control {
+- (void)selectedSegment:(XXSegmentedControl*)control {
     switch (control.selectedSegmentIndex) {
         case 0:
-            [self.navigationController popViewControllerAnimated:YES];
+            if (self.needsNavigation){
+                [[(XXAppDelegate*)[UIApplication sharedApplication].delegate dynamicsDrawerViewController] setPaneState:MSDynamicsDrawerPaneStateOpen inDirection:MSDynamicsDrawerDirectionLeft animated:YES allowUserInterruption:YES completion:nil];
+            } else {
+                [self.navigationController popViewControllerAnimated:YES];
+            }
             break;
         case 1:
             [self reset];
@@ -143,7 +196,6 @@
             [self reset];
             details = YES;
             [self showTableView];
-            
             [self.detailsTableView reloadData];
             break;
         case 3:
@@ -209,13 +261,21 @@
 
 - (NSInteger)numberOfSectionsInTableView:(UITableView *)tableView
 {
-    return 1;
+    if (tableView == self.detailsTableView){
+        return 2;
+    } else {
+        return 1;
+    }
 }
 
 - (NSInteger)tableView:(UITableView *)tableView numberOfRowsInSection:(NSInteger)section
 {
     if (details){
-        return 3;
+        if (section == 0){
+            return 3;
+        } else {
+            return _notifications.count;
+        }
     } else {
         if (_circle.stories.count == 0){
             return 1;
@@ -229,30 +289,45 @@
 - (UITableViewCell *)tableView:(UITableView *)tableView cellForRowAtIndexPath:(NSIndexPath *)indexPath
 {
     if (details){
-        XXCircleDetailsCell *cell = (XXCircleDetailsCell *)[tableView dequeueReusableCellWithIdentifier:@"CircleDetailsCell"];
-        if (cell == nil) {
-            cell = [[[NSBundle mainBundle] loadNibNamed:@"XXCircleDetailsCell" owner:nil options:nil] lastObject];
+        if (indexPath.section == 0){
+            XXCircleDetailsCell *cell = (XXCircleDetailsCell *)[tableView dequeueReusableCellWithIdentifier:@"CircleDetailsCell"];
+            if (cell == nil) {
+                cell = [[[NSBundle mainBundle] loadNibNamed:@"XXCircleDetailsCell" owner:nil options:nil] lastObject];
+            }
+            [cell configureWithTextColor:textColor];
+            [cell setSelectionStyle:UITableViewCellSelectionStyleNone];
+            switch (indexPath.row) {
+                case 0:
+                    [cell.headingLabel setText:@"WHAT"];
+                    [cell.contentLabel setText:_circle.name];
+                    break;
+                case 1:
+                    [cell.headingLabel setText:@"CREATED"];
+                    [cell.contentLabel setText:[_detailsFormatter stringFromDate:_circle.createdDate]];
+                    break;
+                case 2:
+                    [cell.headingLabel setText:@"WHO"];
+                    [cell.contentLabel setText:[NSString stringWithFormat:@"%@",_circle.members]];
+                    break;
+                    
+                default:
+                    break;
+            }
+            return cell;
+        } else {
+            XXCircleNotificationCell *cell = (XXCircleNotificationCell *)[tableView dequeueReusableCellWithIdentifier:@"CircleNotificationCell"];
+            if (cell == nil) {
+                cell = [[[NSBundle mainBundle] loadNibNamed:@"XXCircleNotificationCell" owner:nil options:nil] lastObject];
+            }
+            XXNotification *notification = [_notifications objectAtIndex:indexPath.row];
+            [cell configureNotification:notification];
+            [cell.timestamp setTextColor:textColor];
+            [cell.timestamp setText:[_formatter stringFromDate:notification.createdAt]];
+            [cell.notificationLabel setTextColor:textColor];
+            [cell setSelectionStyle:UITableViewCellSelectionStyleNone];
+
+            return cell;
         }
-        [cell configureWithTextColor:textColor];
-        [cell setSelectionStyle:UITableViewCellSelectionStyleNone];
-        switch (indexPath.row) {
-            case 0:
-                [cell.headingLabel setText:@"WHAT"];
-                [cell.contentLabel setText:_circle.name];
-                break;
-            case 1:
-                [cell.headingLabel setText:@"CREATED"];
-                [cell.contentLabel setText:[_formatter stringFromDate:_circle.createdDate]];
-                break;
-            case 2:
-                [cell.headingLabel setText:@"WHO"];
-                [cell.contentLabel setText:[NSString stringWithFormat:@"%@",_circle.members]];
-                break;
-                
-            default:
-                break;
-        }
-        return cell;
     } else {
         XXProfileStoryCell *cell = (XXProfileStoryCell *)[tableView dequeueReusableCellWithIdentifier:@"ProfileStoryCell"];
         if (cell == nil) {
@@ -262,7 +337,7 @@
             [cell.titleLabel setText:@"No stories"];
             [cell.titleLabel setFont:[UIFont fontWithName:kSourceSansProLight size:20]];
             if ([[NSUserDefaults standardUserDefaults] objectForKey:kDarkBackground]){
-                [cell.titleLabel setTextColor:[UIColor colorWithWhite:1 alpha:.75]];
+                [cell.titleLabel setTextColor:textColor];
             } else {
                 [cell.titleLabel setTextColor:[UIColor lightGrayColor]];
             }
@@ -283,7 +358,7 @@
 
 - (CGFloat)tableView:(UITableView *)tableView heightForRowAtIndexPath:(NSIndexPath *)indexPath {
     if (details){
-        return 56;
+        return 60;
     } else {
         return 56;
     }
@@ -293,6 +368,15 @@
     if (tableView == self.storiesTableView){
         [tableView deselectRowAtIndexPath:indexPath animated:YES];
         [self performSegueWithIdentifier:@"Read" sender:indexPath];
+    } else if (tableView == self.detailsTableView){
+        if (indexPath.section == 1){
+            XXNotification *notification = [_notifications objectAtIndex:indexPath.row];
+            if ([notification.type isEqualToString:kCircleComment]){
+                [self reset];
+                chat = YES;
+                [self hideTableView];
+            }
+        }
     }
 }
 
@@ -300,7 +384,7 @@
     if ([segue.identifier isEqualToString:@"Read"]){
         XXStoryViewController *storyVC = [segue destinationViewController];
         XXStory *story = (XXStory*)[_circle.stories objectAtIndex:indexPath.row];
-        [storyVC setStoryId:story.identifier];
+        [storyVC setStory:story];
         [ProgressHUD show:@"Fetching story..."];
         if ([[NSUserDefaults standardUserDefaults] boolForKey:kDarkBackground]){
             [UIView animateWithDuration:.23 animations:^{
@@ -335,7 +419,7 @@
         NSAttributedString * attrStr = [[NSAttributedString alloc] initWithString:comment.body
                                                                        attributes:attributes];
         
-        int maxTextLabelWidth = MAX_BUBBLE_WIDTH - OUTLINE;
+        int maxTextLabelWidth = UIInterfaceOrientationIsPortrait(self.interfaceOrientation) ? screenWidth()*4/5 - OUTLINE : screenHeight()*4/5 - OUTLINE;
         CGRect rect = [attrStr boundingRectWithSize:CGSizeMake(maxTextLabelWidth, CGFLOAT_MAX)
                                             options:NSStringDrawingUsesLineFragmentOrigin | NSStringDrawingUsesFontLeading
                                             context:nil];
@@ -356,9 +440,56 @@
     XXChatCell* cell = [collectionView dequeueReusableCellWithReuseIdentifier:@"ChatCell" forIndexPath:indexPath];
     XXComment *comment = [_circle.comments objectAtIndex:indexPath.row];
     [cell drawCell:comment withTextColor:textColor];
+    cell.deleteButton.tag = indexPath.row;
+    [cell.deleteButton addTarget:self action:@selector(deleteComment:) forControlEvents:UIControlEventTouchUpInside];
+    if (currentOrientation == UIInterfaceOrientationPortrait){
+        [cell.timestamp setAlpha:0.0];
+    } else {
+        [cell.timestamp setText:[_formatter stringFromDate:comment.createdDate]];
+        [cell.timestamp setAlpha:1.0];
+    }
+    
     return cell;
 }
 
+- (void)collectionView:(UICollectionView *)collectionView didSelectItemAtIndexPath:(NSIndexPath *)indexPath {
+    XXChatCell *cell = (XXChatCell*)[collectionView cellForItemAtIndexPath:indexPath];
+    if (cell.deleteButton.hidden){
+        [cell.deleteButton setHidden:NO];
+        [UIView animateWithDuration:.2 animations:^{
+            [cell.deleteButton setAlpha:1.0];
+        } completion:^(BOOL finished) {
+            
+        }];
+    } else {
+        [UIView animateWithDuration:.2 animations:^{
+            [cell.deleteButton setAlpha:0.0];
+        } completion:^(BOOL finished) {
+            [cell.deleteButton setHidden:YES];
+        }];
+    }
+}
+
+- (void)deleteComment:(UIButton*)button {
+    commentForDeletion = [_circle.comments objectAtIndex:button.tag];
+    indexPathForDeletion = [NSIndexPath indexPathForRow:button.tag inSection:0];
+    [[[UIAlertView alloc] initWithTitle:@"One sec..." message:@"Are you sure you want to delete this comment?" delegate:self cancelButtonTitle:@"No" otherButtonTitles:@"Delete", nil] show];
+}
+
+- (void)alertView:(UIAlertView *)alertView clickedButtonAtIndex:(NSInteger)buttonIndex {
+    if ([[alertView buttonTitleAtIndex:buttonIndex] isEqualToString:@"Delete"] && commentForDeletion){
+        [manager DELETE:[NSString stringWithFormat:@"%@/comments/%@,",kAPIBaseUrl,commentForDeletion.identifier] parameters:nil success:^(AFHTTPRequestOperation *operation, id responseObject) {
+            //NSLog(@"success deleting comment: %@",responseObject);
+        } failure:^(AFHTTPRequestOperation *operation, NSError *error) {
+            NSLog(@"Failed to delete comment: %@",error.description);
+        }];
+        [_circle.comments removeObject:commentForDeletion];
+        [self.collectionView deleteItemsAtIndexPaths:@[indexPathForDeletion]];
+       
+    }
+    indexPathForDeletion = nil;
+    commentForDeletion = nil;
+}
 
 #pragma mark Interface Rotation
 
@@ -368,6 +499,7 @@
 - (void) willAnimateRotationToInterfaceOrientation:(UIInterfaceOrientation)toInterfaceOrientation duration:(NSTimeInterval)duration {
     [_chatInput isRotating];
     self.collectionView.frame = (UIInterfaceOrientationIsLandscape(toInterfaceOrientation)) ? CGRectMake(0, 88, screenHeight(), screenWidth() - height(_chatInput) - 88) : CGRectMake(0, 88, screenWidth(), screenHeight() - height(_chatInput) - 88);
+    currentOrientation = toInterfaceOrientation;
     [self.collectionView reloadData];
     [self.collectionView.collectionViewLayout invalidateLayout];
 }
@@ -377,7 +509,15 @@
 }
 
 - (void) chatInputNewMessageSent:(NSString *)messageString {
-    XXComment *newComment = [[XXComment alloc] initWithDictionary:@{@"body":messageString,@"user":@{@"id":[[NSUserDefaults standardUserDefaults] objectForKey:kUserDefaultsId],@"pic_small_url":[[NSUserDefaults standardUserDefaults] objectForKey:kUserDefaultsPicSmall]}}];
+    NSMutableDictionary *commentDict = [NSMutableDictionary dictionary];
+    [commentDict setObject:messageString forKey:@"body"];
+    if ([[NSUserDefaults standardUserDefaults] objectForKey:kUserDefaultsPicSmall]){
+        [commentDict setObject:@{@"id":[[NSUserDefaults standardUserDefaults] objectForKey:kUserDefaultsId],@"pen_name":[[NSUserDefaults standardUserDefaults] objectForKey:kUserDefaultsPenName],@"pic_small_url":[[NSUserDefaults standardUserDefaults] objectForKey:kUserDefaultsPicSmall]} forKey:@"user"];
+    } else {
+        [commentDict setObject:@{@"id":[[NSUserDefaults standardUserDefaults] objectForKey:kUserDefaultsId],@"pen_name":[[NSUserDefaults standardUserDefaults] objectForKey:kUserDefaultsPenName],} forKey:@"user"];
+    }
+    
+    XXComment *newComment = [[XXComment alloc] initWithDictionary:commentDict];
     [self addNewComment:newComment];
 }
 

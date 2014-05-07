@@ -9,7 +9,6 @@
 #import "XXWelcomeViewController.h"
 #import "XXStoryCell.h"
 #import "XXProgress.h"
-#import "XXStory.h"
 #import "XXContribution.h"
 #import "XXUser.h"
 #import "XXPhoto.h"
@@ -20,13 +19,15 @@
 #import "XXTutorialView.h"
 #import "UIImage+ImageEffects.h"
 #import <DTCoreText/DTCoreText.h>
+#import "XXSegmentedControl.h"
 
-@interface XXWelcomeViewController () <UIScrollViewDelegate, SWTableViewCellDelegate>{
+@interface XXWelcomeViewController () <UIScrollViewDelegate, SWTableViewCellDelegate, XXSegmentedControlDelegate>{
     AFHTTPRequestOperationManager *manager;
     XXStory *story1;
     XXStory *story2;
     CGFloat width;
     CGFloat height;
+    CGFloat lastY;
     UIRefreshControl *refreshControl;
     XXTutorialView *tutorial;
     BOOL loading;
@@ -34,6 +35,12 @@
     XXAppDelegate *delegate;
     NSDateFormatter *_formatter;
     UIColor *textColor;
+    XXSegmentedControl *_browseControl;
+    BOOL browse;
+    BOOL trending;
+    BOOL featured;
+    NSMutableArray *_featuredStories;
+    NSMutableArray *_trendingStories;
 }
 
 @end
@@ -52,42 +59,86 @@
 
 - (void)viewDidLoad {
     [super viewDidLoad];
-	if (!manager) manager = [AFHTTPRequestOperationManager manager];
     refreshControl = [[UIRefreshControl alloc] init];
     [refreshControl addTarget:self action:@selector(handleRefresh) forControlEvents:UIControlEventValueChanged];
     [refreshControl setTintColor:[UIColor darkGrayColor]];
     [self.tableView addSubview:refreshControl];
     [self.tableView setSeparatorColor:[UIColor clearColor]];
     self.tableView.directionalLockEnabled = YES;
-    [[NSNotificationCenter defaultCenter] addObserver:self selector:@selector(menuRevealed) name:@"MenuRevealed" object:nil];
-    if (![[NSUserDefaults standardUserDefaults] objectForKey:kNoPreview]) {
+    [[NSNotificationCenter defaultCenter] addObserver:self selector:@selector(removeTutorial) name:@"MenuRevealed" object:nil];
+    if (![[NSUserDefaults standardUserDefaults] boolForKey:kExistingUser]) {
         [self performSelector:@selector(showPreview) withObject:nil afterDelay:1];
     }
     delegate = (XXAppDelegate*)[UIApplication sharedApplication].delegate;
-    canLoadMore = YES;
+    manager = delegate.manager;
+    
     self.reloadTheme = NO;
+    
     _formatter= [[NSDateFormatter alloc] init];
     [_formatter setLocale:[NSLocale currentLocale]];
-    [_formatter setDateFormat:@"MMM, d - h:mm a"];
+    [_formatter setDateFormat:@"MMM d - h:mm a"];
+    
+    _browseControl = [[XXSegmentedControl alloc] initWithItems:@[@"Browse",@"Featured",@"Trending"]];
+    _browseControl.selectedSegmentIndex = 0;
+    browse = YES;
+    _browseControl.showsCount = NO;
+    [_browseControl setAutoresizingMask:UIViewAutoresizingFlexibleWidth];
+    [_browseControl addTarget:self action:@selector(selectedSegment:) forControlEvents:UIControlEventValueChanged];
+    [self.view addSubview:_browseControl];
+    if (UIInterfaceOrientationIsPortrait(self.interfaceOrientation)){
+        [_browseControl setFrame:CGRectMake(0, 0, screenWidth(), 48)];
+        [_browseControl.background setFrame:CGRectMake(0, 0, screenWidth(), 48)];
+    } else {
+        [_browseControl setFrame:CGRectMake(0, 0, screenHeight(), 48)];
+        [_browseControl.background setFrame:CGRectMake(0, 0, screenHeight(), 48)];
+    }
+    
+    [_browseControl setFont:[UIFont fontWithName:kCrimsonRoman size:17]];
+    [self.tableView setContentInset:UIEdgeInsetsMake(44, 0, 0, 0)];
+    [self.featuredTableView setContentInset:UIEdgeInsetsMake(44, 0, 0, 0)];
+    [self.trendingTableView setContentInset:UIEdgeInsetsMake(44, 0, 0, 0)];
+    
+    _featuredStories = [NSMutableArray array];
+    _trendingStories = [NSMutableArray array];
 }
 
 - (void)viewWillAppear:(BOOL)animated {
-    
+    [[UIApplication sharedApplication] setStatusBarHidden:YES withAnimation:UIStatusBarAnimationSlide];
+    canLoadMore = YES;
     [self.navigationController setNavigationBarHidden:YES];
     [delegate.dynamicsDrawerViewController setPaneDragRevealEnabled:NO forDirection:MSDynamicsDrawerDirectionRight];
+
     if ([[NSUserDefaults standardUserDefaults] boolForKey:kDarkBackground]){
         textColor = [UIColor whiteColor];
         [self.view setBackgroundColor:[UIColor clearColor]];
         [refreshControl setTintColor:[UIColor whiteColor]];
+        [_browseControl darkBackground];
     } else {
         textColor = [UIColor blackColor];
         [self.view setBackgroundColor:[UIColor whiteColor]];
         [refreshControl setTintColor:[UIColor darkGrayColor]];
+        [_browseControl lightBackground];
     }
+    
     if (self.reloadTheme){
-        [self.tableView reloadData];
+        if (browse){
+            [self.tableView reloadData];
+        } else if (featured){
+            [self.featuredTableView reloadData];
+        } else if (trending){
+            [self.trendingTableView reloadData];
+        }
     }
-    if (self.tableView.alpha == 0.0){
+    
+    if (featured && self.featuredTableView.alpha == 0.0){
+        [UIView animateWithDuration:.25 animations:^{
+            [self.featuredTableView setAlpha:1.0];
+        }];
+    } else if (trending && self.featuredTableView.alpha == 0.0){
+        [UIView animateWithDuration:.25 animations:^{
+            [self.trendingTableView setAlpha:1.0];
+        }];
+    } else if (browse && self.tableView.alpha == 0.0){
         [UIView animateWithDuration:.25 animations:^{
             [self.tableView setAlpha:1.0];
         }];
@@ -102,15 +153,94 @@
     } else if (_stories.count <= 5){
         [self loadMore];
     }
+    [self loadFeatured];
+    [self loadTrending];
+}
+
+- (void)selectedSegment:(XXSegmentedControl*)control {
+    switch (control.selectedSegmentIndex) {
+        case 0:
+            [self reset];
+            browse = YES;
+            [self hideTableViews];
+            [self showTableView:self.tableView];
+            break;
+        case 1:
+            [self reset];
+            featured = YES;
+            [self hideTableViews];
+            [self showTableView:self.featuredTableView];
+            [self.featuredTableView reloadData];
+            break;
+        case 2:
+            [self reset];
+            trending = YES;
+            [self hideTableViews];
+            [self showTableView:self.trendingTableView];
+            [self.trendingTableView reloadData];
+            break;
+        default:
+            break;
+    }
+}
+
+- (void)reset {
+    browse = NO;
+    trending = NO;
+    featured = NO;
+}
+
+- (void)hideTableViews {
+    [UIView animateWithDuration:.5 delay:0 usingSpringWithDamping:.5 initialSpringVelocity:.0001 options:UIViewAnimationOptionCurveEaseIn animations:^{
+        [self.tableView setAlpha:0.0];
+        self.tableView.transform = CGAffineTransformMakeScale(.87, .87);
+        [self.featuredTableView setAlpha:0.0];
+        self.featuredTableView.transform = CGAffineTransformMakeScale(.87, .87);
+        [self.trendingTableView setAlpha:0.0];
+        self.trendingTableView.transform = CGAffineTransformMakeScale(.87, .87);
+    } completion:^(BOOL finished) {
+        
+    }];
+}
+
+- (void)showTableView:(UITableView*)showTableView {
+    [UIView animateWithDuration:.5 delay:0  usingSpringWithDamping:.5 initialSpringVelocity:.0001 options:UIViewAnimationOptionCurveEaseIn animations:^{
+        [showTableView setAlpha:1.0];
+        showTableView.transform = CGAffineTransformIdentity;
+    } completion:^(BOOL finished) {
+    }];
+}
+
+- (void)showControl {
+    [UIView animateWithDuration:.5 delay:0 usingSpringWithDamping:.8 initialSpringVelocity:.0001 options:UIViewAnimationOptionCurveEaseIn animations:^{
+        _browseControl.transform = CGAffineTransformIdentity;
+    } completion:^(BOOL finished) {
+        
+    }];
+}
+
+- (void)hideControl {
+    [UIView animateWithDuration:.5 delay:0 usingSpringWithDamping:.8 initialSpringVelocity:.0001 options:UIViewAnimationOptionCurveEaseIn animations:^{
+        _browseControl.transform = CGAffineTransformMakeTranslation(0, -_browseControl.frame.size.height);
+    } completion:^(BOOL finished) {
+        
+    }];
 }
 
 - (void)handleRefresh{
+    canLoadMore = YES;
     [self loadEtherStories];
 }
 
 -(UIImage *)blurredSnapshot {
-    UIGraphicsBeginImageContextWithOptions([UIScreen mainScreen].bounds.size, NO, self.view.window.screen.scale);
-    [self.view drawViewHierarchyInRect:self.view.frame afterScreenUpdates:NO];
+    if (UIInterfaceOrientationIsPortrait(self.interfaceOrientation)){
+        UIGraphicsBeginImageContextWithOptions([UIScreen mainScreen].bounds.size, NO, self.view.window.screen.scale);
+        [self.view drawViewHierarchyInRect:self.view.frame afterScreenUpdates:YES];
+    } else {
+        UIGraphicsBeginImageContextWithOptions(CGSizeMake(screenHeight(), screenWidth()), NO, self.view.window.screen.scale);
+        [self.view drawViewHierarchyInRect:CGRectMake(0, 0, screenHeight(), screenWidth()) afterScreenUpdates:YES];
+    }
+    
     UIImage *snapshotImage = UIGraphicsGetImageFromCurrentImageContext();
     UIImage *blurredSnapshotImage = [snapshotImage applyBlurWithRadius:7 blurType:BOXFILTER tintColor:[UIColor colorWithWhite:1 alpha:.7] saturationDeltaFactor:1.8 maskImage:nil];
     UIGraphicsEndImageContext();
@@ -118,17 +248,23 @@
 }
 
 - (void)showPreview {
-    tutorial = [[XXTutorialView alloc] initWithFrame:[UIScreen mainScreen].bounds];
+    if (UIInterfaceOrientationIsPortrait(self.interfaceOrientation)){
+        tutorial = [[XXTutorialView alloc] initWithFrame:[UIScreen mainScreen].bounds];
+    } else {
+        tutorial = [[XXTutorialView alloc] initWithFrame:CGRectMake(0, 0, screenHeight(), screenWidth())];
+    }
+    
     [tutorial showInView:self.view animateDuration:.5 withBackgroundImage:[self blurredSnapshot]];
-    [[NSUserDefaults standardUserDefaults] setBool:YES forKey:kNoPreview];
+    [[NSUserDefaults standardUserDefaults] setBool:YES forKey:kExistingUser];
 }
 
-- (void)menuRevealed {
+- (void)removeTutorial {
     if (tutorial && tutorial.alpha == 1.0){
         [UIView animateWithDuration:.25 delay:.2 options:UIViewAnimationOptionCurveEaseInOut animations:^{
             [tutorial setAlpha:0.0];
         } completion:^(BOOL finished) {
             [tutorial removeFromSuperview];
+            [delegate.dynamicsDrawerViewController setPaneDragRevealEnabled:YES forDirection:MSDynamicsDrawerDirectionLeft];
         }];
     }
 }
@@ -154,6 +290,34 @@
     }];
 }
 
+- (void)loadFeatured {
+    [manager GET:[NSString stringWithFormat:@"%@/stories/featured",kAPIBaseUrl] parameters:nil success:^(AFHTTPRequestOperation *operation, id responseObject) {
+        //NSLog(@"featured stories response: %@",responseObject);
+        _featuredStories = [[Utilities storiesFromJSONArray:[responseObject objectForKey:@"stories"]] mutableCopy];
+        [ProgressHUD dismiss];
+        [self.tableView reloadData];
+    } failure:^(AFHTTPRequestOperation *operation, NSError *error) {
+        [self.tableView reloadData];
+        if (refreshControl.isRefreshing) [refreshControl endRefreshing];
+        NSLog(@"Failure getting featured stories from welcome controller: %@",error.description);
+        [[[UIAlertView alloc] initWithTitle:@"Sorry" message:@"Something went wrong while trying to fetch the latest featured stories. Please pull down to refresh." delegate:nil cancelButtonTitle:@"Okay" otherButtonTitles:nil] show];
+    }];
+}
+
+- (void)loadTrending {
+    [manager GET:[NSString stringWithFormat:@"%@/stories/trending",kAPIBaseUrl] parameters:nil success:^(AFHTTPRequestOperation *operation, id responseObject) {
+        //NSLog(@"trending stories response: %@",responseObject);
+        _trendingStories = [[Utilities storiesFromJSONArray:[responseObject objectForKey:@"stories"]] mutableCopy];
+        [ProgressHUD dismiss];
+        [self.tableView reloadData];
+    } failure:^(AFHTTPRequestOperation *operation, NSError *error) {
+        [self.tableView reloadData];
+        if (refreshControl.isRefreshing) [refreshControl endRefreshing];
+        NSLog(@"Failure getting trending stories from welcome controller: %@",error.description);
+        [[[UIAlertView alloc] initWithTitle:@"Sorry" message:@"Something went wrong while trying to fetch what's trending. Please pull down to refresh." delegate:nil cancelButtonTitle:@"Okay" otherButtonTitles:nil] show];
+    }];
+}
+
 - (void)write{
     if ([[NSUserDefaults standardUserDefaults] objectForKey:kUserDefaultsId]){
         [self performSegueWithIdentifier:@"Write" sender:self];
@@ -166,6 +330,20 @@
     [self performSegueWithIdentifier:@"Login" sender:self];
 }
 
+- (void)willAnimateRotationToInterfaceOrientation:(UIInterfaceOrientation)toInterfaceOrientation duration:(NSTimeInterval)duration {
+    if (tutorial && tutorial.alpha == 1.0){
+        [self removeTutorial];
+    }
+    if (UIInterfaceOrientationIsPortrait(toInterfaceOrientation)){
+        [_browseControl setFrame:CGRectMake(0, 0, screenWidth(), 48)];
+        [_browseControl.background setFrame:CGRectMake(0, 0, screenWidth(), 48)];
+    } else {
+        [_browseControl setFrame:CGRectMake(0, 0, screenHeight(), 48)];
+        [_browseControl.background setFrame:CGRectMake(0, 0, screenHeight(), 48)];
+    }
+
+}
+
 #pragma mark - Table view data source
 
 - (NSInteger)numberOfSectionsInTableView:(UITableView *)tableView
@@ -175,7 +353,15 @@
 
 - (NSInteger)tableView:(UITableView *)tableView numberOfRowsInSection:(NSInteger)section
 {
-    return _stories.count;
+    if (tableView == self.tableView){
+        return _stories.count;
+    } else if (tableView == self.featuredTableView){
+        return _featuredStories.count;
+    } else if (tableView == self.trendingTableView) {
+        return _trendingStories.count;
+    } else {
+        return 0;
+    }
 }
 
 - (UITableViewCell *)tableView:(UITableView *)tableView cellForRowAtIndexPath:(NSIndexPath *)indexPath
@@ -184,13 +370,21 @@
     if (cell == nil) {
         cell = [[[NSBundle mainBundle] loadNibNamed:@"XXStoryCell" owner:nil options:nil] lastObject];
     }
-    XXStory *aStory = [_stories objectAtIndex:indexPath.row];
-    [cell configureForStory:aStory textColor:textColor featured:NO cellHeight:170];
+    XXStory *story;
+    if (tableView == self.tableView){
+        story = [_stories objectAtIndex:indexPath.row];
+    } else if (tableView == self.featuredTableView){
+        story = [_featuredStories objectAtIndex:indexPath.row];
+    } else if (tableView == self.trendingTableView) {
+        story = [_trendingStories objectAtIndex:indexPath.row];
+    }
     
-    if (aStory.minutesToRead == [NSNumber numberWithInt:0]){
-        [cell.infoLabel setText:[NSString stringWithFormat:@"%@ words  |  Quick Read  |  %@",aStory.wordCount,[_formatter stringFromDate:aStory.updatedDate]]];
+    [cell configureForStory:story textColor:textColor featured:NO cellHeight:170];
+    
+    if (story.minutesToRead == [NSNumber numberWithInt:0]){
+        [cell.infoLabel setText:[NSString stringWithFormat:@"%@ words  |  Quick Read  |  %@",story.wordCount,[_formatter stringFromDate:story.updatedDate]]];
     } else {
-        [cell.infoLabel setText:[NSString stringWithFormat:@"%@ words  |  %@ min to read  |  %@",aStory.wordCount,aStory.minutesToRead,[_formatter stringFromDate:aStory.updatedDate]]];
+        [cell.infoLabel setText:[NSString stringWithFormat:@"%@ words  |  %@ min to read  |  %@",story.wordCount,story.minutesToRead,[_formatter stringFromDate:story.updatedDate]]];
     }
     
     if ([[NSUserDefaults standardUserDefaults] boolForKey:kDarkBackground]){
@@ -227,12 +421,22 @@
 }
 
 - (void)scrollViewDidScroll:(UIScrollView *)scrollView {
+    
     CGFloat actualPosition = scrollView.contentOffset.y;
     CGFloat contentHeight = scrollView.contentSize.height - (screenHeight()*2);
     if (actualPosition >= contentHeight && !loading && canLoadMore) {
         NSLog(@"should be loading more");
         [self loadMore];
     }
+    
+    if (actualPosition <= 0){
+        [self showControl];
+    } else if (actualPosition >= lastY){
+        [self hideControl];
+    } else if (actualPosition < lastY) {
+        [self showControl];
+    }
+    lastY = actualPosition;
 }
 
 - (void)loadMore {
@@ -269,14 +473,32 @@
     [super prepareForSegue:segue sender:sender];
     if ([segue.identifier isEqualToString:@"Story"]) {
         if ([sender isKindOfClass:[NSIndexPath class]]) {
-            XXStory *story = [_stories objectAtIndex:[(NSIndexPath*)sender row]];
+            XXStory *story;
+            if (browse){
+                story = [_stories objectAtIndex:[(NSIndexPath*)sender row]];
+            } else if (featured){
+                story = [_featuredStories objectAtIndex:[(NSIndexPath*)sender row]];
+            } else if (trending){
+                story = [_trendingStories objectAtIndex:[(NSIndexPath*)sender row]];
+            }
+            
             XXStoryViewController *vc = [segue destinationViewController];
             [vc setStory:story];
             [vc setStories:_stories];
         }
-        [UIView animateWithDuration:.25 animations:^{
-            [self.tableView setAlpha:0.0];
-        }];
+        if (browse){
+            [UIView animateWithDuration:.25 animations:^{
+                [self.tableView setAlpha:0.0];
+            }];
+        } else if (trending){
+            [UIView animateWithDuration:.25 animations:^{
+                [self.trendingTableView setAlpha:0.0];
+            }];
+        } else if (featured){
+            [UIView animateWithDuration:.25 animations:^{
+                [self.featuredTableView setAlpha:0.0];
+            }];
+        }
     }
 }
 

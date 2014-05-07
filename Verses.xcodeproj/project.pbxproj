@@ -72,6 +72,12 @@
 		F260737418FF1F5E00351463 /* contact@2x.png in Resources */ = {isa = PBXBuildFile; fileRef = F260737218FF1F5E00351463 /* contact@2x.png */; };
 		F260FD8318D3C87A00D7C645 /* XXDraftsViewController.m in Sources */ = {isa = PBXBuildFile; fileRef = F260FD8218D3C87A00D7C645 /* XXDraftsViewController.m */; };
 		F260FD8618D3C88A00D7C645 /* XXCirclesViewController.m in Sources */ = {isa = PBXBuildFile; fileRef = F260FD8518D3C88A00D7C645 /* XXCirclesViewController.m */; };
+		F26F95341905D01B0022F968 /* smallX.png in Resources */ = {isa = PBXBuildFile; fileRef = F26F95321905D01B0022F968 /* smallX.png */; };
+		F26F95351905D01B0022F968 /* smallX@2x.png in Resources */ = {isa = PBXBuildFile; fileRef = F26F95331905D01B0022F968 /* smallX@2x.png */; };
+		F26F95381906E80B0022F968 /* XXCircleNotificationCell.m in Sources */ = {isa = PBXBuildFile; fileRef = F26F95371906E80B0022F968 /* XXCircleNotificationCell.m */; };
+		F26F953A1906E8310022F968 /* XXCircleNotificationCell.xib in Resources */ = {isa = PBXBuildFile; fileRef = F26F95391906E8310022F968 /* XXCircleNotificationCell.xib */; };
+		F26F953D1906EBC80022F968 /* smallWhiteX.png in Resources */ = {isa = PBXBuildFile; fileRef = F26F953B1906EBC80022F968 /* smallWhiteX.png */; };
+		F26F953E1906EBC80022F968 /* smallWhiteX@2x.png in Resources */ = {isa = PBXBuildFile; fileRef = F26F953C1906EBC80022F968 /* smallWhiteX@2x.png */; };
 		F273B85618D61E88003C4818 /* XXTextView.m in Sources */ = {isa = PBXBuildFile; fileRef = F273B85518D61E88003C4818 /* XXTextView.m */; };
 		F279DA1118D628A900E0DB8B /* XXTextStorage.m in Sources */ = {isa = PBXBuildFile; fileRef = F279DA1018D628A900E0DB8B /* XXTextStorage.m */; };
 		F279DA1A18D6329E00E0DB8B /* XXMyStoriesViewController.m in Sources */ = {isa = PBXBuildFile; fileRef = F279DA1918D6329E00E0DB8B /* XXMyStoriesViewController.m */; };
@@ -101,7 +107,6 @@
 		F279DA5B18D663D900E0DB8B /* GothamRnd-Light.otf in Resources */ = {isa = PBXBuildFile; fileRef = F279DA4318D663D900E0DB8B /* GothamRnd-Light.otf */; };
 		F279DA5C18D663D900E0DB8B /* GothamRnd-LightItal.otf in Resources */ = {isa = PBXBuildFile; fileRef = F279DA4418D663D900E0DB8B /* GothamRnd-LightItal.otf */; };
 		F279DA6118D67A0D00E0DB8B /* XXFeedbackViewController.m in Sources */ = {isa = PBXBuildFile; fileRef = F279DA6018D67A0D00E0DB8B /* XXFeedbackViewController.m */; };
-		F279DA6A18D6AB6800E0DB8B /* User.m in Sources */ = {isa = PBXBuildFile; fileRef = F279DA6918D6AB6800E0DB8B /* User.m */; };
 		F279DA6D18D6C0A700E0DB8B /* XXFeedbackCell.m in Sources */ = {isa = PBXBuildFile; fileRef = F279DA6C18D6C0A700E0DB8B /* XXFeedbackCell.m */; };
 		F279DA6F18D6C0B700E0DB8B /* XXFeedbackCell.xib in Resources */ = {isa = PBXBuildFile; fileRef = F279DA6E18D6C0B700E0DB8B /* XXFeedbackCell.xib */; };
 		F279DA7218D6C14000E0DB8B /* XXFeedback.m in Sources */ = {isa = PBXBuildFile; fileRef = F279DA7118D6C14000E0DB8B /* XXFeedback.m */; };
@@ -120,6 +125,13 @@
 		F28976E81808FFE100B9E8A5 /* XXStoryCell.xib in Resources */ = {isa = PBXBuildFile; fileRef = F28976E71808FFE100B9E8A5 /* XXStoryCell.xib */; };
 		F28976EF180901E000B9E8A5 /* Utilities.m in Sources */ = {isa = PBXBuildFile; fileRef = F28976EE180901E000B9E8A5 /* Utilities.m */; };
 		F28976F2180905B500B9E8A5 /* XXWriteViewController.m in Sources */ = {isa = PBXBuildFile; fileRef = F28976F1180905B500B9E8A5 /* XXWriteViewController.m */; };
+		F28BF53C190977C600392471 /* XXLoginNavController.m in Sources */ = {isa = PBXBuildFile; fileRef = F28BF53B190977C600392471 /* XXLoginNavController.m */; };
+		F28BF53F190988E700392471 /* XXWritingTitleCell.m in Sources */ = {isa = PBXBuildFile; fileRef = F28BF53E190988E700392471 /* XXWritingTitleCell.m */; };
+		F28BF541190988FE00392471 /* XXWritingTitleCell.xib in Resources */ = {isa = PBXBuildFile; fileRef = F28BF540190988FE00392471 /* XXWritingTitleCell.xib */; };
+		F28BF5441909C6F100392471 /* trashButton.png in Resources */ = {isa = PBXBuildFile; fileRef = F28BF5421909C6F000392471 /* trashButton.png */; };
+		F28BF5451909C6F100392471 /* trashButton@2x.png in Resources */ = {isa = PBXBuildFile; fileRef = F28BF5431909C6F000392471 /* trashButton@2x.png */; };
+		F28BF5471909C73900392471 /* whiteTrashButton.png in Resources */ = {isa = PBXBuildFile; fileRef = F28BF5461909C73900392471 /* whiteTrashButton.png */; };
+		F28BF5491909C75000392471 /* whiteTrashButton@2x.png in Resources */ = {isa = PBXBuildFile; fileRef = F28BF5481909C75000392471 /* whiteTrashButton@2x.png */; };
 		F28C782618E2B0440088B4C9 /* XXSettingsCell.m in Sources */ = {isa = PBXBuildFile; fileRef = F28C782518E2B0440088B4C9 /* XXSettingsCell.m */; };
 		F28C782818E2B0520088B4C9 /* XXSettingsCell.xib in Resources */ = {isa = PBXBuildFile; fileRef = F28C782718E2B0520088B4C9 /* XXSettingsCell.xib */; };
 		F28C782B18E3866A0088B4C9 /* XXBookmarkCell.m in Sources */ = {isa = PBXBuildFile; fileRef = F28C782A18E3866A0088B4C9 /* XXBookmarkCell.m */; };
@@ -149,7 +161,7 @@
 		F29224CD1828AAC000BEB9EF /* XXNotification.m in Sources */ = {isa = PBXBuildFile; fileRef = F29224CC1828AAC000BEB9EF /* XXNotification.m */; };
 		F295B1F3183C60BD009121BA /* Montserrat-Regular.ttf in Resources */ = {isa = PBXBuildFile; fileRef = F295B1F2183C60BD009121BA /* Montserrat-Regular.ttf */; };
 		F295B2B418457D25009121BA /* downArrowWhite@2x.png in Resources */ = {isa = PBXBuildFile; fileRef = F295B2B318457D25009121BA /* downArrowWhite@2x.png */; };
-		F29F26921901799B00B283D8 /* XXCircleControl.m in Sources */ = {isa = PBXBuildFile; fileRef = F29F26911901799B00B283D8 /* XXCircleControl.m */; };
+		F29F26921901799B00B283D8 /* XXSegmentedControl.m in Sources */ = {isa = PBXBuildFile; fileRef = F29F26911901799B00B283D8 /* XXSegmentedControl.m */; };
 		F29F269519017AD700B283D8 /* XXChatCell.m in Sources */ = {isa = PBXBuildFile; fileRef = F29F269419017AD700B283D8 /* XXChatCell.m */; };
 		F29F269A190180C400B283D8 /* blackSeparator.png in Resources */ = {isa = PBXBuildFile; fileRef = F29F2698190180C400B283D8 /* blackSeparator.png */; };
 		F29F269B190180C400B283D8 /* whiteSeparator.png in Resources */ = {isa = PBXBuildFile; fileRef = F29F2699190180C400B283D8 /* whiteSeparator.png */; };
@@ -232,6 +244,30 @@
 		F2C2008518FC4301003C401A /* XXProfileCell.m in Sources */ = {isa = PBXBuildFile; fileRef = F2C2008418FC4301003C401A /* XXProfileCell.m */; };
 		F2C2008718FC430D003C401A /* XXProfileCell.xib in Resources */ = {isa = PBXBuildFile; fileRef = F2C2008618FC430D003C401A /* XXProfileCell.xib */; };
 		F2C2008918FC4318003C401A /* XXProfileStoryCell.xib in Resources */ = {isa = PBXBuildFile; fileRef = F2C2008818FC4318003C401A /* XXProfileStoryCell.xib */; };
+		F2D83FB51915D13300592F3D /* whiteSearchIcon.png in Resources */ = {isa = PBXBuildFile; fileRef = F2D83FB31915D13300592F3D /* whiteSearchIcon.png */; };
+		F2D83FB61915D13300592F3D /* whiteSearchIcon@2x.png in Resources */ = {isa = PBXBuildFile; fileRef = F2D83FB41915D13300592F3D /* whiteSearchIcon@2x.png */; };
+		F2D83FC11915D86D00592F3D /* blackFeedbackFlag.png in Resources */ = {isa = PBXBuildFile; fileRef = F2D83FBF1915D86D00592F3D /* blackFeedbackFlag.png */; };
+		F2D83FC21915D86D00592F3D /* blackFeedbackFlag@2x.png in Resources */ = {isa = PBXBuildFile; fileRef = F2D83FC01915D86D00592F3D /* blackFeedbackFlag@2x.png */; };
+		F2D83FDD1915ECC700592F3D /* menuPencil.png in Resources */ = {isa = PBXBuildFile; fileRef = F2D83FDB1915ECC700592F3D /* menuPencil.png */; };
+		F2D83FDE1915ECC700592F3D /* menuPencil@2x.png in Resources */ = {isa = PBXBuildFile; fileRef = F2D83FDC1915ECC700592F3D /* menuPencil@2x.png */; };
+		F2D83FE81915EE2500592F3D /* menuSettings.png in Resources */ = {isa = PBXBuildFile; fileRef = F2D83FE41915EE2500592F3D /* menuSettings.png */; };
+		F2D83FE91915EE2500592F3D /* menuSettings@2x.png in Resources */ = {isa = PBXBuildFile; fileRef = F2D83FE51915EE2500592F3D /* menuSettings@2x.png */; };
+		F2D83FED1915EEBB00592F3D /* menuBookmarks.png in Resources */ = {isa = PBXBuildFile; fileRef = F2D83FEB1915EEBB00592F3D /* menuBookmarks.png */; };
+		F2D83FEE1915EEBB00592F3D /* menuBookmarks@2x.png in Resources */ = {isa = PBXBuildFile; fileRef = F2D83FEC1915EEBB00592F3D /* menuBookmarks@2x.png */; };
+		F2D83FF11915F0AB00592F3D /* menuBrowse.png in Resources */ = {isa = PBXBuildFile; fileRef = F2D83FEF1915F0AB00592F3D /* menuBrowse.png */; };
+		F2D83FF21915F0AB00592F3D /* menuBrowse@2x.png in Resources */ = {isa = PBXBuildFile; fileRef = F2D83FF01915F0AB00592F3D /* menuBrowse@2x.png */; };
+		F2D83FF51915F17000592F3D /* menuMy.png in Resources */ = {isa = PBXBuildFile; fileRef = F2D83FF31915F17000592F3D /* menuMy.png */; };
+		F2D83FF61915F17000592F3D /* menuMy@2x.png in Resources */ = {isa = PBXBuildFile; fileRef = F2D83FF41915F17000592F3D /* menuMy@2x.png */; };
+		F2D83FF91915F1B700592F3D /* menuCircles.png in Resources */ = {isa = PBXBuildFile; fileRef = F2D83FF71915F1B700592F3D /* menuCircles.png */; };
+		F2D83FFA1915F1B700592F3D /* menuCircles@2x.png in Resources */ = {isa = PBXBuildFile; fileRef = F2D83FF81915F1B700592F3D /* menuCircles@2x.png */; };
+		F2D840051916CC7500592F3D /* iPadDefault-Landscape.png in Resources */ = {isa = PBXBuildFile; fileRef = F2D840031916CC7500592F3D /* iPadDefault-Landscape.png */; };
+		F2D840061916CC7500592F3D /* iPadDefault-Landscape@2x.png in Resources */ = {isa = PBXBuildFile; fileRef = F2D840041916CC7500592F3D /* iPadDefault-Landscape@2x.png */; };
+		F2EA26E419140D5B00EEF2CC /* Footnote.m in Sources */ = {isa = PBXBuildFile; fileRef = F2EA26E319140D5B00EEF2CC /* Footnote.m */; };
+		F2EA26E719140D5C00EEF2CC /* User.m in Sources */ = {isa = PBXBuildFile; fileRef = F2EA26E619140D5C00EEF2CC /* User.m */; };
+		F2EA26EA1914554200EEF2CC /* XXAddFeedbackViewController.m in Sources */ = {isa = PBXBuildFile; fileRef = F2EA26E91914554200EEF2CC /* XXAddFeedbackViewController.m */; };
+		F2EA26ED191460C000EEF2CC /* XXFeedbackTransition.m in Sources */ = {isa = PBXBuildFile; fileRef = F2EA26EC191460C000EEF2CC /* XXFeedbackTransition.m */; };
+		F2EE4BA019059510001145B6 /* menuShot.png in Resources */ = {isa = PBXBuildFile; fileRef = F2EE4B9E19059510001145B6 /* menuShot.png */; };
+		F2EE4BA119059510001145B6 /* menuShot@2x.png in Resources */ = {isa = PBXBuildFile; fileRef = F2EE4B9F19059510001145B6 /* menuShot@2x.png */; };
 		F2F2F17518BBED9A00840F31 /* XXStoryBodyCell.m in Sources */ = {isa = PBXBuildFile; fileRef = F2F2F17418BBED9A00840F31 /* XXStoryBodyCell.m */; };
 		F2F2F17918BBEDE200840F31 /* XXStoryBodyCell.xib in Resources */ = {isa = PBXBuildFile; fileRef = F2F2F17818BBEDE200840F31 /* XXStoryBodyCell.xib */; };
 		F2F2F18B18BD66A500840F31 /* XXStoryInfoViewController.m in Sources */ = {isa = PBXBuildFile; fileRef = F2F2F18A18BD66A500840F31 /* XXStoryInfoViewController.m */; };
@@ -348,6 +384,13 @@
 		F260FD8218D3C87A00D7C645 /* XXDraftsViewController.m */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.objc; path = XXDraftsViewController.m; sourceTree = "<group>"; };
 		F260FD8418D3C88A00D7C645 /* XXCirclesViewController.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = XXCirclesViewController.h; sourceTree = "<group>"; };
 		F260FD8518D3C88A00D7C645 /* XXCirclesViewController.m */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.objc; path = XXCirclesViewController.m; sourceTree = "<group>"; };
+		F26F95321905D01B0022F968 /* smallX.png */ = {isa = PBXFileReference; lastKnownFileType = image.png; path = smallX.png; sourceTree = "<group>"; };
+		F26F95331905D01B0022F968 /* smallX@2x.png */ = {isa = PBXFileReference; lastKnownFileType = image.png; path = "smallX@2x.png"; sourceTree = "<group>"; };
+		F26F95361906E80B0022F968 /* XXCircleNotificationCell.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = XXCircleNotificationCell.h; sourceTree = "<group>"; };
+		F26F95371906E80B0022F968 /* XXCircleNotificationCell.m */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.objc; path = XXCircleNotificationCell.m; sourceTree = "<group>"; };
+		F26F95391906E8310022F968 /* XXCircleNotificationCell.xib */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = file.xib; path = XXCircleNotificationCell.xib; sourceTree = "<group>"; };
+		F26F953B1906EBC80022F968 /* smallWhiteX.png */ = {isa = PBXFileReference; lastKnownFileType = image.png; path = smallWhiteX.png; sourceTree = "<group>"; };
+		F26F953C1906EBC80022F968 /* smallWhiteX@2x.png */ = {isa = PBXFileReference; lastKnownFileType = image.png; path = "smallWhiteX@2x.png"; sourceTree = "<group>"; };
 		F273B85418D61E88003C4818 /* XXTextView.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = XXTextView.h; sourceTree = "<group>"; };
 		F273B85518D61E88003C4818 /* XXTextView.m */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.objc; path = XXTextView.m; sourceTree = "<group>"; };
 		F279DA0F18D628A900E0DB8B /* XXTextStorage.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = XXTextStorage.h; sourceTree = "<group>"; };
@@ -385,8 +428,6 @@
 		F279DA4418D663D900E0DB8B /* GothamRnd-LightItal.otf */ = {isa = PBXFileReference; lastKnownFileType = file; path = "GothamRnd-LightItal.otf"; sourceTree = "<group>"; };
 		F279DA5F18D67A0D00E0DB8B /* XXFeedbackViewController.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = XXFeedbackViewController.h; sourceTree = "<group>"; };
 		F279DA6018D67A0D00E0DB8B /* XXFeedbackViewController.m */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.objc; path = XXFeedbackViewController.m; sourceTree = "<group>"; };
-		F279DA6818D6AB6800E0DB8B /* User.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; name = User.h; path = ../User.h; sourceTree = "<group>"; };
-		F279DA6918D6AB6800E0DB8B /* User.m */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.objc; name = User.m; path = ../User.m; sourceTree = "<group>"; };
 		F279DA6B18D6C0A700E0DB8B /* XXFeedbackCell.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = XXFeedbackCell.h; sourceTree = "<group>"; };
 		F279DA6C18D6C0A700E0DB8B /* XXFeedbackCell.m */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.objc; path = XXFeedbackCell.m; sourceTree = "<group>"; };
 		F279DA6E18D6C0B700E0DB8B /* XXFeedbackCell.xib */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = file.xib; path = XXFeedbackCell.xib; sourceTree = "<group>"; };
@@ -419,6 +460,15 @@
 		F28976EE180901E000B9E8A5 /* Utilities.m */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.objc; path = Utilities.m; sourceTree = "<group>"; };
 		F28976F0180905B500B9E8A5 /* XXWriteViewController.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = XXWriteViewController.h; sourceTree = "<group>"; };
 		F28976F1180905B500B9E8A5 /* XXWriteViewController.m */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.objc; path = XXWriteViewController.m; sourceTree = "<group>"; };
+		F28BF53A190977C600392471 /* XXLoginNavController.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = XXLoginNavController.h; sourceTree = "<group>"; };
+		F28BF53B190977C600392471 /* XXLoginNavController.m */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.objc; path = XXLoginNavController.m; sourceTree = "<group>"; };
+		F28BF53D190988E700392471 /* XXWritingTitleCell.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = XXWritingTitleCell.h; sourceTree = "<group>"; };
+		F28BF53E190988E700392471 /* XXWritingTitleCell.m */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.objc; path = XXWritingTitleCell.m; sourceTree = "<group>"; };
+		F28BF540190988FE00392471 /* XXWritingTitleCell.xib */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = file.xib; path = XXWritingTitleCell.xib; sourceTree = "<group>"; };
+		F28BF5421909C6F000392471 /* trashButton.png */ = {isa = PBXFileReference; lastKnownFileType = image.png; path = trashButton.png; sourceTree = "<group>"; };
+		F28BF5431909C6F000392471 /* trashButton@2x.png */ = {isa = PBXFileReference; lastKnownFileType = image.png; path = "trashButton@2x.png"; sourceTree = "<group>"; };
+		F28BF5461909C73900392471 /* whiteTrashButton.png */ = {isa = PBXFileReference; lastKnownFileType = image.png; path = whiteTrashButton.png; sourceTree = "<group>"; };
+		F28BF5481909C75000392471 /* whiteTrashButton@2x.png */ = {isa = PBXFileReference; lastKnownFileType = image.png; path = "whiteTrashButton@2x.png"; sourceTree = "<group>"; };
 		F28C782418E2B0440088B4C9 /* XXSettingsCell.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = XXSettingsCell.h; sourceTree = "<group>"; };
 		F28C782518E2B0440088B4C9 /* XXSettingsCell.m */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.objc; path = XXSettingsCell.m; sourceTree = "<group>"; };
 		F28C782718E2B0520088B4C9 /* XXSettingsCell.xib */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = file.xib; path = XXSettingsCell.xib; sourceTree = "<group>"; };
@@ -460,8 +510,8 @@
 		F29224CC1828AAC000BEB9EF /* XXNotification.m */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.objc; path = XXNotification.m; sourceTree = "<group>"; };
 		F295B1F2183C60BD009121BA /* Montserrat-Regular.ttf */ = {isa = PBXFileReference; lastKnownFileType = file; path = "Montserrat-Regular.ttf"; sourceTree = "<group>"; };
 		F295B2B318457D25009121BA /* downArrowWhite@2x.png */ = {isa = PBXFileReference; lastKnownFileType = image.png; path = "downArrowWhite@2x.png"; sourceTree = "<group>"; };
-		F29F26901901799B00B283D8 /* XXCircleControl.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = XXCircleControl.h; sourceTree = "<group>"; };
-		F29F26911901799B00B283D8 /* XXCircleControl.m */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.objc; path = XXCircleControl.m; sourceTree = "<group>"; };
+		F29F26901901799B00B283D8 /* XXSegmentedControl.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = XXSegmentedControl.h; sourceTree = "<group>"; };
+		F29F26911901799B00B283D8 /* XXSegmentedControl.m */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.objc; path = XXSegmentedControl.m; sourceTree = "<group>"; };
 		F29F269319017AD700B283D8 /* XXChatCell.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = XXChatCell.h; sourceTree = "<group>"; };
 		F29F269419017AD700B283D8 /* XXChatCell.m */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.objc; path = XXChatCell.m; sourceTree = "<group>"; };
 		F29F2698190180C400B283D8 /* blackSeparator.png */ = {isa = PBXFileReference; lastKnownFileType = image.png; path = blackSeparator.png; sourceTree = "<group>"; };
@@ -580,6 +630,34 @@
 		F2C2008418FC4301003C401A /* XXProfileCell.m */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.objc; path = XXProfileCell.m; sourceTree = "<group>"; };
 		F2C2008618FC430D003C401A /* XXProfileCell.xib */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = file.xib; path = XXProfileCell.xib; sourceTree = "<group>"; };
 		F2C2008818FC4318003C401A /* XXProfileStoryCell.xib */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = file.xib; path = XXProfileStoryCell.xib; sourceTree = "<group>"; };
+		F2D83FB31915D13300592F3D /* whiteSearchIcon.png */ = {isa = PBXFileReference; lastKnownFileType = image.png; path = whiteSearchIcon.png; sourceTree = "<group>"; };
+		F2D83FB41915D13300592F3D /* whiteSearchIcon@2x.png */ = {isa = PBXFileReference; lastKnownFileType = image.png; path = "whiteSearchIcon@2x.png"; sourceTree = "<group>"; };
+		F2D83FBF1915D86D00592F3D /* blackFeedbackFlag.png */ = {isa = PBXFileReference; lastKnownFileType = image.png; path = blackFeedbackFlag.png; sourceTree = "<group>"; };
+		F2D83FC01915D86D00592F3D /* blackFeedbackFlag@2x.png */ = {isa = PBXFileReference; lastKnownFileType = image.png; path = "blackFeedbackFlag@2x.png"; sourceTree = "<group>"; };
+		F2D83FDB1915ECC700592F3D /* menuPencil.png */ = {isa = PBXFileReference; lastKnownFileType = image.png; path = menuPencil.png; sourceTree = "<group>"; };
+		F2D83FDC1915ECC700592F3D /* menuPencil@2x.png */ = {isa = PBXFileReference; lastKnownFileType = image.png; path = "menuPencil@2x.png"; sourceTree = "<group>"; };
+		F2D83FE41915EE2500592F3D /* menuSettings.png */ = {isa = PBXFileReference; lastKnownFileType = image.png; path = menuSettings.png; sourceTree = "<group>"; };
+		F2D83FE51915EE2500592F3D /* menuSettings@2x.png */ = {isa = PBXFileReference; lastKnownFileType = image.png; path = "menuSettings@2x.png"; sourceTree = "<group>"; };
+		F2D83FEB1915EEBB00592F3D /* menuBookmarks.png */ = {isa = PBXFileReference; lastKnownFileType = image.png; path = menuBookmarks.png; sourceTree = "<group>"; };
+		F2D83FEC1915EEBB00592F3D /* menuBookmarks@2x.png */ = {isa = PBXFileReference; lastKnownFileType = image.png; path = "menuBookmarks@2x.png"; sourceTree = "<group>"; };
+		F2D83FEF1915F0AB00592F3D /* menuBrowse.png */ = {isa = PBXFileReference; lastKnownFileType = image.png; path = menuBrowse.png; sourceTree = "<group>"; };
+		F2D83FF01915F0AB00592F3D /* menuBrowse@2x.png */ = {isa = PBXFileReference; lastKnownFileType = image.png; path = "menuBrowse@2x.png"; sourceTree = "<group>"; };
+		F2D83FF31915F17000592F3D /* menuMy.png */ = {isa = PBXFileReference; lastKnownFileType = image.png; name = menuMy.png; path = "../../Dropbox/Verses/iOS Assets/menuMy.png"; sourceTree = "<group>"; };
+		F2D83FF41915F17000592F3D /* menuMy@2x.png */ = {isa = PBXFileReference; lastKnownFileType = image.png; name = "menuMy@2x.png"; path = "../../Dropbox/Verses/iOS Assets/menuMy@2x.png"; sourceTree = "<group>"; };
+		F2D83FF71915F1B700592F3D /* menuCircles.png */ = {isa = PBXFileReference; lastKnownFileType = image.png; path = menuCircles.png; sourceTree = "<group>"; };
+		F2D83FF81915F1B700592F3D /* menuCircles@2x.png */ = {isa = PBXFileReference; lastKnownFileType = image.png; path = "menuCircles@2x.png"; sourceTree = "<group>"; };
+		F2D840031916CC7500592F3D /* iPadDefault-Landscape.png */ = {isa = PBXFileReference; lastKnownFileType = image.png; path = "iPadDefault-Landscape.png"; sourceTree = "<group>"; };
+		F2D840041916CC7500592F3D /* iPadDefault-Landscape@2x.png */ = {isa = PBXFileReference; lastKnownFileType = image.png; path = "iPadDefault-Landscape@2x.png"; sourceTree = "<group>"; };
+		F2EA26E219140D5B00EEF2CC /* Footnote.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; name = Footnote.h; path = ../Footnote.h; sourceTree = "<group>"; };
+		F2EA26E319140D5B00EEF2CC /* Footnote.m */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.objc; name = Footnote.m; path = ../Footnote.m; sourceTree = "<group>"; };
+		F2EA26E519140D5C00EEF2CC /* User.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; name = User.h; path = ../User.h; sourceTree = "<group>"; };
+		F2EA26E619140D5C00EEF2CC /* User.m */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.objc; name = User.m; path = ../User.m; sourceTree = "<group>"; };
+		F2EA26E81914554200EEF2CC /* XXAddFeedbackViewController.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = XXAddFeedbackViewController.h; sourceTree = "<group>"; };
+		F2EA26E91914554200EEF2CC /* XXAddFeedbackViewController.m */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.objc; path = XXAddFeedbackViewController.m; sourceTree = "<group>"; };
+		F2EA26EB191460C000EEF2CC /* XXFeedbackTransition.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = XXFeedbackTransition.h; sourceTree = "<group>"; };
+		F2EA26EC191460C000EEF2CC /* XXFeedbackTransition.m */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.objc; path = XXFeedbackTransition.m; sourceTree = "<group>"; };
+		F2EE4B9E19059510001145B6 /* menuShot.png */ = {isa = PBXFileReference; lastKnownFileType = image.png; path = menuShot.png; sourceTree = "<group>"; };
+		F2EE4B9F19059510001145B6 /* menuShot@2x.png */ = {isa = PBXFileReference; lastKnownFileType = image.png; path = "menuShot@2x.png"; sourceTree = "<group>"; };
 		F2F2F17318BBED9A00840F31 /* XXStoryBodyCell.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = XXStoryBodyCell.h; sourceTree = "<group>"; };
 		F2F2F17418BBED9A00840F31 /* XXStoryBodyCell.m */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.objc; path = XXStoryBodyCell.m; sourceTree = "<group>"; };
 		F2F2F17818BBEDE200840F31 /* XXStoryBodyCell.xib */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = file.xib; path = XXStoryBodyCell.xib; sourceTree = "<group>"; };
@@ -701,6 +779,10 @@
 				F279DA1918D6329E00E0DB8B /* XXMyStoriesViewController.m */,
 				F29224771827BB4C00BEB9EF /* XXStoryViewController.h */,
 				F29224781827BB4C00BEB9EF /* XXStoryViewController.m */,
+				F2EA26E81914554200EEF2CC /* XXAddFeedbackViewController.h */,
+				F2EA26E91914554200EEF2CC /* XXAddFeedbackViewController.m */,
+				F2EA26EB191460C000EEF2CC /* XXFeedbackTransition.h */,
+				F2EA26EC191460C000EEF2CC /* XXFeedbackTransition.m */,
 				F260FD8118D3C87A00D7C645 /* XXDraftsViewController.h */,
 				F260FD8218D3C87A00D7C645 /* XXDraftsViewController.m */,
 				F28976F0180905B500B9E8A5 /* XXWriteViewController.h */,
@@ -719,6 +801,8 @@
 				F28C785718E3A73C0088B4C9 /* XXFeedbackDetailViewController.m */,
 				F2021B7918029626008B1BAE /* XXLoginController.h */,
 				F2021B7A18029626008B1BAE /* XXLoginController.m */,
+				F28BF53A190977C600392471 /* XXLoginNavController.h */,
+				F28BF53B190977C600392471 /* XXLoginNavController.m */,
 				F28976DD1807DB4300B9E8A5 /* XXWelcomeViewController.h */,
 				F28976DE1807DB4300B9E8A5 /* XXWelcomeViewController.m */,
 				F285E96218E74365008FFEC1 /* XXTutorialView.h */,
@@ -726,10 +810,10 @@
 				F23D50B218E7774C0050D219 /* XXTutorialPage.h */,
 				F23D50B318E7774C0050D219 /* XXTutorialPage.m */,
 				F279DA1B18D632AA00E0DB8B /* Custom Subclasses */,
+				F2021B411802908C008B1BAE /* Supporting Files */,
 				F279DA1C18D632BB00E0DB8B /* Fonts */,
 				F28976DC1807BE4500B9E8A5 /* Images */,
 				F2021B5B1802908C008B1BAE /* Images.xcassets */,
-				F2021B411802908C008B1BAE /* Supporting Files */,
 			);
 			path = Verses;
 			sourceTree = "<group>";
@@ -769,8 +853,8 @@
 		F279DA1B18D632AA00E0DB8B /* Custom Subclasses */ = {
 			isa = PBXGroup;
 			children = (
-				F29F26901901799B00B283D8 /* XXCircleControl.h */,
-				F29F26911901799B00B283D8 /* XXCircleControl.m */,
+				F29F26901901799B00B283D8 /* XXSegmentedControl.h */,
+				F29F26911901799B00B283D8 /* XXSegmentedControl.m */,
 				F28976E11808EC0000B9E8A5 /* XXProgress.h */,
 				F28976E21808EC0000B9E8A5 /* XXProgress.m */,
 				F285E97518E7600D008FFEC1 /* XXPhotoButton.h */,
@@ -823,6 +907,34 @@
 		F28976DC1807BE4500B9E8A5 /* Images */ = {
 			isa = PBXGroup;
 			children = (
+				F2D840031916CC7500592F3D /* iPadDefault-Landscape.png */,
+				F2D840041916CC7500592F3D /* iPadDefault-Landscape@2x.png */,
+				F2D83FF71915F1B700592F3D /* menuCircles.png */,
+				F2D83FF81915F1B700592F3D /* menuCircles@2x.png */,
+				F2D83FF31915F17000592F3D /* menuMy.png */,
+				F2D83FF41915F17000592F3D /* menuMy@2x.png */,
+				F2D83FEF1915F0AB00592F3D /* menuBrowse.png */,
+				F2D83FF01915F0AB00592F3D /* menuBrowse@2x.png */,
+				F2D83FEB1915EEBB00592F3D /* menuBookmarks.png */,
+				F2D83FEC1915EEBB00592F3D /* menuBookmarks@2x.png */,
+				F2D83FE41915EE2500592F3D /* menuSettings.png */,
+				F2D83FE51915EE2500592F3D /* menuSettings@2x.png */,
+				F2D83FDB1915ECC700592F3D /* menuPencil.png */,
+				F2D83FDC1915ECC700592F3D /* menuPencil@2x.png */,
+				F2D83FBF1915D86D00592F3D /* blackFeedbackFlag.png */,
+				F2D83FC01915D86D00592F3D /* blackFeedbackFlag@2x.png */,
+				F2D83FB31915D13300592F3D /* whiteSearchIcon.png */,
+				F2D83FB41915D13300592F3D /* whiteSearchIcon@2x.png */,
+				F28BF5461909C73900392471 /* whiteTrashButton.png */,
+				F28BF5481909C75000392471 /* whiteTrashButton@2x.png */,
+				F28BF5421909C6F000392471 /* trashButton.png */,
+				F28BF5431909C6F000392471 /* trashButton@2x.png */,
+				F26F953B1906EBC80022F968 /* smallWhiteX.png */,
+				F26F953C1906EBC80022F968 /* smallWhiteX@2x.png */,
+				F26F95321905D01B0022F968 /* smallX.png */,
+				F26F95331905D01B0022F968 /* smallX@2x.png */,
+				F2EE4B9E19059510001145B6 /* menuShot.png */,
+				F2EE4B9F19059510001145B6 /* menuShot@2x.png */,
 				F29F2698190180C400B283D8 /* blackSeparator.png */,
 				F29F2699190180C400B283D8 /* whiteSeparator.png */,
 				F260737118FF1F5E00351463 /* contact.png */,
@@ -906,8 +1018,10 @@
 		F28976E01807EE0000B9E8A5 /* Models */ = {
 			isa = PBXGroup;
 			children = (
-				F279DA6818D6AB6800E0DB8B /* User.h */,
-				F279DA6918D6AB6800E0DB8B /* User.m */,
+				F2EA26E519140D5C00EEF2CC /* User.h */,
+				F2EA26E619140D5C00EEF2CC /* User.m */,
+				F2EA26E219140D5B00EEF2CC /* Footnote.h */,
+				F2EA26E319140D5B00EEF2CC /* Footnote.m */,
 				F2021B7C1802965C008B1BAE /* XXUser.h */,
 				F2021B7D1802965C008B1BAE /* XXUser.m */,
 				F2021B7F180296A8008B1BAE /* XXStory.h */,
@@ -947,6 +1061,9 @@
 				F29224BB18286B0200BEB9EF /* XXWritingCell.h */,
 				F29224BC18286B0200BEB9EF /* XXWritingCell.m */,
 				F29224BE18286B0F00BEB9EF /* XXWritingCell.xib */,
+				F28BF53D190988E700392471 /* XXWritingTitleCell.h */,
+				F28BF53E190988E700392471 /* XXWritingTitleCell.m */,
+				F28BF540190988FE00392471 /* XXWritingTitleCell.xib */,
 				F2F2F19018BD69EC00840F31 /* XXStoryInfoCell.h */,
 				F2F2F19118BD69EC00840F31 /* XXStoryInfoCell.m */,
 				F2F2F19318BD69FA00840F31 /* XXStoryInfoCell.xib */,
@@ -977,6 +1094,9 @@
 				F29224C61828A9B800BEB9EF /* XXNotificationCell.h */,
 				F29224C71828A9B800BEB9EF /* XXNotificationCell.m */,
 				F29224C91828A9C600BEB9EF /* XXNotificationCell.xib */,
+				F26F95361906E80B0022F968 /* XXCircleNotificationCell.h */,
+				F26F95371906E80B0022F968 /* XXCircleNotificationCell.m */,
+				F26F95391906E8310022F968 /* XXCircleNotificationCell.xib */,
 				F2C2008018FC42F5003C401A /* XXProfileStoryCell.h */,
 				F2C2008118FC42F5003C401A /* XXProfileStoryCell.m */,
 				F2C2008818FC4318003C401A /* XXProfileStoryCell.xib */,
@@ -1098,6 +1218,17 @@
 			path = PSTCollectionView;
 			sourceTree = "<group>";
 		};
+		F2EA262B190D60A100EEF2CC /* Font Categories */ = {
+			isa = PBXGroup;
+			children = (
+				F29F26A81903364B00B283D8 /* UIFontDescriptor+SourceSansPro.h */,
+				F29F26A91903364B00B283D8 /* UIFontDescriptor+SourceSansPro.m */,
+				F29F26A51902F20000B283D8 /* UIFontDescriptor+CrimsonText.h */,
+				F29F26A61902F20000B283D8 /* UIFontDescriptor+CrimsonText.m */,
+			);
+			name = "Font Categories";
+			sourceTree = "<group>";
+		};
 		F2FB33DB1821EF8C000D32F8 /* ProgressHUD */ = {
 			isa = PBXGroup;
 			children = (
@@ -1126,10 +1257,7 @@
 				F2BFE3BE18EA14F3002A27FE /* MWPhotoBrowser */,
 				F231109118DF6B280054062B /* UIImage+ImageEffects.h */,
 				F231109218DF6B280054062B /* UIImage+ImageEffects.m */,
-				F29F26A81903364B00B283D8 /* UIFontDescriptor+SourceSansPro.h */,
-				F29F26A91903364B00B283D8 /* UIFontDescriptor+SourceSansPro.m */,
-				F29F26A51902F20000B283D8 /* UIFontDescriptor+CrimsonText.h */,
-				F29F26A61902F20000B283D8 /* UIFontDescriptor+CrimsonText.m */,
+				F2EA262B190D60A100EEF2CC /* Font Categories */,
 				F2FB341B1821FA2C000D32F8 /* SWRevealViewController */,
 				F2FB33F51821F778000D32F8 /* SWTableViewCell */,
 				F2FB33DB1821EF8C000D32F8 /* ProgressHUD */,
@@ -1255,6 +1383,8 @@
 				F285E95F18E69183008FFEC1 /* XXCommentCell.xib in Resources */,
 				F2C2008718FC430D003C401A /* XXProfileCell.xib in Resources */,
 				F260736C18FEF24E00351463 /* icon-120.png in Resources */,
+				F2D83FFA1915F1B700592F3D /* menuCircles@2x.png in Resources */,
+				F28BF541190988FE00392471 /* XXWritingTitleCell.xib in Resources */,
 				F2FB340E1821F778000D32F8 /* cross@2x.png in Resources */,
 				F23D50B718E786620050D219 /* upArrow.png in Resources */,
 				F2BFE4BB18F22BE3002A27FE /* icon-152.png in Resources */,
@@ -1266,13 +1396,18 @@
 				F23110B618E0F99A0054062B /* readIconDark@2x.png in Resources */,
 				F2BFE47018F09AA5002A27FE /* bookmark@2x.png in Resources */,
 				F292241A1827A48200BEB9EF /* XXUserNameCell.xib in Resources */,
+				F2D83FB61915D13300592F3D /* whiteSearchIcon@2x.png in Resources */,
 				F279DA4C18D663D900E0DB8B /* Gotham-BookItalic.ttf in Resources */,
 				F28C785018E3A20D0088B4C9 /* readIconDarkSmall.png in Resources */,
 				F2B8176718F9A6EE002168FD /* moon.png in Resources */,
 				F2B8174F18F750F9002168FD /* SourceSansPro-Italic.ttf in Resources */,
 				F2A63C3F1809F762003F3777 /* readIcon.png in Resources */,
+				F2D83FDD1915ECC700592F3D /* menuPencil.png in Resources */,
+				F28BF5471909C73900392471 /* whiteTrashButton.png in Resources */,
 				F279DA7718D75C4C00E0DB8B /* settings@2x.png in Resources */,
+				F2D83FC21915D86D00592F3D /* blackFeedbackFlag@2x.png in Resources */,
 				F23D50AE18E773110050D219 /* XXAuthorInfoCell.xib in Resources */,
+				F26F95351905D01B0022F968 /* smallX@2x.png in Resources */,
 				F279DA5818D663D900E0DB8B /* GothamRnd-BoldItal.otf in Resources */,
 				F231107D18DF54DB0054062B /* blue.png in Resources */,
 				F2FB34141821F778000D32F8 /* list@2x.png in Resources */,
@@ -1299,15 +1434,21 @@
 				F2B8177818F9B81E002168FD /* whiteMenu@2x.png in Resources */,
 				F285E97318E75F6C008FFEC1 /* readIconSmall.png in Resources */,
 				F2B8175B18F9A38A002168FD /* whiteSun.png in Resources */,
+				F26F953D1906EBC80022F968 /* smallWhiteX.png in Resources */,
 				F2BFE46218EF6FE3002A27FE /* Default-568h@2x.png in Resources */,
 				F231107E18DF54DB0054062B /* blue@2x.png in Resources */,
 				F2B8177718F9B81E002168FD /* whiteMenu.png in Resources */,
 				F2FB340C1821F778000D32F8 /* check@2x.png in Resources */,
+				F2D83FF91915F1B700592F3D /* menuCircles.png in Resources */,
 				F2B8177018F9B79F002168FD /* menu@2x.png in Resources */,
+				F2D83FE81915EE2500592F3D /* menuSettings.png in Resources */,
+				F28BF5491909C75000392471 /* whiteTrashButton@2x.png in Resources */,
 				F2A63C421809F762003F3777 /* userIcon@2x.png in Resources */,
 				F23D50D218EA0CA80050D219 /* blueFlipped.png in Resources */,
 				F279DA5B18D663D900E0DB8B /* GothamRnd-Light.otf in Resources */,
 				F23110CD18E102C90054062B /* blackX.png in Resources */,
+				F26F95341905D01B0022F968 /* smallX.png in Resources */,
+				F2EE4BA019059510001145B6 /* menuShot.png in Resources */,
 				F2BFE49E18F1EB8E002A27FE /* iPadDefault.png in Resources */,
 				F29224BA1828674600BEB9EF /* emptyNavBarBackgroundTall.png in Resources */,
 				F2021B5C1802908C008B1BAE /* Images.xcassets in Resources */,
@@ -1315,45 +1456,62 @@
 				F29F26A41901AB8000B283D8 /* XXCircleDetailsCell.xib in Resources */,
 				F2A63C411809F762003F3777 /* userIcon.png in Resources */,
 				F279DA4A18D663D900E0DB8B /* Gotham-BoldItalic.ttf in Resources */,
+				F28BF5451909C6F100392471 /* trashButton@2x.png in Resources */,
+				F2D83FDE1915ECC700592F3D /* menuPencil@2x.png in Resources */,
 				F2BFE47818F0B94A002A27FE /* sendButton@2x.png in Resources */,
+				F2D83FED1915EEBB00592F3D /* menuBookmarks.png in Resources */,
 				F29F269B190180C400B283D8 /* whiteSeparator.png in Resources */,
 				F23110A118DFA2B20054062B /* XXLeaveFeedbackCell.xib in Resources */,
+				F2D83FF11915F0AB00592F3D /* menuBrowse.png in Resources */,
 				F2BFE4B918F22BAE002A27FE /* icon-76.png in Resources */,
 				F2BFE4A218F1EBFF002A27FE /* iPadBlue.png in Resources */,
+				F26F953E1906EBC80022F968 /* smallWhiteX@2x.png in Resources */,
 				F23D50CF18E967DB0050D219 /* XXContactCell.xib in Resources */,
 				F2021B4E1802908C008B1BAE /* Main_iPhone.storyboard in Resources */,
 				F279DA5018D663D900E0DB8B /* Gotham-MediumItalic.ttf in Resources */,
 				F260737418FF1F5E00351463 /* contact@2x.png in Resources */,
 				F2BFE45A18EE2E9F002A27FE /* SourceSansPro-Semibold2.ttf in Resources */,
 				F231109018DF5E110054062B /* dark@2x.png in Resources */,
+				F2D83FF51915F17000592F3D /* menuMy.png in Resources */,
 				F28C785118E3A20D0088B4C9 /* readIconDarkSmall@2x.png in Resources */,
+				F2D83FF21915F0AB00592F3D /* menuBrowse@2x.png in Resources */,
 				F2BFE49F18F1EB8E002A27FE /* iPadDefault@2x.png in Resources */,
 				F279DA4E18D663D900E0DB8B /* Gotham-LightItalic.ttf in Resources */,
 				F28976E81808FFE100B9E8A5 /* XXStoryCell.xib in Resources */,
 				F2A63C321809F43D003F3777 /* writeIcon@2x.png in Resources */,
+				F2D83FB51915D13300592F3D /* whiteSearchIcon.png in Resources */,
 				F29224101827577800BEB9EF /* CrimsonText-Semibold.ttf in Resources */,
 				F2B8178418F9BA06002168FD /* whiteBack@2x.png in Resources */,
 				F279DA4F18D663D900E0DB8B /* Gotham-Medium.ttf in Resources */,
+				F28BF5441909C6F100392471 /* trashButton.png in Resources */,
 				F279DA4B18D663D900E0DB8B /* Gotham-Book.ttf in Resources */,
 				F279DA5A18D663D900E0DB8B /* GothamRnd-BookItal.otf in Resources */,
 				F279DA5C18D663D900E0DB8B /* GothamRnd-LightItal.otf in Resources */,
+				F2D83FF61915F17000592F3D /* menuMy@2x.png in Resources */,
 				F292240E1827577800BEB9EF /* CrimsonText-Italic.ttf in Resources */,
+				F2D840051916CC7500592F3D /* iPadDefault-Landscape.png in Resources */,
+				F2EE4BA119059510001145B6 /* menuShot@2x.png in Resources */,
 				F279DA4818D663D900E0DB8B /* Gotham-BlackItalic.ttf in Resources */,
 				F2021B451802908C008B1BAE /* InfoPlist.strings in Resources */,
 				F2C2008918FC4318003C401A /* XXProfileStoryCell.xib in Resources */,
 				F2BFE48818F0C71A002A27FE /* bookmarked@2x.png in Resources */,
 				F2BFE49B18F1E969002A27FE /* Main_iPad.storyboard in Resources */,
 				F231108F18DF5E110054062B /* dark.png in Resources */,
+				F2D83FC11915D86D00592F3D /* blackFeedbackFlag.png in Resources */,
 				F2BFE42418EA15CA002A27FE /* README.mdown in Resources */,
 				F2A63C311809F43D003F3777 /* writeIcon.png in Resources */,
 				F2B8174D18F750D0002168FD /* SourceSansPro-Semibold.ttf in Resources */,
 				F2BFE4A318F1EBFF002A27FE /* iPadBlue@2x.png in Resources */,
 				F231109B18DF89FF0054062B /* SourceSansPro-Light.ttf in Resources */,
 				F2BFE45818EE2E92002A27FE /* SourceSansPro-Bold.ttf in Resources */,
+				F2D840061916CC7500592F3D /* iPadDefault-Landscape@2x.png in Resources */,
 				F29224B91828674600BEB9EF /* emptyNavBarBackgroundShort.png in Resources */,
 				F23D50C018E7872C0050D219 /* rightArrow@2x.png in Resources */,
 				F279DA5918D663D900E0DB8B /* GothamRnd-Book.otf in Resources */,
 				F2B8176F18F9B79F002168FD /* menu.png in Resources */,
+				F26F953A1906E8310022F968 /* XXCircleNotificationCell.xib in Resources */,
+				F2D83FE91915EE2500592F3D /* menuSettings@2x.png in Resources */,
+				F2D83FEE1915EEBB00592F3D /* menuBookmarks@2x.png in Resources */,
 				F2BFE4B718F22BAE002A27FE /* icon-40.png in Resources */,
 				F279DA5218D663D900E0DB8B /* Gotham-ThinItalic.ttf in Resources */,
 				F23110CA18E1028E0054062B /* whiteX@2x.png in Resources */,
@@ -1427,6 +1585,7 @@
 			buildActionMask = 2147483647;
 			files = (
 				F2BFE42C18EA15CA002A27FE /* PSTCollectionViewLayout.m in Sources */,
+				F2EA26E419140D5B00EEF2CC /* Footnote.m in Sources */,
 				F2BFE42218EA15CA002A27FE /* DACircularProgressView.m in Sources */,
 				F279DA1118D628A900E0DB8B /* XXTextStorage.m in Sources */,
 				F23D50C718E8A0E80050D219 /* XXCircleDetailViewController.m in Sources */,
@@ -1440,10 +1599,12 @@
 				F231109F18DFA2A60054062B /* XXLeaveFeedbackCell.m in Sources */,
 				F2021B4B1802908C008B1BAE /* XXAppDelegate.m in Sources */,
 				F2BFE42918EA15CA002A27FE /* PSTCollectionViewData.m in Sources */,
+				F2EA26E719140D5C00EEF2CC /* User.m in Sources */,
 				F28976E61808FFBA00B9E8A5 /* XXStoryCell.m in Sources */,
 				F279DA2918D6343E00E0DB8B /* XXCircleCell.m in Sources */,
 				F279DA7518D7551C00E0DB8B /* XXComment.m in Sources */,
 				F29F26A21901AB7500B283D8 /* XXCircleDetailsCell.m in Sources */,
+				F26F95381906E80B0022F968 /* XXCircleNotificationCell.m in Sources */,
 				F2021B7B18029626008B1BAE /* XXLoginController.m in Sources */,
 				F279DA1A18D6329E00E0DB8B /* XXMyStoriesViewController.m in Sources */,
 				F2BFE42518EA15CA002A27FE /* NSIndexPath+PSTCollectionViewAdditions.m in Sources */,
@@ -1452,7 +1613,6 @@
 				F279DA7218D6C14000E0DB8B /* XXFeedback.m in Sources */,
 				F23D50AC18E771ED0050D219 /* XXAuthorInfoCell.m in Sources */,
 				F2B8178D18FC3165002168FD /* XXProfileViewController.m in Sources */,
-				F279DA6A18D6AB6800E0DB8B /* User.m in Sources */,
 				F29F269F19018B8100B283D8 /* XXChat.m in Sources */,
 				F2BFE3D318EA14F3002A27FE /* MWGridCell.m in Sources */,
 				F285E97718E7600D008FFEC1 /* XXPhotoButton.m in Sources */,
@@ -1476,6 +1636,7 @@
 				F260FD8618D3C88A00D7C645 /* XXCirclesViewController.m in Sources */,
 				F23D50CD18E967CF0050D219 /* XXContactCell.m in Sources */,
 				F2021B84180296B2008B1BAE /* XXContribution.m in Sources */,
+				F2EA26ED191460C000EEF2CC /* XXFeedbackTransition.m in Sources */,
 				F292241318275B4000BEB9EF /* XXMenuViewController.m in Sources */,
 				F2BFE3D718EA14F3002A27FE /* MWTapDetectingImageView.m in Sources */,
 				F2C2008218FC42F5003C401A /* XXProfileStoryCell.m in Sources */,
@@ -1498,6 +1659,7 @@
 				F292247C18282C0100BEB9EF /* XXSettingsViewController.m in Sources */,
 				F2BFE42618EA15CA002A27FE /* PSTCollectionView.m in Sources */,
 				F260FD8318D3C87A00D7C645 /* XXDraftsViewController.m in Sources */,
+				F28BF53F190988E700392471 /* XXWritingTitleCell.m in Sources */,
 				F231109318DF6B280054062B /* UIImage+ImageEffects.m in Sources */,
 				F2021B81180296A8008B1BAE /* XXStory.m in Sources */,
 				F2021B7E1802965C008B1BAE /* XXUser.m in Sources */,
@@ -1507,6 +1669,8 @@
 				F29224BD18286B0200BEB9EF /* XXWritingCell.m in Sources */,
 				F28976EF180901E000B9E8A5 /* Utilities.m in Sources */,
 				F2F2F17518BBED9A00840F31 /* XXStoryBodyCell.m in Sources */,
+				F28BF53C190977C600392471 /* XXLoginNavController.m in Sources */,
+				F2EA26EA1914554200EEF2CC /* XXAddFeedbackViewController.m in Sources */,
 				F29224C81828A9B800BEB9EF /* XXNotificationCell.m in Sources */,
 				F279DA6D18D6C0A700E0DB8B /* XXFeedbackCell.m in Sources */,
 				F29224181827A46D00BEB9EF /* XXUserNameCell.m in Sources */,
@@ -1516,7 +1680,7 @@
 				F2FB33F41821F090000D32F8 /* XXPhoto.m in Sources */,
 				F2BFE42818EA15CA002A27FE /* PSTCollectionViewController.m in Sources */,
 				F28976F2180905B500B9E8A5 /* XXWriteViewController.m in Sources */,
-				F29F26921901799B00B283D8 /* XXCircleControl.m in Sources */,
+				F29F26921901799B00B283D8 /* XXSegmentedControl.m in Sources */,
 			);
 			runOnlyForDeploymentPostprocessing = 0;
 		};

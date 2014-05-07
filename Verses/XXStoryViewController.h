@@ -14,14 +14,16 @@
 #import <MSDynamicsDrawerViewController/MSDynamicsDrawerViewController.h>
 #import "XXPhotoButton.h"
 
-@interface XXStoryViewController : UIViewController <UIScrollViewDelegate, UITableViewDataSource, UITableViewDelegate>
+@interface XXStoryViewController : UIViewController <UIScrollViewDelegate, UITableViewDataSource, UITableViewDelegate, UITextViewDelegate>
 
 @property (weak, nonatomic) IBOutlet UIScrollView *scrollView;
 @property (strong, nonatomic) XXStory *story;
-@property (strong, nonatomic) NSNumber *storyId;
 @property (strong, nonatomic) NSMutableArray *stories;
 @property (weak, nonatomic) MSDynamicsDrawerViewController *dynamicsViewController;
 @property (weak, nonatomic) IBOutlet UILabel *titleLabel;
 @property (weak, nonatomic) IBOutlet UILabel *authorsLabel;
 @property (weak, nonatomic) IBOutlet XXPhotoButton *imageButton;
+@property (strong, nonatomic) UIImageView *backgroundImageView;
+
+- (void)resetWithStory:(XXStory*)newStory;
 @end

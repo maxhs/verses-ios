@@ -32,24 +32,28 @@
 }
 
 - (void)configureAlert:(NSInteger)alertCount{
+    [_menuLabel setFont:[UIFont fontWithName:kSourceSansProSemibold size:18]];
+    
     CGRect expectedSize;
     if (alertCount == 0){
-        [self.alertLabel setHidden:YES];
+        [_alertLabel setHidden:YES];
     } else {
-        [self.alertLabel setText:[NSString stringWithFormat:@"%d",alertCount]];
-        expectedSize = [self.firstButton.titleLabel.text boundingRectWithSize:self.firstButton.titleLabel.frame.size options:NSStringDrawingUsesLineFragmentOrigin attributes:@{NSFontAttributeName:self.firstButton.titleLabel.font} context:nil];
-        [self.alertLabel setHidden:NO];
-        if (self.alertLabel.backgroundColor != [UIColor redColor]){
-            [self.alertLabel setBackgroundColor:[UIColor redColor]];
-            [self.alertLabel setTextColor:[UIColor whiteColor]];
-            [self.alertLabel setFont:[UIFont fontWithName:kSourceSansProRegular size:13]];
-            [self.alertLabel.layer setBackgroundColor:[UIColor clearColor].CGColor];
-            self.alertLabel.layer.cornerRadius = self.alertLabel.frame.size.height/2;
-            self.alertLabel.layer.rasterizationScale = [UIScreen mainScreen].scale;
-            self.alertLabel.layer.shouldRasterize = YES;
-            [self.alertLabel setTextAlignment:NSTextAlignmentCenter];
+        [_alertLabel setText:[NSString stringWithFormat:@"%d",alertCount]];
+        expectedSize = [_menuLabel.text boundingRectWithSize:_menuLabel.frame.size options:NSStringDrawingUsesLineFragmentOrigin attributes:@{NSFontAttributeName:_menuLabel.font} context:nil];
+        [_alertLabel setHidden:NO];
+        if (_alertLabel.backgroundColor != [UIColor redColor]){
+            [_alertLabel setBackgroundColor:[UIColor redColor]];
+            [_alertLabel setTextColor:[UIColor whiteColor]];
+            [_alertLabel setFont:[UIFont fontWithName:kSourceSansProRegular size:13]];
+            [_alertLabel.layer setBackgroundColor:[UIColor clearColor].CGColor];
+            _alertLabel.layer.cornerRadius = _alertLabel.frame.size.height/2;
+            [_alertLabel setTextAlignment:NSTextAlignmentCenter];
         }
+        _alertLabel.layer.rasterizationScale = [UIScreen mainScreen].scale;
+        _alertLabel.layer.shouldRasterize = YES;
     }
+    _menuLabel.layer.rasterizationScale = [UIScreen mainScreen].scale;
+    _menuLabel.layer.shouldRasterize = YES;
 }
 
 @end
