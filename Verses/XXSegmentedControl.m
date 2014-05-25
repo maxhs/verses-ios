@@ -31,10 +31,15 @@
         [_background setTranslucent:YES];
         [self addSubview:_background];
         _selectedSegmentIndex = -1;
-        _font = [UIFont fontWithName:kSourceSansProRegular size:15.0];
+        if (IDIOM == IPAD){
+            _font = [UIFont fontWithName:kSourceSansProRegular size:17.0];
+        } else {
+            _font = [UIFont fontWithName:kSourceSansProRegular size:15.0];
+        }
+        
         _height = 48.0;
         _selectionIndicatorHeight = 2.0;
-        _animationDuration = 0.17;
+        _animationDuration = 0.47;
         _showsCount = YES;
         _autoAdjustSelectionIndicatorWidth = YES;
         _selectionIndicator = [UIView new];
@@ -488,6 +493,8 @@
         
         [UIView animateWithDuration:duration
                               delay:0
+             usingSpringWithDamping:.5
+              initialSpringVelocity:.001
                             options:UIViewAnimationOptionBeginFromCurrentState|UIViewAnimationOptionCurveEaseInOut
                          animations:^{
                              _selectionIndicator.frame = [self selectionIndicatorRect];

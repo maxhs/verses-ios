@@ -7,9 +7,9 @@
 //
 
 #import <UIKit/UIKit.h>
+#import "XXTextView.h"
 
 @interface XXStoryBodyCell : UITableViewCell
-@property (weak, nonatomic) IBOutlet UILabel *titleLabel;
-@property (weak, nonatomic) IBOutlet UILabel *bodySnippet;
-@property (weak, nonatomic) IBOutlet UIButton *imageButton;
+@property (strong, nonatomic) XXTextView *textView;
+@property (strong, nonatomic) NSTextContainer *textContainer;
 @end

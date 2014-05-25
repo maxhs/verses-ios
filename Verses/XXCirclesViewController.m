@@ -22,12 +22,13 @@
     UIImageView *navBarShadowView;
     NSDateFormatter *_formatter;
     CGRect screen;
-    
 }
 
 @end
 
 @implementation XXCirclesViewController
+
+@synthesize freshCircles = _freshCircles;
 
 - (void)viewDidLoad
 {
@@ -115,7 +116,7 @@
 
 - (void)loadCircles {
     [manager GET:[NSString stringWithFormat:@"%@/circles",kAPIBaseUrl] parameters:@{@"user_id":[[NSUserDefaults standardUserDefaults] objectForKey:kUserDefaultsId]} success:^(AFHTTPRequestOperation *operation, id responseObject) {
-        //NSLog(@"success fetching circles: %@",responseObject);
+        NSLog(@"success fetching circles: %@",responseObject);
         _circles = [[Utilities circlesFromJSONArray:[responseObject objectForKey:@"circles"]] mutableCopy];
         if (_circles.count == 0){
             [ProgressHUD dismiss];
@@ -176,6 +177,7 @@
 - (void)tableView:(UITableView *)tableView didSelectRowAtIndexPath:(NSIndexPath *)indexPath {
     XXCircle *circle = [_circles objectAtIndex:indexPath.row];
     circle.unreadCommentCount = 0;
+    circle.fresh = NO;
     [self.tableView reloadSections:[NSIndexSet indexSetWithIndex:0] withRowAnimation:UITableViewRowAnimationFade];
     [self performSegueWithIdentifier:@"CircleDetail" sender:circle];
     [tableView deselectRowAtIndexPath:indexPath animated:YES];
@@ -184,6 +186,8 @@
 #pragma mark - Navigation
 
 - (void)prepareForSegue:(UIStoryboardSegue *)segue sender:(id)sender{
+    [super prepareForSegue:segue sender:sender];
+    
     if ([[segue identifier] isEqualToString:@"CircleDetail"]){
         XXCircleDetailViewController *vc = [segue destinationViewController];
         [vc setCircle:(XXCircle*)sender];

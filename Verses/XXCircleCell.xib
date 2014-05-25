@@ -1,5 +1,5 @@
 <?xml version="1.0" encoding="UTF-8" standalone="no"?>
-<document type="com.apple.InterfaceBuilder3.CocoaTouch.XIB" version="3.0" toolsVersion="5056" systemVersion="13C1021" targetRuntime="iOS.CocoaTouch" propertyAccessControl="none">
+<document type="com.apple.InterfaceBuilder3.CocoaTouch.XIB" version="3.0" toolsVersion="5056" systemVersion="13D65" targetRuntime="iOS.CocoaTouch" propertyAccessControl="none">
     <dependencies>
         <deployment defaultVersion="1792" identifier="iOS"/>
         <plugIn identifier="com.apple.InterfaceBuilder.IBCocoaTouchPlugin" version="3733"/>
@@ -42,9 +42,9 @@
                 </subviews>
             </tableViewCellContentView>
             <connections>
+                <outlet property="alertLabel" destination="3ns-ZO-hYu" id="qah-OV-5aG"/>
                 <outlet property="circleName" destination="lvT-ty-gSS" id="hC8-yW-8Dg"/>
                 <outlet property="infoLabel" destination="yOE-4A-0D2" id="5I3-Pc-QqU"/>
-                <outlet property="unreadLabel" destination="3ns-ZO-hYu" id="XMe-EX-bJH"/>
             </connections>
         </tableViewCell>
     </objects>

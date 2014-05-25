@@ -318,31 +318,32 @@
         [self doneEditing];
         NSMutableDictionary *parameters = [NSMutableDictionary dictionary];
         if (signup) {
-            [parameters setObject:self.registerEmailTextField.text forKey:@"user[email]"];
-            [parameters setObject:self.registerPasswordTextField.text forKey:@"user[password]"];
-            [parameters setObject:self.registerPenNameTextField.text forKey:@"user[pen_name]"];
-            [parameters setObject:[NSNumber numberWithBool:YES] forKey:@"user[signup]"];
+            [parameters setObject:self.registerEmailTextField.text forKey:@"email"];
+            [parameters setObject:self.registerPasswordTextField.text forKey:@"password"];
+            [parameters setObject:self.registerPenNameTextField.text forKey:@"pen_name"];
+            [parameters setObject:[NSNumber numberWithBool:YES] forKey:@"signup"];
         } else {
-            [parameters setObject:self.emailTextField.text forKey:@"user[email]"];
-            [parameters setObject:self.passwordTextField.text forKey:@"user[password]"];
+            [parameters setObject:self.emailTextField.text forKey:@"email"];
+            [parameters setObject:self.passwordTextField.text forKey:@"password"];
         }
         if ([[NSUserDefaults standardUserDefaults] objectForKey:kUserDefaultsDeviceToken]) {
-            [parameters setObject:[[NSUserDefaults standardUserDefaults] objectForKey:kUserDefaultsDeviceToken] forKey:@"user[device_token]"];
+            [parameters setObject:[[NSUserDefaults standardUserDefaults] objectForKey:kUserDefaultsDeviceToken] forKey:@"device_token"];
         }
 
-        [manager POST:[NSString stringWithFormat:@"%@/sessions", kAPIBaseUrl] parameters:parameters success:^(AFHTTPRequestOperation *operation, id responseObject) {
+        [manager POST:[NSString stringWithFormat:@"%@/sessions", kAPIBaseUrl] parameters:@{@"user":parameters} success:^(AFHTTPRequestOperation *operation, id responseObject) {
             NSLog(@"success logging in: %@",responseObject);
             XXUser *user = [[XXUser alloc] initWithDictionary:[responseObject objectForKey:@"user"]];
             [[NSUserDefaults standardUserDefaults] setObject:user.identifier forKey:kUserDefaultsId];
             [[NSUserDefaults standardUserDefaults] setObject:user.email forKey:kUserDefaultsEmail];
-            [[NSUserDefaults standardUserDefaults] setObject:[parameters objectForKey:@"user[password]"] forKey:kUserDefaultsPassword];
+            [[NSUserDefaults standardUserDefaults] setObject:[parameters objectForKey:@"password"] forKey:kUserDefaultsPassword];
             [[NSUserDefaults standardUserDefaults] setObject:user.authToken forKey:kUserDefaultsAuthToken];
             [[NSUserDefaults standardUserDefaults] setObject:user.penName forKey:kUserDefaultsPenName];
             [[NSUserDefaults standardUserDefaults] setObject:user.picSmallUrl forKey:kUserDefaultsPicSmall];
+            [[NSUserDefaults standardUserDefaults] setObject:user.picLargeUrl forKey:kUserDefaultsPicLarge];
             [[NSUserDefaults standardUserDefaults] synchronize];
-            
+
             [delegate.dynamicsDrawerViewController setPaneState:MSDynamicsDrawerPaneStateClosed animated:YES allowUserInterruption:YES completion:^{
-            
+                
             }];
             [UIView animateWithDuration:.23 animations:^{
                 [self.logo setAlpha:0.0];
@@ -350,37 +351,33 @@
             
             NSManagedObjectContext *localContext = [NSManagedObjectContext MR_contextForCurrentThread];
             NSPredicate *predicate = [NSPredicate predicateWithFormat:@"identifier ==[c] %@", user.identifier];
-            User *savedUser = [User MR_findFirstWithPredicate:predicate inContext:localContext];
-            if (savedUser) {
-                savedUser.picSmall = user.picSmallUrl;
-                savedUser.email = user.email;
-                savedUser.penName = user.penName;
-                savedUser.identifier = user.identifier;
-                savedUser.contactCount = user.contactCount;
-                savedUser.storyCount = user.storyCount;
-                NSLog(@"found existing MR user from Login vc");
-                [localContext MR_saveToPersistentStoreWithCompletion:^(BOOL success, NSError *error) {
-                    [self dismissViewControllerAnimated:YES completion:^{
-                        [ProgressHUD dismiss];
-                    }];
-                }];
+            delegate.currentUser = [User MR_findFirstWithPredicate:predicate inContext:localContext];
+            if (delegate.currentUser) {
+                delegate.currentUser.picLarge = user.picLargeUrl;
+                delegate.currentUser.picSmall = user.picSmallUrl;
+                delegate.currentUser.email = user.email;
+                delegate.currentUser.penName = user.penName;
+                delegate.currentUser.identifier = user.identifier;
+                delegate.currentUser.contactCount = user.contactCount;
+                delegate.currentUser.storyCount = user.storyCount;
             } else {
                 NSLog(@"had to create new MR user");
-                User *newUser = [User MR_createInContext:localContext];
-                newUser.picSmall = user.picSmallUrl;
-                newUser.email = user.email;
-                newUser.penName = user.penName;
-                newUser.identifier = user.identifier;
-                newUser.contactCount = user.contactCount;
-                newUser.storyCount = user.storyCount;
-                [localContext MR_saveOnlySelfWithCompletion:^(BOOL success, NSError *error) {
-                    if (success) NSLog(@"done saving user through Magical Record");
-                    else NSLog(@"error saving through MR: %@",error.description);
-                    [self dismissViewControllerAnimated:YES completion:^{
-                        [ProgressHUD dismiss];
-                    }];
-                }];
+                delegate.currentUser = [User MR_createInContext:localContext];
+                delegate.currentUser.picSmall = user.picSmallUrl;
+                delegate.currentUser.picLarge = user.picLargeUrl;
+                delegate.currentUser.email = user.email;
+                delegate.currentUser.penName = user.penName;
+                delegate.currentUser.identifier = user.identifier;
+                delegate.currentUser.contactCount = user.contactCount;
+                delegate.currentUser.storyCount = user.storyCount;
             }
+            [localContext MR_saveToPersistentStoreWithCompletion:^(BOOL success, NSError *error) {
+                if (success) NSLog(@"done saving user through Magical Record");
+                else NSLog(@"error saving through MR: %@",error.description);
+                [self dismissViewControllerAnimated:YES completion:^{
+                    [ProgressHUD dismiss];
+                }];
+            }];
             
         } failure:^(AFHTTPRequestOperation *operation, NSError *error) {
             [ProgressHUD dismiss];

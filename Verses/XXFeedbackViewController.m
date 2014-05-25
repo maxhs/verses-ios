@@ -148,6 +148,8 @@
 
 - (void)prepareForSegue:(UIStoryboardSegue *)segue sender:(NSIndexPath*)indexPath
 {
+    [super prepareForSegue:segue sender:indexPath];
+    
     if ([[segue identifier] isEqualToString:@"FeedbackDetail"]){
         XXFeedbackDetailViewController *vc = [segue destinationViewController];
         [vc setFeedback:[_feedbacks objectAtIndex:indexPath.row]];

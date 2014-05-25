@@ -34,7 +34,6 @@
 @synthesize story = _story;
 
 - (void)viewDidLoad {
-    
     [self.tableView setSeparatorStyle:UITableViewCellSeparatorStyleNone];
     manager = [(XXAppDelegate*)[UIApplication sharedApplication].delegate manager];
     _formatter= [[NSDateFormatter alloc] init];
@@ -48,16 +47,10 @@
 
 - (void)viewWillAppear:(BOOL)animated {
     [[UIApplication sharedApplication] setStatusBarHidden:YES withAnimation:UIStatusBarAnimationFade];
-    _storyViewController = (XXStoryViewController*)[(UINavigationController*)self.dynamicsDrawerViewController.paneViewController viewControllers].lastObject;
-    _story = _storyViewController.story;
     if (self.tableView.alpha != 1.0){
         [UIView animateWithDuration:.23 animations:^{
             [self.tableView setAlpha:1.0];
             self.tableView.transform = CGAffineTransformIdentity;
-            if (_storyViewController) {
-                _storyViewController.view.transform = CGAffineTransformIdentity;
-                [_storyViewController.view setAlpha:1.0];
-            }
         }];
     }
     [self.tableView reloadData];
@@ -74,7 +67,7 @@
 
 - (NSInteger)numberOfSectionsInTableView:(UITableView *)tableView
 {
-    if (signedIn && _story.feedbacks){
+    if (signedIn && _story.feedbacks.count){
         return 3 + _story.feedbacks.count;
     } else {
         return 3;
@@ -83,36 +76,13 @@
 
 - (NSInteger)tableView:(UITableView *)tableView numberOfRowsInSection:(NSInteger)section
 {
-    switch (section) {
-        case 0:
-        {
-            return 1;
-        }
-            break;
-            
-        case 1:
-        {
-            return _story.collaborators.count;
-        }
-            break;
-        case 2:
-        {
-            return 1;
-        }
-            break;
-        case 3:
-        {
-            int count = 0;
-            for (XXFeedback *feedback in _story.feedbacks){
-                count += feedback.comments.count;
-            }
-            return count;
-        }
-            break;
-            
-        default:
-            return 0;
-            break;
+    if (section == 1){
+        return _story.collaborators.count;
+    } else if (section == 0 || section == 2){
+        return 1;
+    } else {
+        XXFeedback *feedback = [_story.feedbacks objectAtIndex:section-3];
+        return feedback.comments.count;
     }
 }
 
@@ -170,11 +140,40 @@
         if (cell == nil) {
             cell = [[[NSBundle mainBundle] loadNibNamed:@"XXCommentCell" owner:nil options:nil] lastObject];
         }
-        XXFeedback *feedback = [_story.feedbacks objectAtIndex:indexPath.section-(self.tableView.numberOfSections-1)];
+        XXFeedback *feedback = [_story.feedbacks objectAtIndex:indexPath.section-3];
         XXComment *comment = [feedback.comments objectAtIndex:indexPath.row];
         [cell configureComment:comment];
         [cell.timestampLabel setText:[NSString stringWithFormat:@"- %@  |  %@",comment.user.penName,[_formatter stringFromDate:comment.createdDate]]];
         return cell;
+    }
+}
+
+- (CGFloat)tableView:(UITableView *)tableView heightForHeaderInSection:(NSInteger)section {
+    if (section > 2){
+        return 34;
+    } else {
+        return 0;
+    }
+}
+
+- (UIView*)tableView:(UITableView *)tableView viewForHeaderInSection:(NSInteger)section {
+    if (section > 2){
+        UILabel *headerLabel = [[UILabel alloc] initWithFrame:CGRectMake(0, 0, self.tableView.frame.size.width, 34)];
+        [headerLabel setTextColor:[UIColor whiteColor]];
+        
+        if (IDIOM == IPAD){
+            [headerLabel setFont:[UIFont fontWithName:kSourceSansProLight size:16]];
+        } else {
+            [headerLabel setFont:[UIFont fontWithName:kSourceSansProLight size:15]];
+        }
+        XXFeedback *feedback = [_story.feedbacks objectAtIndex:section-3];
+        [headerLabel setText:[NSString stringWithFormat:@"FROM:  %@",feedback.user.penName.uppercaseString]];
+        [headerLabel setTextAlignment:NSTextAlignmentCenter];
+        headerLabel.autoresizingMask = UIViewAutoresizingFlexibleWidth;
+        return headerLabel;
+    } else {
+        UIView *empty = [[UIView alloc] init];
+        return empty;
     }
 }
 
@@ -195,12 +194,12 @@
                     NSLog(@"successfully replaced feedback: %d",feedback.comments.count);
                     //[self.tableView reloadSections:[NSIndexSet indexSetWithIndexesInRange:NSMakeRange(3, 1)] withRowAnimation:UITableViewRowAnimationFade];
                     [self.tableView reloadData];
-                    //*stop = YES;
+                    *stop = YES;
                 } else {
                     NSLog(@"new feedback");
                     _story.feedbacks = [NSMutableArray array];
                     [_story.feedbacks addObject:newFeedback];
-                    //*stop = YES;
+                    *stop = YES;
                 }
             }];
     
@@ -252,9 +251,9 @@
     [UIView animateWithDuration:.5 delay:0 usingSpringWithDamping:.5 initialSpringVelocity:.0001 options:UIViewAnimationOptionCurveEaseInOut animations:^{
         sendFeedback.alpha = 1.0;
         cancelFeedback.alpha = 1.0;
-        sendFeedback.transform = CGAffineTransformMakeTranslation(0, 10);
-        cancelFeedback.transform = CGAffineTransformMakeTranslation(0, 10);
-        feedbackTextView.transform = CGAffineTransformMakeTranslation(0, 30);
+        sendFeedback.transform = CGAffineTransformMakeTranslation(0, 17);
+        cancelFeedback.transform = CGAffineTransformMakeTranslation(0, 17);
+        feedbackTextView.transform = CGAffineTransformMakeTranslation(0, 27);
     } completion:^(BOOL finished) {
         
     }];
@@ -316,7 +315,7 @@
     } else if (indexPath.section == 2) {
         return 110;
     } else {
-        return 70;
+        return 90;
     }
 }
 - (void)tableView:(UITableView *)tableView didSelectRowAtIndexPath:(NSIndexPath *)indexPath {
@@ -336,7 +335,6 @@
             XXAuthorInfoCell *cell = (XXAuthorInfoCell*)[self.tableView cellForRowAtIndexPath:indexPath];
             CGRect displayFrom = CGRectMake(cell.frame.origin.x, cell.frame.origin.y, screen.size.width/3, screen.size.height/3);
             [self.popover presentPopoverFromRect:displayFrom inView:self.view permittedArrowDirections:UIPopoverArrowDirectionAny animated:YES];
-            NSLog(@"profile vc: %@",vc);
 
         } else {
             XXUser *user = [_story.collaborators objectAtIndex:indexPath.row];
@@ -351,10 +349,6 @@
             [UIView animateWithDuration:.23 animations:^{
                 [self.tableView setAlpha:0.0];
                 self.tableView.transform = CGAffineTransformMakeScale(.8, .8);
-                if (_storyViewController) {
-                    _storyViewController.view.transform = CGAffineTransformMakeScale(.8, .8);
-                    [_storyViewController.view setAlpha:0.0];
-                }
             }];
         }
     }
@@ -377,7 +371,7 @@
 }
 
 - (void)deleteComment {
-    XXFeedback *feedback = [_story.feedbacks objectAtIndex:indexPathForDeletion.section-(self.tableView.numberOfSections-1)];
+    XXFeedback *feedback = [_story.feedbacks objectAtIndex:indexPathForDeletion.section-3];
     XXComment *comment = [feedback.comments objectAtIndex:indexPathForDeletion.row];
     [manager DELETE:[NSString stringWithFormat:@"%@/comments/%@",kAPIBaseUrl,comment.identifier] parameters:nil success:^(AFHTTPRequestOperation *operation, id responseObject) {
         //NSLog(@"Success deleting comment: %@",responseObject);
@@ -391,7 +385,7 @@
 
 - (BOOL)tableView:(UITableView *)tableView canEditRowAtIndexPath:(NSIndexPath *)indexPath {
     if (indexPath.section == 3){
-        XXFeedback *feedback = [_story.feedbacks objectAtIndex:indexPath.section-(self.tableView.numberOfSections-1)];
+        XXFeedback *feedback = [_story.feedbacks objectAtIndex:indexPath.section-3];
         XXComment *comment = [feedback.comments objectAtIndex:indexPath.row];
         if (signedIn && comment.user.identifier && [[[NSUserDefaults standardUserDefaults] objectForKey:kUserDefaultsId] isEqualToNumber:comment.user.identifier]){
             return YES;

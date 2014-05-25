@@ -25,6 +25,7 @@
 @property (strong, nonatomic) NSString *members;
 @property (nonatomic) NSUInteger unreadCommentCount;
 @property (nonatomic) BOOL publicCircle;
+@property (nonatomic) BOOL fresh;
 
 - (id) initWithDictionary:(NSDictionary*)dictionary;
 @end

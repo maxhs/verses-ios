@@ -34,7 +34,9 @@
 - (void)configureStory:(XXStory *)story withTextColor:(UIColor*)textColor {
     [self.titleLabel setText:story.title];
     [self.titleLabel setTextColor:textColor];
-    [self.titleLabel setFont:[UIFont fontWithName:kCrimsonRoman size:23]];
+    [self.titleLabel setFont:[UIFont fontWithName:kSourceSansProSemibold size:27]];
+    [self.subtitleLabel setTextColor:textColor];
+    [self.subtitleLabel setFont:[UIFont fontWithName:kCrimsonRoman size:18]];
 }
 
 @end

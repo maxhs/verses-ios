@@ -11,7 +11,7 @@
 @interface XXWelcomeViewController : UIViewController <UITableViewDataSource, UITableViewDelegate>
 @property (weak, nonatomic) IBOutlet UITableView *tableView;
 @property (weak, nonatomic) IBOutlet UITableView *trendingTableView;
-@property (weak, nonatomic) IBOutlet UITableView *featuredTableView;
+@property (weak, nonatomic) IBOutlet UITableView *sharedTableView;
 @property (strong, nonatomic) NSMutableArray *stories;
 @property BOOL reloadTheme;
 - (void)loadEtherStories;

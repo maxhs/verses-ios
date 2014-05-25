@@ -94,6 +94,7 @@ static int minimumHeight = 30;
     _textSize = comment.rectSize;
     _textLabel.text = comment.body;
     CGFloat height = self.contentView.bounds.size.height - 10;
+    CGFloat width = self.contentView.bounds.size.width;
     if (height < minimumHeight) height = minimumHeight;
     
     if (!_imageButton) {
@@ -112,14 +113,14 @@ static int minimumHeight = 30;
         
         _outlineLabel.frame = CGRectMake(offsetX + minimumHeight, 0, _textSize.width + OUTLINE, height);
         _outlineLabel.backgroundColor = _myColor;
-        _deleteButton.frame = (UIInterfaceOrientationIsPortrait([[UIApplication sharedApplication]statusBarOrientation])) ? CGRectMake(screenWidth()-34, self.frame.size.height/2-23, 34, 34) : CGRectMake(screenHeight()-34, self.frame.size.height/2-23, 34, 34);
+        _deleteButton.frame = (UIInterfaceOrientationIsPortrait([[UIApplication sharedApplication]statusBarOrientation])) ? CGRectMake(width-34, self.frame.size.height/2-23, 34, 34) : CGRectMake(screenHeight()-34, self.frame.size.height/2-23, 34, 34);
         _timestamp.frame = CGRectMake(_outlineLabel.frame.origin.x + _outlineLabel.bounds.size.width + offsetX, -6, 40, 50);
         [_textLabel setTextColor:[UIColor whiteColor]];
         
     } else {
-        _imageButton.frame = (UIInterfaceOrientationIsPortrait([[UIApplication sharedApplication]statusBarOrientation])) ? CGRectMake(screenWidth() - offsetX/2 - minimumHeight, 0, minimumHeight, minimumHeight) : CGRectMake(screenHeight() - offsetX/2 - minimumHeight, 0, minimumHeight, minimumHeight);
+        _imageButton.frame = (UIInterfaceOrientationIsPortrait([[UIApplication sharedApplication]statusBarOrientation])) ? CGRectMake(width - offsetX/2 - minimumHeight, 0, minimumHeight, minimumHeight) : CGRectMake(screenHeight() - offsetX/2 - minimumHeight, 0, minimumHeight, minimumHeight);
         
-        _outlineLabel.frame = (UIInterfaceOrientationIsPortrait([[UIApplication sharedApplication]statusBarOrientation])) ? CGRectMake(screenWidth() - offsetX - minimumHeight, 0, -_textSize.width - OUTLINE, height) : CGRectMake(screenHeight() - offsetX - minimumHeight, 0, -_textSize.width - OUTLINE, height);
+        _outlineLabel.frame = (UIInterfaceOrientationIsPortrait([[UIApplication sharedApplication]statusBarOrientation])) ? CGRectMake(width - offsetX - minimumHeight, 0, -_textSize.width - OUTLINE, height) : CGRectMake(screenHeight() - offsetX - minimumHeight, 0, -_textSize.width - OUTLINE, height);
         _outlineLabel.backgroundColor = _senderColor;
         _deleteButton.frame = CGRectMake(0, 0, 0, 0);
         _timestamp.frame = CGRectMake(_outlineLabel.frame.origin.x - 50, -6, 40, 60);
@@ -145,9 +146,9 @@ static int minimumHeight = 30;
         _imageButton.layer.borderColor = [UIColor colorWithWhite:.9 alpha:1].CGColor;
         _imageButton.layer.borderWidth = 1.f;
         
-        for (UIView * v in @[_outlineLabel, _textLabel]) {
+        /*for (UIView * v in @[_outlineLabel, _textLabel]) {
             v.center = CGPointMake(v.center.x + _imageButton.bounds.size.width, v.center.y);
-        }
+        }*/
     }
     
     [_deleteButton setHidden:YES];

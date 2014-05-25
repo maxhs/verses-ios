@@ -108,7 +108,7 @@
         cell = [[[NSBundle mainBundle] loadNibNamed:@"XXStoryCell" owner:nil options:nil] lastObject];
     }
     XXStory *story = [_stories objectAtIndex:indexPath.row];
-    [cell configureForStory:story textColor:[UIColor blackColor] featured:YES cellHeight:screen.size.height/2];
+    [cell configureForStory:story];
 
     return cell;
 }
@@ -123,6 +123,7 @@
 }
 
 - (void)prepareForSegue:(UIStoryboardSegue *)segue sender:(NSIndexPath*)indexPath {
+    [super prepareForSegue:segue sender:indexPath];
     if ([segue.identifier isEqualToString:@"Story"]){
         XXStory *story = [_stories objectAtIndex:indexPath.row];
         XXStoryViewController *vc = [segue destinationViewController];

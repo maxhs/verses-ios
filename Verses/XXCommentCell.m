@@ -31,10 +31,11 @@
     // Configure the view for the selected state
 }
 -(void)configureComment:(XXComment*)comment{
-     [self.commentLabel setFont:[UIFont fontWithName:kCrimsonRoman size:17]];
+    [_commentLabel setFont:[UIFont fontWithName:kCrimsonRoman size:17]];
     NSString *commentText = [NSString stringWithFormat:@"\"%@\"",comment.body];
-    [self.commentLabel setText:commentText];
-    [self.timestampLabel setFont:[UIFont fontWithName:kSourceSansProRegular size:15]];
+    [_commentLabel setText:commentText];
+    [_timestampLabel setFont:[UIFont fontWithName:kSourceSansProLight size:15]];
+    [_separatorView setBackgroundColor:kSeparatorColor];
 }
 
 @end

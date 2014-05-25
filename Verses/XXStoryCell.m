@@ -11,9 +11,11 @@
 #import <SDWebImage/UIButton+WebCache.h>
 #import <DTCoreText/DTCoreText.h>
 #import "UIFontDescriptor+CrimsonText.h"
+#import "UIImage+ImageEffects.h"
 
 @implementation XXStoryCell {
-    XXTextStorage *_textStorage;
+    CGFloat width;
+    CGFloat height;
 }
 
 - (id)initWithStyle:(UITableViewCellStyle)style reuseIdentifier:(NSString *)reuseIdentifier
@@ -32,92 +34,73 @@
     // Configure the view for the selected state
 }
 
-- (void)configureForStory:(XXStory*)story textColor:(UIColor*)color featured:(BOOL)featured cellHeight:(CGFloat)height {
-    [self.infoLabel setFont:[UIFont fontWithName:kCrimsonItalic size:15]];
-    [self.infoLabel setTextColor:[UIColor lightGrayColor]];
-    [self.authorLabel setText:[NSString stringWithFormat:@"by %@",story.authors]];
+- (void)configureForStory:(XXStory*)story {
+    [_infoLabel setFont:[UIFont fontWithName:kCrimsonItalic size:15]];
+    [_infoLabel setTextColor:[UIColor lightGrayColor]];
+    [_authorLabel setText:[NSString stringWithFormat:@"by %@",story.authors]];
+    [_separatorView setBackgroundColor:kSeparatorColor];
+    
+    width = self.contentView.frame.size.width;
+    height = self.contentView.frame.size.height;
     
     if (IDIOM == IPAD){
-        [self.authorLabel setFont:[UIFont fontWithName:kSourceSansProRegular size:14]];
-        [self.titleLabel setFont:[UIFont fontWithName:kSourceSansProSemibold size:31]];
+        [_authorLabel setFont:[UIFont fontWithName:kCrimsonRoman size:15]];
+        [_titleLabel setFont:[UIFont fontWithName:kSourceSansProSemibold size:33]];
         if ([[NSUserDefaults standardUserDefaults] boolForKey:kDarkBackground]){
-            [self.authorLabel setTextColor:[UIColor whiteColor]];
+            [_authorLabel setTextColor:[UIColor whiteColor]];
         } else {
-            [self.authorLabel setTextColor:[UIColor lightGrayColor]];
+            [_authorLabel setTextColor:[UIColor lightGrayColor]];
         }
         
-        [self.authorPhoto setHidden:NO];
-        [self.authorLabel setHidden:NO];
+        [_authorPhoto setHidden:NO];
+        [_authorLabel setHidden:NO];
         
     } else {
-        [self.titleLabel setFont:[UIFont fontWithName:kSourceSansProSemibold size:25]];
-        [self.authorPhoto setHidden:YES];
-        [self.authorLabel setHidden:YES];
-        
-        self.infoLabel.transform = CGAffineTransformMakeTranslation(0, 6);
-    }
-    /*if (story.owner.picSmallUrl.length){
-        self.authorLabel.transform = CGAffineTransformMakeTranslation(-44, 0);
-        
-        self.authorPhoto.imageView.layer.cornerRadius = 18.f;
-        [self.authorPhoto.imageView setBackgroundColor:[UIColor clearColor]];
-        [self.authorPhoto.imageView.layer setBackgroundColor:[UIColor whiteColor].CGColor];
-        self.authorPhoto.imageView.layer.shouldRasterize = YES;
-        self.authorPhoto.imageView.layer.rasterizationScale = [UIScreen mainScreen].scale;
-        
-        [self.authorPhoto setImageWithURL:[NSURL URLWithString:story.owner.picSmallUrl] forState:UIControlStateNormal completed:^(UIImage *image, NSError *error, SDImageCacheType cacheType) {
-            [UIView animateWithDuration:.23 animations:^{
-                [self.authorPhoto setAlpha:1.0];
-            }];
-        }];
-    } else {
-        self.authorLabel.transform = CGAffineTransformIdentity;
-        [self.authorPhoto setAlpha:0.0];
-    }*/
-    
-    if (story.firstContribution.body.length){
-        int rangeAmount;
-        if (story.mystery){
-            rangeAmount = 250;
-        } else if (IDIOM == IPAD) {
-            rangeAmount = 500;
-        } else {
-            rangeAmount = 300;
-        }
-        NSRange range;
-        if ([[story.contributions.firstObject body] length] > rangeAmount){
-            range = NSMakeRange(0, rangeAmount);
-        } else {
-            range = NSMakeRange(0, [[story.contributions.firstObject body] length]);
-        }
-
-    
-        NSDictionary *options = @{DTUseiOS6Attributes: [NSNumber numberWithBool:YES],
-                                  DTDefaultFontSize: @19,
-                                  DTDefaultFontFamily: @"Crimson Text"};
-        
-        DTHTMLAttributedStringBuilder *stringBuilder = [[DTHTMLAttributedStringBuilder alloc] initWithHTML:[[[story.contributions.firstObject body] substringWithRange:range] dataUsingEncoding:NSUTF8StringEncoding] options:options documentAttributes:nil];
-        NSMutableAttributedString *aString = [[stringBuilder generatedAttributedString] mutableCopy];
-        NSRange fullRange = NSMakeRange(0, aString.length);
-        [[aString mutableString] replaceOccurrencesOfString:@"\n" withString:@"" options:NSCaseInsensitiveSearch range:fullRange];
-        NSAttributedString *ellipsis = [[NSAttributedString alloc] initWithString:@"..."];
-        [aString appendAttributedString:ellipsis];
-//        if (aString.length) [aString addAttributes:@{NSFontAttributeName:[UIFont fontWithDescriptor:[UIFontDescriptor preferredCrimsonTextFontDescriptorWithTextStyle:UIFontTextStyleBody] size:0]} range:fullRange];
-        self.bodySnippet.attributedText = aString;
-        [self.bodySnippet setTextColor:color];
-    } else {
-        [self.bodySnippet setText:@""];
+        [_titleLabel setFont:[UIFont fontWithName:kSourceSansProSemibold size:33]];
+        [_authorPhoto setHidden:YES];
+        [_authorLabel setHidden:YES];
     }
     
-    [self.titleLabel setTextColor:color];
-    [self.titleLabel setText:story.title];
+    XXTextStorage *_textStorage = [XXTextStorage new];
+    [_textStorage setAttributedString:story.attributedSnippet];
+    
+    NSLayoutManager *layoutManager = [[NSLayoutManager alloc] init];
+    
+    [_textStorage addLayoutManager:layoutManager];
+    
+    if (!_bodySnippet){
+        CGFloat containerHeight;
+        if (IDIOM == IPAD){
+            containerHeight = height*.9;
+        } else {
+            if (screenHeight() == 568){
+                containerHeight = height*2/3;
+            } else {
+                containerHeight = height/2;
+            }
+        }
+        CGFloat spacer = 18;
+        
+        NSTextContainer *container = [[NSTextContainer alloc] initWithSize:CGSizeMake(width-spacer, containerHeight)];
+        container.widthTracksTextView = YES;
+        [layoutManager addTextContainer:container];
+        _bodySnippet = [[XXTextView alloc] initWithFrame:CGRectMake(spacer/2, _titleLabel.frame.size.height+_titleLabel.frame.origin.y, width-spacer, container.size.height) textContainer:container];
+        _bodySnippet.userInteractionEnabled = NO;
+        [self.contentView addSubview:_bodySnippet];
+    }
+    
+    [_bodySnippet setAttributedText:story.attributedSnippet];
+    [_bodySnippet setAutoresizingMask:UIViewAutoresizingFlexibleWidth];
+    _bodySnippet.textContainer.widthTracksTextView = YES;
+    _bodySnippet.textContainer.maximumNumberOfLines = 0;
+    _bodySnippet.textContainer.lineBreakMode = NSLineBreakByTruncatingTail;
+    [_titleLabel setText:story.title];
     
     [UIView animateWithDuration:.25 animations:^{
-        [self.bodySnippet setAlpha:1.0];
-        [self.titleLabel setAlpha:1.0];
+        [_bodySnippet setAlpha:1.0];
+        [_titleLabel setAlpha:1.0];
     }];
 }
-
 
 /*- (void)createTextView:(NSString*)text withCellHeight:(CGFloat)height withOrientation:(UIInterfaceOrientation)orientation {
     

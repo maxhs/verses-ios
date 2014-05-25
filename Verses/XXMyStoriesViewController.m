@@ -64,7 +64,7 @@
         NSPredicate *predicate = [NSPredicate predicateWithFormat:@"identifier == %@", [notification.userInfo objectForKey:@"story_id"]];
         if([predicate evaluateWithObject:story]) {
             [_stories removeObject:story];
-            [self.tableView reloadData];
+            [self.tableView reloadSections:[NSIndexSet indexSetWithIndex:0] withRowAnimation:UITableViewRowAnimationFade];
             break;
         }
     }
@@ -222,8 +222,8 @@
             if (cell.background.alpha == 1.0) [self swipeCell:cell];
             [cell.readButton addTarget:self action:@selector(readStory:) forControlEvents:UIControlEventTouchUpInside];
             [cell.readButton setTag:[_stories indexOfObject:story]];
-            [cell.writeButton addTarget:self action:@selector(writeStory:) forControlEvents:UIControlEventTouchUpInside];
-            [cell.writeButton setTag:[_stories indexOfObject:story]];
+            [cell.editButton addTarget:self action:@selector(editStory:) forControlEvents:UIControlEventTouchUpInside];
+            [cell.editButton setTag:[_stories indexOfObject:story]];
             [cell.wordCountLabel setText:[NSString stringWithFormat:@"%@ words  |  Last updated: %@",story.wordCount,[_formatter stringFromDate:story.updatedDate]]];
             return cell;
         } else {
@@ -252,7 +252,11 @@
         return 60;
     } else {
         if (_stories.count && !loading){
-            return 170;
+            if (IDIOM == IPAD) {
+                return screenHeight()/3;
+            } else {
+                return screenHeight()/2;
+            }
         } else {
             return screenHeight()-64;
         }
@@ -288,7 +292,7 @@
     [self performSegueWithIdentifier:@"Read" sender:story];
 }
 
-- (void)writeStory:(UIButton*)button {
+- (void)editStory:(UIButton*)button {
     XXStory *story = [_stories objectAtIndex:button.tag];
     XXWriteViewController *write = [[self storyboard] instantiateViewControllerWithIdentifier:@"Write"];
     [write setStory:story];
@@ -330,6 +334,8 @@
 
 - (void)prepareForSegue:(UIStoryboardSegue *)segue sender:(id)sender
 {
+    [super prepareForSegue:segue sender:sender];
+    
     if ([segue.identifier isEqualToString:@"Read"]){
         XXStoryViewController *vc = [segue destinationViewController];
         

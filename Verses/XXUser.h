@@ -17,13 +17,13 @@
 @property (strong, nonatomic) NSString *firstName;
 @property (strong, nonatomic) NSString *lastName;
 @property (strong, nonatomic) NSString *location;
+@property (strong, nonatomic) NSString *picLargeUrl;
+@property (strong, nonatomic) UIImage *largeImage;
 @property (strong, nonatomic) NSString *picMediumUrl;
 @property (strong, nonatomic) NSString *picSmallUrl;
 @property (strong, nonatomic) UIImage *userImage;
-@property (strong, nonatomic) NSString *picThumbUrl;
 @property (strong, nonatomic) NSNumber *storyCount;
 @property (strong, nonatomic) NSNumber *contactCount;
-@property (strong, nonatomic) UIImage *thumbImage;
 @property (strong, nonatomic) NSString *authToken;
 @property (strong, nonatomic) NSArray *stories;
 @property BOOL pushBookmarks;

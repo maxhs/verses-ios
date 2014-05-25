@@ -170,6 +170,8 @@
 }
 
 - (void)prepareForSegue:(UIStoryboardSegue *)segue sender:(NSIndexPath*)indexPath {
+    [super prepareForSegue:segue sender:indexPath];
+    
     if ([segue.identifier isEqualToString:@"Read"]){
         XXStoryViewController *storyVC = [segue destinationViewController];
         XXStory *story = [(XXBookmark*)[_bookmarks objectAtIndex:indexPath.row] story];

@@ -15,14 +15,13 @@
 #import "XXPhotoButton.h"
 
 @interface XXStoryViewController : UIViewController <UIScrollViewDelegate, UITableViewDataSource, UITableViewDelegate, UITextViewDelegate>
-
 @property (weak, nonatomic) IBOutlet UIScrollView *scrollView;
+@property (strong, nonatomic) UILabel *titleLabel;
+@property (strong, nonatomic) UILabel *authorsLabel;
+@property (strong, nonatomic) XXPhotoButton *imageButton;
 @property (strong, nonatomic) XXStory *story;
 @property (strong, nonatomic) NSMutableArray *stories;
 @property (weak, nonatomic) MSDynamicsDrawerViewController *dynamicsViewController;
-@property (weak, nonatomic) IBOutlet UILabel *titleLabel;
-@property (weak, nonatomic) IBOutlet UILabel *authorsLabel;
-@property (weak, nonatomic) IBOutlet XXPhotoButton *imageButton;
 @property (strong, nonatomic) UIImageView *backgroundImageView;
 
 - (void)resetWithStory:(XXStory*)newStory;

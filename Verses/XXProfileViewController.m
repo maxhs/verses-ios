@@ -17,6 +17,7 @@
     UIColor *textColor;
     UIBarButtonItem *backButton;
     UIImageView *navBarShadowView;
+    NSDateFormatter *_dateFormatter;
 }
 
 @end
@@ -32,6 +33,9 @@
     [self.tableView setSeparatorColor:[UIColor colorWithWhite:1 alpha:0]];
     self.title = _user.penName;
     [self loadUserDetails];
+    _dateFormatter = [[NSDateFormatter alloc] init];
+    [_dateFormatter setLocale:[NSLocale currentLocale]];
+    [_dateFormatter setDateFormat:@"MMM, d  |  h:mm a"];
     navBarShadowView = [Utilities findNavShadow:self.navigationController.navigationBar];
 }
 
@@ -145,6 +149,7 @@
         }
         XXStory *story = [_user.stories objectAtIndex:indexPath.row];
         [cell configureStory:story withTextColor:textColor];
+        [cell.subtitleLabel setText:[_dateFormatter stringFromDate:story.updatedDate]];
         return cell;
     }
 }
@@ -164,7 +169,7 @@
     if (indexPath.section == 0){
         return 140;
     } else if (indexPath.section == 1){
-        return 60;
+        return 80;
     } else {
         return 44;
     }
@@ -176,8 +181,8 @@
         if (IDIOM == IPAD){
             XXStory *story = [_user.stories objectAtIndex:indexPath.row];
             [ProgressHUD show:@"Fetching story..."];
-            _storyInfoVc.storyViewController.story = story;
-            [_storyInfoVc.storyViewController resetWithStory:story];
+            [[NSNotificationCenter defaultCenter] postNotificationName:@"ResetStory" object:nil userInfo:@{@"story":story}];
+            _storyInfoVc.story = story;
             [_storyInfoVc.popover dismissPopoverAnimated:YES];
             [[(XXAppDelegate*)[UIApplication sharedApplication].delegate dynamicsDrawerViewController] setPaneState:MSDynamicsDrawerPaneStateClosed animated:YES allowUserInterruption:YES completion:^{
                 
@@ -191,6 +196,8 @@
 }
 
 - (void)prepareForSegue:(UIStoryboardSegue *)segue sender:(NSIndexPath*)indexPath {
+    [super prepareForSegue:segue sender:indexPath];
+    
     if ([segue.identifier isEqualToString:@"Read"]){
         XXStoryViewController *storyVC = [segue destinationViewController];
         XXStory *story = [_user.stories objectAtIndex:indexPath.row];

@@ -8,6 +8,7 @@
 
 #import "XXTextStorage.h"
 #import "UIFontDescriptor+CrimsonText.h"
+#import "UIFontDescriptor+SourceSansPro.h"
 
 @implementation XXTextStorage {
     NSMutableAttributedString *_storage;
@@ -18,6 +19,7 @@
 {
     if (self = [super init]) {
         _storage = [NSMutableAttributedString new];
+        //[self createStyling];
     }
     return self;
 }
@@ -34,8 +36,7 @@
                              effectiveRange:range];
 }
 
-- (void)replaceCharactersInRange:(NSRange)range withString:(NSString *)str
-{
+- (void)replaceCharactersInRange:(NSRange)range withString:(NSString *)str {
     //NSLog(@"replaceCharactersInRange:%@ withString:%@", NSStringFromRange(range), str);
     [self beginEditing];
     [_storage replaceCharactersInRange:range withString:str];
@@ -53,32 +54,23 @@
     [self endEditing];
 }
 
-- (void)performReplacementsForRange:(NSRange)changedRange
-{
-    NSRange extendedRange = NSUnionRange(changedRange, [[_storage string]
-                                                        lineRangeForRange:NSMakeRange(changedRange.location, 0)]);
-    extendedRange = NSUnionRange(changedRange, [[_storage string]
-                                                lineRangeForRange:NSMakeRange(NSMaxRange(changedRange), 0)]);
-    [self applyStylesToRange:extendedRange];
+- (void)performReplacementsForRange:(NSRange)changedRange {
+    NSRange extendedRange = NSUnionRange(changedRange, [[_storage string] lineRangeForRange:NSMakeRange(changedRange.location, 0)]);
+    extendedRange = NSUnionRange(changedRange, [[_storage string] lineRangeForRange:NSMakeRange(NSMaxRange(changedRange), 0)]);
+    //[self applyStylesToRange:extendedRange];
 }
 
--(void)processEditing
-{
+-(void)processEditing {
     [self performReplacementsForRange:[self editedRange]];
     [super processEditing];
 }
 
-- (void) createHighlightPatterns {
-    
-    NSDictionary* boldAttributes = [self
-                                    createAttributesForFontStyle:UIFontTextStyleBody
-                                    withTrait:UIFontDescriptorTraitBold];
-    NSDictionary* italicAttributes = [self createAttributesForFontStyle:UIFontTextStyleBody
-                                      withTrait:UIFontDescriptorTraitItalic];
+- (void) createStyling {
+    NSDictionary* boldAttributes = [self createAttributesForFontStyle:UIFontTextStyleBody withTrait:UIFontDescriptorTraitBold];
+    NSDictionary* italicAttributes = [self createAttributesForFontStyle:UIFontTextStyleBody withTrait:UIFontDescriptorTraitItalic];
     NSDictionary* strikeThroughAttributes = @{ NSStrikethroughStyleAttributeName : @1};
-
-    NSDictionary* redTextAttributes =
-    @{ NSForegroundColorAttributeName : [UIColor redColor]};
+    //NSDictionary* redTextAttributes = @{ NSForegroundColorAttributeName : [UIColor redColor]};
+    NSDictionary* headingAttributes = @{NSFontAttributeName : [UIFont fontWithDescriptor:[UIFontDescriptor preferredSourceSansProFontDescriptorWithTextStyle:UIFontTextStyleHeadline] size:0]};
     
     // construct a dictionary of replacements based on regexes
     _replacements = @{
@@ -86,13 +78,12 @@
                       @"(_\\w+(\\s\\w+)*_)\\s" : italicAttributes,
                       @"([0-9]+\\.)\\s" : boldAttributes,
                       @"(-\\w+(\\s\\w+)*-)\\s" : strikeThroughAttributes,
-                      @"\\s([A-Z]{2,})\\s" : redTextAttributes};
+                      @"<h1>(.*?)</h1>)" : headingAttributes,
+                    };
 }
 
-- (void)applyStylesToRange:(NSRange)searchRange
-{
-    NSDictionary* normalAttrs = @{NSFontAttributeName:
-                                      [UIFont preferredFontForTextStyle:UIFontTextStyleBody]};
+- (void)applyStylesToRange:(NSRange)searchRange {
+    NSDictionary* normalAttrs = @{NSFontAttributeName:[UIFont preferredFontForTextStyle:UIFontTextStyleBody]};
     
     // iterate over each replacement
     for (NSString* key in _replacements) {
@@ -115,8 +106,7 @@
                                  
                                  // reset the style to the original
                                  if (NSMaxRange(matchRange)+1 < self.length) {
-                                     [self addAttributes:normalAttrs
-                                                   range:NSMakeRange(NSMaxRange(matchRange)+1, 1)];
+                                     [self addAttributes:normalAttrs range:NSMakeRange(NSMaxRange(matchRange)+1, 1)];
                                  }
                              }];
     }
@@ -125,9 +115,7 @@
 - (NSDictionary*)createAttributesForFontStyle:(NSString*)style
                                     withTrait:(uint32_t)trait {
     UIFontDescriptor *fontDescriptor = [UIFontDescriptor preferredCrimsonTextFontDescriptorWithTextStyle:UIFontTextStyleBody];
-    
-    UIFontDescriptor *descriptorWithTrait = [fontDescriptor
-                                             fontDescriptorWithSymbolicTraits:trait];
+    UIFontDescriptor *descriptorWithTrait = [fontDescriptor fontDescriptorWithSymbolicTraits:trait];
     
     UIFont* font =  [UIFont fontWithDescriptor:descriptorWithTrait size: 0.0];
     return @{ NSFontAttributeName : font };

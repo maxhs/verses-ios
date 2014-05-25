@@ -45,9 +45,8 @@
     if ([[NSUserDefaults standardUserDefaults] boolForKey:kDarkBackground]){
         [sendButton setImage:[UIImage imageNamed:@"sendButton"] forState:UIControlStateNormal];
     } else {
-        [sendButton setImage:[UIImage imageNamed:@"sendButton"] forState:UIControlStateNormal];
+        [sendButton setImage:[UIImage imageNamed:@"sendButtonBlack"] forState:UIControlStateNormal];
     }
-    //[sendButton setAutoresizingMask:UIViewAutoresizingFlexibleLeftMargin];
     
     UILabel *label = [[UILabel alloc] initWithFrame:CGRectMake(0, 0, screenWidth(), 44)];
     [label setFont:[UIFont fontWithName:kCrimsonRoman size:21]];
@@ -169,14 +168,16 @@
         if (_stringLocation){
             [parameters setObject:_stringLocation forKey:@"location"];
         }
-        if (_contribution){
+        if (_contribution && ![_contribution.identifier isEqualToNumber:[NSNumber numberWithInt:0]]){
             [parameters setObject:_contribution.identifier forKey:@"contribution_id"];
-            [parameters setObject:_contribution.user.identifier forKey:@"recipient_id"];
+        }
+        if (_story && ![_story.identifier isEqualToNumber:[NSNumber numberWithInt:0]]){
+            [parameters setObject:_story.identifier forKey:@"story_id"];
         }
         [parameters setObject:feedbackTextView.text forKey:@"feedback"];
         [parameters setObject:[[NSUserDefaults standardUserDefaults] objectForKey:kUserDefaultsId] forKey:@"user_id"];
         [[(XXAppDelegate*)[UIApplication sharedApplication].delegate manager] POST:[NSString stringWithFormat:@"%@/feedbacks",kAPIBaseUrl] parameters:parameters success:^(AFHTTPRequestOperation *operation, id responseObject) {
-            NSLog(@"success posting feedback for snippet %@, %@",_snippet, responseObject);
+            //NSLog(@"success posting feedback for snippet %@, %@",_snippet, responseObject);
             [self dismiss];
         } failure:^(AFHTTPRequestOperation *operation, NSError *error) {
             NSLog(@"Error posting feedback");

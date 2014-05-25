@@ -48,26 +48,27 @@
         }
     }
     
-    if (circle.unreadCommentCount == 0){
-        [_unreadLabel setText:@""];
-        [_unreadLabel setHidden:YES];
+    int count = circle.unreadCommentCount;
+    if (circle.fresh) count ++;
+    
+    if (count == 0){
+        [_alertLabel setText:@""];
+        [_alertLabel setHidden:YES];
     } else {
-        [_unreadLabel setText:[NSString stringWithFormat:@"%d",circle.unreadCommentCount]];
-        [_unreadLabel setHidden:NO];
-        CGRect unreadFrame = _unreadLabel.frame;
-        if (unreadFrame.origin.x <= 5.f){
-            CGRect expectedSize = [_circleName.text boundingRectWithSize:_circleName.frame.size options:NSStringDrawingUsesLineFragmentOrigin attributes:@{NSFontAttributeName:_circleName.font} context:nil];
-            unreadFrame.origin.x += expectedSize.size.width;
-            [_unreadLabel setFrame:unreadFrame];
-            [_unreadLabel setBackgroundColor:[UIColor redColor]];
-            [_unreadLabel setTextColor:[UIColor whiteColor]];
-            [_unreadLabel setFont:[UIFont fontWithName:kSourceSansProRegular size:14]];
-            [_unreadLabel.layer setBackgroundColor:[UIColor clearColor].CGColor];
-            _unreadLabel.layer.cornerRadius = _unreadLabel.frame.size.height/2;
-            [_unreadLabel setTextAlignment:NSTextAlignmentCenter];
-        }
-        _unreadLabel.layer.rasterizationScale = [UIScreen mainScreen].scale;
-        _unreadLabel.layer.shouldRasterize = YES;
+        [_alertLabel setText:[NSString stringWithFormat:@"%d",count]];
+        [_alertLabel setHidden:NO];
+        CGRect unreadFrame = _alertLabel.frame;
+        CGRect expectedSize = [_circleName.text boundingRectWithSize:_circleName.frame.size options:NSStringDrawingUsesLineFragmentOrigin attributes:@{NSFontAttributeName:_circleName.font} context:nil];
+        unreadFrame.origin.x = expectedSize.size.width;
+        [_alertLabel setFrame:unreadFrame];
+        [_alertLabel setBackgroundColor:[UIColor redColor]];
+        [_alertLabel setTextColor:[UIColor whiteColor]];
+        [_alertLabel setFont:[UIFont fontWithName:kSourceSansProRegular size:14]];
+        [_alertLabel.layer setBackgroundColor:[UIColor clearColor].CGColor];
+        _alertLabel.layer.cornerRadius = _alertLabel.frame.size.height/2;
+        [_alertLabel setTextAlignment:NSTextAlignmentCenter];
+        _alertLabel.layer.rasterizationScale = [UIScreen mainScreen].scale;
+        _alertLabel.layer.shouldRasterize = YES;
     }
 }
 

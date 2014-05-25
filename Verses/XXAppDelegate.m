@@ -14,6 +14,7 @@
 #import <Crashlytics/Crashlytics.h>
 #import <Mixpanel/Mixpanel.h>
 #import "UIImage+ImageEffects.h"
+#import <SDWebImage/UIImageView+WebCache.h>
 #define SYSTEM_VERSION_EQUAL_TO(v)                  ([[[UIDevice currentDevice] systemVersion] compare:v options:NSNumericSearch] == NSOrderedSame)
 #define SYSTEM_VERSION_GREATER_THAN(v)              ([[[UIDevice currentDevice] systemVersion] compare:v options:NSNumericSearch] == NSOrderedDescending)
 #define SYSTEM_VERSION_GREATER_THAN_OR_EQUAL_TO(v)  ([[[UIDevice currentDevice] systemVersion] compare:v options:NSNumericSearch] != NSOrderedAscending)
@@ -24,10 +25,7 @@
     XXWelcomeViewController *welcome;
     NSTimer *timer;
 }
-
-@property (nonatomic, strong) UIImageView *windowBackground;
 @property (nonatomic, strong) UIImageView *defaultBackground;
-
 @end
 
 @implementation XXAppDelegate
@@ -61,11 +59,10 @@
     }
     
     MSDynamicsDrawerScaleStyler *menuScale = [MSDynamicsDrawerScaleStyler styler];
-    [menuScale setClosedScale:.5];
+    [menuScale setClosedScale:.13];
     // left drawer
     [self.dynamicsDrawerViewController addStylersFromArray:@[menuScale, [MSDynamicsDrawerFadeStyler styler], [MSDynamicsDrawerParallaxStyler styler]] forDirection:MSDynamicsDrawerDirectionLeft];
     self.menuViewController = [self.window.rootViewController.storyboard instantiateViewControllerWithIdentifier:@"Menu"];
-    self.menuViewController.dynamicsDrawerViewController = self.dynamicsDrawerViewController;
     [self.dynamicsDrawerViewController setDrawerViewController:self.menuViewController forDirection:MSDynamicsDrawerDirectionLeft];
     
     // right drawer
@@ -136,8 +133,6 @@
                 CGAffineTransform translation = CGAffineTransformMakeTranslation(-128, 128);
                 CGAffineTransform rotate = CGAffineTransformMakeRotation(RADIANS(90));
                 _defaultBackground.transform = CGAffineTransformConcat(rotate, translation);
-                
-                NSLog(@"default background: %@",_defaultBackground);
             }
             
         } else if ([UIScreen mainScreen].bounds.size.height >= 568) {
@@ -278,51 +273,41 @@
     
     // Restart any tasks that were paused (or not yet started) while the application was inactive. If the application was previously in the background, optionally refresh the user interface.
     if ([[NSUserDefaults standardUserDefaults] objectForKey:kUserDefaultsId]){
-
-        //ensure user is signed in
         NSMutableDictionary *parameters = [NSMutableDictionary dictionary];
-        [parameters setObject:[[NSUserDefaults standardUserDefaults] objectForKey:kUserDefaultsEmail] forKey:@"user[email]"];
+        [parameters setObject:[[NSUserDefaults standardUserDefaults] objectForKey:kUserDefaultsEmail] forKey:@"email"];
         if ([[NSUserDefaults standardUserDefaults] objectForKey:kUserDefaultsPassword]) {
-            [parameters setObject:[[NSUserDefaults standardUserDefaults] objectForKey:kUserDefaultsPassword] forKey:@"user[password]"];
-            [[AFHTTPRequestOperationManager manager] POST:[NSString stringWithFormat:@"%@/sessions", kAPIBaseUrl] parameters:parameters success:^(AFHTTPRequestOperation *operation, id responseObject) {
-                    NSLog(@"success logging in from app delegate: %@",responseObject);
-                    XXUser *user = [[XXUser alloc] initWithDictionary:[responseObject objectForKey:@"user"]];
-                    [[NSUserDefaults standardUserDefaults] setObject:user.identifier forKey:kUserDefaultsId];
-                    [[NSUserDefaults standardUserDefaults] setObject:user.authToken forKey:kUserDefaultsAuthToken];
-                    [[NSUserDefaults standardUserDefaults] setObject:user.penName forKey:kUserDefaultsPenName];
-                    [[NSUserDefaults standardUserDefaults] setObject:user.picSmallUrl forKey:kUserDefaultsPicThumb];
-                    [[NSUserDefaults standardUserDefaults] synchronize];
-                    
-                    NSManagedObjectContext *localContext = [NSManagedObjectContext MR_contextForCurrentThread];
-                    NSPredicate *predicate = [NSPredicate predicateWithFormat:@"identifier == %@", user.identifier];
-                    User *savedUser = [User MR_findFirstWithPredicate:predicate inContext:localContext];
-                    if (savedUser) {
-                        savedUser.picThumb = user.picSmallUrl;
-                        savedUser.email = user.email;
-                        savedUser.penName = user.penName;
-                        savedUser.identifier = user.identifier;
-                        NSLog(@"found existing MR user");
-                        [localContext MR_saveToPersistentStoreWithCompletion:^(BOOL success, NSError *error) {
-
-                        }];
-                    } else {
-                        NSLog(@"had to create new MR user");
-                        User *newUser = [User MR_createInContext:localContext];
-                        newUser.picThumb = user.picSmallUrl;
-                        newUser.email = user.email;
-                        newUser.penName = user.penName;
-                        newUser.identifier = user.identifier;
-                        [localContext MR_saveOnlySelfWithCompletion:^(BOOL success, NSError *error) {
-      
-                        }];
-                    }
-                    
-                } failure:^(AFHTTPRequestOperation *operation, NSError *error) {
-
-                    NSLog(@"Failure logging in: %@",error.localizedRecoverySuggestion);
-                    
+            [parameters setObject:[[NSUserDefaults standardUserDefaults] objectForKey:kUserDefaultsPassword] forKey:@"password"];
+            [[AFHTTPRequestOperationManager manager] POST:[NSString stringWithFormat:@"%@/sessions", kAPIBaseUrl] parameters:@{@"user":parameters} success:^(AFHTTPRequestOperation *operation, id responseObject) {
+                NSLog(@"success logging in from app delegate: %@",responseObject);
+                XXUser *user = [[XXUser alloc] initWithDictionary:[responseObject objectForKey:@"user"]];
+                [[NSUserDefaults standardUserDefaults] setObject:user.identifier forKey:kUserDefaultsId];
+                [[NSUserDefaults standardUserDefaults] setObject:user.authToken forKey:kUserDefaultsAuthToken];
+                [[NSUserDefaults standardUserDefaults] setObject:user.penName forKey:kUserDefaultsPenName];
+                [[NSUserDefaults standardUserDefaults] setObject:user.picLargeUrl forKey:kUserDefaultsPicLarge];
+                [[NSUserDefaults standardUserDefaults] synchronize];
+                
+                NSManagedObjectContext *localContext = [NSManagedObjectContext MR_contextForCurrentThread];
+                NSPredicate *predicate = [NSPredicate predicateWithFormat:@"identifier == %@", user.identifier];
+                _currentUser = [User MR_findFirstWithPredicate:predicate inContext:localContext];
+                if (_currentUser) {
+                    _currentUser.picThumb = user.picSmallUrl;
+                    _currentUser.email = user.email;
+                    _currentUser.penName = user.penName;
+                    _currentUser.identifier = user.identifier;
+                } else {
+                    _currentUser = [User MR_createInContext:localContext];
+                    _currentUser.picThumb = user.picSmallUrl;
+                    _currentUser.email = user.email;
+                    _currentUser.penName = user.penName;
+                    _currentUser.identifier = user.identifier;
+                }
+                [localContext MR_saveToPersistentStoreWithCompletion:^(BOOL success, NSError *error) {
+                    NSLog(@"Saving user to persistent store: %u %@",success, error);
                 }];
-            }
+            } failure:^(AFHTTPRequestOperation *operation, NSError *error) {
+                NSLog(@"Failure logging in from app delegate: %@",error.localizedRecoverySuggestion);
+            }];
+        }
     }
 }
 

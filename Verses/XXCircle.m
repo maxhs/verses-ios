@@ -37,6 +37,8 @@
         self.members = value;
     } else if ([key isEqualToString:@"unread_comments"]) {
         self.unreadCommentCount = [self unreadComments:value];
+    } else if ([key isEqualToString:@"fresh"]) {
+        self.fresh = [value boolValue];
     }
 }
 

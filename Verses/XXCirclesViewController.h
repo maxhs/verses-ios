@@ -11,5 +11,6 @@
 @interface XXCirclesViewController : UIViewController <UITableViewDataSource, UITableViewDelegate>
 
 @property (weak, nonatomic) IBOutlet UITableView *tableView;
+@property (strong, nonatomic) NSMutableArray *freshCircles;
 - (void)loadCircles;
 @end

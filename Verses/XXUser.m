@@ -28,17 +28,14 @@
         self.location = value;
     } else if([key isEqualToString:@"authentication_token"]) {
         self.authToken = value;
-    } else if([key isEqualToString:@"pic_medium_url"]) {
+    }else if([key isEqualToString:@"pic_medium_url"]) {
         self.picMediumUrl = value;
     } else if([key isEqualToString:@"pic_small_url"]) {
         self.picSmallUrl = value;
+    } else if([key isEqualToString:@"pic_large_url"]) {
+        self.picLargeUrl = value;
         [self downloadImageWithURL:[NSURL URLWithString:value] completionBlock:^(BOOL succeeded, UIImage *image) {
-            self.thumbImage = image;
-        }];
-    } else if([key isEqualToString:@"pic_thumb_url"]) {
-        self.picThumbUrl = value;
-        [self downloadImageWithURL:[NSURL URLWithString:value] completionBlock:^(BOOL succeeded, UIImage *image) {
-            self.thumbImage = image;
+            self.largeImage = image;
         }];
     } else if ([key isEqualToString:@"story_count"]) {
         self.storyCount = value;

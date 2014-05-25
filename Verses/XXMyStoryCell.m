@@ -39,16 +39,22 @@
 
 - (void)configureForStory:(XXStory*)story textColor:(UIColor*)color {
     screen = [UIScreen mainScreen].bounds;
-    [self.wordCountLabel setFont:[UIFont fontWithName:kCrimsonItalic size:15]];
+    [_wordCountLabel setFont:[UIFont fontWithName:kCrimsonItalic size:15]];
     if ([[NSUserDefaults standardUserDefaults] boolForKey:kDarkBackground]){
-        [self.wordCountLabel setTextColor:[UIColor whiteColor]];
+        [_wordCountLabel setTextColor:[UIColor whiteColor]];
     } else {
-        [self.wordCountLabel setTextColor:[UIColor lightGrayColor]];
+        [_wordCountLabel setTextColor:[UIColor lightGrayColor]];
     }
     
-    [self.draftLabel setFont:[UIFont fontWithName:kSourceSansProRegular size:14]];
-    [self.revealLabel setFont:[UIFont fontWithName:kSourceSansProRegular size:14]];
-    [self.revealLabel setTextColor:kElectricBlue];
+    [_draftLabel setFont:[UIFont fontWithName:kSourceSansProRegular size:14]];
+    [_revealLabel setFont:[UIFont fontWithName:kSourceSansProRegular size:14]];
+    [_revealLabel setTextColor:kElectricBlue];
+    
+    [_titleLabel setText:story.title];
+    [_titleLabel setFont:[UIFont fontWithName:kSourceSansProSemibold size:33]];
+    [_titleLabel setTextColor:color];
+    [_titleLabel setAdjustsFontSizeToFitWidth:YES];
+    
     NSString *storyBody;
     NSRange range;
     if (story.mystery){
@@ -57,69 +63,93 @@
         storyBody = [story.contributions.lastObject body];
     }
     
-    if ([storyBody length] > 160){
+    int snippetLength;
+    if (IDIOM == IPAD){
+        snippetLength = 600;
+    } else {
+        snippetLength = 400;
+    }
+    
+    if ([storyBody length] > snippetLength){
         if (story.mystery){
-            range = NSMakeRange([storyBody length]-160, 160);
+            range = NSMakeRange([storyBody length]-snippetLength, snippetLength);
         } else {
-            range = NSMakeRange(0, 160);
+            range = NSMakeRange(0, snippetLength);
         }
     } else {
         range = NSMakeRange(0, [storyBody length]);
     }
     
-    [self.bodySnippet setHidden:NO];
     NSDictionary *options = @{DTUseiOS6Attributes: [NSNumber numberWithBool:YES],
-                              DTDefaultFontSize: @18,
+                              DTDefaultFontSize: @21,
                               DTDefaultFontFamily: @"Crimson Text"};
     
     DTHTMLAttributedStringBuilder *stringBuilder = [[DTHTMLAttributedStringBuilder alloc] initWithHTML:[[storyBody substringWithRange:range] dataUsingEncoding:NSUTF8StringEncoding] options:options documentAttributes:nil];
-    NSMutableAttributedString *aString = [[stringBuilder generatedAttributedString] mutableCopy];
-    [[aString mutableString] replaceOccurrencesOfString:@"\n" withString:@"" options:NSCaseInsensitiveSearch range:NSMakeRange(0, aString.length)];
-    NSMutableAttributedString *ellipsis = [[NSMutableAttributedString alloc] initWithString:@"..."];
+    NSAttributedString *aString = [stringBuilder generatedAttributedString];
+    /*[[aString mutableString] replaceOccurrencesOfString:@"\n" withString:@"" options:NSCaseInsensitiveSearch range:NSMakeRange(0, aString.length)];
+    NSMutableAttributedString *ellipsis = [[NSMutableAttributedString alloc] initWithString:@"..."];*/
     
-    if (story.mystery){
-        [ellipsis appendAttributedString:aString];
-        self.bodySnippet.attributedText = ellipsis;
-    } else {
-        [aString appendAttributedString:ellipsis];
-        self.bodySnippet.attributedText = aString;
+    if (!_bodySnippet){
+        _bodySnippet = [[XXTextView alloc] init];
+        [_bodySnippet setUserInteractionEnabled:NO];
+        [_bodySnippet setScrollEnabled:NO];
+        [_bodySnippet setAutoresizingMask:UIViewAutoresizingFlexibleWidth];
+        [_bodySnippet.textContainer setMaximumNumberOfLines:0];
+        [_bodySnippet.textContainer setLineBreakMode:NSLineBreakByTruncatingTail];
+
+        CGFloat textContainerHeight;
+        if (IDIOM == IPAD){
+            textContainerHeight = self.contentView.frame.size.height*2/3;
+        } else {
+            if (screenHeight() == 568){
+                NSLog(@"iPhone5");
+                textContainerHeight = self.contentView.frame.size.height*2/3;
+            } else {
+                NSLog(@"old form factory");
+                textContainerHeight = self.contentView.frame.size.height/2;
+            }
+            
+        }
+        CGFloat spacer = 18;
+        
+        [_bodySnippet setFrame:CGRectMake(spacer/2, _titleLabel.frame.size.height+_titleLabel.frame.origin.y, self.contentView.frame.size.width-spacer, textContainerHeight)];
+        [self.contentView insertSubview:_bodySnippet belowSubview:_background];
     }
-    [self.bodySnippet setTextColor:color];
     
-    [self.titleLabel setText:story.title];
-    [self.titleLabel setFont:[UIFont fontWithName:kSourceSansProSemibold size:23]];
-    [self.titleLabel setTextColor:color];
+    [_bodySnippet setAttributedText:aString];
+    [_bodySnippet setTextColor:color];
     
-    [self.readButton.titleLabel setFont:[UIFont fontWithName:kSourceSansProRegular size:20]];
-    [self buttonTreatment:self.readButton];
-    [self.writeButton.titleLabel setFont:[UIFont fontWithName:kSourceSansProRegular size:20]];
-    [self buttonTreatment:self.writeButton];
+    [_readButton.titleLabel setFont:[UIFont fontWithName:kSourceSansProLight size:20]];
+    [self buttonTreatment:_readButton];
+    [_editButton.titleLabel setFont:[UIFont fontWithName:kSourceSansProLight size:20]];
+    [self buttonTreatment:_editButton];
     
     readY = (int)arc4random_uniform(320)-160;
     editY = (int)arc4random_uniform(320)-160;
     
-    self.writeButton.transform = CGAffineTransformMakeTranslation(screen.size.width, editY);
-    self.readButton.transform = CGAffineTransformMakeTranslation(-screen.size.width, readY);
+    _editButton.transform = CGAffineTransformMakeTranslation(screen.size.width, editY);
+    _readButton.transform = CGAffineTransformMakeTranslation(-screen.size.width, readY);
     
     if (story.saved){
-        [self.draftLabel setHidden:NO];
+        [_draftLabel setHidden:NO];
         if (story.mystery){
-            [self.revealLabel setHidden:NO];
+            [_revealLabel setHidden:NO];
         } else {
-            [self.revealLabel setHidden:YES];
+            [_revealLabel setHidden:YES];
         }
     } else {
-        [self.draftLabel setHidden:YES];
+        [_draftLabel setHidden:YES];
         if (story.mystery){
-            self.revealLabel.transform = CGAffineTransformMakeTranslation(0, -24);
-            [self.revealLabel setHidden:NO];
+            _revealLabel.transform = CGAffineTransformMakeTranslation(0, -24);
+            [_revealLabel setHidden:NO];
         } else {
-            [self.revealLabel setHidden:YES];
+            _revealLabel.transform = CGAffineTransformIdentity;
+            [_revealLabel setHidden:YES];
         }
     }
     [UIView animateWithDuration:.25 animations:^{
-        [self.bodySnippet setAlpha:1.0];
-        [self.titleLabel setAlpha:1.0];
+        [_bodySnippet setAlpha:1.0];
+        [_titleLabel setAlpha:1.0];
     }];
 }
 
@@ -150,14 +180,14 @@
 }
 
 - (void)swipe{
-    if (self.background.alpha == 0.0){
-        [self.background setImage:[self blurredSnapshot]];
+    if (_background.alpha == 0.0){
+        [_background setImage:[self blurredSnapshot]];
         [UIView animateWithDuration:.75 delay:0 usingSpringWithDamping:.5 initialSpringVelocity:.001 options:UIViewAnimationOptionCurveEaseInOut animations:^{
-            [self.background setAlpha:1.0];
-            self.readButton.transform = CGAffineTransformIdentity;
-            self.writeButton.transform = CGAffineTransformIdentity;
-            [self.readButton setAlpha:1.0];
-            [self.writeButton setAlpha:1.0];
+            [_background setAlpha:1.0];
+            _readButton.transform = CGAffineTransformIdentity;
+            _editButton.transform = CGAffineTransformIdentity;
+            [_readButton setAlpha:1.0];
+            [_editButton setAlpha:1.0];
         } completion:^(BOOL finished) {
             
         }];
@@ -165,11 +195,11 @@
         readY = (int)arc4random_uniform(320)-160;
         editY = (int)arc4random_uniform(320)-160;
         [UIView animateWithDuration:1 delay:0 usingSpringWithDamping:.4 initialSpringVelocity:.0001 options:UIViewAnimationOptionCurveEaseInOut animations:^{
-            [self.background setAlpha:0];
-            self.writeButton.transform = CGAffineTransformMakeTranslation(screen.size.width, editY);
-            self.readButton.transform = CGAffineTransformMakeTranslation(-screen.size.width, readY);
-            [self.readButton setAlpha:0.0];
-            [self.writeButton setAlpha:0.0];
+            [_background setAlpha:0];
+            _editButton.transform = CGAffineTransformMakeTranslation(screen.size.width, editY);
+            _readButton.transform = CGAffineTransformMakeTranslation(-screen.size.width, readY);
+            [_readButton setAlpha:0.0];
+            [_editButton setAlpha:0.0];
         } completion:^(BOOL finished) {
             
         }];

@@ -38,7 +38,6 @@
     _story = story;
     _photo = photo;
     _vc = vc;
-
     __weak typeof(self) weakSelf = self;
     [weakSelf setAlpha:0.0];
     [weakSelf setImageWithURL:photo.imageLargeUrl forState:UIControlStateNormal completed:^(UIImage *image, NSError *error, SDImageCacheType cacheType) {

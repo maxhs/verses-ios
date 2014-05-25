@@ -28,12 +28,12 @@
 
 - (void)configureForStory:(XXStory*)story {
     [self.storyTitle setText:story.title];
-    [self.storyTitle setFont:[UIFont fontWithName:kSourceSansProSemibold size:23]];
-    [self.lastUpdatedAt setFont:[UIFont fontWithName:kSourceSansProLight size:15]];
+    [self.storyTitle setFont:[UIFont fontWithName:kSourceSansProSemibold size:27]];
+    [self.lastUpdatedAt setFont:[UIFont fontWithName:kCrimsonRoman size:15]];
     
     if (story.views){
         [self.viewsLabel setText:[NSString stringWithFormat:@"%@ views",story.views]];
-        [self.viewsLabel setFont:[UIFont fontWithName:kSourceSansProLight size:17]];
+        [self.viewsLabel setFont:[UIFont fontWithName:kCrimsonRoman size:15]];
     }
 }
 

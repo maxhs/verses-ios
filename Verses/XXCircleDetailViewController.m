@@ -42,8 +42,8 @@
 - (void)viewDidLoad
 {
     screen = [UIScreen mainScreen].bounds;
-    [super viewDidLoad];
     manager = [(XXAppDelegate*)[UIApplication sharedApplication].delegate manager];
+    [super viewDidLoad];
     
     NSString *storyCount;
     if (_circle.stories.count == 1){
@@ -68,16 +68,30 @@
     [_formatter setLocale:[NSLocale currentLocale]];
     [_formatter setDateFormat:@"MMM, d\nh:mm a"];
     if (_circle.comments.count == 0){
-        NSLog(@"needed to load details for circle");
         [self loadDetails];
     } else {
         [self loadCircleNotifications];
     }
+    if (!_chatInput){
+        [self setupChat];
+        [self.view addSubview:self.collectionView];
+        [self.view addSubview:_chatInput];
+    }
+    [self scrollToBottom];
+    
+    //show chat by default//
+    [self reset];
+    chat = YES;
+    [self hideTableView];
+    //**//
+    
+    self.detailsTableView.rowHeight = 60;
+    self.storiesTableView.rowHeight = 80;
 }
 
 - (void)loadDetails {
     [manager GET:[NSString stringWithFormat:@"%@/circles/%@",kAPIBaseUrl,_circle.identifier] parameters:@{@"user_id":[[NSUserDefaults standardUserDefaults] objectForKey:kUserDefaultsId]} success:^(AFHTTPRequestOperation *operation, id responseObject) {
-        NSLog(@"success getting circle details: %@", responseObject);
+        //NSLog(@"success getting circle details: %@", responseObject);
         _circle = [[XXCircle alloc] initWithDictionary:[responseObject objectForKey:@"circle"]];
         [self.collectionView reloadData];
         
@@ -108,21 +122,8 @@
 }
 
 - (void) viewWillAppear:(BOOL)animated {
-    [self hideTableView];
     [[UIApplication sharedApplication] setStatusBarHidden:NO withAnimation:UIStatusBarAnimationFade];
     currentOrientation = self.interfaceOrientation;
-    if (!_chatInput){
-        [self setupChat];
-        [self.view addSubview:self.collectionView];
-        [self.view addSubview:_chatInput];
-    }
-    [self scrollToBottom];
-    
-    //show chat by default//
-    [self reset];
-    chat = YES;
-    [self hideTableView];
-    //**//
     
     [self.navigationController setNavigationBarHidden:YES animated:NO];
     if ([[NSUserDefaults standardUserDefaults] boolForKey:kDarkBackground]){
@@ -141,6 +142,11 @@
         [_circleControl lightBackground];
         [_chatInput.bgToolbar setBarStyle:UIBarStyleDefault];
         _chatInput.textView.keyboardAppearance = UIKeyboardAppearanceDefault;
+    }
+    if (self.view.alpha != 1.0){
+        [UIView animateWithDuration:.23 animations:^{
+            [self.view setAlpha:1.0];
+        }];
     }
 }
 
@@ -346,22 +352,17 @@
             XXStory *story = [_circle.stories objectAtIndex:indexPath.row];
             [cell configureStory:story withTextColor:textColor];
             [cell.titleLabel setTextAlignment:NSTextAlignmentLeft];
-            [cell.titleLabel setFont:[UIFont fontWithName:kCrimsonRoman size:21]];
+            [cell.subtitleLabel setText:[_detailsFormatter stringFromDate:story.updatedDate]];
         }
         return cell;
     }
 }
 
 - (void)tableView:(UITableView *)tableView willDisplayCell:(UITableViewCell *)cell forRowAtIndexPath:(NSIndexPath *)indexPath {
+    UIView *selectionView = [[UIView alloc] initWithFrame:cell.frame];
+    [selectionView setBackgroundColor:[UIColor colorWithWhite:.9 alpha:.23]];
+    cell.selectedBackgroundView = selectionView;
     cell.backgroundColor = [UIColor clearColor];
-}
-
-- (CGFloat)tableView:(UITableView *)tableView heightForRowAtIndexPath:(NSIndexPath *)indexPath {
-    if (details){
-        return 60;
-    } else {
-        return 56;
-    }
 }
 
 - (void)tableView:(UITableView *)tableView didSelectRowAtIndexPath:(NSIndexPath *)indexPath {
@@ -381,6 +382,8 @@
 }
 
 - (void)prepareForSegue:(UIStoryboardSegue *)segue sender:(NSIndexPath*)indexPath {
+    [super prepareForSegue:segue sender:indexPath];
+    
     if ([segue.identifier isEqualToString:@"Read"]){
         XXStoryViewController *storyVC = [segue destinationViewController];
         XXStory *story = (XXStory*)[_circle.stories objectAtIndex:indexPath.row];
@@ -528,7 +531,13 @@
         sent = YES;
         if (_circle.comments == nil)  _circle.comments = [NSMutableArray array];
         [_circle.comments addObject:comment];
-        [manager POST:[NSString stringWithFormat:@"%@/comments",kAPIBaseUrl] parameters:@{@"comment[circle_id]":_circle.identifier,@"comment[body]":comment.body,@"comment[user_id]":comment.user.identifier,@"comment[comment_type]":@"circle"} success:^(AFHTTPRequestOperation *operation, id responseObject) {
+        NSMutableDictionary *parameters = [NSMutableDictionary dictionary];
+        [parameters setObject:_circle.identifier forKey:@"circle_id"];
+        [parameters setObject:comment.body forKey:@"body"];
+        [parameters setObject:comment.user.identifier forKey:@"user_id"];
+        [parameters setObject:@"circle" forKey:@"comment_type"];
+        
+        [manager POST:[NSString stringWithFormat:@"%@/comments",kAPIBaseUrl] parameters:@{@"comment":parameters} success:^(AFHTTPRequestOperation *operation, id responseObject) {
             NSLog(@"success posting circle comment: %@",responseObject);
         } failure:^(AFHTTPRequestOperation *operation, NSError *error) {
             NSLog(@"Error posting circle comment: %@",error.description);

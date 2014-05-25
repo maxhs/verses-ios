@@ -96,13 +96,7 @@
         [ProgressHUD dismiss];
     } failure:^(AFHTTPRequestOperation *operation, NSError *error) {
         if (operation.response.statusCode == 401){
-            UIStoryboard *storyboard;
-            if ([[UIDevice currentDevice] userInterfaceIdiom] == UIUserInterfaceIdiomPhone){
-                storyboard = [UIStoryboard storyboardWithName:@"Main_iPhone" bundle:nil];
-            } else {
-                storyboard = [UIStoryboard storyboardWithName:@"Main_iPad" bundle:nil];
-            }
-            XXLoginController *login = [storyboard instantiateViewControllerWithIdentifier:@"Login"];
+            XXLoginController *login = [[self storyboard] instantiateViewControllerWithIdentifier:@"Login"];
             [self presentViewController:login animated:YES completion:^{
                 
             }];
@@ -170,7 +164,7 @@
             return 3;
             break;
         case 2:
-            return 2;
+            return 1;
             break;
         case 3:
             return 7;
@@ -374,7 +368,7 @@
                     [feedbackPushSwitch setOn:NO animated:YES];
                 }
                 cell.accessoryView = feedbackPushSwitch;
-                [cell.textLabel setText:@"Feedback"];
+                [cell.textLabel setText:@"Receive feedback"];
                 break;
             case 3:
                 if (!circlePublishPushSwitch) {
@@ -405,7 +399,7 @@
                 }
                 
                 cell.accessoryView = subscriptionPushSwitch;
-                [cell.textLabel setText:@"Subscribed to you"];
+                [cell.textLabel setText:@"Someone subscribes to you"];
                 break;
             case 5:
                 if (!invitationsPushSwitch) {
@@ -794,19 +788,13 @@
 }
 
 - (IBAction)logout {
-    UIStoryboard *storyboard;
-    if ([[UIDevice currentDevice] userInterfaceIdiom] == UIUserInterfaceIdiomPhone){
-        storyboard = [UIStoryboard storyboardWithName:@"Main_iPhone" bundle:nil];
-    } else {
-        storyboard = [UIStoryboard storyboardWithName:@"Main_iPad" bundle:nil];
-    }
     NSString *appDomain = [[NSBundle mainBundle] bundleIdentifier];
     [[NSUserDefaults standardUserDefaults] removePersistentDomainForName:appDomain];
     [NSUserDefaults resetStandardUserDefaults];
     
     [[[SDWebImageManager sharedManager] imageCache] clearDisk];
     
-    XXWelcomeViewController *welcomeVC = [storyboard instantiateViewControllerWithIdentifier:@"Welcome"];
+    XXWelcomeViewController *welcomeVC = [[self storyboard] instantiateViewControllerWithIdentifier:@"Welcome"];
     [self.navigationController pushViewController:welcomeVC animated:YES];
     [welcomeVC loadEtherStories];
 }

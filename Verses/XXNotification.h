@@ -29,6 +29,7 @@
 @property (nonatomic, strong) NSString *type;
 @property (nonatomic, strong) XXUser *targetUser;
 @property (strong, nonatomic) NSNumber *epochTime;
+@property BOOL read;
 
 - (id) initWithDictionary:(NSDictionary*)dictionary;
 

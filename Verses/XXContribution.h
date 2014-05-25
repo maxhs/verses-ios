@@ -16,6 +16,8 @@
 @property (strong, nonatomic) XXUser *user;
 @property (strong, nonatomic) NSArray *photos;
 @property (strong, nonatomic) NSNumber *wordCount;
+@property (strong, nonatomic) NSMutableArray *sections;
+
 @property BOOL allowFeedback;
 
 - (id) initWithDictionary:(NSDictionary*)dictionary;

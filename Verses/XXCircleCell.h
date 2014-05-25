@@ -13,6 +13,6 @@
 @property (weak, nonatomic) IBOutlet UILabel *circleName;
 @property (weak, nonatomic) IBOutlet UILabel *infoLabel;
 @property (weak, nonatomic) IBOutlet UIImageView *separatorView;
-@property (weak, nonatomic) IBOutlet UILabel *unreadLabel;
+@property (weak, nonatomic) IBOutlet UILabel *alertLabel;
 - (void)configureCell:(XXCircle*)circle withTextColor:(UIColor*)textColor;
 @end

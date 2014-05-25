@@ -11,7 +11,6 @@
 #import "XXStoryInfoViewController.h"
 #import "XXStoryCell.h"
 #import "XXStoryBodyCell.h"
-//#import <DTCoreText/DTCoreText.h>
 #import "XXPhoto.h"
 #import "UIImage+ImageEffects.h"
 #import <SDWebImage/UIButton+WebCache.h>
@@ -24,6 +23,7 @@
 #import "XXTextView.h"
 #import "XXAddFeedbackViewController.h"
 #import "XXFeedbackTransition.h"
+#import <DTCoreText/DTCoreText.h>
 
 @interface XXStoryViewController () <UIViewControllerTransitioningDelegate> {
     AFHTTPRequestOperationManager *manager;
@@ -35,6 +35,8 @@
     UIImage *backgroundImage;
     NSTimer *readingTimer;
     XXStoryInfoViewController *storyInfoVc;
+    XXWelcomeViewController *welcomeVc;
+    XXBookmarksViewController *bookmarkVc;
     UIInterfaceOrientation orientation;
     CGFloat rowHeight;
     UIBarButtonItem *backButton;
@@ -44,24 +46,38 @@
     NSDateFormatter *_formatter;
     UIImageView *navBarShadowView;
     UIColor *textColor;
-    XXWelcomeViewController *welcomeVc;
-    XXBookmarksViewController *bookmarkVc;
+
     BOOL signedIn;
-    UIStoryboard *storyboard;
+    CGRect titleFrame;
+    CGRect authorsFrame;
     CGFloat imageHeight;
     CGFloat spacer;
+    CGFloat contributionOffset;
+    
+    UIButton *shouldShareButton;
     UIButton *addSlowRevealButton;
-    UITextView *newContributionTextView;
-    XXTextStorage *_textStorage;
+    XXTextView *newContributionTextView;
+    NSString *_selectedText;
+    UITextRange *_selectedRange;
+    
     CGFloat keyboardHeight;
     UIButton *publishButton;
     UIButton *cancelButton;
+    
+    BOOL multipleTextViews;
+    CGFloat maxHeight;
+    int pages;
+    NSLayoutManager *layoutManager;
+    XXTextStorage *_textStorage;
+    NSMutableArray *_attributedPages;
+    NSMutableSet *visiblePages;
+    NSInteger page;
+    CGFloat header1spacing,header2spacing;
 }
+
 @end
 
 @implementation XXStoryViewController
-
-int const storyConstant = 87;
 
 @synthesize story = _story;
 @synthesize stories = _stories;
@@ -73,15 +89,6 @@ int const storyConstant = 87;
         //self.edgesForExtendedLayout = UIRectEdgeNone;
         self.automaticallyAdjustsScrollViewInsets = NO;
     }
-    if (IDIOM == IPAD){
-        rowHeight = 270;
-        if (_story.title.length){
-            self.title = _story.title;
-        }
-    } else {
-        rowHeight = 200;
-    }
-    
     orientation = self.interfaceOrientation;
     if (UIInterfaceOrientationIsPortrait(orientation)){
         width = screenWidth();
@@ -100,6 +107,11 @@ int const storyConstant = 87;
             keyboardHeight = 216;
         }
     }
+    if (IDIOM == IPAD){
+        rowHeight = height/3;
+    } else {
+        rowHeight = height/2;
+    }
     
     appDelegate = (XXAppDelegate*)[UIApplication sharedApplication].delegate;
     [appDelegate.dynamicsDrawerViewController setPaneDragRevealEnabled:YES forDirection:MSDynamicsDrawerDirectionRight];
@@ -107,12 +119,6 @@ int const storyConstant = 87;
     
     if ([[NSUserDefaults standardUserDefaults] objectForKey:kUserDefaultsId]) signedIn = YES;
     else signedIn = NO;
-    
-    if ([[UIDevice currentDevice] userInterfaceIdiom] == UIUserInterfaceIdiomPhone){
-        storyboard = [UIStoryboard storyboardWithName:@"Main_iPhone" bundle:nil];
-    } else {
-        storyboard = [UIStoryboard storyboardWithName:@"Main_iPad" bundle:nil];
-    }
     
     storiesTableView = [[UITableView alloc] initWithFrame:CGRectMake(0, 0, width, height)];
     [self.view addSubview:storiesTableView];
@@ -142,8 +148,8 @@ int const storyConstant = 87;
     }
     readingTimer = [NSTimer scheduledTimerWithTimeInterval:3 target:self selector:@selector(hideControls) userInfo:nil repeats:NO];
     
+    _attributedPages = [NSMutableArray array];
     if (!_stories) _stories = [(XXMenuViewController*)[appDelegate.dynamicsDrawerViewController drawerViewControllerForDirection:MSDynamicsDrawerDirectionLeft] stories];
-    
     storyInfoVc = (XXStoryInfoViewController*)[appDelegate.dynamicsDrawerViewController drawerViewControllerForDirection:MSDynamicsDrawerDirectionRight];
 
     _formatter= [[NSDateFormatter alloc] init];
@@ -152,7 +158,7 @@ int const storyConstant = 87;
     navBarShadowView = [Utilities findNavShadow:self.navigationController.navigationBar];
     
     [self showControls];
-    [super viewDidLoad];
+    
     [[NSNotificationCenter defaultCenter] addObserver:self
                                              selector:@selector(willShowKeyboard:)
                                                  name:UIKeyboardWillShowNotification object:nil];
@@ -160,8 +166,10 @@ int const storyConstant = 87;
     [[NSNotificationCenter defaultCenter] addObserver:self
                                              selector:@selector(addFeedback:)
                                                  name:@"AddFeedback" object:nil];
+    [[NSNotificationCenter defaultCenter] addObserver:self selector:@selector(resetStory:) name:@"ResetStory" object:nil];
+    
+    [super viewDidLoad];
 }
-
 
 - (void)viewWillAppear:(BOOL)animated {
     [super viewWillAppear:animated];
@@ -176,6 +184,8 @@ int const storyConstant = 87;
     }
     
     if (_story.contributions.count){
+        pages = 0;
+        maxHeight = 0;
         [self resetStoryBody];
         [self drawStoryBody];
         [storyInfoVc setStory:_story];
@@ -184,18 +194,35 @@ int const storyConstant = 87;
         [self loadStory];
     }
     
-    storyInfoVc.storyViewController = self;
-    
-    
-    if (self.scrollView.alpha == 0.0){
+    if (_scrollView.alpha == 0.0){
         [UIView animateWithDuration:.23 animations:^{
-            [self.scrollView setAlpha:1.0];
-            self.scrollView.transform = CGAffineTransformIdentity;
+            [_scrollView setAlpha:1.0];
+            _scrollView.transform = CGAffineTransformIdentity;
         }];
     }
     
+    //_scrollView.pagingEnabled = YES;
 }
 
+
+- (void)loadStory {
+    [self resetStoryBody];
+    NSDictionary *parameters;
+    if ([[NSUserDefaults standardUserDefaults] objectForKey:kUserDefaultsId]){
+        parameters = @{@"user_id":[[NSUserDefaults standardUserDefaults] objectForKey:kUserDefaultsId]};
+    }
+    
+    [manager GET:[NSString stringWithFormat:@"%@/stories/%@",kAPIBaseUrl,_story.identifier] parameters:parameters success:^(AFHTTPRequestOperation *operation, id responseObject) {
+        //NSLog(@"load story response: %@",responseObject);
+        _story = [[XXStory alloc] initWithDictionary:[responseObject objectForKey:@"story"]];
+        [self drawStoryBody];
+        [self loadFeedbacks];
+        storyInfoVc.story = _story;
+    } failure:^(AFHTTPRequestOperation *operation, NSError *error) {
+        NSLog(@"Error loading story: %@",error.description);
+    }];
+    
+}
 
 - (void)confirmLoginPrompt {
     [[[UIAlertView alloc] initWithTitle:@"Easy does it!" message:@"You'll need to log in if you want to leave feedback." delegate:self cancelButtonTitle:@"No Thanks" otherButtonTitles:@"Login", nil] show];
@@ -204,24 +231,18 @@ int const storyConstant = 87;
     [[[UIAlertView alloc] initWithTitle:@"Slow those horses!" message:@"You'll need to log in if you want to create bookmarks." delegate:self cancelButtonTitle:@"No Thanks" otherButtonTitles:@"Login", nil] show];
 }
 
-- (void)pop {
-    [self.navigationController popViewControllerAnimated:YES];
-}
-
 - (void)edit {
-    XXWriteViewController *vc = [storyboard instantiateViewControllerWithIdentifier:@"Write"];
+    XXWriteViewController *vc = [[self storyboard] instantiateViewControllerWithIdentifier:@"Write"];
     [vc setStory:_story];
     UINavigationController *nav = [[UINavigationController alloc] initWithRootViewController:vc];
     if ([[NSUserDefaults standardUserDefaults] boolForKey:kDarkBackground]){
         [UIView animateWithDuration:.23 animations:^{
-            [self.scrollView setAlpha:0.0];
-            self.scrollView.transform = CGAffineTransformMakeScale(.8, .8);
+            [_scrollView setAlpha:0.0];
+            _scrollView.transform = CGAffineTransformMakeScale(.8, .8);
         }];
     }
     
-    [self presentViewController:nav animated:YES completion:^{
-        
-    }];
+    [self presentViewController:nav animated:YES completion:nil];
 }
 
 - (void)createBookmark {
@@ -248,6 +269,9 @@ int const storyConstant = 87;
     }
 }
 
+- (void)pop {
+    [self.navigationController popViewControllerAnimated:YES];
+}
 - (void)back {
     [[(XXAppDelegate*)[UIApplication sharedApplication].delegate dynamicsDrawerViewController] setPaneState:MSDynamicsDrawerPaneStateOpen inDirection:MSDynamicsDrawerDirectionLeft animated:YES allowUserInterruption:YES completion:^{
         
@@ -289,15 +313,16 @@ int const storyConstant = 87;
         editButton = [[UIBarButtonItem alloc] initWithImage:[UIImage imageNamed:@"bookmark"] style:UIBarButtonItemStylePlain target:self action:@selector(confirmLoginPromptBookmark)];
     }
     
+    menuButton = [[UIBarButtonItem alloc] initWithImage:[UIImage imageNamed:@"menu"] style:UIBarButtonItemStylePlain target:self action:@selector(showStoriesMenu)];
+    
     if ([[NSUserDefaults standardUserDefaults] boolForKey:kDarkBackground]){
         themeButton = [[UIBarButtonItem alloc] initWithImage:[UIImage imageNamed:@"moon"] style:UIBarButtonItemStylePlain target:self action:@selector(themeSwitch)];
-        menuButton = [[UIBarButtonItem alloc] initWithImage:[UIImage imageNamed:@"whiteMenu"] style:UIBarButtonItemStylePlain target:self action:@selector(showStoriesMenu)];
         self.navigationItem.rightBarButtonItems = @[menuButton,editButton,themeButton];
         [self.view setBackgroundColor:[UIColor clearColor]];
         textColor = [UIColor whiteColor];
     } else {
-        themeButton = [[UIBarButtonItem alloc] initWithImage:[UIImage imageNamed:@"whiteSun"] style:UIBarButtonItemStylePlain target:self action:@selector(themeSwitch)];
-        menuButton = [[UIBarButtonItem alloc] initWithImage:[UIImage imageNamed:@"menu"] style:UIBarButtonItemStylePlain target:self action:@selector(showStoriesMenu)];
+        themeButton = [[UIBarButtonItem alloc] initWithImage:[UIImage imageNamed:@"sun"] style:UIBarButtonItemStylePlain target:self action:@selector(themeSwitch)];
+        
         self.navigationItem.rightBarButtonItems = @[menuButton,editButton,themeButton];
         [self.view setBackgroundColor:[UIColor whiteColor]];
         textColor = [UIColor blackColor];
@@ -311,19 +336,17 @@ int const storyConstant = 87;
     if ([[NSUserDefaults standardUserDefaults] boolForKey:kDarkBackground]){
         [[NSUserDefaults standardUserDefaults] setBool:NO forKey:kDarkBackground];
         textColor = [UIColor blackColor];
-        [backButton setTintColor:[UIColor blackColor]];
-        [themeButton setTintColor:[UIColor blackColor]];
-        [menuButton setTintColor:[UIColor blackColor]];
+        [backButton setTintColor:textColor];
+        [themeButton setTintColor:textColor];
+        [menuButton setTintColor:textColor];
+        [_titleLabel setTextColor:textColor];
+        [_authorsLabel setTextColor:textColor];
         [UIView animateWithDuration:.23 animations:^{
             [self.view setBackgroundColor:[UIColor whiteColor]];
-            for (id obj in self.scrollView.subviews){
-                if ([obj isKindOfClass:[UITextView class]] || [obj isKindOfClass:[UILabel class]]){
+            for (id obj in _scrollView.subviews){
+                if ([obj isKindOfClass:[XXTextView class]] || [obj isKindOfClass:[UILabel class]]){
                     [obj setTextColor:textColor];
                 }
-            }
-            if (_story.photos.count){
-                [self.titleLabel setTextColor:[UIColor whiteColor]];
-                [self.authorsLabel setTextColor:[UIColor whiteColor]];
             }
         }];
         
@@ -341,17 +364,15 @@ int const storyConstant = 87;
         [themeButton setTintColor:[UIColor whiteColor]];
         [menuButton setTintColor:[UIColor whiteColor]];
         textColor = [UIColor whiteColor];
+        [_titleLabel setTextColor:textColor];
+        [_authorsLabel setTextColor:textColor];
         
         [UIView animateWithDuration:.23 animations:^{
             [self.view setBackgroundColor:[UIColor clearColor]];
-            for (id obj in self.scrollView.subviews){
-                if ([obj isKindOfClass:[UITextView class]]){
+            for (id obj in _scrollView.subviews){
+                if ([obj isKindOfClass:[XXTextView class]]){
                     [obj setTextColor:textColor];
                 }
-            }
-            if (_story.photos.count){
-                [self.titleLabel setTextColor:[UIColor whiteColor]];
-                [self.authorsLabel setTextColor:[UIColor whiteColor]];
             }
         }];
         
@@ -372,25 +393,25 @@ int const storyConstant = 87;
 }
 
 - (void)showControls {
-    [[UIApplication sharedApplication] setStatusBarHidden:NO withAnimation:UIStatusBarAnimationSlide];
+    [[UIApplication sharedApplication] setStatusBarHidden:NO withAnimation:UIStatusBarAnimationFade];
     [self.navigationController setNavigationBarHidden:NO animated:YES];
 }
 
 - (void)hideControls {
-    [[UIApplication sharedApplication] setStatusBarHidden:YES withAnimation:UIStatusBarAnimationSlide];
+    [[UIApplication sharedApplication] setStatusBarHidden:YES withAnimation:UIStatusBarAnimationFade];
     [self.navigationController setNavigationBarHidden:YES animated:YES];
 }
 
 - (void)willAnimateRotationToInterfaceOrientation:(UIInterfaceOrientation)toInterfaceOrientation duration:(NSTimeInterval)duration {
     orientation = toInterfaceOrientation;
     if (toInterfaceOrientation == UIInterfaceOrientationLandscapeLeft || toInterfaceOrientation == UIInterfaceOrientationLandscapeRight){
-        NSLog(@"rotating landscape");
+        //NSLog(@"rotating landscape");
         width = screenHeight();
         height = screenWidth();
         [self resetStoryBody];
         [self drawStoryBody];
     } else {
-        NSLog(@"rotating portrait");
+        //NSLog(@"rotating portrait");
         width = screenWidth();
         height = screenHeight();
         [self resetStoryBody];
@@ -399,51 +420,29 @@ int const storyConstant = 87;
     [storiesTableView setFrame:CGRectMake(0, 0, width, height)];
 }
 
-/*- (NSAttributedString*)generateAttributedString:(XXContribution*)contribution mystery:(BOOL)mystery {
-   NSDictionary *options = @{DTDefaultFontSize: @21,
-                              DTDefaultTextColor: textColor,
-                              DTDefaultLineHeightMultiplier:@10,
-                              DTDefaultFontFamily: @"Crimson Text"};
-    DTHTMLAttributedStringBuilder *stringBuilder = [[DTHTMLAttributedStringBuilder alloc] initWithHTML:[contribution.body dataUsingEncoding:NSUTF8StringEncoding] options:options documentAttributes:nil];
-    if (mystery){
-        NSMutableAttributedString *attributedString = [[stringBuilder generatedAttributedString] mutableCopy];
-        NSString *tempString = [attributedString string];
-        NSString *mysteryString = [@"..." stringByAppendingString:[tempString substringFromIndex:tempString.length-250]];
-        [[attributedString mutableString] setString:mysteryString];
-        return attributedString;
-    } else {
-        return [stringBuilder generatedAttributedString];
-    }
-}*/
+- (void)resetStory:(NSNotification*)notification{
+    _story = [notification.userInfo objectForKey:@"story"];
+    [self loadStory];
+    
+}
 
 - (void)resetStoryBody {
-    for (id obj in self.scrollView.subviews) {
-        if ([obj isKindOfClass:[XXTextView class]] || [(UIView*)obj tag] == kSeparatorTag) {
+    maxHeight = 0;
+    contributionOffset = 0;
+    titleFrame = CGRectZero;
+    authorsFrame = CGRectZero;
+    _imageButton = nil;
+    for (id obj in _scrollView.subviews) {
+        if ([obj isKindOfClass:[XXTextView class]] || [(UIView*)obj tag] == kSeparatorTag || [obj isKindOfClass:[UIButton class]]) {
             [obj removeFromSuperview];
         }
     }
 }
 
-- (void)drawStoryBody {
-    [self setupNavButtons];
-    CGFloat textSize,header1spacing,header2spacing;
-    
-    if (IDIOM == IPAD){
-        textSize = 53;
-        spacer = 40;
-        header1spacing = 27;
-        header2spacing = 23;
-        imageHeight = 400;
-        [self.titleLabel setFont:[UIFont fontWithName:kSourceSansProSemibold size:textSize]];
-    } else {
-        imageHeight = 200;
-        textSize = 33;
-        header1spacing = 27;
-        header2spacing = 21;
-        spacer = 14;
-        [self.titleLabel setFont:[UIFont fontWithName:kSourceSansProSemibold size:textSize]];
+- (void)drawTitle {
+    if (_titleLabel == nil) {
+        _titleLabel = [[UILabel alloc] initWithFrame:CGRectZero];
     }
-    
     NSMutableParagraphStyle *titleCenterStyle = [[NSMutableParagraphStyle alloc] init];
     titleCenterStyle.alignment = NSTextAlignmentCenter;
     titleCenterStyle.lineSpacing = 0.f;
@@ -453,23 +452,27 @@ int const storyConstant = 87;
                                                                                        NSFontAttributeName:self.titleLabel.font,
                                                                                        NSParagraphStyleAttributeName:titleCenterStyle
                                                                                        }];
-    [self.titleLabel setAttributedText:attributedTitle];
+    [_titleLabel setAttributedText:attributedTitle];
     
-    CGRect titleFrame = [attributedTitle boundingRectWithSize:CGSizeMake(width-spacer, CGFLOAT_MAX)
-                                      options:(NSStringDrawingUsesLineFragmentOrigin|NSStringDrawingUsesFontLeading)
-                                      context:nil];
+    titleFrame = [attributedTitle boundingRectWithSize:CGSizeMake(width-spacer, CGFLOAT_MAX)
+                                                      options:(NSStringDrawingUsesLineFragmentOrigin|NSStringDrawingUsesFontLeading)
+                                                      context:nil];
     titleFrame.origin.x += spacer/2;
-    titleFrame.origin.y += 11;
-    titleFrame.size.width = width-spacer;
-    [self.titleLabel setFrame:titleFrame];
-    
-    NSString *authorsText = [NSString stringWithFormat:@"by %@",_story.authors];
-    [self.authorsLabel setText:authorsText];
     if (_story.photos.count){
-        [self.authorsLabel setFont:[UIFont fontWithName:kSourceSansProSemibold size:18]];
+        titleFrame.origin.y += imageHeight + 11;
     } else {
-        [self.authorsLabel setFont:[UIFont fontWithName:kSourceSansProLight size:15]];
+        titleFrame.origin.y = height/2 - titleFrame.size.height;
     }
+    titleFrame.size.width = width-spacer;
+    [_titleLabel setFrame:titleFrame];
+}
+
+- (void)drawAuthors {
+    if (_authorsLabel == nil) {
+        _authorsLabel = [[UILabel alloc] initWithFrame:CGRectZero];
+    }
+    NSString *authorsText = [NSString stringWithFormat:@"by %@",_story.authors];
+    [_authorsLabel setText:authorsText];
     
     NSMutableParagraphStyle *centerStyle = [[NSMutableParagraphStyle alloc] init];
     centerStyle.alignment = NSTextAlignmentCenter;
@@ -478,149 +481,216 @@ int const storyConstant = 87;
                                                                                          NSFontAttributeName: self.authorsLabel.font,
                                                                                          NSParagraphStyleAttributeName:centerStyle
                                                                                          }];
-    CGRect authorsFrame = [attributedAuthors boundingRectWithSize:CGSizeMake(width-spacer, CGFLOAT_MAX)
-                                                      options:(NSStringDrawingUsesLineFragmentOrigin|NSStringDrawingUsesFontLeading)
-                                                      context:nil];
+    authorsFrame = [attributedAuthors boundingRectWithSize:CGSizeMake(width-spacer, CGFLOAT_MAX)
+                                                          options:(NSStringDrawingUsesLineFragmentOrigin|NSStringDrawingUsesFontLeading)
+                                                          context:nil];
+    
     authorsFrame.origin.x += spacer/2;
     authorsFrame.size.width = width-spacer;
     authorsFrame.size.height += 4;
-    authorsFrame.origin.y += titleFrame.size.height+3;
-    [self.authorsLabel setFrame:authorsFrame];
+    authorsFrame.origin.y += titleFrame.origin.y + titleFrame.size.height - 7;
+    [_authorsLabel setFrame:authorsFrame];
+}
+
+- (void)generateAttributedString:(XXContribution*)contribution {
     
-    //here's the tough part: creating contributions. memory issues here.
-    CGFloat offset = 11;
-    if (_story.photos.count){
-        offset += imageHeight;
+    if (IDIOM == IPAD){
+        header1spacing = 23;
+        header2spacing = 21;
     } else {
-        offset += titleFrame.size.height + authorsFrame.size.height;
+        header1spacing = 23;
+        header2spacing = 21;
     }
-    
     NSMutableParagraphStyle *paragraphStyle = [[NSMutableParagraphStyle alloc] init];
     paragraphStyle.lineHeightMultiple = 1.f;
     paragraphStyle.lineSpacing = 5.f;
     paragraphStyle.paragraphSpacing = 17.f;
     
-    for (XXContribution *contribution in _story.contributions){
-        NSDictionary* attributes = @{NSFontAttributeName:[UIFont fontWithDescriptor:[UIFontDescriptor preferredCrimsonTextFontDescriptorWithTextStyle:UIFontTextStyleBody] size:0],
-                                     
-                                     NSDocumentTypeDocumentAttribute:NSHTMLTextDocumentType,
-                                     };
-        /*NSMutableAttributedString* attributedContributionBody = [[NSMutableAttributedString alloc] initWithHTMLData:[contribution.body dataUsingEncoding:NSUTF32StringEncoding]
-                                                                                              options:nil
-                                                                                   documentAttributes:nil];*/
-        NSError *error;
-        NSDictionary *documentAttributes;
-        NSMutableAttributedString *attributedContributionBody = [[NSMutableAttributedString alloc] initWithData:[contribution.body dataUsingEncoding:NSUnicodeStringEncoding] options:attributes documentAttributes:&documentAttributes error:&error];
-        if (attributedContributionBody.length){
-            if (_story.mystery){
-                NSString *tempString = [attributedContributionBody string];
-                NSString *mysteryString;
-                if (tempString.length > 250){
-                    mysteryString = [@"..." stringByAppendingString:[tempString substringFromIndex:tempString.length-250]];
-                    [[attributedContributionBody mutableString] setString:mysteryString];
-                } else if (tempString.length) {
-                    mysteryString = [@"..." stringByAppendingString:tempString];
-                    [[attributedContributionBody mutableString] setString:mysteryString];
-                }
-            }
-            
-            __block CGFloat headerOffset = header1spacing;
-            [attributedContributionBody beginEditing];
-            [attributedContributionBody addAttributes:attributes range:NSMakeRange(0, attributedContributionBody.length)];
-            
-            /*if (contribution.wordCount && contribution.wordCount.intValue < 4000){
-             
-                
-                [attributedContributionBody enumerateAttributesInRange:NSMakeRange(0, attributedContributionBody.length) options:(NSStringDrawingUsesLineFragmentOrigin|NSStringDrawingUsesFontLeading) usingBlock:^(NSDictionary *attrs, NSRange range, BOOL *stop) {
-                    
-                    if ([[attrs objectForKey:@"DTHeaderLevel"]  isEqual: @1]){
-                        [attributedContributionBody addAttribute:NSFontAttributeName value:[UIFont fontWithDescriptor:[[UIFontDescriptor preferredSourceSansProFontDescriptorWithTextStyle:UIFontTextStyleHeadline] fontDescriptorWithSymbolicTraits:UIFontDescriptorTraitBold] size:0] range:range];
-                        NSMutableParagraphStyle *centerStyle = [[NSMutableParagraphStyle alloc] init];
-                        centerStyle.paragraphSpacing = header1spacing;
-                        [attributedContributionBody addAttribute:NSParagraphStyleAttributeName value:centerStyle range:range];
-                        headerOffset += 30;
-                    } else if ([[attrs objectForKey:@"DTHeaderLevel"]  isEqual: @2] || [[attrs objectForKey:@"DTHeaderLevel"]  isEqual: @3]){
-                        [attributedContributionBody addAttribute:NSFontAttributeName value:[UIFont fontWithDescriptor:[[UIFontDescriptor preferredSourceSansProFontDescriptorWithTextStyle:UIFontTextStyleSubheadline] fontDescriptorWithSymbolicTraits:UIFontDescriptorTraitBold] size:0] range:range];
-                        NSMutableParagraphStyle *centerStyle = [[NSMutableParagraphStyle alloc] init];
-                        centerStyle.paragraphSpacing = header2spacing;
-                        [attributedContributionBody addAttribute:NSParagraphStyleAttributeName value:centerStyle range:range];
-                        headerOffset += 30;
-                    } else if ([[attrs objectForKey:@"DTBlockquote"]  isEqual: @1]){
-                        [attributedContributionBody addAttribute:NSFontAttributeName value:[UIFont fontWithDescriptor:[UIFontDescriptor preferredCrimsonTextFontDescriptorWithTextStyle:CrimsonTextBlockquoteStyle] size:0] range:range];
-                        NSMutableParagraphStyle *centerStyle = [[NSMutableParagraphStyle alloc] init];
-                        centerStyle.firstLineHeadIndent = 33.f;
-                        centerStyle.headIndent = 33.f;
-                        centerStyle.paragraphSpacingBefore = header1spacing;
-                        centerStyle.paragraphSpacing = header1spacing;
-                        [attributedContributionBody addAttribute:NSParagraphStyleAttributeName value:centerStyle range:range];
-                        headerOffset += header1spacing*2;
-                    } else {
-                        headerOffset += 17;
-                    }
-                }];
-            }*/
-            [attributedContributionBody endEditing];
-            
-            CGRect bodyRect = [attributedContributionBody boundingRectWithSize:CGSizeMake(width-spacer, CGFLOAT_MAX)
-                                                                options:(NSStringDrawingUsesLineFragmentOrigin|NSStringDrawingUsesFontLeading)
-                                                                context:nil];
-            
-            XXTextStorage *textStorage = [XXTextStorage new];
-            [textStorage appendAttributedString:attributedContributionBody];
-            
-            NSLog(@"plain string: %@",attributedContributionBody.string);
+    
+    NSDictionary* attributes = @{NSFontAttributeName:[UIFont fontWithDescriptor:[UIFontDescriptor preferredCrimsonTextFontDescriptorWithTextStyle:UIFontTextStyleBody] size:0],
 
-            bodyRect.origin.x += spacer/2;
-            bodyRect.origin.y = offset;
-            bodyRect.size.width = width - spacer;
-            bodyRect.size.height += headerOffset;
-            
-            NSLayoutManager *layoutManager = [[NSLayoutManager alloc] init];
-            CGSize containerSize = CGSizeMake(bodyRect.size.width,  CGFLOAT_MAX);
-            NSTextContainer *container = [[NSTextContainer alloc] initWithSize:containerSize];
-            container.widthTracksTextView = YES;
-            [layoutManager addTextContainer:container];
-            [textStorage addLayoutManager:layoutManager];
-            
-            XXTextView *contributionTextView = [[XXTextView alloc] initWithFrame:bodyRect textContainer:container];
-            [contributionTextView setBackgroundColor:[UIColor clearColor]];
-            contributionTextView.scrollEnabled = NO;
-            contributionTextView.keyboardEnabled = NO;
-            
-            if (contribution.allowFeedback){
-                contributionTextView.userInteractionEnabled = YES;
-                contributionTextView.selectable = YES;
-                [contributionTextView setContribution:contribution];
-            } else {
-                contributionTextView.userInteractionEnabled = NO;
-                contributionTextView.selectable = NO;
-            }
-            
-            [contributionTextView setupButtons];
-            [contributionTextView setTextColor:textColor];
-            
-            //this sucks
-            if (contribution.wordCount && contribution.wordCount.intValue > 4000){
-                //[contributionTextView setFont:[UIFont fontWithName:kCrimsonRoman size:21]];
-            }
-            
-            [self.scrollView addSubview:contributionTextView];
-            offset += bodyRect.size.height;
-            
-            if (_story.contributions.count > 1){
-                UIView *separator = [[UIView alloc] initWithFrame:CGRectMake(spacer/2, offset, screenWidth()-spacer, 1)];
-                [separator setTag:kSeparatorTag];
-                [separator setBackgroundColor:[UIColor colorWithWhite:.5 alpha:.25]];
-                [separator setAutoresizingMask:UIViewAutoresizingFlexibleWidth];
-                [self.scrollView addSubview:separator];
-            }
+                                 NSParagraphStyleAttributeName : paragraphStyle,
+                                 NSDocumentTypeDocumentAttribute:NSHTMLTextDocumentType,
+                                 };
+
+    //This is the non-dt core text version
+    /*NSError *error;
+     NSDictionary *documentAttributes;
+     NSMutableAttributedString *attributedContributionBody = [[NSMutableAttributedString alloc] initWithData:[contribution.body dataUsingEncoding:NSUnicodeStringEncoding] options:attributes documentAttributes:&documentAttributes error:&error];*/
+    
+    NSMutableAttributedString* attributedContributionBody = [[NSMutableAttributedString alloc] initWithHTMLData:[contribution.body dataUsingEncoding:NSUTF8StringEncoding] options:@{NSTextEncodingNameDocumentOption: @"UTF-8"} documentAttributes:nil];
+    [attributedContributionBody beginEditing];
+    [attributedContributionBody addAttributes:attributes range:NSMakeRange(0, attributedContributionBody.length)];
+    [attributedContributionBody enumerateAttributesInRange:NSMakeRange(0, attributedContributionBody.length) options:NSAttributedStringEnumerationLongestEffectiveRangeNotRequired usingBlock:^(NSDictionary *attrs, NSRange range, BOOL *stop) {
+        
+        if ([[attrs objectForKey:@"DTHeaderLevel"]  isEqual: @1]){
+            [attributedContributionBody addAttribute:NSFontAttributeName value:[UIFont fontWithDescriptor:[[UIFontDescriptor preferredSourceSansProFontDescriptorWithTextStyle:UIFontTextStyleHeadline] fontDescriptorWithSymbolicTraits:UIFontDescriptorTraitBold] size:0] range:range];
+            NSMutableParagraphStyle *centerStyle = [[NSMutableParagraphStyle alloc] init];
+            centerStyle.paragraphSpacing = header1spacing;
+            [attributedContributionBody addAttribute:NSParagraphStyleAttributeName value:centerStyle range:range];
+            maxHeight += header1spacing;
+        } else if ([[attrs objectForKey:@"DTHeaderLevel"]  isEqual: @2] || [[attrs objectForKey:@"DTHeaderLevel"]  isEqual: @3]){
+            [attributedContributionBody addAttribute:NSFontAttributeName value:[UIFont fontWithDescriptor:[[UIFontDescriptor preferredSourceSansProFontDescriptorWithTextStyle:UIFontTextStyleSubheadline] fontDescriptorWithSymbolicTraits:UIFontDescriptorTraitBold] size:0] range:range];
+            NSMutableParagraphStyle *centerStyle = [[NSMutableParagraphStyle alloc] init];
+            centerStyle.paragraphSpacing = header2spacing;
+            [attributedContributionBody addAttribute:NSParagraphStyleAttributeName value:centerStyle range:range];
+            maxHeight += header2spacing;
+        } else if ([[attrs objectForKey:@"DTBlockquote"]  isEqual: @1]){
+            [attributedContributionBody addAttribute:NSFontAttributeName value:[UIFont fontWithDescriptor:[UIFontDescriptor preferredCrimsonTextFontDescriptorWithTextStyle:CrimsonTextBlockquoteStyle] size:0] range:range];
+            NSMutableParagraphStyle *centerStyle = [[NSMutableParagraphStyle alloc] init];
+            centerStyle.firstLineHeadIndent = 33.f;
+            centerStyle.headIndent = 33.f;
+            centerStyle.paragraphSpacingBefore = header1spacing;
+            centerStyle.paragraphSpacing = header1spacing;
+            [attributedContributionBody addAttribute:NSParagraphStyleAttributeName value:centerStyle range:range];
         }
-    }
-    //end of contribution drawing loop
+    }];
+    [attributedContributionBody endEditing];
+    [_textStorage appendAttributedString:attributedContributionBody];
+    [self drawContributionBody:attributedContributionBody forContribution:contribution];
+}
+
+- (void)drawContributionBody:(NSMutableAttributedString*)attributedContributionBody forContribution:(XXContribution*)contribution {
     
     if (_story.mystery){
+        NSString *tempString = [attributedContributionBody string];
+        NSString *mysteryString;
+        if (tempString.length > 250){
+            mysteryString = [@"..." stringByAppendingString:[tempString substringFromIndex:tempString.length-250]];
+            [[attributedContributionBody mutableString] setString:mysteryString];
+        } else if (tempString.length) {
+            mysteryString = [@"..." stringByAppendingString:tempString];
+            [[attributedContributionBody mutableString] setString:mysteryString];
+        }
+        XXTextView *textView = [[XXTextView alloc] initWithFrame:CGRectMake(spacer/2,contributionOffset,width-spacer,height)];
+        [textView setContribution:contribution];
+        if (contribution.allowFeedback){
+            textView.keyboardEnabled = NO;
+            textView.userInteractionEnabled = YES;
+            textView.selectable = YES;
+            [textView setupButtons];
+        } else {
+            textView.userInteractionEnabled = NO;
+        }
+        [textView setAttributedText:attributedContributionBody];
+        CGFloat mysteryHeight = [textView sizeThatFits:CGSizeMake(width-spacer, CGFLOAT_MAX)].height;
+        CGRect mysteryFrame = textView.frame;
+        mysteryFrame.origin.y += spacer;
+        mysteryFrame.size.height = mysteryHeight + spacer*2;
+        [textView setFrame:mysteryFrame];
+    
+        [textView setTextColor:textColor];
+        [_scrollView addSubview:textView];
+        
+        contributionOffset += mysteryFrame.size.height;
+        
+        UIView *separator = [[UIView alloc] initWithFrame:CGRectMake(spacer, contributionOffset, width-spacer*2, 1)];
+        [separator setTag:kSeparatorTag];
+        [separator setBackgroundColor:[UIColor colorWithWhite:.7 alpha:.23]];
+        [separator setAutoresizingMask:UIViewAutoresizingFlexibleWidth];
+        [_scrollView addSubview:separator];
+        
+    } else {
+        //draw the first contribution
+        CGFloat textViewHeight;
+        if (!multipleTextViews){
+            textViewHeight = CGFLOAT_MAX;
+        } else {
+            textViewHeight = height;
+        }
+        NSTextContainer *textContainer = [[NSTextContainer alloc] initWithSize:CGSizeMake(width-spacer, textViewHeight)];
+        [layoutManager addTextContainer:textContainer];
+        XXTextView *textView = [[XXTextView alloc] initWithFrame:CGRectMake(spacer/2,height,width-spacer,textViewHeight) textContainer:textContainer];
+        [textView setContribution:contribution];
+        maxHeight += [textView sizeThatFits:CGSizeMake(width-spacer, CGFLOAT_MAX)].height + height;
+        pages += (int)ceilf(maxHeight/height);
+
+        [textView setSelectable:YES];
+        [textView setKeyboardEnabled:NO];
+        [textView setupButtons];
+        [textView setTextColor:textColor];
+        if (!multipleTextViews){
+            CGRect bodyRect = textView.frame;
+            bodyRect.origin.y = height;
+            bodyRect.size.height = maxHeight;
+            [textView setFrame:bodyRect];
+        }
+        
+        [_scrollView addSubview:textView];
+        [textView setTag:1];
+        [visiblePages addObject:[NSNumber numberWithInt:1]];
+    }
+}
+
+- (void)drawStoryBody {
+    [self setupNavButtons];
+    CGFloat textSize;
+    if (visiblePages == nil){
+        visiblePages = [NSMutableSet set];
+    } else {
+        [visiblePages removeAllObjects];
+    }
+    
+    if (IDIOM == IPAD){
+        textSize = 53;
+        spacer = 40;
+        imageHeight = height/2;
+        [_titleLabel setFont:[UIFont fontWithName:kSourceSansProSemibold size:textSize]];
+        [_authorsLabel setFont:[UIFont fontWithName:kCrimsonRoman size:19]];
+    } else {
+        imageHeight = height*.7;
+        textSize = 37;
+        spacer = 14;
+        [_titleLabel setFont:[UIFont fontWithName:kSourceSansProSemibold size:textSize]];
+        [_authorsLabel setFont:[UIFont fontWithName:kCrimsonRoman size:17]];
+    }
+    
+    [self drawTitle];
+    [self drawAuthors];
+    
+    if (_story.photos.count){
+        [_imageButton setHidden:NO];
+        if (_imageButton == nil) {
+            _imageButton = [[XXPhotoButton alloc] initWithFrame:CGRectMake(0, 0, width, imageHeight)];
+            [_scrollView addSubview:_imageButton];
+        } else {
+            [_imageButton setFrame:CGRectMake(0, 0, width, imageHeight)];
+        }
+        [_imageButton.imageView setContentMode:UIViewContentModeScaleAspectFill];
+        [_imageButton initializeWithPhoto:(XXPhoto*)_story.photos.firstObject forStory:_story inVC:self];
+        [_imageButton setUserInteractionEnabled:NO];
+        [_titleLabel setTextColor:textColor];
+        [_authorsLabel setTextColor:textColor];
+    } else {
+        [_imageButton setHidden:YES];
+        [_titleLabel setTextColor:textColor];
+        _titleLabel.layer.shadowColor = [UIColor clearColor].CGColor;
+        _titleLabel.layer.shadowOpacity = 0.f;
+        [_authorsLabel setTextColor:textColor];
+    }
+    
+    //only need to setup the text storage and layout manager once
+    _textStorage = [[XXTextStorage alloc] init];
+    layoutManager = [[NSLayoutManager alloc] init];
+    layoutManager.allowsNonContiguousLayout = YES;
+    [_textStorage addLayoutManager:layoutManager];
+    
+    contributionOffset = height;
+    if (!_story.mystery && _story.contributions.count == 1 && _story.wordCount.intValue < 4000){
+        multipleTextViews = NO;
+        [self generateAttributedString:_story.firstContribution];
+    } else {
+        multipleTextViews = YES;
+        for (XXContribution *contribution in _story.contributions){
+            [self generateAttributedString:contribution];
+        }
+    }
+    
+    if (_story.mystery){
+        maxHeight = contributionOffset;
         addSlowRevealButton = [UIButton buttonWithType:UIButtonTypeCustom];
-        [addSlowRevealButton setFrame:CGRectMake(0, offset, screenWidth(), 88)];
+        [addSlowRevealButton setAutoresizingMask:UIViewAutoresizingFlexibleWidth];
+        [addSlowRevealButton setFrame:CGRectMake(0, maxHeight, width, 176)];
         [addSlowRevealButton setTitle:@"Add to slow reveal..." forState:UIControlStateNormal];
         [addSlowRevealButton.titleLabel setFont:[UIFont fontWithName:kSourceSansProRegular size:20]];
         [addSlowRevealButton addTarget:self action:@selector(addToSlowReveal) forControlEvents:UIControlEventTouchUpInside];
@@ -629,46 +699,131 @@ int const storyConstant = 87;
         } else {
             [addSlowRevealButton setTitleColor:[UIColor lightGrayColor] forState:UIControlStateNormal];
         }
-        [self.scrollView addSubview:addSlowRevealButton];
-        offset += 88;
+        [_scrollView addSubview:addSlowRevealButton];
+        maxHeight += addSlowRevealButton.frame.size.height;
+    } else {
+        
+        shouldShareButton = [UIButton buttonWithType:UIButtonTypeCustom];
+        [shouldShareButton setAutoresizingMask:UIViewAutoresizingFlexibleWidth];
+        [shouldShareButton setFrame:CGRectMake(0, maxHeight , width, 176)];
+        [shouldShareButton setTitle:@"Share this story" forState:UIControlStateNormal];
+        [shouldShareButton.titleLabel setFont:[UIFont fontWithName:kSourceSansProLight size:20]];
+        [shouldShareButton addTarget:self action:@selector(showActivityView) forControlEvents:UIControlEventTouchUpInside];
+        [shouldShareButton setTitleColor:textColor forState:UIControlStateNormal];
+        [_scrollView addSubview:shouldShareButton];
+        
+        maxHeight += 176;
     }
     
-    if (_story.photos.count){
-         [_imageButton setFrame:CGRectMake(0, 0, width, imageHeight)];
-        [_imageButton setHidden:NO];
-        [_imageButton.imageView setContentMode:UIViewContentModeScaleAspectFill];
-        [_imageButton initializeWithPhoto:(XXPhoto*)_story.photos.firstObject forStory:_story inVC:self];
-        
-        [_scrollView setContentSize:CGSizeMake(screenWidth()-spacer, offset)];
-        [_titleLabel setTextColor:[UIColor whiteColor]];
-        _titleLabel.layer.shadowColor = textColor.CGColor;
-        _titleLabel.layer.shadowOffset = CGSizeMake(0, 0);
-        _titleLabel.layer.shadowOpacity = .23f;
-        _titleLabel.layer.shadowRadius = 5.0f;
-        
-        [_authorsLabel setTextColor:[UIColor whiteColor]];
-        _authorsLabel.layer.shadowColor = textColor.CGColor;
-        _authorsLabel.layer.shadowOffset = CGSizeMake(0, 0);
-        _authorsLabel.layer.shadowOpacity = .23f;
-        _authorsLabel.layer.shadowRadius = 2.3f;
-    } else {
-        [_imageButton setHidden:YES];
-        [_scrollView setContentSize:CGSizeMake(screenWidth()-spacer, offset)];
-        [_titleLabel setTextColor:textColor];
-        _titleLabel.layer.shadowColor = [UIColor clearColor].CGColor;
-        _titleLabel.layer.shadowOpacity = 0.f;
-        [_authorsLabel setTextColor:textColor];
-        _authorsLabel.layer.shadowColor = [UIColor clearColor].CGColor;
-        _authorsLabel.layer.shadowOpacity = 0.f;
-    }
-    
-    if ([[NSUserDefaults standardUserDefaults] boolForKey:kStoryPaging]){
-        self.scrollView.pagingEnabled = YES;
-    } else {
-        self.scrollView.pagingEnabled = NO;
-    }
+    [_scrollView setContentSize:CGSizeMake(width, maxHeight)];
     
     [ProgressHUD dismiss];
+}
+
+- (void)showActivityView {
+    UIActivityViewController *activityView = [[UIActivityViewController alloc] initWithActivityItems:@[_story.storyUrl] applicationActivities:nil];
+    [self presentViewController:activityView animated:YES completion:^{
+        
+    }];
+}
+
+- (void)scrollViewDidScroll:(UIScrollView *)scrollView {
+    CGFloat y = scrollView.contentOffset.y;
+    if (y < 0){
+        CGFloat y = scrollView.contentOffset.y;
+        CGRect imageFrame = _imageButton.frame;
+        imageFrame.origin.y = y;
+        imageFrame.origin.x = y/2;
+        imageFrame.size.width = width-y;
+        imageFrame.size.height = imageHeight-y;
+        _imageButton.frame = imageFrame;
+        
+        /*titleFrame.origin.y = y + 11;
+        _titleLabel.frame = titleFrame;
+        authorsFrame.origin.y = y + titleFrame.size.height;
+        _authorsLabel.frame = authorsFrame;*/
+    } else {
+        [self hideControls];
+    }
+    
+    if (!_story.mystery){
+        static NSInteger previousPage = 0;
+        CGFloat pageHeight = scrollView.frame.size.height;
+        float fractionalPage = y / pageHeight;
+        page = floorf(fractionalPage);
+        if (page > previousPage) {
+            previousPage = page;
+            [self loadPage:page+1];
+            [self loadPage:page+2];
+        } else if (page < previousPage){
+            previousPage = page;
+            [self loadPage:page-1];
+            [self loadPage:page-2];
+            
+        }
+    }
+}
+
+- (void)loadPage:(NSInteger)newPage{
+    if (multipleTextViews && newPage > 0 && ![visiblePages containsObject:[NSNumber numberWithInt:newPage]]){
+        NSLog(@"attributed page count: %d, new page: %d",_attributedPages.count, newPage);
+        XXTextView *textView;
+        if (_attributedPages.count > newPage){
+            NSLog(@"object pulled from attributed pages: %@",[_attributedPages objectAtIndex:newPage-1]);
+            textView = [[XXTextView alloc] initWithFrame:CGRectMake(spacer/2,height*newPage-1,width-spacer,height)];
+            [textView setAttributedText:[_attributedPages objectAtIndex:newPage-1]];
+        } else {
+            NSTextContainer *textContainer = [[NSTextContainer alloc] initWithSize:CGSizeMake(width-spacer, height)];
+            [layoutManager addTextContainer:textContainer];
+            textView = [[XXTextView alloc] initWithFrame:CGRectMake(spacer/2,height*newPage,width-spacer,height)];
+            
+            NSRange glyphRange = [layoutManager glyphRangeForTextContainer:textContainer];
+            NSAttributedString *attributedSubstring = [_textStorage attributedSubstringFromRange:glyphRange];
+            [textView setAttributedText: attributedSubstring];
+            [_attributedPages addObject:attributedSubstring];
+        }
+        
+        if (textView.text.length && textView.frame.size.height+textView.frame.origin.y > _scrollView.contentSize.height){
+            CGFloat heightToAdd = [textView sizeThatFits:CGSizeMake(width-spacer, CGFLOAT_MAX)].height;
+            maxHeight += heightToAdd;
+            CGSize contentSize = _scrollView.contentSize;
+            contentSize.height = maxHeight;
+            if (shouldShareButton){
+                CGRect shouldShareRect = shouldShareButton.frame;
+                shouldShareRect.origin.y += heightToAdd;
+                [shouldShareButton setFrame:shouldShareRect];
+            }
+            //NSLog(@"added height: %f",[textView sizeThatFits:CGSizeMake(width-spacer, CGFLOAT_MAX)].height);
+            [_scrollView setContentSize:contentSize];
+        } else if (!textView.text.length) {
+            //NSLog(@"no more text, scrollview height: %f",_scrollView.contentSize.height);
+        }
+        if (_story.contributions.count == 1){
+            [textView setContribution:_story.firstContribution];
+        }
+        
+        [textView setupButtons];
+        textView.selectable = YES;
+        [textView setTextColor:textColor];
+        [textView setTag:newPage];
+        [_scrollView addSubview:textView];
+
+        [visiblePages addObject:[NSNumber numberWithInt:newPage]];
+        //NSLog(@"visible pages: %d for page: %d",visiblePages.count,newPage);
+    }
+}
+
+- (void)removeNonVisible {
+    NSLog(@"removing non visible textviews, current page is: %d",page);
+    for (id view in _scrollView.subviews) {
+        if ([view isKindOfClass:[XXTextView class]]){
+            XXTextView *textView = (XXTextView*)view;
+            if (textView.tag != page && textView.tag != page-1 && textView.tag != page+1 ){
+                [view removeFromSuperview];
+                [visiblePages removeObject:[NSNumber numberWithInt:textView.tag]];
+            }
+        }
+    }
 }
 
 - (void)addFeedback:(NSNotification*)notification {
@@ -700,15 +855,12 @@ int const storyConstant = 87;
     [vc setStoryViewController:self];
     [vc setTextColor:textColor];
     
-    [self presentViewController:vc animated:YES completion:^{
-        
-    }];
+    [self presentViewController:vc animated:YES completion:nil];
 }
 
 - (id<UIViewControllerAnimatedTransitioning>)animationControllerForPresentedController:(UIViewController *)presented
                                                                   presentingController:(UIViewController *)presenting
                                                                       sourceController:(UIViewController *)source {
-    
     XXFeedbackTransition *animator = [XXFeedbackTransition new];
     animator.presenting = YES;
     return animator;
@@ -722,7 +874,7 @@ int const storyConstant = 87;
 - (void)showWriteControls {
     publishButton = [UIButton buttonWithType:UIButtonTypeCustom];
     [publishButton setFrame:CGRectMake(screenWidth()-100, addSlowRevealButton.frame.origin.y, 88, 68)];
-    [publishButton setTitle:@"Publish" forState:UIControlStateNormal];
+    [publishButton setTitle:@"Add" forState:UIControlStateNormal];
     [publishButton setTitleColor:kElectricBlue forState:UIControlStateNormal];
     [publishButton.titleLabel setFont:[UIFont fontWithName:kSourceSansProRegular size:16]];
     [publishButton addTarget:self action:@selector(publishContribution) forControlEvents:UIControlEventTouchUpInside];
@@ -750,17 +902,23 @@ int const storyConstant = 87;
         
         [ProgressHUD show:@"Adding your contribution..."];
         NSMutableDictionary *parameters = [NSMutableDictionary dictionary];
-        [parameters setObject:_story.identifier forKey:@"contribution[story_id]"];
-        [parameters setObject:[[NSUserDefaults standardUserDefaults] objectForKey:kUserDefaultsId] forKey:@"contribution[user_id]"];
-        [parameters setObject:[newContributionTextView.attributedText string] forKey:@"contribution[body]"];
-        [manager POST:[NSString stringWithFormat:@"%@/contributions",kAPIBaseUrl] parameters:parameters success:^(AFHTTPRequestOperation *operation, id responseObject) {
+        [parameters setObject:_story.identifier forKey:@"story_id"];
+        [parameters setObject:[[NSUserDefaults standardUserDefaults] objectForKey:kUserDefaultsId] forKey:@"user_id"];
+        [parameters setObject:[newContributionTextView.attributedText htmlFragment] forKey:@"body"];
+        [manager POST:[NSString stringWithFormat:@"%@/contributions",kAPIBaseUrl] parameters:@{@"contribution":parameters} success:^(AFHTTPRequestOperation *operation, id responseObject) {
             NSLog(@"success posting a new contribution: %@",responseObject);
             XXContribution *newContribution = [[XXContribution alloc] initWithDictionary:[responseObject objectForKey:@"contribution"]];
             [_story.contributions addObject:newContribution];
             [newContributionTextView removeFromSuperview];
+            [self resetStoryBody];
             [self drawStoryBody];
+            UIEdgeInsets contentInsets = _scrollView.contentInset;
+            contentInsets.bottom = 0;
+            [_scrollView setContentInset:contentInsets];
+            _scrollView.pagingEnabled = YES;
             [ProgressHUD dismiss];
         } failure:^(AFHTTPRequestOperation *operation, NSError *error) {
+            _scrollView.pagingEnabled = YES;
             [ProgressHUD dismiss];
             NSLog(@"Failed to post a new contribution: %@",error.description);
         }];
@@ -769,40 +927,52 @@ int const storyConstant = 87;
 
 - (void)doneEditing {
     [self.view endEditing:YES];
+    [newContributionTextView removeFromSuperview];
     [UIView animateWithDuration:.23 animations:^{
         [publishButton setAlpha:0.0];
         [cancelButton setAlpha:0.0];
     }completion:^(BOOL finished) {
         [publishButton setHidden:YES];
         [cancelButton setHidden:YES];
+        addSlowRevealButton = [UIButton buttonWithType:UIButtonTypeCustom];
+        [addSlowRevealButton setFrame:CGRectMake(0, contributionOffset, screenWidth(), 176)];
+        [addSlowRevealButton setTitle:@"Add to slow reveal..." forState:UIControlStateNormal];
+        [addSlowRevealButton.titleLabel setFont:[UIFont fontWithName:kSourceSansProRegular size:20]];
+        [addSlowRevealButton addTarget:self action:@selector(addToSlowReveal) forControlEvents:UIControlEventTouchUpInside];
+        if ([[NSUserDefaults standardUserDefaults] boolForKey:kDarkBackground]){
+            [addSlowRevealButton setTitleColor:textColor forState:UIControlStateNormal];
+        } else {
+            [addSlowRevealButton setTitleColor:[UIColor lightGrayColor] forState:UIControlStateNormal];
+        }
+        [_scrollView addSubview:addSlowRevealButton];
     }];
 }
 
 - (void)addToSlowReveal {
+    _scrollView.pagingEnabled = NO;
     [self hideControls];
     [self showWriteControls];
-    //NSDictionary* attributes = @{NSDocumentTypeDocumentAttribute:NSHTMLTextDocumentType};
-    NSAttributedString* attrString = [[NSAttributedString alloc] initWithString:@""];
-    _textStorage = [XXTextStorage new];
-    [_textStorage appendAttributedString:attrString];
     
-    NSLayoutManager *layoutManager = [[NSLayoutManager alloc] init];
     CGRect newTextViewRect;
     if (UIInterfaceOrientationIsPortrait(orientation)){
         newTextViewRect = CGRectMake(spacer/2, publishButton.frame.origin.y + publishButton.frame.size.height, screenWidth()-spacer, screenHeight()-publishButton.frame.size.height-keyboardHeight);
     } else {
         newTextViewRect = CGRectMake(spacer/2, publishButton.frame.origin.y + publishButton.frame.size.height, screenHeight()-spacer, screenWidth()-publishButton.frame.size.height-keyboardHeight);
     }
-    CGSize containerSize = CGSizeMake(newTextViewRect.size.width,  CGFLOAT_MAX);
-    NSTextContainer *container = [[NSTextContainer alloc] initWithSize:containerSize];
-    container.widthTracksTextView = YES;
-    [layoutManager addTextContainer:container];
-    [_textStorage addLayoutManager:layoutManager];
     
-    newContributionTextView = [[UITextView alloc] initWithFrame:newTextViewRect textContainer:container];
-    [self.scrollView addSubview:newContributionTextView];
+    newContributionTextView = [[XXTextView alloc] initWithFrame:newTextViewRect];
+    newContributionTextView.keyboardEnabled = YES;
+    [newContributionTextView setupButtons];
+    
+    [newContributionTextView.boldButton addTarget:self action:@selector(boldText) forControlEvents:UIControlEventTouchUpInside];
+    [newContributionTextView.italicsButton addTarget:self action:@selector(italicText) forControlEvents:UIControlEventTouchUpInside];
+    [newContributionTextView.underlineButton addTarget:self action:@selector(underlineText) forControlEvents:UIControlEventTouchUpInside];
+    //[newContributionTextView.headerButton addTarget:self action:@selector(headline) forControlEvents:UIControlEventTouchUpInside];
+    //[newContributionTextView.footnoteButton addTarget:self action:@selector(footnote) forControlEvents:UIControlEventTouchUpInside];
+    
+    newContributionTextView.delegate = self;
+    [_scrollView addSubview:newContributionTextView];
     [newContributionTextView becomeFirstResponder];
-    self.scrollView.contentInset = UIEdgeInsetsMake(0, 0, newTextViewRect.size.height+keyboardHeight+44, 0);
     
     newContributionTextView.delegate = self;
     [newContributionTextView setFont:[UIFont fontWithName:kCrimsonRoman size:22]];
@@ -810,10 +980,9 @@ int const storyConstant = 87;
     [UIView animateWithDuration:.23 animations:^{
         [addSlowRevealButton setAlpha:0.0];
     }completion:^(BOOL finished) {
-        [self.scrollView setContentOffset:CGPointMake(0, publishButton.frame.origin.y) animated:YES];
+        [_scrollView setContentOffset:CGPointMake(0, publishButton.frame.origin.y) animated:YES];
     }];
 }
-
 
 - (void)textViewDidBeginEditing:(XXTextView *)textView {
     if ([textView.text isEqualToString:kSlowRevealPlaceholder]){
@@ -835,21 +1004,81 @@ int const storyConstant = 87;
     }
 }
 
-- (void)loadStory {
-    NSDictionary *parameters;
-    if ([[NSUserDefaults standardUserDefaults] objectForKey:kUserDefaultsId]){
-        parameters = @{@"user_id":[[NSUserDefaults standardUserDefaults] objectForKey:kUserDefaultsId]};
-    }
-    
-    [manager GET:[NSString stringWithFormat:@"%@/stories/%@",kAPIBaseUrl,_story.identifier] parameters:parameters success:^(AFHTTPRequestOperation *operation, id responseObject) {
-        //NSLog(@"load story response: %@",responseObject);
-        _story = [[XXStory alloc] initWithDictionary:[responseObject objectForKey:@"story"]];
-        [self drawStoryBody];
-        [self loadFeedbacks];
-    } failure:^(AFHTTPRequestOperation *operation, NSError *error) {
-        NSLog(@"Error loading story: %@",error.description);
-    }];
+- (void)textViewDidChange:(UITextView *)textView {
+    //54 is the extra height for the keyboard toolbar
+    /*CGRect bodyRect = textView.frame;
+    bodyRect.size.height = [textView sizeThatFits:CGSizeMake(textView.frame.size.width, CGFLOAT_MAX)].height;
+    [textView setFrame:bodyRect];
+    [_scrollView setContentSize:CGSizeMake(textView.frame.size.width,bodyRect.size.height + keyboardHeight+54)];
+    if ([textView.text hasSuffix:@"\n"]) {
+     [CATransaction setCompletionBlock:^{
+     [self scrollToCaret:NO];
+     }];
+     } else {
+     [self scrollToCaret:NO];
+     }*/
+}
 
+- (void)boldText {
+    [newContributionTextView toggleBoldface:nil];
+}
+
+- (void)italicText {
+    [newContributionTextView toggleItalics:nil];
+}
+
+- (void)underlineText {
+    [newContributionTextView toggleUnderline:nil];
+}
+
+- (void)headline {
+    if (_selectedText.length){
+        NSRange selectionRange = [self selectedRangeForText:_selectedRange];
+        NSMutableAttributedString *attrString = [newContributionTextView.textStorage attributedSubstringFromRange:[self selectedRangeForText:_selectedRange]].mutableCopy;
+        UIFontDescriptor *currentFontDescriptor = [[newContributionTextView.textStorage attributesAtIndex:selectionRange.location effectiveRange:NULL][NSFontAttributeName] fontDescriptor];
+        CGFloat fontSize = [currentFontDescriptor.fontAttributes[UIFontDescriptorSizeAttribute] floatValue];
+        
+        [attrString beginEditing];
+        if (fontSize < 25.f){
+            [attrString addAttribute:NSFontAttributeName value:[UIFont fontWithDescriptor:[[UIFontDescriptor preferredSourceSansProFontDescriptorWithTextStyle:UIFontTextStyleSubheadline] fontDescriptorWithSymbolicTraits:UIFontDescriptorTraitBold] size:0] range:NSMakeRange((0), attrString.length)];
+            [newContributionTextView.textStorage replaceCharactersInRange:selectionRange withAttributedString:attrString];
+        } else if (fontSize > 25.f && fontSize < 30.f){
+            [attrString addAttribute:NSFontAttributeName value:[UIFont fontWithDescriptor:[[UIFontDescriptor preferredSourceSansProFontDescriptorWithTextStyle:UIFontTextStyleHeadline] fontDescriptorWithSymbolicTraits:UIFontDescriptorTraitBold] size:0] range:NSMakeRange((0), attrString.length)];
+            [newContributionTextView.textStorage replaceCharactersInRange:selectionRange withAttributedString:attrString];
+        } else {
+            [attrString addAttribute:NSFontAttributeName value:[UIFont fontWithDescriptor:[UIFontDescriptor preferredCrimsonTextFontDescriptorWithTextStyle:UIFontTextStyleBody] size:0] range:NSMakeRange((0), attrString.length)];
+            [newContributionTextView.textStorage replaceCharactersInRange:selectionRange withAttributedString:attrString];
+        }
+        
+        [attrString endEditing];
+    }
+}
+
+- (void)footnote {
+    if (_selectedText.length){
+        NSRange selectionRange = [self selectedRangeForText:_selectedRange];
+        NSMutableAttributedString *attrString = [newContributionTextView.textStorage attributedSubstringFromRange:[self selectedRangeForText:_selectedRange]].mutableCopy;
+        
+        [attrString beginEditing];
+        [attrString addAttribute:NSFontAttributeName value:[UIFont fontWithDescriptor:[UIFontDescriptor preferredCrimsonTextFontDescriptorWithTextStyle:UIFontTextStyleFootnote] size:0] range:NSMakeRange((0), attrString.length)];
+        [newContributionTextView.textStorage replaceCharactersInRange:selectionRange withAttributedString:attrString];
+        
+        [attrString endEditing];
+    }
+}
+
+- (NSRange) selectedRangeForText:(UITextRange*)selectedRange
+{
+    UITextPosition* beginning = newContributionTextView.beginningOfDocument;
+    UITextPosition* selectionStart = selectedRange.start;
+    UITextPosition* selectionEnd = selectedRange.end;
+    const NSInteger location = [newContributionTextView offsetFromPosition:beginning toPosition:selectionStart];
+    const NSInteger length = [newContributionTextView offsetFromPosition:selectionStart toPosition:selectionEnd];
+    return NSMakeRange(location, length);
+}
+
+-(void)textViewDidChangeSelection:(UITextView *)textView {
+    NSLog(@"text selection: %@",textView.text);
 }
 
 #pragma mark - Table view data source
@@ -864,7 +1093,8 @@ int const storyConstant = 87;
     if (tableView == storiesTableView){
         return _stories.count;
     } else {
-        return 1;
+        
+        return (int)pages;
     }
 }
 
@@ -875,19 +1105,17 @@ int const storyConstant = 87;
         cell = [[[NSBundle mainBundle] loadNibNamed:@"XXStoryCell" owner:nil options:nil] lastObject];
     }
     XXStory *aStory = [_stories objectAtIndex:indexPath.row];
-    [cell configureForStory:aStory textColor:[UIColor whiteColor] featured:NO cellHeight:rowHeight];
+    [cell configureForStory:aStory];
     
     if (aStory.minutesToRead == [NSNumber numberWithInt:0]){
         [cell.infoLabel setText:[NSString stringWithFormat:@"%@ words  |  Quick Read  |  %@",aStory.wordCount,[_formatter stringFromDate:aStory.updatedDate]]];
     } else {
         [cell.infoLabel setText:[NSString stringWithFormat:@"%@ words  |  %@ min to read  |  %@",aStory.wordCount,aStory.minutesToRead,[_formatter stringFromDate:aStory.updatedDate]]];
     }
-    
+    [cell.titleLabel setTextColor:[UIColor whiteColor]];
+    [cell.bodySnippet setTextColor:[UIColor whiteColor]];
     [cell.infoLabel setTextColor:[UIColor whiteColor]];
-    [cell.separatorView setBackgroundColor:[UIColor colorWithWhite:1 alpha:.1]];
-    UIView *backgroundView = [[UIView alloc] init];
-    [backgroundView setBackgroundColor:[UIColor clearColor]];
-    cell.backgroundView = backgroundView;
+    [cell.separatorView setBackgroundColor:kSeparatorColor];
     
     return cell;
 }
@@ -920,31 +1148,9 @@ int const storyConstant = 87;
     if (tableView == storiesTableView) {
         cell.backgroundColor = [UIColor clearColor];
         UIView *selectedView = [[UIView alloc] initWithFrame:cell.frame];
-        [selectedView setBackgroundColor:[UIColor colorWithWhite:.73 alpha:.23]];
+        [selectedView setBackgroundColor:kSeparatorColor];
         cell.selectedBackgroundView = selectedView;
     }
-}
-
-- (void)scrollViewDidScroll:(UIScrollView *)scrollView {
-
-    if (scrollView.contentOffset.y < 0){
-        CGFloat y = scrollView.contentOffset.y;
-        CGRect imageFrame = _imageButton.frame;
-        imageFrame.origin.y = y;
-        imageFrame.origin.x = y/2;
-        imageFrame.size.width = screenWidth()-y;
-        imageFrame.size.height = imageHeight-y;
-        _imageButton.frame = imageFrame;
-        
-        CGRect titleFrame = _titleLabel.frame;
-        titleFrame.origin.y = y + 11;
-        _titleLabel.frame = titleFrame;
-        
-        CGRect authorsFrame = _authorsLabel.frame;
-        authorsFrame.origin.y = y + titleFrame.size.height +3 ;
-        _authorsLabel.frame = authorsFrame;
-    }
-
 }
 
 -(void)willShowKeyboard:(NSNotification*)notification {
@@ -967,7 +1173,7 @@ int const storyConstant = 87;
     if ([[NSUserDefaults standardUserDefaults] boolForKey:kDarkBackground]){
         blurredSnapshotImage = [snapshotImage applyBlurWithRadius:90 blurType:BOXFILTER tintColor:[UIColor colorWithWhite:0.08 alpha:0.93] saturationDeltaFactor:1.8 maskImage:nil];
     } else if (light){
-        blurredSnapshotImage = [snapshotImage applyBlurWithRadius:30 blurType:BOXFILTER tintColor:[UIColor colorWithWhite:.75 alpha:0.3] saturationDeltaFactor:1.8 maskImage:nil];
+        blurredSnapshotImage = [snapshotImage applyBlurWithRadius:10 blurType:BOXFILTER tintColor:[UIColor colorWithWhite:.93 alpha:0.23] saturationDeltaFactor:1.8 maskImage:nil];
     } else {
         blurredSnapshotImage = [snapshotImage applyBlurWithRadius:20 blurType:BOXFILTER tintColor:[UIColor colorWithWhite:0.11 alpha:0.5] saturationDeltaFactor:1.8 maskImage:nil];
     }
@@ -1019,9 +1225,11 @@ int const storyConstant = 87;
 }
 
 - (void)resetWithStory:(XXStory*)newStory {
+    [self.scrollView setContentOffset:CGPointZero animated:NO];
     [self resetStoryBody];
-    _story = nil;
     _story = newStory;
+    storyInfoVc.story = newStory;
+    [storyInfoVc.tableView reloadData];
     if (_story.contributions.count){
         [self drawStoryBody];
         [self loadFeedbacks];
@@ -1031,7 +1239,7 @@ int const storyConstant = 87;
     if (IDIOM == IPAD){
         self.title = _story.title;
     }
-    [self.scrollView setContentOffset:CGPointZero animated:YES];
+    
     readingTimer = [NSTimer scheduledTimerWithTimeInterval:1.5 target:self selector:@selector(hideControls) userInfo:nil repeats:NO];
 }
 
@@ -1047,5 +1255,9 @@ int const storyConstant = 87;
 {
     [super didReceiveMemoryWarning];
     // Dispose of any resources that can be recreated.
+    NSLog(@"received memory warning");
+    if (multipleTextViews){
+        [self removeNonVisible];
+    }
 }
 @end

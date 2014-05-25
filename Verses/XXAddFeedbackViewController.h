@@ -13,7 +13,6 @@
 @interface XXAddFeedbackViewController : UIViewController <UITableViewDataSource, UITableViewDelegate, UITextViewDelegate>
 
 @property (weak, nonatomic) IBOutlet UITableView *tableView;
-@property (weak, nonatomic) IBOutlet UIButton *sendButton;
 @property (strong, nonatomic) NSString *snippet;
 @property (strong, nonatomic) XXStory *story;
 @property (strong, nonatomic) XXContribution *contribution;

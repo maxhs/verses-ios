@@ -8,10 +8,12 @@
 
 #import <UIKit/UIKit.h>
 #import "XXWelcomeViewController.h"
+#import "XXTextView.h"
 
-@interface XXWriteViewController : UIViewController <UITableViewDataSource, UITableViewDelegate, UITextFieldDelegate, UITextViewDelegate>
+@interface XXWriteViewController : UIViewController <UIScrollViewDelegate, UITextFieldDelegate, UITextViewDelegate>
 
-@property (weak, nonatomic) IBOutlet UITableView *tableView;
+@property (weak, nonatomic) IBOutlet UIScrollView *scrollView;
+@property (weak, nonatomic) IBOutlet UITextField *titleTextField;
 @property (strong, nonatomic) XXStory *story;
 @property (weak, nonatomic) IBOutlet UIView *optionsContainerView;
 @property (weak, nonatomic) IBOutlet UISwitch *privateSwitch;

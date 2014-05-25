@@ -240,7 +240,6 @@
     if (UIInterfaceOrientationIsLandscape([UIApplication sharedApplication].statusBarOrientation)) {
         if (isKeyboardVisible) {
             inputStartingPoint = screenWidth() - currentKeyboardHeight;
-            
         }
         else inputStartingPoint = screenWidth();
     }
@@ -275,7 +274,7 @@
     CGFloat width = _textView.bounds.size.width - 10; // whatever your desired width is
     // 10 less than our target because it seems to frame better
     
-    CGRect rect = [attrStr boundingRectWithSize:CGSizeMake(width, 10000) options:NSStringDrawingUsesLineFragmentOrigin | NSStringDrawingUsesFontLeading context:nil];
+    CGRect rect = [attrStr boundingRectWithSize:CGSizeMake(width, CGFLOAT_MAX) options:NSStringDrawingUsesLineFragmentOrigin | NSStringDrawingUsesFontLeading context:nil];
     CGFloat height = rect.size.height;
     
     if ([_textView.text hasSuffix:@"\n"]) {
@@ -287,7 +286,7 @@
     int targetHeight = height + offset + 6; // should this be plus 12? it works with 6 but I don't know why
     // when we format the text, we use width 235.  Then we put it back onto here at 245 px.  This is then compensated here.  It seems to work.
     
-    // adding this to help with rotation animations.  When target height is greater than max height, it doesn't orietn properly
+    // adding this to help with rotation animations.
     if (targetHeight > maxHeight) targetHeight = maxHeight;
     else if (targetHeight < 40) targetHeight = 40;
     

@@ -11,6 +11,7 @@
 @interface XXProfileStoryCell : UITableViewCell
 
 @property (weak, nonatomic) IBOutlet UILabel *titleLabel;
+@property (weak, nonatomic) IBOutlet UILabel *subtitleLabel;
 
 - (void)configureStory:(XXStory*)story withTextColor:(UIColor*)textColor;
 @end

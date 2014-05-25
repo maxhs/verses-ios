@@ -45,6 +45,7 @@
     UIButton *_loginButton;
     NSInteger _circleAlertCount;
     NSAttributedString *searchPlaceholder;
+    MSDynamicsDrawerViewController *dynamicsViewController;
 }
 
 @end
@@ -54,6 +55,7 @@
 - (void)viewDidLoad
 {
     manager = [(XXAppDelegate*)[UIApplication sharedApplication].delegate manager];
+    dynamicsViewController = [(XXAppDelegate*)[UIApplication sharedApplication].delegate dynamicsDrawerViewController];
     [[UIApplication sharedApplication] setStatusBarHidden:YES];
     [self.view setBackgroundColor:[UIColor clearColor]];
     _filteredResults = [NSMutableArray array];
@@ -193,7 +195,7 @@
             [_stories addObjectsFromArray:newNotificaitons];
             if (newNotificaitons.count < 30) {
                 canLoadMore = NO;
-                NSLog(@"can't load more, we now have %i notifications", notifications.count);
+                //NSLog(@"can't load more, we now have %i notifications", notifications.count);
             }
             [ProgressHUD dismiss];
             loading = NO;
@@ -283,6 +285,7 @@
             
             if (indexPath.row == 3) [cell configureAlert:_circleAlertCount];
             else [cell configureAlert:0];
+            
             UIView *selectedBackgroundView = [[UIView alloc] initWithFrame:cell.frame];
             [selectedBackgroundView setBackgroundColor:[UIColor colorWithWhite:1 alpha:.5]];
             cell.selectedBackgroundView = selectedBackgroundView;
@@ -291,13 +294,13 @@
                 case 0:
                 {
                     [cell.menuImage setImage:[UIImage imageNamed:@"menuBrowse"]];
-                    [cell.menuLabel setText:@"Browse"];
+                    [cell.menuLabel setText:@"Read"];
                     return cell;
                 }
                     break;
                 case 1:
                 {
-                    [cell.menuImage setImage:[UIImage imageNamed:@"menuPencil"]];
+                    [cell.menuImage setImage:[UIImage imageNamed:@"menuWrite"]];
                     [cell.menuLabel setText:@"Write"];
                     return cell;
                 }
@@ -305,7 +308,7 @@
                 case 2:
                 {
                     [cell.menuImage setImage:[UIImage imageNamed:@"menuMy"]];
-                    [cell.menuLabel setText:@"My Work"];
+                    [cell.menuLabel setText:@"Portfolio"];
                     return cell;
                 }
                     break;
@@ -381,61 +384,57 @@
 }
 
 - (void)goHome {
-    if ([[(UINavigationController*)self.dynamicsDrawerViewController.paneViewController viewControllers].lastObject isKindOfClass:[XXWelcomeViewController class]]){
-        [self.dynamicsDrawerViewController setPaneState:MSDynamicsDrawerPaneStateClosed inDirection:MSDynamicsDrawerDirectionLeft animated:YES allowUserInterruption:YES completion:nil];
+    if ([[(UINavigationController*)dynamicsViewController.paneViewController viewControllers].lastObject isKindOfClass:[XXWelcomeViewController class]]){
+        [dynamicsViewController setPaneState:MSDynamicsDrawerPaneStateClosed inDirection:MSDynamicsDrawerDirectionLeft animated:YES allowUserInterruption:YES completion:nil];
     } else {
         [ProgressHUD show:@"Fetching the latest..."];
         XXWelcomeViewController *vc = [[self storyboard] instantiateViewControllerWithIdentifier:@"Welcome"];
         UINavigationController *nav = [[UINavigationController alloc] initWithRootViewController:vc];
-        [self.dynamicsDrawerViewController setPaneViewController:nav animated:YES completion:^{
-            if (_stories.count){
-                [vc setStories:_stories];
-            } else {
-                [vc loadEtherStories];
-            }
+        [dynamicsViewController setPaneViewController:nav animated:YES completion:^{
+            [vc loadEtherStories];
         }];
     }
 }
 - (void)goToSettings {
-    if ([[(UINavigationController*)self.dynamicsDrawerViewController.paneViewController viewControllers].lastObject isKindOfClass:[XXSettingsViewController class]]){
-        [self.dynamicsDrawerViewController setPaneState:MSDynamicsDrawerPaneStateClosed inDirection:MSDynamicsDrawerDirectionLeft animated:YES allowUserInterruption:YES completion:nil];
+    if ([[(UINavigationController*)dynamicsViewController.paneViewController viewControllers].lastObject isKindOfClass:[XXSettingsViewController class]]){
+        [dynamicsViewController setPaneState:MSDynamicsDrawerPaneStateClosed inDirection:MSDynamicsDrawerDirectionLeft animated:YES allowUserInterruption:YES completion:nil];
     } else {
         [ProgressHUD show:@"Getting settings..."];
         XXSettingsViewController *vc = [[self storyboard] instantiateViewControllerWithIdentifier:@"Settings"];
         [vc setTitle:@"Settings"];
         UINavigationController *nav = [[UINavigationController alloc] initWithRootViewController:vc];
-        [self.dynamicsDrawerViewController setPaneViewController:nav animated:YES completion:^{
-            [vc setDynamicsDrawerViewController:self.dynamicsDrawerViewController];
+        [dynamicsViewController setPaneViewController:nav animated:YES completion:^{
+            //[vc setDynamicsDrawerViewController:dynamicsViewController];
         }];
     }
 }
 - (void)goToFeatured {
-    if ([[(UINavigationController*)self.dynamicsDrawerViewController.paneViewController viewControllers].lastObject isKindOfClass:[XXStoriesViewController class]]){
-        [self.dynamicsDrawerViewController setPaneState:MSDynamicsDrawerPaneStateClosed inDirection:MSDynamicsDrawerDirectionLeft animated:YES allowUserInterruption:YES completion:nil];
+    if ([[(UINavigationController*)dynamicsViewController.paneViewController viewControllers].lastObject isKindOfClass:[XXStoriesViewController class]]){
+        [dynamicsViewController setPaneState:MSDynamicsDrawerPaneStateClosed inDirection:MSDynamicsDrawerDirectionLeft animated:YES allowUserInterruption:YES completion:nil];
     } else {
         [ProgressHUD show:@"Fetching what's featured..."];
         XXStoriesViewController *vc = [[self storyboard] instantiateViewControllerWithIdentifier:@"Stories"];
         [vc setFeatured:YES];
         UINavigationController *nav = [[UINavigationController alloc] initWithRootViewController:vc];
-        [self.dynamicsDrawerViewController setPaneViewController:nav animated:YES completion:nil];
+        [dynamicsViewController setPaneViewController:nav animated:YES completion:nil];
     }
 }
 - (void)goToMyStories {
-    if ([[(UINavigationController*)self.dynamicsDrawerViewController.paneViewController viewControllers].lastObject isKindOfClass:[XXMyStoriesViewController class]]){
-        [self.dynamicsDrawerViewController setPaneState:MSDynamicsDrawerPaneStateClosed inDirection:MSDynamicsDrawerDirectionLeft animated:YES allowUserInterruption:YES completion:nil];
+    if ([[(UINavigationController*)dynamicsViewController.paneViewController viewControllers].lastObject isKindOfClass:[XXMyStoriesViewController class]]){
+        [dynamicsViewController setPaneState:MSDynamicsDrawerPaneStateClosed inDirection:MSDynamicsDrawerDirectionLeft animated:YES allowUserInterruption:YES completion:nil];
     } else {
-        [ProgressHUD show:@"Grabbing your stories..."];
+        [ProgressHUD show:@"Grabbing your work..."];
         XXMyStoriesViewController *vc = [[self storyboard] instantiateViewControllerWithIdentifier:@"My Stories"];
         UINavigationController *nav = [[UINavigationController alloc] initWithRootViewController:vc];
-        [self.dynamicsDrawerViewController setPaneViewController:nav animated:YES completion:nil];
+        [dynamicsViewController setPaneViewController:nav animated:YES completion:nil];
     }
 }
 - (void)goWrite {
-    if ([[(UINavigationController*)self.dynamicsDrawerViewController.paneViewController viewControllers].lastObject isKindOfClass:[XXWriteViewController class]]){
-        XXWriteViewController *writeVc = [(UINavigationController*)self.dynamicsDrawerViewController.paneViewController viewControllers].lastObject;
+    if ([[(UINavigationController*)dynamicsViewController.paneViewController viewControllers].lastObject isKindOfClass:[XXWriteViewController class]]){
+        XXWriteViewController *writeVc = [(UINavigationController*)dynamicsViewController.paneViewController viewControllers].lastObject;
         [writeVc setStory:nil];
         [writeVc prepareStory];
-        [self.dynamicsDrawerViewController setPaneState:MSDynamicsDrawerPaneStateClosed inDirection:MSDynamicsDrawerDirectionLeft animated:YES allowUserInterruption:YES completion:^{
+        [dynamicsViewController setPaneState:MSDynamicsDrawerPaneStateClosed inDirection:MSDynamicsDrawerDirectionLeft animated:YES allowUserInterruption:YES completion:^{
             
         }];
     } else {
@@ -443,12 +442,12 @@
         XXWriteViewController *write = [[self storyboard] instantiateViewControllerWithIdentifier:@"Write"];
         UINavigationController *nav = [[UINavigationController alloc] initWithRootViewController:write];
         [self presentViewController:nav animated:YES completion:^{
-            //[self.dynamicsDrawerViewController setPaneState:MSDynamicsDrawerPaneStateClosed];
+            //[dynamicsViewController setPaneState:MSDynamicsDrawerPaneStateClosed];
         }];
         
         if ([[NSUserDefaults standardUserDefaults] boolForKey:kDarkBackground]){
             [UIView animateWithDuration:.3 animations:^{
-                [self.dynamicsDrawerViewController.paneViewController.view setAlpha:0.0];
+                [dynamicsViewController.paneViewController.view setAlpha:0.0];
                 [self.tableView setAlpha:0.0];
             }];
         }
@@ -456,46 +455,46 @@
 }
 
 - (void)goToDrafts {
-    if ([[(UINavigationController*)self.dynamicsDrawerViewController.paneViewController viewControllers].lastObject isKindOfClass:[XXDraftsViewController class]]){
-        [self.dynamicsDrawerViewController setPaneState:MSDynamicsDrawerPaneStateClosed inDirection:MSDynamicsDrawerDirectionLeft animated:YES allowUserInterruption:YES completion:nil];
+    if ([[(UINavigationController*)dynamicsViewController.paneViewController viewControllers].lastObject isKindOfClass:[XXDraftsViewController class]]){
+        [dynamicsViewController setPaneState:MSDynamicsDrawerPaneStateClosed inDirection:MSDynamicsDrawerDirectionLeft animated:YES allowUserInterruption:YES completion:nil];
     } else {
         [ProgressHUD show:@"Drying off your drafts..."];
         XXDraftsViewController *vc = [[self storyboard] instantiateViewControllerWithIdentifier:@"Drafts"];
         UINavigationController *nav = [[UINavigationController alloc] initWithRootViewController:vc];
-        [self.dynamicsDrawerViewController setPaneDragRevealEnabled:NO forDirection:MSDynamicsDrawerDirectionRight];
-        [self.dynamicsDrawerViewController setPaneViewController:nav animated:YES completion:nil];
+        [dynamicsViewController setPaneDragRevealEnabled:NO forDirection:MSDynamicsDrawerDirectionRight];
+        [dynamicsViewController setPaneViewController:nav animated:YES completion:nil];
     }
 }
 - (void)goToCircles {
-    if ([[(UINavigationController*)self.dynamicsDrawerViewController.paneViewController viewControllers].lastObject isKindOfClass:[XXCirclesViewController class]]){
-        XXCirclesViewController *vc = [(UINavigationController*)self.dynamicsDrawerViewController.paneViewController viewControllers].lastObject;
+    if ([[(UINavigationController*)dynamicsViewController.paneViewController viewControllers].lastObject isKindOfClass:[XXCirclesViewController class]]){
+        XXCirclesViewController *vc = [(UINavigationController*)dynamicsViewController.paneViewController viewControllers].lastObject;
         [vc loadCircles];
-        [self.dynamicsDrawerViewController setPaneState:MSDynamicsDrawerPaneStateClosed inDirection:MSDynamicsDrawerDirectionLeft animated:YES allowUserInterruption:YES completion:nil];
+        [dynamicsViewController setPaneState:MSDynamicsDrawerPaneStateClosed inDirection:MSDynamicsDrawerDirectionLeft animated:YES allowUserInterruption:YES completion:nil];
     } else {
         [ProgressHUD show:@"Gathering your circles..."];
         XXCirclesViewController *vc = [[self storyboard] instantiateViewControllerWithIdentifier:@"Circles"];
         UINavigationController *nav = [[UINavigationController alloc] initWithRootViewController:vc];
-        [self.dynamicsDrawerViewController setPaneViewController:nav animated:YES completion:nil];
+        [dynamicsViewController setPaneViewController:nav animated:YES completion:nil];
     }
 }
 - (void)goToFeedback {
-    if ([[(UINavigationController*)self.dynamicsDrawerViewController.paneViewController viewControllers].lastObject isKindOfClass:[XXFeedbackViewController class]]){
-        [self.dynamicsDrawerViewController setPaneState:MSDynamicsDrawerPaneStateClosed inDirection:MSDynamicsDrawerDirectionLeft animated:YES allowUserInterruption:YES completion:nil];
+    if ([[(UINavigationController*)dynamicsViewController.paneViewController viewControllers].lastObject isKindOfClass:[XXFeedbackViewController class]]){
+        [dynamicsViewController setPaneState:MSDynamicsDrawerPaneStateClosed inDirection:MSDynamicsDrawerDirectionLeft animated:YES allowUserInterruption:YES completion:nil];
     } else {
         [ProgressHUD show:@"Fetching your feedback..."];
         XXFeedbackViewController *vc = [[self storyboard] instantiateViewControllerWithIdentifier:@"Feedback"];
         UINavigationController *nav = [[UINavigationController alloc] initWithRootViewController:vc];
-        [self.dynamicsDrawerViewController setPaneViewController:nav animated:YES completion:nil];
+        [dynamicsViewController setPaneViewController:nav animated:YES completion:nil];
     }
 }
 - (void)goToBookmarks {
-    if ([[(UINavigationController*)self.dynamicsDrawerViewController.paneViewController viewControllers].lastObject isKindOfClass:[XXBookmarksViewController class]]){
-        [self.dynamicsDrawerViewController setPaneState:MSDynamicsDrawerPaneStateClosed inDirection:MSDynamicsDrawerDirectionLeft animated:YES allowUserInterruption:YES completion:nil];
+    if ([[(UINavigationController*)dynamicsViewController.paneViewController viewControllers].lastObject isKindOfClass:[XXBookmarksViewController class]]){
+        [dynamicsViewController setPaneState:MSDynamicsDrawerPaneStateClosed inDirection:MSDynamicsDrawerDirectionLeft animated:YES allowUserInterruption:YES completion:nil];
     } else {
         [ProgressHUD show:@"Grabbing your bookmarks..."];
         XXBookmarksViewController *vc = [[self storyboard] instantiateViewControllerWithIdentifier:@"Bookmarks"];
         UINavigationController *nav = [[UINavigationController alloc] initWithRootViewController:vc];
-        [self.dynamicsDrawerViewController setPaneViewController:nav animated:YES completion:nil];
+        [dynamicsViewController setPaneViewController:nav animated:YES completion:nil];
     }
 }
 
@@ -527,7 +526,7 @@
                 [vc setStories:_stories];
                 [vc setStory:story];
                 UINavigationController *nav = [[UINavigationController alloc] initWithRootViewController:vc];
-                [self.dynamicsDrawerViewController setPaneViewController:nav animated:YES completion:nil];
+                [dynamicsViewController setPaneViewController:nav animated:YES completion:nil];
             }
         } else if (self.searchBar.text) {
             NSLog(@"should be searching more extensively");
@@ -569,14 +568,14 @@
                 NSLog(@"notification story object: %@",storyObject.identifier);
                 [vc setStory:storyObject];
                 UINavigationController *nav = [[UINavigationController alloc] initWithRootViewController:vc];
-                [self.dynamicsDrawerViewController setPaneViewController:nav animated:YES completion:nil];
+                [dynamicsViewController setPaneViewController:nav animated:YES completion:nil];
             } else if (notification.circle.identifier){
                 [ProgressHUD show:@"Writing circle..."];
                 XXCircleDetailViewController *vc = [[self storyboard] instantiateViewControllerWithIdentifier:@"CircleDetail"];
                 [vc setCircle:notification.circle];
                 [vc setNeedsNavigation:YES];
                 UINavigationController *nav = [[UINavigationController alloc] initWithRootViewController:vc];
-                [self.dynamicsDrawerViewController setPaneViewController:nav animated:YES completion:nil];
+                [dynamicsViewController setPaneViewController:nav animated:YES completion:nil];
             } else if ([notification.type isEqualToString:kSubscription]){
                 if (IDIOM == IPAD){
                     XXProfileViewController* vc = [[self storyboard] instantiateViewControllerWithIdentifier:@"Profile"];
@@ -585,7 +584,6 @@
                     self.popover.delegate = self;
                     
                     XXNotificationCell *cell = (XXNotificationCell*)[self.tableView cellForRowAtIndexPath:indexPath];
-                    NSLog(@"cell: %@",cell);
                     CGRect displayFrom = CGRectMake(cell.frame.origin.x, cell.frame.origin.y, screenWidth()/2, screenHeight()/2);
                     [self.popover presentPopoverFromRect:displayFrom inView:self.view permittedArrowDirections:UIPopoverArrowDirectionLeft animated:YES];
                 } else {
@@ -660,33 +658,13 @@
     [self.searchBar setShowsCancelButton:NO animated:YES];
     [self.view endEditing:YES];
     [self.tableView reloadData];
-    [self.dynamicsDrawerViewController setPaneState:MSDynamicsDrawerPaneStateOpen animated:YES allowUserInterruption:YES completion:^{
-        [self.searchDisplayController.searchBar setFrame:searchRect];
-    }];
+    [dynamicsViewController setPaneState:MSDynamicsDrawerPaneStateOpen animated:YES allowUserInterruption:YES completion:nil];
 }
 
 - (BOOL)searchBar:(UISearchBar *)searchBar shouldChangeTextInRange:(NSRange)range replacementText:(NSString *)text {
     NSString* newText = [searchBar.text stringByReplacingCharactersInRange:range withString:text];
     [self filterContentForSearchText:newText scope:nil];
     return YES;
-}
-
-- (void)transitionToViewController:(MSPaneViewControllerType)paneViewControllerType
-{
-    if (paneViewControllerType == self.paneViewControllerType) {
-        [self.dynamicsDrawerViewController setPaneState:MSDynamicsDrawerPaneStateClosed animated:YES allowUserInterruption:YES completion:nil];
-        return;
-    }
-    
-    BOOL animateTransition = self.dynamicsDrawerViewController.paneViewController != nil;
-    
-    UIViewController *paneViewController = [self.storyboard instantiateViewControllerWithIdentifier:@"Welcome"];
-    paneViewController.navigationItem.title = @"Welcome";
-    
-    UINavigationController *paneNavigationViewController = [[UINavigationController alloc] initWithRootViewController:paneViewController];
-    [self.dynamicsDrawerViewController setPaneViewController:paneNavigationViewController animated:animateTransition completion:nil];
-    
-    self.paneViewControllerType = paneViewControllerType;
 }
 
 
@@ -732,7 +710,7 @@
     CGFloat actualPosition = scrollView.contentOffset.y;
     CGFloat contentHeight = scrollView.contentSize.height - (screenHeight()*2);
     if (actualPosition >= contentHeight && !loading && canLoadMore) {
-        NSLog(@"should be loading more. content height: %f actual position: %f",contentHeight,actualPosition);
+        //NSLog(@"should be loading more. content height: %f actual position: %f",contentHeight,actualPosition);
         [self loadMoreNotifications];
     }
     

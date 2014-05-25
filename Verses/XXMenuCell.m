@@ -33,14 +33,17 @@
 
 - (void)configureAlert:(NSInteger)alertCount{
     [_menuLabel setFont:[UIFont fontWithName:kSourceSansProSemibold size:18]];
+    _menuLabel.layer.rasterizationScale = [UIScreen mainScreen].scale;
+    _menuLabel.layer.shouldRasterize = YES;
     
     CGRect expectedSize;
     if (alertCount == 0){
         [_alertLabel setHidden:YES];
     } else {
         [_alertLabel setText:[NSString stringWithFormat:@"%d",alertCount]];
-        expectedSize = [_menuLabel.text boundingRectWithSize:_menuLabel.frame.size options:NSStringDrawingUsesLineFragmentOrigin attributes:@{NSFontAttributeName:_menuLabel.font} context:nil];
-        [_alertLabel setHidden:NO];
+        expectedSize = [@"Writing Circles" boundingRectWithSize:_menuLabel.frame.size options:NSStringDrawingUsesLineFragmentOrigin attributes:@{NSFontAttributeName:_menuLabel.font} context:nil];
+
+        [_alertLabel setFrame:CGRectMake(_menuLabel.frame.origin.x+expectedSize.size.width-7, _menuLabel.frame.origin.y+7, 21, 21)];
         if (_alertLabel.backgroundColor != [UIColor redColor]){
             [_alertLabel setBackgroundColor:[UIColor redColor]];
             [_alertLabel setTextColor:[UIColor whiteColor]];
@@ -49,11 +52,10 @@
             _alertLabel.layer.cornerRadius = _alertLabel.frame.size.height/2;
             [_alertLabel setTextAlignment:NSTextAlignmentCenter];
         }
+        [_alertLabel setHidden:NO];
         _alertLabel.layer.rasterizationScale = [UIScreen mainScreen].scale;
         _alertLabel.layer.shouldRasterize = YES;
     }
-    _menuLabel.layer.rasterizationScale = [UIScreen mainScreen].scale;
-    _menuLabel.layer.shouldRasterize = YES;
 }
 
 @end

@@ -37,6 +37,8 @@
         self.targetUser = [[XXUser alloc] initWithDictionary:value];
     } else if ([key isEqualToString:@"notification_type"]) {
         self.type = value;
+    } else if ([key isEqualToString:@"read"]) {
+        self.read = [value boolValue];
     }
 }
 

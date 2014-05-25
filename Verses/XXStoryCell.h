@@ -9,17 +9,18 @@
 #import <UIKit/UIKit.h>
 #import "XXContribution.h"
 #import "XXStory.h"
+#import "XXTextView.h"
 #import "XXTextStorage.h"
 
 @interface XXStoryCell : UITableViewCell <UIScrollViewDelegate>
 @property (weak, nonatomic) IBOutlet UILabel *titleLabel;
-@property (weak, nonatomic) IBOutlet UILabel *bodySnippet;
+@property (strong, nonatomic) XXTextView *bodySnippet;
 @property (weak, nonatomic) IBOutlet UIButton *imageButton;
 @property (weak, nonatomic) IBOutlet UILabel *authorLabel;
 @property (weak, nonatomic) IBOutlet UIButton *authorPhoto;
 @property (strong, nonatomic) UITextView *textView;
 @property (weak, nonatomic) IBOutlet UILabel *infoLabel;
-@property (weak, nonatomic) IBOutlet UIImageView *separatorView;
-- (void)configureForStory:(XXStory*)story textColor:(UIColor*)color featured:(BOOL)featured cellHeight:(CGFloat)height;
+@property (weak, nonatomic) IBOutlet UIView *separatorView;
+- (void)configureForStory:(XXStory*)story;
 
 @end

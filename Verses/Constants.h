@@ -16,6 +16,7 @@ static inline CGFloat height(UIView *view) { return view.frame.size.height; }
 
 #define OUTLINE ((int) 22)
 #define kSeparatorTag 21
+#define kBaseUrl @"https://www.writeverses.com"
 #define kAPIBaseUrl @"https://www.writeverses.com/api/v1"
 
 #define MIXPANEL_TOKEN @"8184fc9baafab30a5c51cceefb90e2d0"
@@ -42,11 +43,14 @@ static inline CGFloat height(UIView *view) { return view.frame.size.height; }
 #define kUserDefaultsLocation @"location"
 #define kUserDefaultsPenName @"penName"
 #define kUserDefaultsFullName @"fullName"
-#define kUserDefaultsPicThumb @"pic_thumb_url"
+#define kUserDefaultsPicLarge @"pic_large_url"
+#define kUserDefaultsPicMedium @"pic_medium_url"
 #define kUserDefaultsPicSmall @"pic_small_url"
 #define kUserDefaultsDeviceToken @"deviceToken"
 
+#define kSeparatorColor [UIColor colorWithWhite:.77 alpha:.23]
 #define kElectricBlue [UIColor colorWithRed:(0.0/255.0) green:(128.0/255.0) blue:(255.0/255.0) alpha:1]
+#define kStyleButtonBorderColor [UIColor colorWithWhite:1 alpha:.2].CGColor
 
 //String constants
 #define kStoryPlaceholder @"Start your story..."

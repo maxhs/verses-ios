@@ -8,6 +8,8 @@
 
 #import "XXStory.h"
 #import "XXTag.h"
+#import <DTCoreText/DTCoreText.h>
+#import "XXTextStorage.h"
 
 @implementation XXStory
 @synthesize collaborators, contributions;
@@ -16,8 +18,6 @@
         self.identifier = value;
     } else if ([key isEqualToString:@"title"]) {
         self.title = value;
-    } else if ([key isEqualToString:@"snippet"]) {
-        self.snippet = value;
     } else if ([key isEqualToString:@"owner"]) {
         self.owner = [[XXUser alloc] initWithDictionary:value];
     } else if ([key isEqualToString:@"author"]) {
@@ -28,8 +28,33 @@
         self.collaborators = [[Utilities usersFromJSONArray:value] mutableCopy];
     } else if ([key isEqualToString:@"circles"]) {
         self.circles = [[Utilities circlesFromJSONArray:value] mutableCopy];
+    } else if ([key isEqualToString:@"mystery"]){
+        self.mystery = [value boolValue];
     } else if ([key isEqualToString:@"contributions"]) {
         self.contributions = [[Utilities contributionsFromJSONArray:value] mutableCopy];
+        int rangeAmount;
+        if (self.mystery){
+            rangeAmount = 250;
+        } else if (IDIOM == IPAD) {
+            rangeAmount = 800;
+        } else {
+            rangeAmount = 400;
+        }
+        NSRange range;
+        if ([[self.contributions.firstObject body] length] > rangeAmount){
+            range = NSMakeRange(0, rangeAmount);
+        } else {
+            range = NSMakeRange(0, [[self.contributions.firstObject body] length]);
+        }
+        
+        NSDictionary *options = @{DTUseiOS6Attributes: [NSNumber numberWithBool:YES],
+                                  DTDefaultFontSize: @21,
+                                  DTDefaultFontFamily: @"Crimson Text",
+                                  NSTextEncodingNameDocumentOption: @"UTF-8"};
+        DTHTMLAttributedStringBuilder *stringBuilder = [[DTHTMLAttributedStringBuilder alloc] initWithHTML:[[[self.contributions.firstObject body] substringWithRange:range] dataUsingEncoding:NSUTF8StringEncoding] options:options documentAttributes:nil];
+        
+        self.attributedSnippet = [stringBuilder generatedAttributedString];
+    
     } else if ([key isEqualToString:@"tags"]) {
         self.tags = value;
     } else if ([key isEqualToString:@"photos"]) {
@@ -52,8 +77,6 @@
     } else if ([key isEqualToString:@"published_date"]){
         NSTimeInterval _interval = [value doubleValue];
         self.published = [NSDate dateWithTimeIntervalSince1970:_interval];
-    } else if ([key isEqualToString:@"mystery"]){
-        self.mystery = [value boolValue];
     } else if ([key isEqualToString:@"saved"]){
         self.saved = [value boolValue];
     } else if ([key isEqualToString:@"joinable"]){
@@ -62,6 +85,8 @@
         self.privateStory = [value boolValue];
     } else if ([key isEqualToString:@"bookmarked"]){
         self.bookmarked = [value boolValue];
+    } else if ([key isEqualToString:@"to_param"]){
+        self.storyUrl = [NSString stringWithFormat:@"%@/stories/%@",kBaseUrl,value];
     }
 }
 
@@ -98,7 +123,6 @@
         self.identifier = [decoder decodeObjectForKey:@"identifier"];
         self.title = [decoder decodeObjectForKey:@"title"];
         self.owner = [decoder decodeObjectForKey:@"owner"];
-        self.snippet = [decoder decodeObjectForKey:@"snippet"];
     }
     return self;
 }
@@ -107,7 +131,6 @@
     [coder encodeObject:self.identifier forKey:@"identifier"];
     [coder encodeObject:self.title forKey:@"title"];
     [coder encodeObject:self.owner forKey:@"owner"];
-    [coder encodeObject:self.snippet forKey:@"snippet"];
 }
 
 @end

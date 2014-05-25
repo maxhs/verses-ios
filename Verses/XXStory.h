@@ -18,7 +18,7 @@
 @property (strong, nonatomic) NSMutableArray *tags;
 @property (strong, nonatomic) NSNumber *identifier;
 @property (strong, nonatomic) NSString *title;
-@property (strong, nonatomic) NSString *snippet;
+@property (strong, nonatomic) NSAttributedString *attributedSnippet;
 @property (strong, nonatomic) NSNumber *views;
 @property (strong, nonatomic) NSNumber *wordCount;
 @property (strong, nonatomic) NSNumber *minutesToRead;
@@ -32,6 +32,8 @@
 @property (strong, nonatomic) NSMutableArray *collaborators;
 @property (strong, nonatomic) NSMutableArray *circles;
 @property (strong, nonatomic) NSMutableArray *feedbacks;
+@property (strong, nonatomic) NSString *storyUrl;
+
 @property BOOL privateStory;
 @property BOOL saved;
 @property BOOL mystery;

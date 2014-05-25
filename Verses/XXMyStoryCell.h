@@ -13,16 +13,14 @@
 
 @interface XXMyStoryCell : UITableViewCell <UIScrollViewDelegate,UIGestureRecognizerDelegate>
 @property (weak, nonatomic) IBOutlet UILabel *titleLabel;
-@property (weak, nonatomic) IBOutlet UILabel *bodySnippet;
-@property (strong, nonatomic) UITextView *textView;
-@property (weak, nonatomic) IBOutlet UIButton *imageButton;
 @property (weak, nonatomic) IBOutlet UIButton *readButton;
-@property (weak, nonatomic) IBOutlet UIButton *writeButton;
+@property (weak, nonatomic) IBOutlet UIButton *editButton;
 @property (weak, nonatomic) IBOutlet UIImageView *background;
 @property (weak, nonatomic) IBOutlet UILabel *wordCountLabel;
 @property (weak, nonatomic) IBOutlet UILabel *revealLabel;
 @property (weak, nonatomic) IBOutlet UILabel *draftLabel;
 @property (weak, nonatomic) IBOutlet UIView *separatorView;
+@property (strong, nonatomic) XXTextView *bodySnippet;
 
 - (void)configureForStory:(XXStory*)story textColor:(UIColor*)color;
 - (void)swipe;

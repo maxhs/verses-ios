@@ -152,13 +152,7 @@
 }
 
 - (void)startWriting {
-    UIStoryboard *storyboard;
-    if ([[UIDevice currentDevice] userInterfaceIdiom] == UIUserInterfaceIdiomPhone){
-        storyboard = [UIStoryboard storyboardWithName:@"Main_iPhone" bundle:nil];
-    } else {
-        storyboard = [UIStoryboard storyboardWithName:@"Main_iPad" bundle:nil];
-    }
-    XXWriteViewController *write = [storyboard instantiateViewControllerWithIdentifier:@"Write"];
+    XXWriteViewController *write = [[self storyboard] instantiateViewControllerWithIdentifier:@"Write"];
     [self.navigationController pushViewController:write animated:YES];
 }
 
@@ -185,6 +179,8 @@
 }
 
 - (void)prepareForSegue:(UIStoryboardSegue *)segue sender:(NSIndexPath*)indexPath {
+    [super prepareForSegue:segue sender:indexPath];
+    
     if ([segue.identifier isEqualToString:@"Edit"]){
         XXStory *story = [_drafts objectAtIndex:indexPath.row];
         XXWriteViewController *vc = [segue destinationViewController];
