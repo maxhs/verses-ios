@@ -14,6 +14,9 @@
 #import <Crashlytics/Crashlytics.h>
 #import <Mixpanel/Mixpanel.h>
 #import "UIImage+ImageEffects.h"
+#import "XXCircleDetailViewController.h"
+#import "XXStoryViewController.h"
+#import "XXProfileViewController.h"
 #import <SDWebImage/UIImageView+WebCache.h>
 #define SYSTEM_VERSION_EQUAL_TO(v)                  ([[[UIDevice currentDevice] systemVersion] compare:v options:NSNumericSearch] == NSOrderedSame)
 #define SYSTEM_VERSION_GREATER_THAN(v)              ([[[UIDevice currentDevice] systemVersion] compare:v options:NSNumericSearch] == NSOrderedDescending)
@@ -31,6 +34,8 @@
 @implementation XXAppDelegate
 
 @synthesize manager = _manager;
+@synthesize stories = _stories;
+@synthesize backgroundURL = _backgroundURL;
 
 - (BOOL)application:(UIApplication *)application didFinishLaunchingWithOptions:(NSDictionary *)launchOptions
 {
@@ -71,29 +76,38 @@
     self.storyInfoViewController.dynamicsDrawerViewController = self.dynamicsDrawerViewController;
     [self.dynamicsDrawerViewController setDrawerViewController:self.storyInfoViewController forDirection:MSDynamicsDrawerDirectionRight];
     
-    timer = [NSTimer scheduledTimerWithTimeInterval:5 target:self selector:@selector(transition) userInfo:nil repeats:NO];
-    welcome = [self.window.rootViewController.storyboard instantiateViewControllerWithIdentifier:@"Welcome"];
-    
     _manager = [[AFHTTPRequestOperationManager manager] initWithBaseURL:[NSURL URLWithString:kAPIBaseUrl]];
     _manager.requestSerializer = [AFJSONRequestSerializer serializer];
     
-    [_manager GET:[NSString stringWithFormat:@"%@/stories",kAPIBaseUrl] parameters:@{@"count":@"5"} success:^(AFHTTPRequestOperation *operation, id responseObject) {
-        [timer invalidate];
-        timer = nil;
-        NSArray *stories = [Utilities storiesFromJSONArray:[responseObject objectForKey:@"stories"]];
-        [welcome setStories:[stories mutableCopy]];
-        [self.menuViewController setStories:[stories mutableCopy]];
-        [self transition];
-    } failure:^(AFHTTPRequestOperation *operation, NSError *error) {
-        [self transition];
-        NSLog(@"Failure getting stories from welcome controller: %@",error.description);
-    }];
-   
     self.window = [[UIWindow alloc] initWithFrame:[[UIScreen mainScreen] bounds]];
     self.window.rootViewController = self.dynamicsDrawerViewController;
     [self.window makeKeyAndVisible];
-    [self.window addSubview:self.defaultBackground];
-    [self.window sendSubviewToBack:self.defaultBackground];
+    
+    if (launchOptions != nil && [launchOptions objectForKey:UIApplicationLaunchOptionsRemoteNotificationKey]){
+        NSDictionary* dictionary = [launchOptions objectForKey:UIApplicationLaunchOptionsRemoteNotificationKey];
+        if (dictionary != nil)
+        {
+            NSLog(@"dictionary: %@",dictionary);
+            [self redirect:dictionary];
+        }
+    } else {
+        [self.window addSubview:self.defaultBackground];
+        [self.window sendSubviewToBack:self.defaultBackground];
+        timer = [NSTimer scheduledTimerWithTimeInterval:5 target:self selector:@selector(transition) userInfo:nil repeats:NO];
+        welcome = [self.window.rootViewController.storyboard instantiateViewControllerWithIdentifier:@"Welcome"];
+        [_manager GET:[NSString stringWithFormat:@"%@/stories",kAPIBaseUrl] parameters:@{@"count":@"5"} success:^(AFHTTPRequestOperation *operation, id responseObject) {
+            [timer invalidate];
+            timer = nil;
+            NSArray *stories = [Utilities storiesFromJSONArray:[responseObject objectForKey:@"stories"]];
+            [welcome setStories:[stories mutableCopy]];
+            _stories = [stories mutableCopy];
+            [self transition];
+        } failure:^(AFHTTPRequestOperation *operation, NSError *error) {
+            [self transition];
+            NSLog(@"Failure getting stories from welcome controller: %@",error.description);
+        }];
+    }
+
     [self.window addSubview:self.windowBackground];
     [self.window sendSubviewToBack:self.windowBackground];
     [self customizeAppearance];
@@ -134,7 +148,6 @@
                 CGAffineTransform rotate = CGAffineTransformMakeRotation(RADIANS(90));
                 _defaultBackground.transform = CGAffineTransformConcat(rotate, translation);
             }
-            
         } else if ([UIScreen mainScreen].bounds.size.height >= 568) {
             _defaultBackground = [[UIImageView alloc] initWithImage:[UIImage imageNamed:@"Default-568h"]];
         } else {
@@ -148,9 +161,9 @@
 {
     if (!_windowBackground) {
         if (UI_USER_INTERFACE_IDIOM() == UIUserInterfaceIdiomPad){
-            _windowBackground = [[UIImageView alloc] initWithImage:[UIImage imageNamed:@"iPadBlue"]];
+            _windowBackground = [[UIImageView alloc] initWithImage:[UIImage imageNamed:@"background_ipad"]];
         } else {
-            _windowBackground = [[UIImageView alloc] initWithImage:[UIImage imageNamed:@"blue"]];
+            _windowBackground = [[UIImageView alloc] initWithImage:[UIImage imageNamed:@"background"]];
         }
         [_windowBackground setAlpha:1];
     }
@@ -201,7 +214,7 @@
         [[UIBarButtonItem appearance] setBackButtonBackgroundImage:backImage forState:UIControlStateNormal barMetrics:UIBarMetricsDefault];
         [[UINavigationBar appearance] setTitleTextAttributes:@{
                                                                NSForegroundColorAttributeName: [UIColor whiteColor],
-                                                               NSFontAttributeName: [UIFont fontWithName:kSourceSansProSemibold size:23],
+                                                               NSFontAttributeName: [UIFont fontWithName:kSourceSansProSemibold size:21],
                                                                NSShadowAttributeName: clearShadow,
                                                                }];
         [UIView animateWithDuration:.23 animations:^{
@@ -217,7 +230,7 @@
         [[UIBarButtonItem appearance] setBackButtonBackgroundImage:backImage forState:UIControlStateNormal barMetrics:UIBarMetricsDefault];
         [[UINavigationBar appearance] setTitleTextAttributes:@{
                                                                NSForegroundColorAttributeName: [UIColor blackColor],
-                                                               NSFontAttributeName: [UIFont fontWithName:kSourceSansProSemibold size:23],
+                                                               NSFontAttributeName: [UIFont fontWithName:kSourceSansProSemibold size:21],
                                                                NSShadowAttributeName: clearShadow,
                                                                }];
         [UIView animateWithDuration:.23 animations:^{
@@ -230,12 +243,90 @@
     }
 }
 
+-(void)redirect:(NSDictionary*)dict {
+    if ([dict objectForKey:@"circle_id"] && [dict objectForKey:@"circle_id"] != [NSNull null]) {
+        XXCircleDetailViewController *vc = [self.window.rootViewController.storyboard instantiateViewControllerWithIdentifier:@"CircleDetail"];
+        [vc setCircleId:[dict objectForKey:@"circle_id"]];
+        UINavigationController *nav = [[UINavigationController alloc] initWithRootViewController:vc];
+        [self.dynamicsDrawerViewController setPaneViewController:nav];
+    } else if ([dict objectForKey:@"story_id"] && [dict objectForKey:@"story_id"] != [NSNull null]) {
+        XXStoryViewController *vc = [self.window.rootViewController.storyboard instantiateViewControllerWithIdentifier:@"Story"];
+        [vc setStoryId:[dict objectForKey:@"story_id"]];
+        UINavigationController *nav = [[UINavigationController alloc] initWithRootViewController:vc];
+        [self.dynamicsDrawerViewController setPaneViewController:nav];
+    } else if ([dict objectForKey:@"target_user_id"] && [dict objectForKey:@"target_user_id"] != [NSNull null]) {
+        XXProfileViewController *vc = [self.window.rootViewController.storyboard instantiateViewControllerWithIdentifier:@"Profile"];
+        [vc setUserId:[dict objectForKey:@"target_user_id"]];
+        UINavigationController *nav = [[UINavigationController alloc] initWithRootViewController:vc];
+        [self.dynamicsDrawerViewController setPaneViewController:nav];
+    }
+}
 
 - (void)application:(UIApplication *)application didReceiveRemoteNotification:(NSDictionary *)pushMessage
 {
     //[Flurry logEvent:@"Did Receive Remote Notification"];
     [[Mixpanel sharedInstance] track:@"Just received a push message"];
-    NSLog(@"Just received a push notification: %@",pushMessage);
+    //NSLog(@"Received push: %@",pushMessage);
+    [self redirect:pushMessage];
+}
+
+- (BOOL)application:(UIApplication *)application handleOpenURL:(NSURL *)url {
+    NSLog(@"handle open url: %@",url);
+    if ([[url scheme] isEqualToString:kUrlScheme]) {
+        if ([[url query] length]) {
+            NSDictionary *urlDict = [self parseQueryString:[url query]];
+            if ([urlDict objectForKey:@"circle_id"] && [urlDict objectForKey:@"circle_id"] != [NSNull null]) {
+                XXCircleDetailViewController *vc = [self.window.rootViewController.storyboard instantiateViewControllerWithIdentifier:@"CircleDetail"];
+                [vc setCircleId:[urlDict objectForKey:@"circle_id"]];
+                UINavigationController *nav = [[UINavigationController alloc] initWithRootViewController:vc];
+                [self.dynamicsDrawerViewController setPaneViewController:nav];
+            } else if ([urlDict objectForKey:@"story_id"]) {
+                XXStoryViewController *vc = [self.window.rootViewController.storyboard instantiateViewControllerWithIdentifier:@"Story"];
+                [vc setStoryId:[urlDict objectForKey:@"story_id"]];
+                UINavigationController *nav = [[UINavigationController alloc] initWithRootViewController:vc];
+                [self.dynamicsDrawerViewController setPaneViewController:nav];
+            }
+        }
+    }
+    return YES;
+}
+
+- (BOOL)application:(UIApplication *)application
+            openURL:(NSURL *)url
+  sourceApplication:(NSString *)sourceApplication
+         annotation:(id)annotation
+{
+    NSLog(@"url: %@",url);
+    if ([[url scheme] isEqualToString:kUrlScheme]) {
+        if ([[url query] length]) {
+            NSDictionary *urlDict = [self parseQueryString:[url query]];
+            if ([urlDict objectForKey:@"circle_id"]) {
+                XXCircleDetailViewController *vc = [self.window.rootViewController.storyboard instantiateViewControllerWithIdentifier:@"CircleDetail"];
+                [vc setCircleId:[urlDict objectForKey:@"circle_id"]];
+                UINavigationController *nav = [[UINavigationController alloc] initWithRootViewController:vc];
+                [self.dynamicsDrawerViewController setPaneViewController:nav];
+            } else if ([urlDict objectForKey:@"story_id"]) {
+                XXStoryViewController *vc = [self.window.rootViewController.storyboard instantiateViewControllerWithIdentifier:@"Story"];
+                [vc setStoryId:[urlDict objectForKey:@"story_id"]];
+                UINavigationController *nav = [[UINavigationController alloc] initWithRootViewController:vc];
+                [self.dynamicsDrawerViewController setPaneViewController:nav];
+            }
+        }
+    }
+    return YES;
+}
+
+- (NSDictionary *)parseQueryString:(NSString *)query {
+    NSMutableDictionary *dict = [NSMutableDictionary dictionary];
+    NSArray *pairs = [query componentsSeparatedByString:@"&"];
+    for (NSString *pair in pairs) {
+        NSArray *elements = [pair componentsSeparatedByString:@"="];
+        NSString *key = [[elements objectAtIndex:0] stringByReplacingPercentEscapesUsingEncoding:NSUTF8StringEncoding];
+        NSString *val = [[elements objectAtIndex:1] stringByReplacingPercentEscapesUsingEncoding:NSUTF8StringEncoding];
+        [dict setObject:val forKey:key];
+    }
+    //NSLog(@"parsed query dict: %@",dict);
+    return dict;
 }
 
 - (void)application:(UIApplication*)application didRegisterForRemoteNotificationsWithDeviceToken:(NSData*)deviceToken
@@ -278,7 +369,7 @@
         if ([[NSUserDefaults standardUserDefaults] objectForKey:kUserDefaultsPassword]) {
             [parameters setObject:[[NSUserDefaults standardUserDefaults] objectForKey:kUserDefaultsPassword] forKey:@"password"];
             [[AFHTTPRequestOperationManager manager] POST:[NSString stringWithFormat:@"%@/sessions", kAPIBaseUrl] parameters:@{@"user":parameters} success:^(AFHTTPRequestOperation *operation, id responseObject) {
-                NSLog(@"success logging in from app delegate: %@",responseObject);
+                //NSLog(@"success logging in from app delegate: %@",responseObject);
                 XXUser *user = [[XXUser alloc] initWithDictionary:[responseObject objectForKey:@"user"]];
                 [[NSUserDefaults standardUserDefaults] setObject:user.identifier forKey:kUserDefaultsId];
                 [[NSUserDefaults standardUserDefaults] setObject:user.authToken forKey:kUserDefaultsAuthToken];
@@ -302,7 +393,7 @@
                     _currentUser.identifier = user.identifier;
                 }
                 [localContext MR_saveToPersistentStoreWithCompletion:^(BOOL success, NSError *error) {
-                    NSLog(@"Saving user to persistent store: %u %@",success, error);
+                    //NSLog(@"Saving user to persistent store: %u %@",success, error);
                 }];
             } failure:^(AFHTTPRequestOperation *operation, NSError *error) {
                 NSLog(@"Failure logging in from app delegate: %@",error.localizedRecoverySuggestion);

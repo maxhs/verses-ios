@@ -21,6 +21,7 @@
 @property (strong, nonatomic) NSAttributedString *attributedSnippet;
 @property (strong, nonatomic) NSNumber *views;
 @property (strong, nonatomic) NSNumber *wordCount;
+@property (strong, nonatomic) NSNumber *trendingCount;
 @property (strong, nonatomic) NSNumber *minutesToRead;
 @property (strong, nonatomic) NSNumber *epochTime;
 @property (strong, nonatomic) NSDate *createdDate;

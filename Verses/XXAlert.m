@@ -92,18 +92,17 @@
 		label.baselineAdjustment = UIBaselineAdjustmentAlignCenters;
 		label.numberOfLines = 0;
         [background addSubview:label];
-        [label setFrame:CGRectMake(10, background.frame.size.height/2-20, background.frame.size.width-20, 40)];
+        [label setFrame:CGRectMake(10, background.frame.size.height/2-160, background.frame.size.width-20, 320)];
 	}
-	NSLog(@"background: %@, %@",background, label);
 }
 
 -(UIImage *)blurredSnapshot {
     if (UIInterfaceOrientationIsPortrait([[UIApplication sharedApplication] statusBarOrientation])){
         UIGraphicsBeginImageContextWithOptions([UIScreen mainScreen].bounds.size, NO, self.window.screen.scale);
-        [self.window drawViewHierarchyInRect:self.window.frame afterScreenUpdates:NO];
+        [self.window drawViewHierarchyInRect:self.window.frame afterScreenUpdates:YES];
     } else {
         UIGraphicsBeginImageContextWithOptions(CGSizeMake(screenHeight(), screenWidth()), NO, self.window.screen.scale);
-        [self.window drawViewHierarchyInRect:CGRectMake(0, 0, screenHeight(), screenWidth()) afterScreenUpdates:NO];
+        [self.window drawViewHierarchyInRect:CGRectMake(0, 0, screenHeight(), screenWidth()) afterScreenUpdates:YES];
     }
     
     UIImage *snapshotImage = UIGraphicsGetImageFromCurrentImageContext();

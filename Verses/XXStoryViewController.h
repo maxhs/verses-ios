@@ -20,6 +20,7 @@
 @property (strong, nonatomic) UILabel *authorsLabel;
 @property (strong, nonatomic) XXPhotoButton *imageButton;
 @property (strong, nonatomic) XXStory *story;
+@property (strong, nonatomic) NSNumber *storyId;
 @property (strong, nonatomic) NSMutableArray *stories;
 @property (weak, nonatomic) MSDynamicsDrawerViewController *dynamicsViewController;
 @property (strong, nonatomic) UIImageView *backgroundImageView;

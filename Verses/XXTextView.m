@@ -41,7 +41,7 @@
     if (self.keyboardEnabled){
         _boldButton = [UIButton buttonWithType:UIButtonTypeCustom];
         [_boldButton setTitle:@"B" forState:UIControlStateNormal];
-        [_boldButton.titleLabel setFont:[UIFont fontWithName:kSourceSansProRegular size:21]];
+        [_boldButton.titleLabel setFont:[UIFont fontWithName:kCrimsonRoman size:23]];
         _boldButton.layer.borderColor = kStyleButtonBorderColor;
         _boldButton.layer.borderWidth = .5f;
         _boldButton.layer.cornerRadius = 3.f;
@@ -60,7 +60,7 @@
         NSAttributedString *underline = [[NSAttributedString alloc] initWithString:@"U"
                                                                  attributes:underlineAttribute];
         [_underlineButton setAttributedTitle:underline forState:UIControlStateNormal];
-        [_underlineButton.titleLabel setFont:[UIFont fontWithName:kSourceSansProRegular size:21]];
+        [_underlineButton.titleLabel setFont:[UIFont fontWithName:kCrimsonRoman size:23]];
         _underlineButton.layer.borderColor = kStyleButtonBorderColor;
         _underlineButton.layer.borderWidth = .5f;
         _underlineButton.layer.cornerRadius = 3.f;
@@ -124,12 +124,7 @@
             [_feedbackButton setImage:[UIImage imageNamed:@"blackFeedbackFlag"] forState:UIControlStateNormal];
         }*/
         [_feedbackButton setTitle:@"   Feedback" forState:UIControlStateNormal];
-        if (IDIOM == IPAD){
-            [_feedbackButton setBackgroundColor:[UIColor colorWithPatternImage:[UIImage imageNamed:@"iPadBlue"]]];
-        } else {
-            [_feedbackButton setBackgroundColor:[UIColor colorWithPatternImage:[UIImage imageNamed:@"blue"]]];
-        }
-        
+        [_feedbackButton setBackgroundColor:kElectricBlue];
         self.editable = NO;
         self.inputAccessoryView = _feedbackButton;
     }
@@ -149,6 +144,7 @@
 
 - (void)newFeedback {
     [self resignFirstResponder];
+    NSLog(@"should be adding new feedback, %@",_contribution);
     if (_selectedText.length && _contribution){
         [[NSNotificationCenter defaultCenter] postNotificationName:@"AddFeedback" object:nil userInfo:@{@"text":_selectedText,@"contribution":_contribution,@"location":[NSNumber numberWithUnsignedInteger:_stringLocation]}];
     }

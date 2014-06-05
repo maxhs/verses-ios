@@ -10,7 +10,7 @@
 
 @interface XXChat ()
 
-@property (strong, nonatomic) UIButton * sendBtn;
+@property (strong, nonatomic) UIButton * sendButton;
 
 @end
 
@@ -25,12 +25,8 @@
 - (id)initWithFrame:(CGRect)frame {
     
     self = [super initWithFrame:frame];
-    
     if (self) {
-        // Initialization code
         self.backgroundColor = [UIColor whiteColor];
-        
-        // Set Up Main Frame
         UIInterfaceOrientation myOrientation = [UIApplication sharedApplication].statusBarOrientation;
         if (UIInterfaceOrientationIsPortrait(myOrientation)) {
             self.frame = CGRectMake(0, screenHeight() - 40, screenWidth(), 40);
@@ -55,25 +51,23 @@
         _textView.layer.cornerRadius = 7;
         _textView.font = [UIFont fontWithName:kSourceSansProRegular size:16];
         _textView.layer.borderWidth = .5;
-        _textView.layer.borderColor = [UIColor lightGrayColor].CGColor;
+        _textView.layer.borderColor = [UIColor colorWithWhite:.87 alpha:1].CGColor;
         _textView.textColor = [UIColor darkTextColor];
         _textView.backgroundColor = [UIColor colorWithWhite:1 alpha:0.9f];
         [self addSubview:_textView];
         
-        // Send Button
-        _sendBtn = [UIButton buttonWithType:UIButtonTypeSystem];
-        
-        _sendBtnActiveColor = kElectricBlue;
-        _sendBtnInactiveColor = [UIColor lightGrayColor];
+        _sendButton = [UIButton buttonWithType:UIButtonTypeSystem];
+        _sendButtonActiveColor = kElectricBlue;
+        _sendButtonInactiveColor = [UIColor lightGrayColor];
         [self deactivateSendBtn];
         
-        _sendBtn.frame = CGRectMake(self.bounds.size.width - 60, 0, 50, 40);
-        _sendBtn.autoresizingMask = UIViewAutoresizingFlexibleLeftMargin | UIViewAutoresizingFlexibleTopMargin;
-        [_sendBtn setTitle:@"Send" forState:UIControlStateNormal];
-        _sendBtn.titleLabel.font = [UIFont fontWithName:kSourceSansProSemibold size:16.0];
-        [_sendBtn addTarget:self action:@selector(sendBtnPressed:) forControlEvents:UIControlEventTouchUpInside];
-        _sendBtn.userInteractionEnabled = YES;
-        [self addSubview:_sendBtn];
+        _sendButton.frame = CGRectMake(self.bounds.size.width - 60, 0, 50, 40);
+        _sendButton.autoresizingMask = UIViewAutoresizingFlexibleLeftMargin | UIViewAutoresizingFlexibleTopMargin;
+        [_sendButton setTitle:@"Send" forState:UIControlStateNormal];
+        _sendButton.titleLabel.font = [UIFont fontWithName:kSourceSansProSemibold size:16.0];
+        [_sendButton addTarget:self action:@selector(sendBtnPressed:) forControlEvents:UIControlEventTouchUpInside];
+        _sendButton.userInteractionEnabled = YES;
+        [self addSubview:_sendButton];
         
         // Background
         _bgToolbar = [[UIToolbar alloc] initWithFrame:self.bounds];
@@ -116,9 +110,9 @@
     _textView.delegate = nil;
     _textView = nil;
     
-    [_sendBtn removeTarget:self action:@selector(sendBtnPressed:) forControlEvents:UIControlEventTouchUpInside];
-    [_sendBtn removeFromSuperview];
-    _sendBtn = nil;
+    [_sendButton removeTarget:self action:@selector(sendBtnPressed:) forControlEvents:UIControlEventTouchUpInside];
+    [_sendButton removeFromSuperview];
+    _sendButton = nil;
     
     [_bgToolbar removeFromSuperview];;
     _bgToolbar = nil;
@@ -126,8 +120,8 @@
     _delegate = nil;
     _maxY = nil;
     _maxCharacters = nil;
-    _sendBtnActiveColor = nil;
-    _sendBtnInactiveColor = nil;
+    _sendButtonActiveColor = nil;
+    _sendButtonInactiveColor = nil;
     
     [super removeFromSuperview];
 }
@@ -177,11 +171,11 @@
 #pragma mark ACTIVATE | DEACTIVATE - SEND BTN
 
 - (void) activateSendBtn {
-    [_sendBtn setTitleColor:_sendBtnActiveColor forState:UIControlStateNormal];
+    [_sendButton setTitleColor:_sendButtonActiveColor forState:UIControlStateNormal];
 }
 
 - (void) deactivateSendBtn {
-    [_sendBtn setTitleColor:_sendBtnInactiveColor forState:UIControlStateNormal];
+    [_sendButton setTitleColor:_sendButtonInactiveColor forState:UIControlStateNormal];
 }
 
 #pragma mark OPEN | CLOSE
@@ -418,13 +412,13 @@
 #pragma mark GETTERS | SETTERS
 
 - (void) setSendBtnActiveColor:(UIColor *)sendBtnActiveColor {
-    _sendBtnActiveColor = sendBtnActiveColor;
-    if (_textView.text.length > 0) [_sendBtn setTitleColor:sendBtnActiveColor forState:UIControlStateNormal];
+    _sendButtonActiveColor = sendBtnActiveColor;
+    if (_textView.text.length > 0) [_sendButton setTitleColor:sendBtnActiveColor forState:UIControlStateNormal];
 }
 
 - (void) setSendBtnInactiveColor:(UIColor *)sendBtnInactiveColor {
-    _sendBtnInactiveColor = sendBtnInactiveColor;
-    if (_textView.text.length == 0) [_sendBtn setTitleColor:sendBtnInactiveColor forState:UIControlStateNormal];
+    _sendButtonInactiveColor = sendBtnInactiveColor;
+    if (_textView.text.length == 0) [_sendButton setTitleColor:sendBtnInactiveColor forState:UIControlStateNormal];
 }
 
 - (UILabel *) placeholderLabel {

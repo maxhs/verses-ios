@@ -28,9 +28,13 @@
 }
 
 - (void)configureCell:(XXNotification*)notification {
-
     [_messageLabel setText:notification.message];
-    [_messageLabel setFont:[UIFont fontWithName:kSourceSansProRegular size:14]];
+    if (IDIOM == IPAD){
+        [_messageLabel setFont:[UIFont fontWithName:kSourceSansProRegular size:16]];
+    } else {
+        [_messageLabel setFont:[UIFont fontWithName:kSourceSansProRegular size:14]];
+    }
+    
     XXPhoto *firstPhoto = [notification.photos firstObject];
     if (firstPhoto){
         CGRect rect = _messageLabel.frame;

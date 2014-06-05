@@ -26,9 +26,17 @@
         self.penName = value;
     } else if ([key isEqualToString:@"location"]) {
         self.location = value;
+    } else if ([key isEqualToString:@"bio"]) {
+        self.bio = value;
+    } else if ([key isEqualToString:@"day_job"]) {
+        self.dayJob = value;
+    } else if ([key isEqualToString:@"night_job"]) {
+        self.nightJob = value;
     } else if([key isEqualToString:@"authentication_token"]) {
         self.authToken = value;
-    }else if([key isEqualToString:@"pic_medium_url"]) {
+    } else if ([key isEqualToString:@"subscribed"]) {
+        self.subscribed = [value boolValue];
+    } else if([key isEqualToString:@"pic_medium_url"]) {
         self.picMediumUrl = value;
     } else if([key isEqualToString:@"pic_small_url"]) {
         self.picSmallUrl = value;
@@ -63,8 +71,6 @@
         self.stories = [Utilities storiesFromJSONArray:value];
     }
 }
-
-//////////////////
 
 - (id)initWithDictionary:(NSDictionary *)dictionary {
     if (self = [super init]) {

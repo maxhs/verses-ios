@@ -15,5 +15,6 @@
 
 @property (weak, nonatomic) IBOutlet UITableView *tableView;
 @property (strong, nonatomic) XXUser *user;
+@property (strong, nonatomic) NSNumber *userId;
 @property (strong, nonatomic) XXStoryInfoViewController *storyInfoVc;
 @end

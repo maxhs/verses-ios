@@ -13,6 +13,7 @@
 #import "User.h"
 #import "XXMenuViewController.h"
 #import "SWRevealViewController/SWRevealViewController.h"
+#import "XXWebViewController.h"
 
 @interface XXLoginController () <UITextFieldDelegate, UIAlertViewDelegate> {
     AFHTTPRequestOperationManager *manager;
@@ -20,6 +21,7 @@
     CGRect screen;
     CGRect originalLoginButtonFrame;
     CGRect originalSignupButtonFrame;
+    CGRect originalLogoFrame;
     CGFloat keyboardHeight;
     BOOL smallFormFactor;
 }
@@ -63,6 +65,8 @@
     [self.signupButton setTitleColor:[UIColor blackColor] forState:UIControlStateNormal];
     originalSignupButtonFrame = self.signupButton.frame;
     
+    originalLogoFrame = self.logo.frame;
+    
     if (IDIOM == IPAD){
         self.signupButton.layer.cornerRadius = 14.f;
         self.signupButton.layer.backgroundColor = [UIColor clearColor].CGColor;
@@ -88,12 +92,36 @@
     self.signupContainer.transform = CGAffineTransformMakeTranslation(-2*screen.size.width, 0);
     
     [self.forgotPasswordButton.titleLabel setFont:[UIFont fontWithName:kSourceSansProLight size:16]];
-    UITapGestureRecognizer *tapGesture = [[UITapGestureRecognizer alloc] initWithTarget:self action:@selector(doneEditing)];
+    [self.termsButton.titleLabel setFont:[UIFont fontWithName:kSourceSansProLight size:14]];
+    [self.termsButton.titleLabel setTextColor:[UIColor lightGrayColor]];
+    NSMutableAttributedString *termsString = [[NSMutableAttributedString alloc] initWithString:@"By continuing, you agree to our " attributes:nil];
+    NSMutableAttributedString *linkString = [[NSMutableAttributedString alloc] initWithString:@"Terms of Service" attributes:@{NSUnderlineStyleAttributeName:[NSNumber numberWithInt:NSUnderlineStyleSingle]}];
+    [termsString appendAttributedString:linkString];
+    self.termsButton.titleLabel.numberOfLines = 0;
+    self.termsButton.titleLabel.textAlignment = NSTextAlignmentCenter;
+    [self.termsButton setAttributedTitle:termsString forState:UIControlStateNormal];
+    [self.termsButton addTarget:self action:@selector(termsWebView) forControlEvents:UIControlEventTouchUpInside];
+    UITapGestureRecognizer *tapGesture = [[UITapGestureRecognizer alloc] initWithTarget:self action:@selector(resetButtons)];
     tapGesture.numberOfTapsRequired = 1;
     [self.view addGestureRecognizer:tapGesture];
     
     keyboardHeight = 216;
     [[NSNotificationCenter defaultCenter] addObserver:self selector:@selector(keyboardWillShow:) name:UIKeyboardWillShowNotification object:nil];
+}
+
+- (void)viewWillAppear:(BOOL)animated {
+    [super viewWillAppear:animated];
+    [[UIApplication sharedApplication] setStatusBarHidden:YES withAnimation:UIStatusBarAnimationFade];
+}
+
+- (void)termsWebView {
+    XXWebViewController *webViewVC = [[self storyboard] instantiateViewControllerWithIdentifier:@"WebView"];
+    UINavigationController *nav = [[UINavigationController alloc] initWithRootViewController:webViewVC];
+    [webViewVC setUrlString:kTermsUrl];
+    [webViewVC setTitle:@"Terms of Service"];
+    [self presentViewController:nav animated:YES completion:^{
+        
+    }];
 }
 
 - (void)keyboardWillShow:(NSNotification *)notification {
@@ -104,7 +132,7 @@
 }
 
 - (void)textFieldTreatment:(UITextField*)textField {
-    textField.layer.borderColor = [UIColor colorWithWhite:0 alpha:.23].CGColor;
+    textField.layer.borderColor = [UIColor colorWithWhite:0 alpha:.03].CGColor;
     textField.layer.borderWidth = .25f;
     textField.layer.cornerRadius = 4.f;
     UIView *paddingView = [[UIView alloc] initWithFrame:CGRectMake(0, 0, 7, 20)];
@@ -113,20 +141,22 @@
 }
 
 - (void)loginTapped{
-    [self.loginButton setUserInteractionEnabled:NO];
-    [self.signupButton setUserInteractionEnabled:YES];
+    [self.emailTextField becomeFirstResponder];
     [UIView animateWithDuration:.75 delay:0 usingSpringWithDamping:.5 initialSpringVelocity:.0001 options:UIViewAnimationOptionCurveEaseInOut animations:^{
         self.loginContainer.transform = CGAffineTransformIdentity;
         self.signupContainer.transform = CGAffineTransformMakeTranslation(-2*screen.size.width, 0);
         [self.signupButton setFrame:CGRectMake(-screenWidth(), self.signupButton.frame.origin.y, self.signupButton.frame.size.width, self.signupButton.frame.size.height)];
         self.forgotPasswordButton.transform = CGAffineTransformMakeTranslation(0, screenHeight()/2);
         if (IDIOM == IPAD){
+            CGRect logoFrame = originalLogoFrame;
+            logoFrame.origin.y = 110;
+            [self.logo setFrame:logoFrame];
             [self.loginButton setFrame:CGRectMake(screenWidth()/2-self.emailTextField.frame.size.width/2, screenHeight()/2-33, self.emailTextField.frame.size.width, 66)];
         } else {
             if (smallFormFactor) {
                 self.logo.transform = CGAffineTransformMakeTranslation(0, -(self.emailTextField.frame.origin.y+100));
             } else {
-                self.logo.transform = CGAffineTransformMakeTranslation(0, -(self.emailTextField.frame.origin.y+70));
+                self.logo.transform = CGAffineTransformMakeTranslation(0, -(self.emailTextField.frame.origin.y+77));
             }
             
             [self.loginButton setFrame:CGRectMake(0, screenHeight()-keyboardHeight-66, screenWidth(), 66)];
@@ -141,14 +171,11 @@
                                  action:NULL
                        forControlEvents:UIControlEventAllEvents];
         [self.loginButton addTarget:self action:@selector(login) forControlEvents:UIControlEventTouchUpInside];
-        [self.emailTextField becomeFirstResponder];
-        [self.cancelButton setHidden:YES];
     }];
 }
 
 - (IBAction)signupTapped{
-    [self.loginButton setUserInteractionEnabled:YES];
-    [self.signupButton setUserInteractionEnabled:NO];
+    [self.registerPenNameTextField becomeFirstResponder];
     [UIView animateWithDuration:.75 delay:0 usingSpringWithDamping:.5 initialSpringVelocity:.0001 options:UIViewAnimationOptionCurveEaseInOut animations:^{
         self.signupContainer.transform = CGAffineTransformIdentity;
         self.loginContainer.transform = CGAffineTransformMakeTranslation(2*screen.size.width, 0);
@@ -157,11 +184,14 @@
         
         if (IDIOM == IPAD){
             [self.signupButton setFrame:CGRectMake(screenWidth()/2-self.registerEmailTextField.frame.size.width/2, screenHeight()/2-33, self.registerEmailTextField.frame.size.width, 66)];
+            CGRect logoFrame = originalLogoFrame;
+            logoFrame.origin.y = 110;
+            [self.logo setFrame:logoFrame];
         } else {
             if (smallFormFactor){
                 self.logo.transform = CGAffineTransformMakeTranslation(0, -(self.registerEmailTextField.frame.origin.y+70));
             } else {
-                self.logo.transform = CGAffineTransformMakeTranslation(0, -(self.registerEmailTextField.frame.origin.y+60));
+                self.logo.transform = CGAffineTransformMakeTranslation(0, -(self.registerEmailTextField.frame.origin.y+67));
             }
             
             [self.signupButton setFrame:CGRectMake(0, screenHeight()-keyboardHeight-66, screenWidth(), 66)];
@@ -177,8 +207,6 @@
                                 action:NULL
                       forControlEvents:UIControlEventAllEvents];
         [self.signupButton addTarget:self action:@selector(signup) forControlEvents:UIControlEventTouchUpInside];
-        [self.registerPenNameTextField becomeFirstResponder];
-        [self.cancelButton setHidden:YES];
     }];
 }
 
@@ -191,6 +219,7 @@
 }
 
 - (void)resetButtons {
+    [self.view endEditing:YES];
     [UIView animateWithDuration:.75 delay:0 usingSpringWithDamping:.5 initialSpringVelocity:.0001 options:UIViewAnimationOptionCurveEaseInOut animations:^{
         [self.loginButton setFrame:originalLoginButtonFrame];
         [self.signupButton setFrame:originalSignupButtonFrame];
@@ -204,6 +233,10 @@
         [self.loginButton setTitleColor:[UIColor blackColor] forState:UIControlStateNormal];
         self.logo.transform = CGAffineTransformIdentity;
         self.forgotPasswordButton.transform = CGAffineTransformIdentity;
+        [_cancelButton setAlpha:1.0];
+        if (IDIOM == IPAD){
+            [self.logo setFrame:originalLogoFrame];
+        }
     } completion:^(BOOL finished) {
         [self.signupButton removeTarget:nil
                                  action:NULL
@@ -267,46 +300,68 @@
 }
 
 - (void)textFieldDidBeginEditing:(UITextField *)textField {
-    textField.layer.borderColor = [UIColor colorWithWhite:0 alpha:.5].CGColor;
+    textField.layer.borderColor = [UIColor colorWithWhite:0 alpha:.25].CGColor;
     [textField setTintColor:kElectricBlue];
+    [self checkTextFields];
 }
 
 - (void)textFieldDidEndEditing:(UITextField *)textField {
-    textField.layer.borderColor = [UIColor colorWithWhite:0 alpha:.23].CGColor;
+    textField.layer.borderColor = [UIColor colorWithWhite:0 alpha:.03].CGColor;
+    [self checkTextFields];
 }
 
 - (BOOL)textField:(UITextField *)textField shouldChangeCharactersInRange:(NSRange)range replacementString:(NSString *)string {
-    if (self.emailTextField.text.length && self.passwordTextField.text.length){
-        [self.loginButton setBackgroundColor:kElectricBlue];
-        self.loginButton.layer.borderColor = kElectricBlue.CGColor;
-        [self.loginButton setTitleColor:[UIColor whiteColor] forState:UIControlStateNormal];
-        self.loginButton.userInteractionEnabled = YES;
-    } else if (self.registerEmailTextField.text.length && self.registerPasswordTextField.text.length && self.registerPenNameTextField.text.length) {
-        [self.signupButton setBackgroundColor:kElectricBlue];
-        self.signupButton.layer.borderColor = kElectricBlue.CGColor;
-        [self.signupButton setTitleColor:[UIColor whiteColor] forState:UIControlStateNormal];
-        self.signupButton.userInteractionEnabled = YES;
-    } else {
-        [self.loginButton setBackgroundColor:[UIColor whiteColor]];
-        self.loginButton.layer.borderColor = [UIColor darkGrayColor].CGColor;
-        [self.loginButton setUserInteractionEnabled:NO];
-        [self.loginButton setTitleColor:[UIColor blackColor] forState:UIControlStateNormal];
-        [self.signupButton setBackgroundColor:[UIColor whiteColor]];
-        self.signupButton.layer.borderColor = [UIColor darkGrayColor].CGColor;
-        [self.signupButton setUserInteractionEnabled:NO];
-        [self.signupButton setTitleColor:[UIColor blackColor] forState:UIControlStateNormal];
+    [self checkTextFields];
+    if ([string isEqualToString:@"\n"]) {
+        if (textField == _registerPenNameTextField){
+            [_registerEmailTextField becomeFirstResponder];
+        } else if (textField == _registerEmailTextField) {
+            [_registerPasswordTextField becomeFirstResponder];
+        } else if (textField == _registerPasswordTextField && _registerPasswordTextField.text.length) {
+            [self signup];
+        } else if (textField == _emailTextField) {
+            [_passwordTextField becomeFirstResponder];
+        } else if (textField == _passwordTextField && _passwordTextField.text.length) {
+            [self login];
+        }
+        return NO;
     }
     return YES;
 }
 
+- (void)checkTextFields {
+    if (self.emailTextField.text.length && self.passwordTextField.text.length){
+        [self.loginButton setBackgroundColor:kElectricBlue];
+        self.loginButton.layer.borderColor = kElectricBlue.CGColor;
+        [self.loginButton setTitleColor:[UIColor whiteColor] forState:UIControlStateNormal];
+        [self.loginButton addTarget:self action:@selector(login) forControlEvents:UIControlEventTouchUpInside];
+    } else if (self.registerEmailTextField.text.length && self.registerPasswordTextField.text.length && self.registerPenNameTextField.text.length) {
+        [self.signupButton setBackgroundColor:kElectricBlue];
+        self.signupButton.layer.borderColor = kElectricBlue.CGColor;
+        [self.signupButton setTitleColor:[UIColor whiteColor] forState:UIControlStateNormal];
+        [self.signupButton addTarget:self action:@selector(signup) forControlEvents:UIControlEventTouchUpInside];
+    } else {
+        [self.loginButton setBackgroundColor:[UIColor whiteColor]];
+        self.loginButton.layer.borderColor = [UIColor darkGrayColor].CGColor;
+        [self.loginButton removeTarget:nil
+                                 action:NULL
+                       forControlEvents:UIControlEventAllEvents];
+        [self.loginButton setTitleColor:[UIColor blackColor] forState:UIControlStateNormal];
+        [self.signupButton setBackgroundColor:[UIColor whiteColor]];
+        self.signupButton.layer.borderColor = [UIColor darkGrayColor].CGColor;
+        [self.signupButton removeTarget:nil
+                                 action:NULL
+                       forControlEvents:UIControlEventAllEvents];
+        [self.signupButton setTitleColor:[UIColor blackColor] forState:UIControlStateNormal];
+    }
+}
+
 - (void)doneEditing {
-    [self.cancelButton setHidden:NO];
     [UIView animateWithDuration:.23 animations:^{
         [self.cancelButton setAlpha:1.0];
     }completion:^(BOOL finished) {
         
     }];
-    [self resetButtons];
     [self.view endEditing:YES];
 }
 
@@ -331,7 +386,7 @@
         }
 
         [manager POST:[NSString stringWithFormat:@"%@/sessions", kAPIBaseUrl] parameters:@{@"user":parameters} success:^(AFHTTPRequestOperation *operation, id responseObject) {
-            NSLog(@"success logging in: %@",responseObject);
+            //NSLog(@"success logging in: %@",responseObject);
             XXUser *user = [[XXUser alloc] initWithDictionary:[responseObject objectForKey:@"user"]];
             [[NSUserDefaults standardUserDefaults] setObject:user.identifier forKey:kUserDefaultsId];
             [[NSUserDefaults standardUserDefaults] setObject:user.email forKey:kUserDefaultsEmail];
@@ -342,38 +397,27 @@
             [[NSUserDefaults standardUserDefaults] setObject:user.picLargeUrl forKey:kUserDefaultsPicLarge];
             [[NSUserDefaults standardUserDefaults] synchronize];
 
-            [delegate.dynamicsDrawerViewController setPaneState:MSDynamicsDrawerPaneStateClosed animated:YES allowUserInterruption:YES completion:^{
-                
-            }];
+            [delegate.dynamicsDrawerViewController setPaneState:MSDynamicsDrawerPaneStateClosed animated:YES allowUserInterruption:YES completion:nil];
             [UIView animateWithDuration:.23 animations:^{
                 [self.logo setAlpha:0.0];
             }];
             
             NSManagedObjectContext *localContext = [NSManagedObjectContext MR_contextForCurrentThread];
             NSPredicate *predicate = [NSPredicate predicateWithFormat:@"identifier ==[c] %@", user.identifier];
-            delegate.currentUser = [User MR_findFirstWithPredicate:predicate inContext:localContext];
-            if (delegate.currentUser) {
-                delegate.currentUser.picLarge = user.picLargeUrl;
-                delegate.currentUser.picSmall = user.picSmallUrl;
-                delegate.currentUser.email = user.email;
-                delegate.currentUser.penName = user.penName;
-                delegate.currentUser.identifier = user.identifier;
-                delegate.currentUser.contactCount = user.contactCount;
-                delegate.currentUser.storyCount = user.storyCount;
-            } else {
-                NSLog(@"had to create new MR user");
-                delegate.currentUser = [User MR_createInContext:localContext];
-                delegate.currentUser.picSmall = user.picSmallUrl;
-                delegate.currentUser.picLarge = user.picLargeUrl;
-                delegate.currentUser.email = user.email;
-                delegate.currentUser.penName = user.penName;
-                delegate.currentUser.identifier = user.identifier;
-                delegate.currentUser.contactCount = user.contactCount;
-                delegate.currentUser.storyCount = user.storyCount;
+            User *currentUser = [User MR_findFirstWithPredicate:predicate inContext:localContext];
+            if (!currentUser) {
+                currentUser = [User MR_createInContext:localContext];
             }
+            currentUser.picSmall = user.picSmallUrl;
+            currentUser.picLarge = user.picLargeUrl;
+            currentUser.email = user.email;
+            currentUser.penName = user.penName;
+            currentUser.identifier = user.identifier;
+            currentUser.contactCount = user.contactCount;
+            currentUser.storyCount = user.storyCount;
+            
             [localContext MR_saveToPersistentStoreWithCompletion:^(BOOL success, NSError *error) {
-                if (success) NSLog(@"done saving user through Magical Record");
-                else NSLog(@"error saving through MR: %@",error.description);
+                delegate.currentUser = currentUser;
                 [self dismissViewControllerAnimated:YES completion:^{
                     [ProgressHUD dismiss];
                 }];
@@ -381,12 +425,18 @@
             
         } failure:^(AFHTTPRequestOperation *operation, NSError *error) {
             [ProgressHUD dismiss];
-            NSLog(@"Failure logging in: %@",error.localizedRecoverySuggestion);
-            NSLog(@"Failure logging in: %@",error.localizedFailureReason);
-            NSLog(@"Failure logging in: %@",error.description);
-            NSLog(@"Failure logging in: %@",error.debugDescription);
-            UIAlertView *trouble = [[UIAlertView alloc] initWithTitle:@"Uh oh" message:@"Something went wrong while trying to log you in" delegate:self cancelButtonTitle:@"Okay" otherButtonTitles:nil];
-            [trouble show];
+            NSLog(@"Response string: %@",operation.responseString);
+            if (operation.response.statusCode == 401) {
+                if ([operation.responseString isEqualToString:@"Incorrect password"]){
+                    [[[UIAlertView alloc] initWithTitle:@"Incorrect password" message:@"Your email and password don't match. Please try again." delegate:nil cancelButtonTitle:@"Okay" otherButtonTitles:nil] show];
+                } else if ([operation.responseString isEqualToString:@"User already exists"]) {
+                    [[[UIAlertView alloc] initWithTitle:@"Account already exists" message:@"Sorry, but an account with that email address already exists." delegate:nil cancelButtonTitle:@"Okay" otherButtonTitles:nil] show];
+                } else {
+                    [[[UIAlertView alloc] initWithTitle:@"Uh oh" message:@"Something went wrong while trying to log you in." delegate:self cancelButtonTitle:@"Okay" otherButtonTitles:nil] show];
+                }
+            } else {
+                [[[UIAlertView alloc] initWithTitle:@"Sorry" message:@"Something went wrong while trying to log you in." delegate:self cancelButtonTitle:@"Okay" otherButtonTitles:nil] show];
+            }
         }];
     }
 }

@@ -11,6 +11,12 @@
 @interface XXProfileCell : UITableViewCell
 
 @property (weak, nonatomic) IBOutlet UIButton *imageButton;
+@property (weak, nonatomic) IBOutlet UIImageView *background;
+@property (weak, nonatomic) IBOutlet UIImageView *blurredBackground;
 @property (weak, nonatomic) IBOutlet UILabel *locationLabel;
-
+@property (weak, nonatomic) IBOutlet UILabel *bioLabel;
+@property (weak, nonatomic) IBOutlet UILabel *dayJobLabel;
+@property (weak, nonatomic) IBOutlet UILabel *nightJobLabel;
+@property (weak, nonatomic) IBOutlet UIButton *subscribeButton;
+- (void)configureForUser:(XXUser*)user;
 @end

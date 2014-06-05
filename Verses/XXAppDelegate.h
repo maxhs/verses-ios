@@ -19,7 +19,10 @@
 @property (strong, nonatomic) XXMenuViewController *menuViewController;
 @property (strong, nonatomic) AFHTTPRequestOperationManager *manager;
 @property (nonatomic, strong) UIImageView *windowBackground;
+@property (strong, nonatomic) NSURL *backgroundURL;
 @property (strong, nonatomic) User *currentUser;
+@property (strong, nonatomic) NSMutableArray *stories;
+@property BOOL loadingBackground;
 @property BOOL offline;
 - (void)switchBackgroundTheme;
 @end

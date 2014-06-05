@@ -16,8 +16,10 @@
     AFHTTPRequestOperationManager *manager;
     UIColor *textColor;
     UIBarButtonItem *backButton;
-    UIImageView *navBarShadowView;
+    //UIImageView *navBarShadowView;
     NSDateFormatter *_dateFormatter;
+    UIImageView *userBlurredBackground;
+    UIView *profileCellContentView;
 }
 
 @end
@@ -25,18 +27,30 @@
 @implementation XXProfileViewController
 
 @synthesize user = _user;
+@synthesize userId = _userId;
 
 - (void)viewDidLoad
 {
     [super viewDidLoad];
-    manager = [AFHTTPRequestOperationManager manager];
+    manager = [(XXAppDelegate*)[UIApplication sharedApplication].delegate manager];
+    if (_user){
+        [self loadUserDetails:_user.identifier];
+    } else if (_userId) {
+        [self loadUserDetails:_userId];
+    }
+    
+   
     [self.tableView setSeparatorColor:[UIColor colorWithWhite:1 alpha:0]];
     self.title = _user.penName;
-    [self loadUserDetails];
+    
     _dateFormatter = [[NSDateFormatter alloc] init];
     [_dateFormatter setLocale:[NSLocale currentLocale]];
     [_dateFormatter setDateFormat:@"MMM, d  |  h:mm a"];
-    navBarShadowView = [Utilities findNavShadow:self.navigationController.navigationBar];
+    //navBarShadowView = [Utilities findNavShadow:self.navigationController.navigationBar];
+    [self.navigationController.navigationBar setBackgroundImage:[UIImage new]
+                             forBarMetrics:UIBarMetricsDefault];
+    self.navigationController.navigationBar.shadowImage = [UIImage new];
+    self.navigationController.navigationBar.translucent = YES;
 }
 
 - (void)viewWillAppear:(BOOL)animated {
@@ -53,7 +67,7 @@
         backButton = [[UIBarButtonItem alloc] initWithImage:[UIImage imageNamed:@"blackX"] style:UIBarButtonItemStylePlain target:self action:@selector(back)];
     }
     self.navigationItem.leftBarButtonItem = backButton;
-    navBarShadowView.hidden = YES;
+    //navBarShadowView.hidden = YES;
     if (self.tableView.alpha != 1.0){
         [UIView animateWithDuration:.23 animations:^{
             [self.tableView setAlpha:1.0];
@@ -63,16 +77,31 @@
 }
 
 - (void)back {
-    [self dismissViewControllerAnimated:YES completion:^{
-        
-    }];
+    MSDynamicsDrawerViewController *drawerView = [(XXAppDelegate*)[UIApplication sharedApplication].delegate dynamicsDrawerViewController];
+    if ([[(UINavigationController*)drawerView.paneViewController viewControllers] firstObject] == self){
+        [[(XXAppDelegate*)[UIApplication sharedApplication].delegate dynamicsDrawerViewController] setPaneState:MSDynamicsDrawerPaneStateOpen inDirection:MSDynamicsDrawerDirectionLeft animated:YES allowUserInterruption:NO completion:nil];
+    } else {
+        [self dismissViewControllerAnimated:YES completion:^{
+            
+        }];
+    }
 }
 
-- (void)loadUserDetails {
-    [manager GET:[NSString stringWithFormat:@"%@/users/%@",kAPIBaseUrl,_user.identifier] parameters:nil success:^(AFHTTPRequestOperation *operation, id responseObject) {
+- (void)loadUserDetails:(NSNumber*)identifier {
+    NSMutableDictionary *parameters = [NSMutableDictionary dictionary];
+    if ([[NSUserDefaults standardUserDefaults] objectForKey:kUserDefaultsId]){
+        [parameters setObject:[[NSUserDefaults standardUserDefaults] objectForKey:kUserDefaultsId] forKey:@"user_id"];
+    }
+    NSLog(@"should be loading user details");
+    [manager GET:[NSString stringWithFormat:@"%@/users/%@",kAPIBaseUrl,identifier] parameters:parameters success:^(AFHTTPRequestOperation *operation, id responseObject) {
         _user = [[XXUser alloc] initWithDictionary:[responseObject objectForKey:@"user"]];
-        //NSLog(@"success getting user details: %@",responseObject);
-        [self.tableView reloadData];
+        NSLog(@"user stories: %d",_user.stories.count);
+        NSLog(@"success getting user details: %@",responseObject);
+        if (self.tableView.numberOfSections){
+            [self.tableView reloadSections:[NSIndexSet indexSetWithIndex:1] withRowAnimation:UITableViewRowAnimationFade];
+        } else {
+            [self.tableView reloadData];
+        }
     } failure:^(AFHTTPRequestOperation *operation, NSError *error) {
         NSLog(@"Failed to get user details: %@",error.description);
     }];
@@ -88,7 +117,8 @@
 
 - (NSInteger)numberOfSectionsInTableView:(UITableView *)tableView
 {
-    return 2;
+    if (_user) return 2;
+    else return 0;
 }
 
 - (NSInteger)tableView:(UITableView *)tableView numberOfRowsInSection:(NSInteger)section
@@ -110,37 +140,12 @@
         cell.imageButton.imageView.layer.cornerRadius = cell.imageButton.frame.size.height/2;
         cell.imageButton.layer.backgroundColor = [UIColor clearColor].CGColor;
         cell.imageButton.backgroundColor = [UIColor clearColor];
+        [cell.locationLabel setTextColor:textColor];
         
-        if (_user.location.length){
-            [cell.locationLabel setFont:[UIFont fontWithName:kCrimsonItalic size:18]];
-            [cell.locationLabel setTextColor:textColor];
-            [cell.locationLabel setText:_user.location];
-            
-        } else {
-            if ([[NSUserDefaults standardUserDefaults] boolForKey:kDarkBackground]){
-                [cell.locationLabel setTextColor:textColor];
-            } else {
-                [cell.locationLabel setTextColor:[UIColor lightGrayColor]];
-            }
-            [cell.locationLabel setText:@"No location listed..."];
-            [cell.locationLabel setFont:[UIFont fontWithName:kCrimsonItalic size:18]];
-        }
+        [cell configureForUser:_user];
+        userBlurredBackground = cell.blurredBackground;
+        profileCellContentView = cell.contentView;
         
-        if (_user.picSmallUrl){
-            [cell.imageButton setImageWithURL:[NSURL URLWithString:_user.picMediumUrl] forState:UIControlStateNormal completed:^(UIImage *image, NSError *error, SDImageCacheType cacheType) {
-                [UIView animateWithDuration:.23 animations:^{
-                    [cell.imageButton setAlpha:1.0];
-                    [cell.locationLabel setAlpha:1.0];
-                }];
-            }];
-        } else {
-            [cell.imageButton setTitle:@"NO PHOTO" forState:UIControlStateNormal];
-            [cell.imageButton setTitleColor:[UIColor lightGrayColor] forState:UIControlStateNormal];
-            [cell.imageButton.titleLabel setFont:[UIFont fontWithName:kSourceSansProLight size:14]];
-            [UIView animateWithDuration:.23 animations:^{
-                [cell.imageButton setAlpha:1.0];
-            }];
-        }
         return cell;
     } else {
         XXProfileStoryCell *cell = (XXProfileStoryCell *)[tableView dequeueReusableCellWithIdentifier:@"ProfileStoryCell"];
@@ -167,11 +172,27 @@
 
 - (CGFloat)tableView:(UITableView *)tableView heightForRowAtIndexPath:(NSIndexPath *)indexPath {
     if (indexPath.section == 0){
-        return 140;
+        if (IDIOM == IPAD){
+            return screenHeight()/3;
+        } else {
+            return screenHeight()/2;
+        }
+        
     } else if (indexPath.section == 1){
         return 80;
     } else {
         return 44;
+    }
+}
+
+- (void)scrollViewDidScroll:(UIScrollView *)scrollView {
+    CGFloat y = scrollView.contentOffset.y;
+    if (y <= 0){
+        CGRect profileFrame = profileCellContentView.frame;
+        profileFrame.origin.y = y;
+        [profileCellContentView setFrame:profileFrame];
+        CGFloat alpha = (1+y/screenHeight());
+        [userBlurredBackground setAlpha:alpha];
     }
 }
 

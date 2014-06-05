@@ -66,7 +66,7 @@ static int minimumHeight = 30;
         
         if (!_timestamp) {
             _timestamp = [UILabel new];
-            _timestamp.font = [UIFont fontWithName:kSourceSansProRegular size:12.0f];
+            _timestamp.font = [UIFont fontWithName:kSourceSansProLight size:11.f];
             _timestamp.textColor = [UIColor lightGrayColor];
             _timestamp.numberOfLines = 0;
             [self.contentView addSubview:_timestamp];
@@ -114,7 +114,7 @@ static int minimumHeight = 30;
         _outlineLabel.frame = CGRectMake(offsetX + minimumHeight, 0, _textSize.width + OUTLINE, height);
         _outlineLabel.backgroundColor = _myColor;
         _deleteButton.frame = (UIInterfaceOrientationIsPortrait([[UIApplication sharedApplication]statusBarOrientation])) ? CGRectMake(width-34, self.frame.size.height/2-23, 34, 34) : CGRectMake(screenHeight()-34, self.frame.size.height/2-23, 34, 34);
-        _timestamp.frame = CGRectMake(_outlineLabel.frame.origin.x + _outlineLabel.bounds.size.width + offsetX, -6, 40, 50);
+        _timestamp.frame = CGRectMake(_outlineLabel.frame.origin.x + _outlineLabel.bounds.size.width + offsetX, 0, 40, height);
         [_textLabel setTextColor:[UIColor whiteColor]];
         
     } else {
@@ -123,7 +123,7 @@ static int minimumHeight = 30;
         _outlineLabel.frame = (UIInterfaceOrientationIsPortrait([[UIApplication sharedApplication]statusBarOrientation])) ? CGRectMake(width - offsetX - minimumHeight, 0, -_textSize.width - OUTLINE, height) : CGRectMake(screenHeight() - offsetX - minimumHeight, 0, -_textSize.width - OUTLINE, height);
         _outlineLabel.backgroundColor = _senderColor;
         _deleteButton.frame = CGRectMake(0, 0, 0, 0);
-        _timestamp.frame = CGRectMake(_outlineLabel.frame.origin.x - 50, -6, 40, 60);
+        _timestamp.frame = CGRectMake(_outlineLabel.frame.origin.x - 40, 0, 40, height);
         if ([[NSUserDefaults standardUserDefaults] boolForKey:kDarkBackground]){
             [_textLabel setTextColor:[UIColor whiteColor]];
         } else {

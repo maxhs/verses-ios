@@ -18,6 +18,7 @@
     AFHTTPRequestOperationManager *manager;
     CGRect screen;
     UIBarButtonItem *backButton;
+    UIInterfaceOrientation orientation;
 }
 @end
 
@@ -83,6 +84,7 @@
 }
 
 - (void)willAnimateRotationToInterfaceOrientation:(UIInterfaceOrientation)toInterfaceOrientation duration:(NSTimeInterval)duration {
+    orientation = toInterfaceOrientation;
     if (toInterfaceOrientation == UIInterfaceOrientationLandscapeLeft || toInterfaceOrientation == UIInterfaceOrientationLandscapeRight) {
         
     }
@@ -108,7 +110,7 @@
         cell = [[[NSBundle mainBundle] loadNibNamed:@"XXStoryCell" owner:nil options:nil] lastObject];
     }
     XXStory *story = [_stories objectAtIndex:indexPath.row];
-    [cell configureForStory:story];
+    [cell configureForStory:story withOrientation:orientation];
 
     return cell;
 }
@@ -128,7 +130,7 @@
         XXStory *story = [_stories objectAtIndex:indexPath.row];
         XXStoryViewController *vc = [segue destinationViewController];
         [vc setStory:story];
-        [vc setStories:[[(XXAppDelegate*)[UIApplication sharedApplication].delegate menuViewController] stories]];
+        [vc setStories:[(XXAppDelegate*)[UIApplication sharedApplication].delegate stories]];
     }
 }
 

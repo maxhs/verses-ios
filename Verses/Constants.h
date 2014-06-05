@@ -18,6 +18,8 @@ static inline CGFloat height(UIView *view) { return view.frame.size.height; }
 #define kSeparatorTag 21
 #define kBaseUrl @"https://www.writeverses.com"
 #define kAPIBaseUrl @"https://www.writeverses.com/api/v1"
+#define kTermsUrl @"https://www.writeverses.com/terms"
+#define kUrlScheme @"verses"
 
 #define MIXPANEL_TOKEN @"8184fc9baafab30a5c51cceefb90e2d0"
 #define RADIANS(degrees) ((degrees * M_PI) / 180.0)
@@ -68,20 +70,16 @@ static inline CGFloat height(UIView *view) { return view.frame.size.height; }
 //Font constants
 #define kGotham @"GothamBook"
 #define kGothamRounded @"GothamRounded-Book"
-#define kCrimsonRoman @"CrimsonText-Roman"
-#define kCrimsonItalic @"CrimsonText-Italic"
-#define kCrimsonSemibold @"CrimsonText-Semibold"
-#define kExistenceLight @"Existence-Light"
-#define kBostonTraffic @"BostonTraffic"
 #define kGothamBold @"GothamBold"
 #define kGothamExtraLight @"GothamExtraLight"
 #define kGothamLight @"GothamLight"
-#define kGothamUltra @"GothamUltra"
 #define kGothamThin @"GothamThin"
 #define kSourceSansProLight @"SourceSansPro-Light"
 #define kSourceSansProRegular @"SourceSansPro-Regular"
 #define kSourceSansProSemibold @"SourceSansPro-Semibold"
 #define kSourceSansProBold @"SourceSansPro-Bold"
 #define kSourceSansProItalic @"SourceSansPro-It"
-#define kMontserrat @"Montserrat-Regular"
+#define kCrimsonRoman @"CrimsonText-Roman"
+#define kCrimsonItalic @"CrimsonText-Italic"
+#define kCrimsonSemibold @"CrimsonText-Semibold"
 #endif

@@ -22,6 +22,7 @@
     UIImageView *navBarShadowView;
     NSDateFormatter *_formatter;
     CGRect screen;
+    BOOL loading;
 }
 
 @end
@@ -99,7 +100,6 @@
 - (void)viewContacts{
     XXCollaborateViewController *vc = [[self storyboard] instantiateViewControllerWithIdentifier:@"Collaborate"];
     [vc setTitle:@"Collaborators"];
-    [vc setModal:YES];
     [vc setManageContacts:YES];
     if ([[NSUserDefaults standardUserDefaults] boolForKey:kDarkBackground]){
         [UIView animateWithDuration:.23 animations:^{
@@ -115,16 +115,15 @@
 }
 
 - (void)loadCircles {
+    loading = YES;
     [manager GET:[NSString stringWithFormat:@"%@/circles",kAPIBaseUrl] parameters:@{@"user_id":[[NSUserDefaults standardUserDefaults] objectForKey:kUserDefaultsId]} success:^(AFHTTPRequestOperation *operation, id responseObject) {
-        NSLog(@"success fetching circles: %@",responseObject);
+        //NSLog(@"success fetching circles: %@",responseObject);
         _circles = [[Utilities circlesFromJSONArray:[responseObject objectForKey:@"circles"]] mutableCopy];
-        if (_circles.count == 0){
-            [ProgressHUD dismiss];
-        } else {
-            [self.tableView reloadData];
-        }
+        loading = NO;
+        [self.tableView reloadData];
     } failure:^(AFHTTPRequestOperation *operation, NSError *error) {
         NSLog(@"Failure getting circles: %@",error.description);
+        loading = NO;
         [ProgressHUD dismiss];
     }];
 }
@@ -139,27 +138,47 @@
 
 - (NSInteger)numberOfSectionsInTableView:(UITableView *)tableView
 {
-    return 1;
+    if (loading) return 0;
+    else return 1;
 }
 
 - (NSInteger)tableView:(UITableView *)tableView numberOfRowsInSection:(NSInteger)section
 {
-    return _circles.count;
+    if (_circles.count == 0 && !loading) return 1;
+    else return _circles.count;
 }
 
 - (UITableViewCell *)tableView:(UITableView *)tableView cellForRowAtIndexPath:(NSIndexPath *)indexPath
 {
-    XXCircleCell *cell = [tableView dequeueReusableCellWithIdentifier:@"CircleCell"];
-    if (cell == nil) {
-        cell = [[[NSBundle mainBundle] loadNibNamed:@"XXCircleCell" owner:nil options:nil] lastObject];
+    if (_circles.count == 0){
+        static NSString *CellIdentifier = @"NothingCell";
+        UITableViewCell *cell = [tableView dequeueReusableCellWithIdentifier:CellIdentifier forIndexPath:indexPath];
+        UIButton *nothingButton = [UIButton buttonWithType:UIButtonTypeCustom];
+        [nothingButton setTitle:@"You don't have any writing circles." forState:UIControlStateNormal];
+        [nothingButton.titleLabel setNumberOfLines:0];
+        [nothingButton.titleLabel setFont:[UIFont fontWithName:kSourceSansProLight size:20]];
+        [nothingButton.titleLabel setTextAlignment:NSTextAlignmentCenter];
+        nothingButton.contentHorizontalAlignment = UIControlContentHorizontalAlignmentCenter;
+        [nothingButton setTitleColor:[UIColor blackColor] forState:UIControlStateNormal];
+        [nothingButton setBackgroundColor:[UIColor clearColor]];
+        [cell addSubview:nothingButton];
+        [nothingButton setFrame:CGRectMake(20, 0, screen.size.width-40, screen.size.height-84)];
+        
+        return cell;
+    } else {
+        XXCircleCell *cell = [tableView dequeueReusableCellWithIdentifier:@"CircleCell"];
+        if (cell == nil) {
+            cell = [[[NSBundle mainBundle] loadNibNamed:@"XXCircleCell" owner:nil options:nil] lastObject];
+        }
+        XXCircle *circle = [_circles objectAtIndex:indexPath.row];
+        [cell configureCell:circle withTextColor:textColor];
+        return cell;
     }
-    XXCircle *circle = [_circles objectAtIndex:indexPath.row];
-    [cell configureCell:circle withTextColor:textColor];
-    return cell;
 }
 
 -(CGFloat)tableView:(UITableView *)tableView heightForRowAtIndexPath:(NSIndexPath *)indexPath {
-    return 70;
+    if (_circles.count == 0 && !loading) return screen.size.height - 84;
+    else return 70;
 }
 
 -(void)tableView:(UITableView *)tableView willDisplayCell:(UITableViewCell *)cell forRowAtIndexPath:(NSIndexPath *)indexPath

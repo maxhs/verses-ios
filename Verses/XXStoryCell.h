@@ -14,13 +14,17 @@
 
 @interface XXStoryCell : UITableViewCell <UIScrollViewDelegate>
 @property (weak, nonatomic) IBOutlet UILabel *titleLabel;
-@property (strong, nonatomic) XXTextView *bodySnippet;
+@property (weak, nonatomic) IBOutlet UILabel *countLabel;
 @property (weak, nonatomic) IBOutlet UIButton *imageButton;
 @property (weak, nonatomic) IBOutlet UILabel *authorLabel;
 @property (weak, nonatomic) IBOutlet UIButton *authorPhoto;
-@property (strong, nonatomic) UITextView *textView;
 @property (weak, nonatomic) IBOutlet UILabel *infoLabel;
 @property (weak, nonatomic) IBOutlet UIView *separatorView;
-- (void)configureForStory:(XXStory*)story;
-
+@property (weak, nonatomic) IBOutlet UIImageView *backgroundImageView;
+@property (weak, nonatomic) IBOutlet UIScrollView *scrollView;
+@property (strong, nonatomic) UITextView *textView;
+@property (strong, nonatomic) XXTextView *bodySnippet;
+@property (strong, nonatomic) UITapGestureRecognizer *scrollTouch;
+- (void)configureForStory:(XXStory*)story withOrientation:(UIInterfaceOrientation)orientation;
+- (void)resetCell;
 @end

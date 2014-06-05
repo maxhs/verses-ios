@@ -102,15 +102,13 @@
             textContainerHeight = self.contentView.frame.size.height*2/3;
         } else {
             if (screenHeight() == 568){
-                NSLog(@"iPhone5");
                 textContainerHeight = self.contentView.frame.size.height*2/3;
             } else {
-                NSLog(@"old form factory");
                 textContainerHeight = self.contentView.frame.size.height/2;
             }
             
         }
-        CGFloat spacer = 18;
+        CGFloat spacer = 10;
         
         [_bodySnippet setFrame:CGRectMake(spacer/2, _titleLabel.frame.size.height+_titleLabel.frame.origin.y, self.contentView.frame.size.width-spacer, textContainerHeight)];
         [self.contentView insertSubview:_bodySnippet belowSubview:_background];
@@ -119,9 +117,9 @@
     [_bodySnippet setAttributedText:aString];
     [_bodySnippet setTextColor:color];
     
-    [_readButton.titleLabel setFont:[UIFont fontWithName:kSourceSansProLight size:20]];
+    [_readButton.titleLabel setFont:[UIFont fontWithName:kSourceSansProSemibold size:17]];
     [self buttonTreatment:_readButton];
-    [_editButton.titleLabel setFont:[UIFont fontWithName:kSourceSansProLight size:20]];
+    [_editButton.titleLabel setFont:[UIFont fontWithName:kSourceSansProSemibold size:17]];
     [self buttonTreatment:_editButton];
     
     readY = (int)arc4random_uniform(320)-160;

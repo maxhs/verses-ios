@@ -46,7 +46,7 @@
     [_formatter setLocale:[NSLocale currentLocale]];
     [_formatter setDateFormat:@"MMM d - h:mm a"];
     canLoadMore = YES;
-    [self.searchDisplayController.searchBar setPlaceholder:@"Search my stories"];
+    [self.searchDisplayController.searchBar setPlaceholder:@"Search my portfolio"];
     self.searchDisplayController.delegate = self;
     [self.searchDisplayController setSearchResultsDelegate:self];
     [self.searchDisplayController setSearchResultsDataSource:self];
@@ -265,7 +265,8 @@
 
 - (void)startWriting {
     XXWriteViewController *write = [[self storyboard] instantiateViewControllerWithIdentifier:@"Write"];
-    [self presentViewController:write animated:YES completion:^{
+    UINavigationController *nav = [[UINavigationController alloc] initWithRootViewController:write];
+    [self presentViewController:nav animated:YES completion:^{
         
     }];
 }
@@ -344,7 +345,7 @@
             [vc setStory:(XXStory*)sender];
         }
         
-        [vc setStories:[[(XXAppDelegate*)[UIApplication sharedApplication].delegate menuViewController] stories]];
+        [vc setStories:[(XXAppDelegate*)[UIApplication sharedApplication].delegate stories]];
         NSLog(@"should be seguing to story");
         [UIView animateWithDuration:.23 animations:^{
             [self.tableView setAlpha:0.0];

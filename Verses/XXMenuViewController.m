@@ -51,7 +51,7 @@
 @end
 
 @implementation XXMenuViewController
-@synthesize stories = _stories;
+
 - (void)viewDidLoad
 {
     manager = [(XXAppDelegate*)[UIApplication sharedApplication].delegate manager];
@@ -192,14 +192,14 @@
         [manager GET:[NSString stringWithFormat:@"%@/stories",kAPIBaseUrl] parameters:@{@"before_date":lastNotification.epochTime, @"count":@"30"} success:^(AFHTTPRequestOperation *operation, id responseObject) {
             //NSLog(@"more notificaitons response: %@",responseObject);
             NSArray *newNotificaitons = [Utilities notificationsFromJSONArray:[responseObject objectForKey:@"notifications"]];
-            [_stories addObjectsFromArray:newNotificaitons];
+            [notifications addObjectsFromArray:newNotificaitons];
             if (newNotificaitons.count < 30) {
                 canLoadMore = NO;
-                //NSLog(@"can't load more, we now have %i notifications", notifications.count);
+                NSLog(@"can't load more, we now have %i notifications", notifications.count);
             }
             [ProgressHUD dismiss];
             loading = NO;
-            [self.tableView reloadData];
+            [self.tableView reloadSections:[NSIndexSet indexSetWithIndex:1] withRowAnimation:UITableViewRowAnimationFade];
         } failure:^(AFHTTPRequestOperation *operation, NSError *error) {
             
         }];
@@ -361,7 +361,7 @@
             [_loginButton setBackgroundColor:[UIColor clearColor]];
             [cell addSubview:_loginButton];
         }
-        [_loginButton setFrame:CGRectMake(0, 0, screenWidth()*.975, screenHeight()-self.searchBar.frame.size.height*3)];
+        [_loginButton setFrame:CGRectMake(0, 0, screenWidth()*.923, screenHeight()-self.searchBar.frame.size.height*2)];
         [_loginButton setAutoresizingMask:UIViewAutoresizingFlexibleWidth];
         [_loginButton setAutoresizingMask:UIViewAutoresizingFlexibleHeight];
         [_loginButton setAutoresizingMask:UIViewAutoresizingFlexibleRightMargin];
@@ -391,7 +391,7 @@
         XXWelcomeViewController *vc = [[self storyboard] instantiateViewControllerWithIdentifier:@"Welcome"];
         UINavigationController *nav = [[UINavigationController alloc] initWithRootViewController:vc];
         [dynamicsViewController setPaneViewController:nav animated:YES completion:^{
-            [vc loadEtherStories];
+            
         }];
     }
 }
@@ -523,7 +523,7 @@
             XXStoryViewController *vc = [[self storyboard] instantiateViewControllerWithIdentifier:@"Story"];
             if (story && story.identifier){
                 [ProgressHUD show:@"Fetching story..."];
-                [vc setStories:_stories];
+                [vc setStories:[(XXAppDelegate*)[UIApplication sharedApplication].delegate stories]];
                 [vc setStory:story];
                 UINavigationController *nav = [[UINavigationController alloc] initWithRootViewController:vc];
                 [dynamicsViewController setPaneViewController:nav animated:YES completion:nil];
@@ -558,14 +558,12 @@
             }
         } else if (indexPath.section == 1){
             XXNotification *notification = [notifications objectAtIndex:indexPath.row];
-            NSLog(@"notification type: %@",notification.type);
             if (notification.storyId){
                 XXStoryViewController *vc = [[self storyboard] instantiateViewControllerWithIdentifier:@"Story"];
                 [ProgressHUD show:@"Fetching story..."];
-                [vc setStories:_stories];
+                [vc setStories:[(XXAppDelegate*)[UIApplication sharedApplication].delegate stories]];
                 XXStory *storyObject = [[XXStory alloc] init];
                 storyObject.identifier = notification.storyId;
-                NSLog(@"notification story object: %@",storyObject.identifier);
                 [vc setStory:storyObject];
                 UINavigationController *nav = [[UINavigationController alloc] initWithRootViewController:vc];
                 [dynamicsViewController setPaneViewController:nav animated:YES completion:nil];

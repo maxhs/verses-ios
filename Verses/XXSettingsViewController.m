@@ -791,7 +791,8 @@
     NSString *appDomain = [[NSBundle mainBundle] bundleIdentifier];
     [[NSUserDefaults standardUserDefaults] removePersistentDomainForName:appDomain];
     [NSUserDefaults resetStandardUserDefaults];
-    
+    [[NSUserDefaults standardUserDefaults] setBool:YES forKey:kExistingUser];
+    [[NSUserDefaults standardUserDefaults] synchronize];
     [[[SDWebImageManager sharedManager] imageCache] clearDisk];
     
     XXWelcomeViewController *welcomeVC = [[self storyboard] instantiateViewControllerWithIdentifier:@"Welcome"];

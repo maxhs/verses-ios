@@ -105,6 +105,9 @@
             cell = [[[NSBundle mainBundle] loadNibNamed:@"XXAuthorInfoCell" owner:nil options:nil] lastObject];
         }
         [cell configureForAuthor:author];
+        
+        [cell.authorPhoto setTag:indexPath.row];
+        [cell.authorPhoto addTarget:self action:@selector(goToProfile:) forControlEvents:UIControlEventTouchUpInside];
         UIView *selectedView = [[UIView alloc] initWithFrame:cell.frame];
         [selectedView setBackgroundColor:[UIColor colorWithWhite:1 alpha:.5]];
         cell.selectedBackgroundView = selectedView;
@@ -186,17 +189,15 @@
         [parameters setObject:_story.identifier forKey:@"story_id"];
         [parameters setObject:feedbackTextView.text forKey:@"feedback"];
         [manager POST:[NSString stringWithFormat:@"%@/feedbacks",kAPIBaseUrl] parameters:parameters success:^(AFHTTPRequestOperation *operation, id responseObject) {
-            NSLog(@"Success sending feedback: %@",responseObject);
+            //NSLog(@"Success sending feedback: %@",responseObject);
             XXFeedback *newFeedback = [[XXFeedback alloc] initWithDictionary:[responseObject objectForKey:@"feedback"]];
             [_story.feedbacks enumerateObjectsUsingBlock:^(XXFeedback *feedback, NSUInteger idx, BOOL *stop) {
                 if ([feedback.identifier isEqualToNumber:newFeedback.identifier]){
                     [_story.feedbacks replaceObjectAtIndex:idx withObject:newFeedback];
-                    NSLog(@"successfully replaced feedback: %d",feedback.comments.count);
                     //[self.tableView reloadSections:[NSIndexSet indexSetWithIndexesInRange:NSMakeRange(3, 1)] withRowAnimation:UITableViewRowAnimationFade];
                     [self.tableView reloadData];
                     *stop = YES;
                 } else {
-                    NSLog(@"new feedback");
                     _story.feedbacks = [NSMutableArray array];
                     [_story.feedbacks addObject:newFeedback];
                     *stop = YES;
@@ -318,6 +319,35 @@
         return 90;
     }
 }
+
+-(void)goToProfile:(UIButton*)button {
+    if (IDIOM == IPAD){
+        XXUser *user = [_story.collaborators objectAtIndex:button.tag];
+        XXProfileViewController* vc = [[self storyboard] instantiateViewControllerWithIdentifier:@"Profile"];
+        [vc setStoryInfoVc:self];
+        [vc setUser:user];
+        self.popover = [[UIPopoverController alloc] initWithContentViewController:vc];
+        self.popover.delegate = self;
+        XXAuthorInfoCell *cell = (XXAuthorInfoCell*)[self.tableView cellForRowAtIndexPath:[NSIndexPath indexPathForRow:button.tag inSection:1]];
+        [self.popover presentPopoverFromRect:cell.frame inView:self.view permittedArrowDirections:UIPopoverArrowDirectionAny animated:YES];
+        
+    } else {
+        XXUser *user = [_story.collaborators objectAtIndex:button.tag];
+        XXProfileViewController* vc = [[self storyboard] instantiateViewControllerWithIdentifier:@"Profile"];
+        [vc setUser:user];
+        UINavigationController *nav = [[UINavigationController alloc] initWithRootViewController:vc];
+        [self presentViewController:nav animated:YES completion:^{
+            
+        }];
+    }
+    if ([[NSUserDefaults standardUserDefaults] boolForKey:kDarkBackground]){
+        [UIView animateWithDuration:.23 animations:^{
+            [self.tableView setAlpha:0.0];
+            self.tableView.transform = CGAffineTransformMakeScale(.8, .8);
+        }];
+    }
+}
+
 - (void)tableView:(UITableView *)tableView didSelectRowAtIndexPath:(NSIndexPath *)indexPath {
     if (!signedIn && indexPath.section == 2){
         [self confirmLoginPrompt];

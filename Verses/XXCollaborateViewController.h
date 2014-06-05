@@ -11,11 +11,9 @@
 
 @interface XXCollaborateViewController : UIViewController <UITableViewDataSource, UITableViewDelegate, UIAlertViewDelegate>
 @property (weak, nonatomic) IBOutlet UITableView *tableView;
-@property (weak, nonatomic) IBOutlet UIBarButtonItem *addButton;
 @property (strong, nonatomic) NSMutableArray *collaborators;
 @property (strong, nonatomic) NSMutableArray *circleCollaborators;
-@property BOOL modal;
 @property BOOL manageContacts;
--(IBAction)addContact;
+-(void)addContact;
 
 @end

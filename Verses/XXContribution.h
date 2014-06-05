@@ -17,6 +17,9 @@
 @property (strong, nonatomic) NSArray *photos;
 @property (strong, nonatomic) NSNumber *wordCount;
 @property (strong, nonatomic) NSMutableArray *sections;
+@property (strong, nonatomic) NSNumber *epochTime;
+@property (strong, nonatomic) NSDate *createdDate;
+@property (strong, nonatomic) NSDate *updatedDate;
 
 @property BOOL allowFeedback;
 

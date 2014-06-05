@@ -38,6 +38,7 @@
 @implementation XXCircleDetailViewController
 
 @synthesize circle = _circle;
+@synthesize circleId = _circleId;
 
 - (void)viewDidLoad
 {
@@ -67,8 +68,11 @@
     _formatter = [[NSDateFormatter alloc] init];
     [_formatter setLocale:[NSLocale currentLocale]];
     [_formatter setDateFormat:@"MMM, d\nh:mm a"];
-    if (_circle.comments.count == 0){
-        [self loadDetails];
+    
+    if (_circleId){
+        [self loadDetails:_circleId];
+    } else if (_circle.comments.count == 0){
+        [self loadDetails:_circle.identifier];
     } else {
         [self loadCircleNotifications];
     }
@@ -89,8 +93,8 @@
     self.storiesTableView.rowHeight = 80;
 }
 
-- (void)loadDetails {
-    [manager GET:[NSString stringWithFormat:@"%@/circles/%@",kAPIBaseUrl,_circle.identifier] parameters:@{@"user_id":[[NSUserDefaults standardUserDefaults] objectForKey:kUserDefaultsId]} success:^(AFHTTPRequestOperation *operation, id responseObject) {
+- (void)loadDetails:(NSNumber*)identifier {
+    [manager GET:[NSString stringWithFormat:@"%@/circles/%@",kAPIBaseUrl,identifier] parameters:@{@"user_id":[[NSUserDefaults standardUserDefaults] objectForKey:kUserDefaultsId]} success:^(AFHTTPRequestOperation *operation, id responseObject) {
         //NSLog(@"success getting circle details: %@", responseObject);
         _circle = [[XXCircle alloc] initWithDictionary:[responseObject objectForKey:@"circle"]];
         [self.collectionView reloadData];
@@ -188,9 +192,17 @@
     switch (control.selectedSegmentIndex) {
         case 0:
             if (self.needsNavigation){
-                [[(XXAppDelegate*)[UIApplication sharedApplication].delegate dynamicsDrawerViewController] setPaneState:MSDynamicsDrawerPaneStateOpen inDirection:MSDynamicsDrawerDirectionLeft animated:YES allowUserInterruption:YES completion:nil];
+                [[(XXAppDelegate*)[UIApplication sharedApplication].delegate dynamicsDrawerViewController] setPaneState:MSDynamicsDrawerPaneStateOpen inDirection:MSDynamicsDrawerDirectionLeft animated:YES allowUserInterruption:NO completion:^{
+                    [_circleControl setSelectedSegmentIndex:1];
+                }];
             } else {
-                [self.navigationController popViewControllerAnimated:YES];
+                if (self.navigationController.viewControllers.firstObject == self){
+                    [[(XXAppDelegate*)[UIApplication sharedApplication].delegate dynamicsDrawerViewController] setPaneState:MSDynamicsDrawerPaneStateOpen inDirection:MSDynamicsDrawerDirectionLeft animated:YES allowUserInterruption:NO completion:^{
+                        [_circleControl setSelectedSegmentIndex:1];
+                    }];
+                } else {
+                    [self.navigationController popViewControllerAnimated:YES];
+                }
             }
             break;
         case 1:
@@ -445,12 +457,12 @@
     [cell drawCell:comment withTextColor:textColor];
     cell.deleteButton.tag = indexPath.row;
     [cell.deleteButton addTarget:self action:@selector(deleteComment:) forControlEvents:UIControlEventTouchUpInside];
-    if (currentOrientation == UIInterfaceOrientationPortrait){
+    /*if (currentOrientation == UIInterfaceOrientationPortrait){
         [cell.timestamp setAlpha:0.0];
-    } else {
+    } else {*/
         [cell.timestamp setText:[_formatter stringFromDate:comment.createdDate]];
         [cell.timestamp setAlpha:1.0];
-    }
+    //}
     
     return cell;
 }

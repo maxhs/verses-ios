@@ -32,7 +32,12 @@
 }
 
 - (void)configureAlert:(NSInteger)alertCount{
-    [_menuLabel setFont:[UIFont fontWithName:kSourceSansProSemibold size:18]];
+    if (IDIOM == IPAD){
+        [_menuLabel setFont:[UIFont fontWithName:kSourceSansProSemibold size:19]];
+    } else {
+       [_menuLabel setFont:[UIFont fontWithName:kSourceSansProSemibold size:18]];
+    }
+    
     _menuLabel.layer.rasterizationScale = [UIScreen mainScreen].scale;
     _menuLabel.layer.shouldRasterize = YES;
     

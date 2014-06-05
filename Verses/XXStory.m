@@ -36,9 +36,9 @@
         if (self.mystery){
             rangeAmount = 250;
         } else if (IDIOM == IPAD) {
-            rangeAmount = 800;
+            rangeAmount = 1000;
         } else {
-            rangeAmount = 400;
+            rangeAmount = 700;
         }
         NSRange range;
         if ([[self.contributions.firstObject body] length] > rangeAmount){
@@ -48,7 +48,7 @@
         }
         
         NSDictionary *options = @{DTUseiOS6Attributes: [NSNumber numberWithBool:YES],
-                                  DTDefaultFontSize: @21,
+                                  DTDefaultFontSize: @22,
                                   DTDefaultFontFamily: @"Crimson Text",
                                   NSTextEncodingNameDocumentOption: @"UTF-8"};
         DTHTMLAttributedStringBuilder *stringBuilder = [[DTHTMLAttributedStringBuilder alloc] initWithHTML:[[[self.contributions.firstObject body] substringWithRange:range] dataUsingEncoding:NSUTF8StringEncoding] options:options documentAttributes:nil];
@@ -65,6 +65,8 @@
         self.views = value;
     } else if ([key isEqualToString:@"word_count"]){
         self.wordCount = value;
+    } else if ([key isEqualToString:@"trending_count"]){
+        self.trendingCount = value;
     } else if ([key isEqualToString:@"minutes_to_read"]){
         self.minutesToRead = value;
     } else if ([key isEqualToString:@"created_date"]){

@@ -18,6 +18,7 @@
 
 @property (weak, nonatomic) IBOutlet UITableView *detailsTableView;
 @property (weak, nonatomic) IBOutlet UITableView *storiesTableView;
+@property (weak, nonatomic) NSNumber *circleId;
 @property (strong, nonatomic) XXCircle *circle;
 @property (strong, nonatomic) UICollectionView *collectionView;
 @property (strong, nonatomic) XXChat *chatInput;

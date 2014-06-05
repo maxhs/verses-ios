@@ -8,12 +8,14 @@
 
 #import "XXPhotoButton.h"
 #import <SDWebImage/UIButton+WebCache.h>
+#import "UIImage+ImageEffects.h"
 
 @implementation XXPhotoButton {
     XXStory *_story;
     XXPhoto *_photo;
     UIViewController *_vc;
     NSMutableArray *browserPhotos;
+    XXAppDelegate *delegate;
 }
 
 - (id)initWithFrame:(CGRect)frame
@@ -38,11 +40,37 @@
     _story = story;
     _photo = photo;
     _vc = vc;
+    delegate = (XXAppDelegate*)[UIApplication sharedApplication].delegate;
     __weak typeof(self) weakSelf = self;
     [weakSelf setAlpha:0.0];
     [weakSelf setImageWithURL:photo.imageLargeUrl forState:UIControlStateNormal completed:^(UIImage *image, NSError *error, SDImageCacheType cacheType) {
-        [UIView animateWithDuration:.25 animations:^{
+        [UIView animateWithDuration:.27 animations:^{
             [weakSelf setAlpha:1.0];
+            
+            if ([[(NSURL*)[delegate backgroundURL] absoluteString] isEqualToString:photo.imageLargeUrl.absoluteString] || delegate.loadingBackground){
+                NSLog(@"Background image already set");
+            } else {
+                delegate.loadingBackground = YES;
+                dispatch_async(dispatch_get_global_queue(DISPATCH_QUEUE_PRIORITY_DEFAULT, 0), ^{
+                    
+                    [delegate.windowBackground setContentMode:UIViewContentModeScaleAspectFill];
+                    UIImage *blurred = [image applyBlurWithRadius:50 blurType:BOXFILTER tintColor:[UIColor colorWithWhite:0 alpha:.527] saturationDeltaFactor:1.8 maskImage:nil];
+                    
+                    dispatch_async(dispatch_get_main_queue(), ^{
+                        CATransition *transition = [CATransition animation];
+                        transition.duration = 1.0f;
+                        transition.timingFunction = [CAMediaTimingFunction functionWithName:kCAMediaTimingFunctionEaseInEaseOut];
+                        transition.type = kCATransitionFade;
+                        
+                        [UIView transitionWithView:[(XXAppDelegate*)[UIApplication sharedApplication].delegate windowBackground] duration:1 options:UIViewAnimationOptionTransitionCrossDissolve animations:^{
+                            [[(XXAppDelegate*)[UIApplication sharedApplication].delegate windowBackground] setImage:blurred];
+                        } completion:^(BOOL finished) {
+                            [(XXAppDelegate*)[UIApplication sharedApplication].delegate setBackgroundURL:photo.imageLargeUrl];
+                            delegate.loadingBackground = NO;
+                        }];
+                    });
+                });
+            }
         }];
     }];
     [self addTarget:self action:@selector(expandPhoto) forControlEvents:UIControlEventTouchUpInside];

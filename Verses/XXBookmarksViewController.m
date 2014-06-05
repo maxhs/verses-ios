@@ -136,7 +136,7 @@
         [nothingButton setTitleColor:textColor forState:UIControlStateNormal];
         [nothingButton setBackgroundColor:[UIColor clearColor]];
         [cell addSubview:nothingButton];
-        [nothingButton setFrame:CGRectMake(20, 0, screenWidth()-40, screenHeight()-64)];
+        [nothingButton setFrame:CGRectMake(20, 0, screenWidth()-40, screenHeight()-84)];
         cell.backgroundView = [[UIView alloc] initWithFrame:cell.frame];
         [cell.backgroundView setBackgroundColor:[UIColor clearColor]];
         [self.tableView setScrollEnabled:NO];
@@ -176,7 +176,7 @@
         XXStoryViewController *storyVC = [segue destinationViewController];
         XXStory *story = [(XXBookmark*)[_bookmarks objectAtIndex:indexPath.row] story];
         [storyVC setStory:story];
-        [storyVC setStories:delegate.menuViewController.stories];
+        [storyVC setStories:delegate.stories];
         [ProgressHUD show:@"Fetching story..."];
         if ([[NSUserDefaults standardUserDefaults] boolForKey:kDarkBackground]){
             [UIView animateWithDuration:.23 animations:^{

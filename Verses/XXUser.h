@@ -17,6 +17,9 @@
 @property (strong, nonatomic) NSString *firstName;
 @property (strong, nonatomic) NSString *lastName;
 @property (strong, nonatomic) NSString *location;
+@property (strong, nonatomic) NSString *bio;
+@property (strong, nonatomic) NSString *dayJob;
+@property (strong, nonatomic) NSString *nightJob;
 @property (strong, nonatomic) NSString *picLargeUrl;
 @property (strong, nonatomic) UIImage *largeImage;
 @property (strong, nonatomic) NSString *picMediumUrl;
@@ -26,6 +29,7 @@
 @property (strong, nonatomic) NSNumber *contactCount;
 @property (strong, nonatomic) NSString *authToken;
 @property (strong, nonatomic) NSArray *stories;
+@property BOOL subscribed;
 @property BOOL pushBookmarks;
 @property BOOL pushCirclePublish;
 @property BOOL pushCircleComments;

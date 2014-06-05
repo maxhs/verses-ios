@@ -96,6 +96,7 @@
     [self offsetOptions];
     [self setupView];
     [self setupControls];
+    
     [super viewDidLoad];
     
     _collaborators = [NSMutableArray array];
@@ -126,7 +127,7 @@
 
 - (void)viewWillAppear:(BOOL)animated {
     [super viewWillAppear:animated];
-    [[UIApplication sharedApplication] setStatusBarHidden:YES withAnimation:UIStatusBarAnimationSlide];
+    [[UIApplication sharedApplication] setStatusBarHidden:YES withAnimation:UIStatusBarAnimationFade];
     [self.navigationController setNavigationBarHidden:NO animated:YES];
     if ([[NSUserDefaults standardUserDefaults] boolForKey:kDarkBackground]){
         [self.view setBackgroundColor:[UIColor clearColor]];
@@ -150,6 +151,7 @@
     [self.feedbackLabel setTextColor:textColor];
     [self.joinableLabel setTextColor:textColor];
     [self.slowRevealLabel setTextColor:textColor];
+
     [_titleTextField setTextColor:textColor];
     [_titleTextField setFont:[UIFont fontWithName:kSourceSansProSemibold size:33]];
     [_titleTextField setAutocapitalizationType:UITextAutocapitalizationTypeWords];
@@ -173,7 +175,6 @@
 
 - (void)setupControls {
     if (_story.contributions.count){
-        NSLog(@"had story");
         saveButton = [[UIBarButtonItem alloc] initWithTitle:@"   SAVE   " style:UIBarButtonItemStylePlain target:self action:@selector(save)];
         self.navigationItem.rightBarButtonItems = @[saveButton,optionsButton];
         if ([_story.owner.identifier isEqualToNumber:[[NSUserDefaults standardUserDefaults] objectForKey:kUserDefaultsId]]){
@@ -440,9 +441,13 @@
     
     if (_bodyTextView.text.length && ![_bodyTextView.text isEqualToString:kStoryPlaceholder]){
         [contributionParameters setObject:[_bodyTextView.attributedText htmlFragment] forKey:@"body"];
+    } else {
+        [contributionParameters setObject:@"" forKey:@"body"];
     }
     if (_titleTextField.text.length && ![_titleTextField.text isEqualToString:kTitlePlaceholder]) {
         [storyParameters setObject:_titleTextField.text forKey:@"title"];
+    } else {
+        [storyParameters setObject:@"" forKey:@"title"];
     }
     
     if (self.draftSwitch.isOn){
@@ -504,7 +509,6 @@
         [ProgressHUD show:@"Saving..."];
         [manager POST:[NSString stringWithFormat:@"%@/stories",kAPIBaseUrl] parameters:@{@"story":storyParameters,@"contribution":contributionParameters} success:^(AFHTTPRequestOperation *operation, id responseObject) {
             NSLog(@"Success creating and then savign your story: %@",responseObject);
-            
             [XXAlert show:@"Story saved"];
             //[[[UIAlertView alloc] initWithTitle:@"Story saved" message:nil delegate:nil cancelButtonTitle:@"Okay" otherButtonTitles:nil] show];
             [ProgressHUD dismiss];
@@ -530,7 +534,7 @@
     XXStoryViewController *vc = [[self storyboard] instantiateViewControllerWithIdentifier:@"Story"];
     [vc setStory:_story];
     XXAppDelegate *delegate = [UIApplication sharedApplication].delegate;
-    [vc setStories:delegate.menuViewController.stories];
+    [vc setStories:delegate.stories];
     [vc setTitle:_story.title];
     UINavigationController *nav = [[UINavigationController alloc] initWithRootViewController:vc];
     [delegate.dynamicsDrawerViewController setPaneState:MSDynamicsDrawerPaneStateClosed];
@@ -578,7 +582,7 @@
 
 - (IBAction)collaborate {
     XXCollaborateViewController *vc = [[self storyboard] instantiateViewControllerWithIdentifier:@"Collaborate"];
-    [vc setModal:YES];
+    [vc setManageContacts:NO];
     [vc setTitle:@"Collaborate"];
     [vc setCollaborators:_collaborators];
     [vc setCircleCollaborators:_circleCollaborators];
@@ -611,7 +615,7 @@
     if (_story.title.length) {
         [_titleTextField setText:_story.title];
     } else {
-         [_titleTextField setText:kTitlePlaceholder];
+         [_titleTextField setPlaceholder:kTitlePlaceholder];
     }
 
     [_titleTextField setDelegate:self];
@@ -639,7 +643,7 @@
 
 - (void)drawTextView {
     widthSpacer = 10;
-    if (_story && _story.contributions.count){
+    if (_story && _story.contributions.count && !_bodyTextView){
         NSString *storyBody = @"";
         for (XXContribution *contribution in _story.contributions) {
             if (contribution.body.length) storyBody = [storyBody stringByAppendingString:contribution.body];
@@ -670,15 +674,6 @@
         bodyRect.origin.y = offset;
         bodyRect.origin.x = widthSpacer/2;
         bodyRect.size.width = screenWidth() - widthSpacer;
-        
-        if ([_bodyTextView.text isEqualToString:kStoryPlaceholder]){
-            if ([[NSUserDefaults standardUserDefaults] boolForKey:kDarkBackground]){
-                [_bodyTextView setTextColor:textColor];
-            } else {
-                [_bodyTextView setTextColor:[UIColor lightGrayColor]];
-            }
-        }
-        
         sections = [NSMutableArray array];
         int start = 0;
         int distance = 7000;
@@ -709,7 +704,19 @@
         _bodyTextView.clipsToBounds = NO;
         _bodyTextView.scrollEnabled = NO;
         
+        if ([_bodyTextView.text isEqualToString:kStoryPlaceholder]){
+            if ([[NSUserDefaults standardUserDefaults] boolForKey:kDarkBackground]){
+                [_bodyTextView setTextColor:textColor];
+            } else {
+                [_bodyTextView setTextColor:[UIColor lightGrayColor]];
+            }
+        }
+        
         [_scrollView addSubview:_bodyTextView];
+        
+        if ([_bodyTextView.text isEqualToString:kStoryPlaceholder]) {
+            [_bodyTextView becomeFirstResponder];
+        }
         
         if (sections.count > 1){
             loadMoreButton = [UIButton buttonWithType:UIButtonTypeCustom];
@@ -724,6 +731,8 @@
         }
         
         [_scrollView setContentSize:CGSizeMake(_bodyTextView.frame.size.width, offset)];
+    } else {
+        NSLog(@"already had a bodytextview");
     }
 }
 
@@ -851,10 +860,10 @@
 }
 
 - (void)textViewDidEndEditing:(UITextView *)textView{
-    /*if (!textView.text.length isEqualToString:@""]) {
+    if ([textView.text isEqualToString:@""]) {
         textView.text = kStoryPlaceholder;
         textView.textColor = [UIColor lightGrayColor];
-    }*/
+    }
     self.navigationItem.leftBarButtonItem = leftBarButtonItem;
 }
 
@@ -1099,6 +1108,11 @@
             [[delegate.dynamicsDrawerViewController paneViewController].view setAlpha:1.0];
         }];
     }
+}
+
+- (void)viewDidDisappear:(BOOL)animated {
+    [super viewDidDisappear:animated];
+    [self doneOptions];
 }
 
 @end

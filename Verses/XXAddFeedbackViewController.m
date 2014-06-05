@@ -67,8 +67,6 @@
     
     self.tableView.tableHeaderView = headerView;
     [super viewDidLoad];
-    
-    NSLog(@"%@ string location",_stringLocation);
 }
 
 - (void)viewDidAppear:(BOOL)animated {

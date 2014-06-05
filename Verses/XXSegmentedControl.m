@@ -38,7 +38,7 @@
         }
         
         _height = 48.0;
-        _selectionIndicatorHeight = 2.0;
+        _selectionIndicatorHeight = 1.27;
         _animationDuration = 0.47;
         _showsCount = YES;
         _autoAdjustSelectionIndicatorWidth = YES;

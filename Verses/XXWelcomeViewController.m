@@ -16,21 +16,22 @@
 #import "SWRevealViewController.h"
 #import "XXStoryViewController.h"
 #import "XXAppDelegate.h"
-#import "XXTutorialView.h"
 #import "UIImage+ImageEffects.h"
 #import <DTCoreText/DTCoreText.h>
 #import "XXSegmentedControl.h"
 #import "XXNewUserWalkthroughViewController.h"
+#import "XXNewUserTransition.h"
+#import "XXCollaborateViewController.h"
 
-@interface XXWelcomeViewController () <UIScrollViewDelegate, SWTableViewCellDelegate, XXSegmentedControlDelegate>{
+@interface XXWelcomeViewController () <UIScrollViewDelegate, SWTableViewCellDelegate, XXSegmentedControlDelegate, UIViewControllerTransitioningDelegate>{
     AFHTTPRequestOperationManager *manager;
     XXStory *story1;
     XXStory *story2;
     CGFloat width;
     CGFloat height;
     CGFloat lastY;
+    UIInterfaceOrientation orientation;
     UIRefreshControl *refreshControl;
-    XXTutorialView *tutorial;
     BOOL loading;
     BOOL canLoadMore;
     BOOL canLoadMoreTrending;
@@ -57,14 +58,7 @@
     [refreshControl setTintColor:[UIColor darkGrayColor]];
     [self.tableView addSubview:refreshControl];
     [self.tableView setSeparatorStyle:UITableViewCellSeparatorStyleNone];
-    
-    //if (![[NSUserDefaults standardUserDefaults] boolForKey:kExistingUser]) {
-    XXNewUserWalkthroughViewController *vc = [[XXNewUserWalkthroughViewController alloc] init];
-    [self presentViewController:vc animated:NO completion:^{
-        
-    }];
-        //[self performSelector:@selector(showPreview) withObject:nil afterDelay:1];
-    //}
+    [self.navigationController setNavigationBarHidden:YES];
     delegate = (XXAppDelegate*)[UIApplication sharedApplication].delegate;
     manager = delegate.manager;
     
@@ -91,7 +85,6 @@
         height = screenHeight();
         [_browseControl setFrame:CGRectMake(0, 0, width, 48)];
         [_browseControl.background setFrame:CGRectMake(0, 0, width, 48)];
-        
     } else {
         height = screenWidth();
         width = screenHeight();
@@ -109,7 +102,7 @@
         self.trendingTableView.rowHeight = height/2;
     }
     
-    [_browseControl setFont:[UIFont fontWithName:kSourceSansProRegular size:17]];
+    [_browseControl setFont:[UIFont fontWithName:kSourceSansProRegular size:21]];
     [self.tableView setContentInset:UIEdgeInsetsMake(48, 0, 0, 0)];
     [self.tableView setScrollIndicatorInsets:UIEdgeInsetsMake(48, 0, 0, 0)];
     [self.sharedTableView setContentInset:UIEdgeInsetsMake(48, 0, 0, 0)];
@@ -121,9 +114,13 @@
     _trendingStories = [NSMutableArray array];
     
     [super viewDidLoad];
+    [[NSNotificationCenter defaultCenter] addObserver:self selector:@selector(storyFlagged:) name:@"StoryFlagged" object:nil];
 }
 
 - (void)viewWillAppear:(BOOL)animated {
+    [super viewWillAppear:animated];
+    
+    orientation = self.interfaceOrientation;
     [[UIApplication sharedApplication] setStatusBarHidden:YES withAnimation:UIStatusBarAnimationSlide];
     
     [self.navigationController setNavigationBarHidden:YES];
@@ -175,30 +172,54 @@
             [self.tableView setAlpha:1.0];
         }];
     }
-    [super viewWillAppear:animated];
+    
+    if (![[NSUserDefaults standardUserDefaults] boolForKey:kExistingUser]) {
+        XXNewUserWalkthroughViewController *vc = [[XXNewUserWalkthroughViewController alloc] init];
+        vc.transitioningDelegate = self;
+        vc.modalPresentationStyle = UIModalPresentationCustom;
+        [self presentViewController:vc animated:YES completion:^{
+            [[NSUserDefaults standardUserDefaults] setBool:YES forKey:kExistingUser];
+        }];
+    }
+}
+
+- (id<UIViewControllerAnimatedTransitioning>)animationControllerForPresentedController:(UIViewController *)presented
+                                                                  presentingController:(UIViewController *)presenting
+                                                                      sourceController:(UIViewController *)source {
+    XXNewUserTransition *animator = [XXNewUserTransition new];
+    animator.presenting = YES;
+    return animator;
+}
+
+- (id<UIViewControllerAnimatedTransitioning>)animationControllerForDismissedController:(UIViewController *)dismissed {
+    XXNewUserTransition *animator = [XXNewUserTransition new];
+    return animator;
 }
 
 - (void)selectedSegment:(XXSegmentedControl*)control {
+    if (refreshControl.isRefreshing) [refreshControl endRefreshing];
+    [self reset];
     switch (control.selectedSegmentIndex) {
         case 0:
-            [self reset];
             read = YES;
+            [self.tableView reloadData];
             [self hideTableViews];
             [self showTableView:self.tableView];
+            [self.tableView addSubview:refreshControl];
             break;
         case 1:
-            [self reset];
             trending = YES;
+            [self.trendingTableView reloadData];
             [self hideTableViews];
             [self showTableView:self.trendingTableView];
-            [self.trendingTableView reloadData];
+            [self.trendingTableView addSubview:refreshControl];
             break;
         case 2:
-            [self reset];
             shared = YES;
+            [self.sharedTableView reloadData];
             [self hideTableViews];
             [self showTableView:self.sharedTableView];
-            [self.sharedTableView reloadData];
+            [self.sharedTableView addSubview:refreshControl];
             break;
         default:
             break;
@@ -212,7 +233,7 @@
 }
 
 - (void)hideTableViews {
-    [UIView animateWithDuration:.5 delay:0 usingSpringWithDamping:.5 initialSpringVelocity:.0001 options:UIViewAnimationOptionCurveEaseIn animations:^{
+    [UIView animateWithDuration:.5 delay:0 usingSpringWithDamping:.7 initialSpringVelocity:.0001 options:UIViewAnimationOptionCurveEaseOut animations:^{
         [self.tableView setAlpha:0.0];
         self.tableView.transform = CGAffineTransformMakeScale(.87, .87);
         [self.sharedTableView setAlpha:0.0];
@@ -225,7 +246,7 @@
 }
 
 - (void)showTableView:(UITableView*)showTableView {
-    [UIView animateWithDuration:.5 delay:0  usingSpringWithDamping:.5 initialSpringVelocity:.0001 options:UIViewAnimationOptionCurveEaseIn animations:^{
+    [UIView animateWithDuration:.5 delay:0  usingSpringWithDamping:.7 initialSpringVelocity:.0001 options:UIViewAnimationOptionCurveEaseIn animations:^{
         [showTableView setAlpha:1.0];
         showTableView.transform = CGAffineTransformIdentity;
     } completion:^(BOOL finished) {
@@ -254,7 +275,13 @@
 
 - (void)handleRefresh{
     canLoadMore = YES;
-    [self loadEtherStories];
+    if (read){
+        [self loadEtherStories];
+    } else if (shared){
+        [self loadShared];
+    } else if (trending){
+        [self loadTrending];
+    }
 }
 
 -(UIImage *)blurredSnapshot {
@@ -283,8 +310,11 @@
         //NSLog(@"story response: %@",responseObject);
         NSLog(@"just loaded ether stories");
         _stories = [[Utilities storiesFromJSONArray:[responseObject objectForKey:@"stories"]] mutableCopy];
-        [ProgressHUD dismiss];
-        [self.tableView reloadData];
+        if ([_tableView numberOfRowsInSection:0] > 0){
+            [_tableView reloadSections:[NSIndexSet indexSetWithIndex:0] withRowAnimation:UITableViewRowAnimationFade];
+        } else {
+            [_tableView reloadData];
+        }
         if (refreshControl.isRefreshing) [refreshControl endRefreshing];
     } failure:^(AFHTTPRequestOperation *operation, NSError *error) {
         if (refreshControl.isRefreshing) [refreshControl endRefreshing];
@@ -298,8 +328,8 @@
         [manager GET:[NSString stringWithFormat:@"%@/stories/shared",kAPIBaseUrl] parameters:@{@"user_id":[[NSUserDefaults standardUserDefaults] objectForKey:kUserDefaultsId],@"count":@"10"} success:^(AFHTTPRequestOperation *operation, id responseObject) {
             //NSLog(@"shared stories response: %@",responseObject);
             _sharedStories = [[Utilities storiesFromJSONArray:[responseObject objectForKey:@"stories"]] mutableCopy];
-            [ProgressHUD dismiss];
             if (shared)[self.sharedTableView reloadSections:[NSIndexSet indexSetWithIndex:0] withRowAnimation:UITableViewRowAnimationFade];
+            if (refreshControl.isRefreshing)[refreshControl endRefreshing];
         } failure:^(AFHTTPRequestOperation *operation, NSError *error) {
             if (refreshControl.isRefreshing) [refreshControl endRefreshing];
             NSLog(@"Failure getting shared stories from welcome controller: %@",error.description);
@@ -312,8 +342,8 @@
     [manager GET:[NSString stringWithFormat:@"%@/stories/trending",kAPIBaseUrl] parameters:nil success:^(AFHTTPRequestOperation *operation, id responseObject) {
         //NSLog(@"trending stories response: %@",responseObject);
         _trendingStories = [[Utilities storiesFromJSONArray:[responseObject objectForKey:@"stories"]] mutableCopy];
-        [ProgressHUD dismiss];
         if (trending)[self.trendingTableView reloadSections:[NSIndexSet indexSetWithIndex:0] withRowAnimation:UITableViewRowAnimationFade];
+        if (refreshControl.isRefreshing)[refreshControl endRefreshing];
     } failure:^(AFHTTPRequestOperation *operation, NSError *error) {
         if (refreshControl.isRefreshing) [refreshControl endRefreshing];
         NSLog(@"Failure getting trending stories from welcome controller: %@",error.description);
@@ -341,7 +371,14 @@
         [_browseControl setFrame:CGRectMake(0, 0, screenHeight(), 48)];
         [_browseControl.background setFrame:CGRectMake(0, 0, screenHeight(), 48)];
     }
-
+    orientation = toInterfaceOrientation;
+    if (read){
+        [self.tableView reloadData];
+    } else if (trending){
+        [self.trendingTableView reloadData];
+    } else if (shared){
+        [self.sharedTableView reloadData];
+    }
 }
 
 #pragma mark - Table view data source
@@ -356,7 +393,11 @@
     if (read){
         return _stories.count;
     } else if (shared){
-        return _sharedStories.count;
+        if (_sharedStories.count == 0) {
+            return 1;
+        } else {
+            return _sharedStories.count;
+        }
     } else if (trending) {
         return _trendingStories.count;
     } else {
@@ -366,35 +407,79 @@
 
 - (UITableViewCell *)tableView:(UITableView *)tableView cellForRowAtIndexPath:(NSIndexPath *)indexPath
 {
-    XXStoryCell *cell = (XXStoryCell *)[tableView dequeueReusableCellWithIdentifier:@"StoryCell"];
-    if (cell == nil) {
-        cell = [[[NSBundle mainBundle] loadNibNamed:@"XXStoryCell" owner:nil options:nil] lastObject];
-    }
-    XXStory *story;
-    if (read){
-        story = [_stories objectAtIndex:indexPath.row];
-    } else if (shared){
-        story = [_sharedStories objectAtIndex:indexPath.row];
-    } else if (trending) {
-        story = [_trendingStories objectAtIndex:indexPath.row];
-    }
-    
-    [cell configureForStory:story];
-    [cell.titleLabel setTextColor:textColor];
-    [cell.bodySnippet setTextColor:textColor];
-    
-    if (story.minutesToRead == [NSNumber numberWithInt:0]){
-        [cell.infoLabel setText:[NSString stringWithFormat:@"%@ words  |  Quick Read  |  %@",story.wordCount,[_formatter stringFromDate:story.updatedDate]]];
+    if (shared && _sharedStories.count == 0){
+        UITableViewCell *cell = [[UITableViewCell alloc] initWithStyle:UITableViewCellStyleDefault reuseIdentifier:@"NothingCell"];
+        UIButton *nothingButton = [UIButton buttonWithType:UIButtonTypeCustom];
+        [nothingButton setTitle:@"Nothing shared with you just yet.\n\nTap here to manage your contacts." forState:UIControlStateNormal];
+        [nothingButton addTarget:self action:@selector(manageCircles) forControlEvents:UIControlEventTouchUpInside];
+        [nothingButton.titleLabel setNumberOfLines:0];
+        [nothingButton.titleLabel setFont:[UIFont fontWithName:kSourceSansProLight size:20]];
+        [nothingButton.titleLabel setTextAlignment:NSTextAlignmentCenter];
+        [nothingButton setTitleColor:[UIColor blackColor] forState:UIControlStateNormal];
+        [nothingButton setBackgroundColor:[UIColor clearColor]];
+        [cell addSubview:nothingButton];
+        [nothingButton setFrame:CGRectMake(20, 0, screenWidth()-40, screenHeight()-74)];
+        [_sharedTableView setScrollEnabled:NO];
+        return cell;
     } else {
-        [cell.infoLabel setText:[NSString stringWithFormat:@"%@ words  |  %@ min to read  |  %@",story.wordCount,story.minutesToRead,[_formatter stringFromDate:story.updatedDate]]];
+        XXStoryCell *cell = (XXStoryCell *)[tableView dequeueReusableCellWithIdentifier:@"StoryCell"];
+        if (cell == nil) {
+            cell = [[[NSBundle mainBundle] loadNibNamed:@"XXStoryCell" owner:nil options:nil] lastObject];
+        }
+        XXStory *story;
+        if (read){
+            story = [_stories objectAtIndex:indexPath.row];
+        } else if (shared){
+            [_sharedTableView setScrollEnabled:YES];
+            story = [_sharedStories objectAtIndex:indexPath.row];
+        } else if (trending) {
+            story = [_trendingStories objectAtIndex:indexPath.row];
+        }
+        [cell resetCell];
+        [cell.titleLabel setTextColor:textColor];
+        [cell.bodySnippet setTextColor:textColor];
+        [cell.countLabel setTextColor:textColor];
+        [cell configureForStory:story withOrientation:orientation];
+        
+        if (tableView == _trendingTableView) {
+            if (story.trendingCount && ![story.trendingCount isEqualToNumber:[NSNumber numberWithInt:0]]){
+                [cell.countLabel setHidden:NO];
+                if ([story.trendingCount isEqualToNumber:[NSNumber numberWithInt:1]]){
+                    [cell.countLabel setText:@"1 view"];
+                } else {
+                    [cell.countLabel setText:[NSString stringWithFormat:@"%@ views",story.trendingCount]];
+                }
+            } else {
+                [cell.countLabel setHidden:YES];
+            }
+            
+        } else if (story.views && ![story.views isEqualToNumber:[NSNumber numberWithInt:0]]) {
+            [cell.countLabel setHidden:NO];
+            if ([story.views isEqualToNumber:[NSNumber numberWithInt:1]]){
+                [cell.countLabel setText:@"1 view"];
+            } else {
+                [cell.countLabel setText:[NSString stringWithFormat:@"%@ views",story.views]];
+            }
+        } else {
+            [cell.countLabel setHidden:YES];
+        }
+        
+        [cell.scrollView setTag:indexPath.row];
+        [cell.scrollTouch addTarget:self action:@selector(storyScrollViewTouched:)];
+        
+        if (story.minutesToRead == [NSNumber numberWithInt:0]){
+            [cell.infoLabel setText:[NSString stringWithFormat:@"%@ words  |  Quick Read  |  %@",story.wordCount,[_formatter stringFromDate:story.updatedDate]]];
+        } else {
+            [cell.infoLabel setText:[NSString stringWithFormat:@"%@ words  |  %@ min to read  |  %@",story.wordCount,story.minutesToRead,[_formatter stringFromDate:story.updatedDate]]];
+        }
+        
+        if ([[NSUserDefaults standardUserDefaults] boolForKey:kDarkBackground]){
+            [cell.infoLabel setTextColor:textColor];
+        } else {
+            [cell.infoLabel setTextColor:[UIColor lightGrayColor]];
+        }
+        return cell;
     }
-    
-    if ([[NSUserDefaults standardUserDefaults] boolForKey:kDarkBackground]){
-        [cell.infoLabel setTextColor:textColor];
-    } else {
-        [cell.infoLabel setTextColor:[UIColor lightGrayColor]];
-    }
-    return cell;
 }
 
 - (void)tableView:(UITableView *)tableView willDisplayCell:(UITableViewCell *)cell forRowAtIndexPath:(NSIndexPath *)indexPath {
@@ -403,7 +488,7 @@
     [selectedView setBackgroundColor:kSeparatorColor];
     cell.selectedBackgroundView = selectedView;
     
-    if([indexPath row] == ((NSIndexPath*)[[tableView indexPathsForVisibleRows] lastObject]).row && tableView == self.tableView){
+    if([indexPath row] == ((NSIndexPath*)[[tableView indexPathsForVisibleRows] lastObject]).row && tableView == self.tableView && !loading){
         //end of loading
         [ProgressHUD dismiss];
         self.reloadTheme = NO;
@@ -443,6 +528,7 @@
 }
 
 - (void)loadMore {
+  
     loading = YES;
     XXStory *lastStory = _stories.lastObject;
     if (lastStory){
@@ -450,19 +536,23 @@
             //NSLog(@"more stories response: %@",responseObject);
             NSArray *newStories = [Utilities storiesFromJSONArray:[responseObject objectForKey:@"stories"]];
             NSMutableArray *indexesToInsert = [NSMutableArray array];
-            for (int i = 0; i < newStories.count; i++){
-                [indexesToInsert addObject:[NSIndexPath indexPathForRow:i+_sharedStories.count inSection:0]];
+            for (int i = _stories.count; i < newStories.count+_stories.count; i++){
+                [indexesToInsert addObject:[NSIndexPath indexPathForRow:i inSection:0]];
             }
             [_stories addObjectsFromArray:newStories];
             if (newStories.count < 10) {
                 canLoadMore = NO;
                 NSLog(@"can't load more, we now have %i stories", _stories.count);
             }
-            [delegate.menuViewController setStories:_stories];
-            [ProgressHUD dismiss];
+            [delegate setStories:_stories];
             loading = NO;
-            [self.tableView reloadData];
-            //[self.tableView insertRowsAtIndexPaths:indexesToInsert withRowAnimation:UITableViewRowAnimationFade];
+            if (read) {
+                if ([_tableView numberOfRowsInSection:0] > 1){
+                    [_tableView insertRowsAtIndexPaths:indexesToInsert withRowAnimation:UITableViewRowAnimationFade];
+                } else {
+                    [_tableView reloadData];
+                }
+            }
             
         } failure:^(AFHTTPRequestOperation *operation, NSError *error) {
             
@@ -470,6 +560,7 @@
     } else {
         [self loadEtherStories];
     }
+
 }
 
 - (void)loadMoreTrending {
@@ -480,21 +571,15 @@
             //NSLog(@"more stories response: %@",responseObject);
             NSArray *newStories = [Utilities storiesFromJSONArray:[responseObject objectForKey:@"stories"]];
             NSMutableArray *indexesToInsert = [NSMutableArray array];
-            for (int i = 0; i < newStories.count; i++){
-                [indexesToInsert addObject:[NSIndexPath indexPathForRow:i+_trendingStories.count inSection:0]];
+            for (int i = _trendingStories.count; i < newStories.count+_trendingStories.count; i++){
+                [indexesToInsert addObject:[NSIndexPath indexPathForRow:i inSection:0]];
             }
             [_trendingStories addObjectsFromArray:newStories];
-            if (self.trendingTableView.numberOfSections && indexesToInsert.count){
-                [self.trendingTableView insertRowsAtIndexPaths:indexesToInsert withRowAnimation:UITableViewRowAnimationFade];
-            } else {
-                [self.trendingTableView reloadData];
-            }
-            
+            [_trendingTableView insertRowsAtIndexPaths:indexesToInsert withRowAnimation:UITableViewRowAnimationFade];
             if (newStories.count < 10) {
                 canLoadMoreTrending = NO;
                 NSLog(@"can't load more trending, we now have %i stories", _stories.count);
             }
-            [ProgressHUD dismiss];
             loading = NO;
         } failure:^(AFHTTPRequestOperation *operation, NSError *error) {
             NSLog(@"Failure loading more trending stories: %@",error.description);
@@ -512,23 +597,16 @@
             //NSLog(@"more shared stories response: %@",responseObject);
             NSArray *newStories = [Utilities storiesFromJSONArray:[responseObject objectForKey:@"stories"]];
             NSMutableArray *indexesToInsert = [NSMutableArray array];
-            for (int i = 0; i < newStories.count; i++){
-                [indexesToInsert addObject:[NSIndexPath indexPathForRow:i+_sharedStories.count inSection:0]];
+            for (int i = _sharedStories.count; i < _sharedStories.count+newStories.count; i++){
+                [indexesToInsert addObject:[NSIndexPath indexPathForRow:i inSection:0]];
             }
             [_sharedStories addObjectsFromArray:newStories];
             if (newStories.count < 10) {
                 canLoadMoreShared = NO;
                 NSLog(@"can't load more shared, we now have %i stories", _stories.count);
             }
-            [delegate.menuViewController setStories:_stories];
-            [ProgressHUD dismiss];
             loading = NO;
-            
-            if (self.sharedTableView.numberOfSections && indexesToInsert.count){
-                [self.sharedTableView insertRowsAtIndexPaths:indexesToInsert withRowAnimation:UITableViewRowAnimationFade];
-            } else {
-                [self.sharedTableView reloadData];
-            }
+            [self.sharedTableView insertRowsAtIndexPaths:indexesToInsert withRowAnimation:UITableViewRowAnimationFade];
             
         } failure:^(AFHTTPRequestOperation *operation, NSError *error) {
             NSLog(@"Failure loading more shared stories: %@",error.description);
@@ -536,6 +614,19 @@
     } else {
         [self loadShared];
     }
+}
+
+- (void)storyScrollViewTouched:(UITapGestureRecognizer*)tapGesture {
+    XXStory *story;
+    if (read){
+        story = [_stories objectAtIndex:tapGesture.view.tag];
+    } else if (shared){
+        story = [_sharedStories objectAtIndex:tapGesture.view.tag];
+    } else if (trending){
+        story = [_trendingStories objectAtIndex:tapGesture.view.tag];
+    }
+    [[UIApplication sharedApplication] setStatusBarHidden:YES withAnimation:UIStatusBarAnimationSlide];
+    [self performSegueWithIdentifier:@"Story" sender:story];
 }
 
 - (void)tableView:(UITableView *)tableView didSelectRowAtIndexPath:(NSIndexPath *)indexPath {
@@ -560,6 +651,10 @@
             XXStoryViewController *vc = [segue destinationViewController];
             [vc setStory:story];
             [vc setStories:_stories];
+        } else if ([sender isKindOfClass:[XXStory class]]){
+            XXStoryViewController *vc = [segue destinationViewController];
+            [vc setStory:(XXStory*)sender];
+            [vc setStories:_stories];
         }
         if (read){
             [UIView animateWithDuration:.25 animations:^{
@@ -575,6 +670,33 @@
             }];
         }
     }
+}
+
+- (void)storyFlagged:(NSNotification*)notification {
+    NSLog(@"story flagged");
+    XXStory *story = [notification.userInfo objectForKey:@"story"];
+    if ([_stories containsObject:story]){
+        NSIndexPath *indexPath = [NSIndexPath indexPathForRow:[_stories indexOfObject:story] inSection:0];
+        [_stories removeObject:story];
+        [_tableView deleteRowsAtIndexPaths:@[indexPath] withRowAnimation:UITableViewRowAnimationFade];
+    } else if ([_trendingStories containsObject:story]){
+        NSIndexPath *indexPath = [NSIndexPath indexPathForRow:[_trendingStories indexOfObject:story] inSection:0];
+        [_trendingStories removeObject:story];
+        [_trendingTableView deleteRowsAtIndexPaths:@[indexPath] withRowAnimation:UITableViewRowAnimationFade];
+    } else if ([_sharedStories containsObject:story]){
+        NSIndexPath *indexPath = [NSIndexPath indexPathForRow:[_sharedStories indexOfObject:story] inSection:0];
+        [_sharedStories removeObject:story];
+        [_sharedTableView deleteRowsAtIndexPaths:@[indexPath] withRowAnimation:UITableViewRowAnimationFade];
+    }
+}
+
+- (void)manageCircles {
+    XXCollaborateViewController *vc = [[self storyboard] instantiateViewControllerWithIdentifier:@"Collaborate"];
+    [vc setTitle:@"Contacts"];
+    UINavigationController *nav = [[UINavigationController alloc] initWithRootViewController:vc];
+    [self presentViewController:nav animated:YES completion:^{
+        
+    }];
 }
 
 - (void)viewWillDisappear:(BOOL)animated {

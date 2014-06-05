@@ -9,18 +9,21 @@
 #import "XXCollaborateViewController.h"
 #import "XXContactCell.h"
 #import "XXCircle.h"
+#import "XXAlert.h"
 
 @interface XXCollaborateViewController () {
     AFHTTPRequestOperationManager *manager;
     NSMutableArray *_contacts;
     NSMutableArray *_circles;
-    BOOL loading;
+    BOOL loadingCircles;
+    BOOL loadingContacts;
     CGRect screen;
     NSIndexPath *indexPathToRemove;
     UIBarButtonItem *cancelButton;
     UIAlertView *addContactAlert;
     UIColor *textColor;
     UIImageView *navBarShadowView;
+    UIBarButtonItem *addButton;
 }
 
 @end
@@ -34,23 +37,33 @@
     [super viewDidLoad];
     screen = [UIScreen mainScreen].bounds;
     manager = [(XXAppDelegate*)[UIApplication sharedApplication].delegate manager];
-    [self loadContacts];
-    if (self.modal){
+    
+    if (self.navigationController.viewControllers.firstObject == self){
         cancelButton = [[UIBarButtonItem alloc] initWithImage:[UIImage imageNamed:@"blackX"] style:UIBarButtonItemStylePlain target:self action:@selector(dismissView)];
         self.navigationItem.leftBarButtonItem = cancelButton;
-        self.navigationItem.rightBarButtonItem = nil;
     } else {
         self.title = @"Contacts";
     }
-    if (!_collaborators) _collaborators = [NSMutableArray array];
-    if (!_circleCollaborators) _circleCollaborators = [NSMutableArray array];
+    
+    if (_manageContacts){
+        addButton = [[UIBarButtonItem alloc] initWithBarButtonSystemItem:UIBarButtonSystemItemAdd target:self action:@selector(addContact)];
+        self.navigationItem.rightBarButtonItem = addButton;
+        [self loadContacts];
+    } else {
+        self.navigationItem.rightBarButtonItem = nil;
+        [self loadContacts];
+        [self loadCircles];
+    }
+    
+    _collaborators = [NSMutableArray array];
+    _circleCollaborators = [NSMutableArray array];
     [self.tableView setSeparatorColor:[UIColor colorWithWhite:0 alpha:.05]];
     navBarShadowView = [Utilities findNavShadow:self.navigationController.navigationBar];
 }
 
 - (void)viewWillAppear:(BOOL)animated {
     [super viewWillAppear:animated];
-    if (!self.modal) [[(XXAppDelegate*)[UIApplication sharedApplication].delegate dynamicsDrawerViewController] registerTouchForwardingClass:[XXContactCell class]];
+    if (self.manageContacts) [[(XXAppDelegate*)[UIApplication sharedApplication].delegate dynamicsDrawerViewController] registerTouchForwardingClass:[XXContactCell class]];
     [[UIApplication sharedApplication] setStatusBarHidden:NO withAnimation:UIStatusBarAnimationFade];
     if ([[NSUserDefaults standardUserDefaults] boolForKey:kDarkBackground]){
         [self.view setBackgroundColor:[UIColor clearColor]];
@@ -64,25 +77,27 @@
 
 - (void)loadContacts {
     [ProgressHUD show:@"Finding your contacts..."];
-    loading = YES;
+    loadingContacts = YES;
     [manager GET:[NSString stringWithFormat:@"%@/users/%@/contacts",kAPIBaseUrl,[[NSUserDefaults standardUserDefaults] objectForKey:kUserDefaultsId]] parameters:nil success:^(AFHTTPRequestOperation *operation, id responseObject) {
-        //NSLog(@"success getting user's contacts: %@",responseObject);
         _contacts = [[Utilities usersFromJSONArray:[responseObject objectForKey:@"users"]] mutableCopy];
-        [self loadCircles];
+        //NSLog(@"success getting user's contacts: %@",[responseObject objectForKey:@"users"]);
+        loadingContacts = NO;
+        [self.tableView reloadData];
     } failure:^(AFHTTPRequestOperation *operation, NSError *error) {
-        [self loadCircles];
+        loadingContacts = NO;
         NSLog(@"error getting user's contacts: %@",error.description);
     }];
 }
 
 - (void)loadCircles {
+    loadingCircles = YES;
     [manager GET:[NSString stringWithFormat:@"%@/circles",kAPIBaseUrl] parameters:@{@"user_id":[[NSUserDefaults standardUserDefaults] objectForKey:kUserDefaultsId]} success:^(AFHTTPRequestOperation *operation, id responseObject) {
         //NSLog(@"success getting circles: %@",responseObject);
         _circles = [[Utilities circlesFromJSONArray:[responseObject objectForKey:@"circles"]] mutableCopy];
-        loading = NO;
+        loadingCircles = NO;
         [self.tableView reloadData];
     } failure:^(AFHTTPRequestOperation *operation, NSError *error) {
-        loading = NO;
+        loadingCircles = NO;
         NSLog(@"error getting user's circles: %@",error.description);
     }];
 }
@@ -90,34 +105,39 @@
 - (void)didReceiveMemoryWarning
 {
     [super didReceiveMemoryWarning];
-    // Dispose of any resources that can be recreated.
 }
 
 #pragma mark - Table view data source
 
 - (NSInteger)numberOfSectionsInTableView:(UITableView *)tableView
 {
-    if (loading){
+    if (self.manageContacts && loadingContacts){
         return 0;
     } else {
-        if (self.modal && !self.manageContacts){
-            return 2;
-        } else {
+        if (self.manageContacts){
             return 1;
+        } else {
+            return 2;
         }
     }
 }
 
 - (NSInteger)tableView:(UITableView *)tableView numberOfRowsInSection:(NSInteger)section
 {
-    if (section == 0 && self.modal){
-        if (_circles.count == 0 && !loading){
+    if (section == 0){
+        if (self.manageContacts){
+            if (_contacts.count == 0 && !loadingContacts) {
+                return 1;
+            } else {
+                return _contacts.count;
+            }
+        } else if (_circles.count == 0 && !loadingCircles){
             return 1;
         } else {
             return _circles.count;
         }
     } else {
-        if (_contacts.count == 0 && !loading){
+        if (_contacts.count == 0 && !loadingContacts){
             return 1;
         } else {
             return _contacts.count;
@@ -127,7 +147,7 @@
 
 - (UITableViewCell *)tableView:(UITableView *)tableView cellForRowAtIndexPath:(NSIndexPath *)indexPath
 {
-    if (indexPath.section == 0 && self.modal && !self.manageContacts){
+    if (indexPath.section == 0 && !self.manageContacts){
         if (_contacts.count){
             XXContactCell *cell = (XXContactCell *)[tableView dequeueReusableCellWithIdentifier:@"ContactCell"];
             if (cell == nil) {
@@ -157,10 +177,8 @@
             [nothingButton setTitleColor:[UIColor blackColor] forState:UIControlStateNormal];
             [nothingButton setBackgroundColor:[UIColor clearColor]];
             [cell addSubview:nothingButton];
-            [nothingButton setFrame:CGRectMake(20, 0, screen.size.width-40, screen.size.height-64)];
-            cell.backgroundView = [[UIView alloc] initWithFrame:cell.frame];
-            [cell.backgroundView setBackgroundColor:[UIColor clearColor]];
-            [self.tableView setScrollEnabled:NO];
+            [nothingButton setFrame:CGRectMake(20, 0, screen.size.width-40, screen.size.height-84)];
+
             return cell;
         }
     } else {
@@ -189,7 +207,7 @@
             static NSString *CellIdentifier = @"NothingCell";
             UITableViewCell *cell = [tableView dequeueReusableCellWithIdentifier:CellIdentifier forIndexPath:indexPath];
             UIButton *nothingButton = [UIButton buttonWithType:UIButtonTypeCustom];
-            [nothingButton setTitle:@"You don't have any writing contacts yet." forState:UIControlStateNormal];
+            [nothingButton setTitle:@"No contacts yet :(" forState:UIControlStateNormal];
             [nothingButton.titleLabel setNumberOfLines:0];
             [nothingButton.titleLabel setFont:[UIFont fontWithName:kSourceSansProLight size:20]];
             [nothingButton.titleLabel setTextAlignment:NSTextAlignmentCenter];
@@ -197,18 +215,16 @@
             [nothingButton setTitleColor:[UIColor blackColor] forState:UIControlStateNormal];
             [nothingButton setBackgroundColor:[UIColor clearColor]];
             [cell addSubview:nothingButton];
-            [nothingButton setFrame:CGRectMake(20, 0, screen.size.width-40, screen.size.height-64)];
-            cell.backgroundView = [[UIView alloc] initWithFrame:cell.frame];
-            [cell.backgroundView setBackgroundColor:[UIColor clearColor]];
-            [self.tableView setScrollEnabled:NO];
+            [nothingButton setFrame:CGRectMake(20, 0, screen.size.width-40, screen.size.height-84)];
+
             return cell;
         }
     }
 }
 
 - (CGFloat)tableView:(UITableView *)tableView heightForRowAtIndexPath:(NSIndexPath *)indexPath {
-    if (_contacts.count == 0 && !loading){
-        return screen.size.height-64;
+    if (_contacts.count == 0){
+        return screen.size.height-84;
     } else {
         return 80;
     }
@@ -262,7 +278,7 @@
 }
 
 - (void)tableView:(UITableView *)tableView didSelectRowAtIndexPath:(NSIndexPath *)indexPath {
-    if (self.modal){
+    if (!self.manageContacts){
         if (indexPath.section == 0){
             XXCircle *circle= [_circles objectAtIndex:indexPath.row];
             if ([_circleCollaborators containsObject:circle.identifier]){
@@ -279,8 +295,6 @@
             }
         }
         [self.tableView reloadData];
-    } else {
-        
     }
     [tableView deselectRowAtIndexPath:indexPath animated:YES];
 }
@@ -295,7 +309,7 @@
     cell.backgroundColor = [UIColor clearColor];
 }
 
-- (IBAction)addContact{
+- (void)addContact{
     addContactAlert = [[UIAlertView alloc] initWithTitle:nil message:@"Your contact's email:" delegate:self cancelButtonTitle:@"Cancel" otherButtonTitles:@"Submit", nil];
     addContactAlert.alertViewStyle = UIAlertViewStylePlainTextInput;
     [addContactAlert show];
@@ -312,11 +326,16 @@
 - (void)createContact:(NSString*)email {
     if (email.length){
         [manager POST:[NSString stringWithFormat:@"%@/users/%@/add_contact",kAPIBaseUrl,[[NSUserDefaults standardUserDefaults] objectForKey:kUserDefaultsId]] parameters:@{@"email":email} success:^(AFHTTPRequestOperation *operation, id responseObject) {
-            NSLog(@"Successfully created contact: %@",responseObject);
+            //NSLog(@"Successfully created contact: %@",responseObject);
             if ([responseObject objectForKey:@"user"]){
                 XXUser *newContact = [[XXUser alloc] initWithDictionary:[responseObject objectForKey:@"user"]];
                 [_contacts insertObject:newContact atIndex:0];
-                if (newContact)[self.tableView insertRowsAtIndexPaths:@[[NSIndexPath indexPathForRow:0 inSection:0]] withRowAnimation:UITableViewRowAnimationTop];
+                if (newContact && _contacts.count > 1)[self.tableView insertRowsAtIndexPaths:@[[NSIndexPath indexPathForRow:0 inSection:0]] withRowAnimation:UITableViewRowAnimationTop];
+                else [self.tableView reloadSections:[NSIndexSet indexSetWithIndex:0] withRowAnimation:UITableViewRowAnimationFade];
+            } else if ([[responseObject objectForKey:@"failure"] isEqualToNumber:[NSNumber numberWithBool:YES]]) {
+                [XXAlert show:[NSString stringWithFormat:@"%@ doesn't user Verses yet. We've sent them an invite.",email]];
+            } else {
+                [[[UIAlertView alloc] initWithTitle:@"Sorry" message:@"Something went wrong while trying to send this invitation. Please try again soon." delegate:nil cancelButtonTitle:@"Okay" otherButtonTitles:nil] show];
             }
         } failure:^(AFHTTPRequestOperation *operation, NSError *error) {
             NSLog(@"Failed to create contact: %@",error.description);
@@ -334,7 +353,11 @@
     [manager DELETE:[NSString stringWithFormat:@"%@/users/%@/remove_contact",kAPIBaseUrl,removeContact.identifier] parameters:@{@"user_id":[[NSUserDefaults standardUserDefaults] objectForKey:kUserDefaultsId]} success:^(AFHTTPRequestOperation *operation, id responseObject) {
         //NSLog(@"successfully removed contact: %@",responseObject);
         [_contacts removeObject:removeContact];
-        [self.tableView deleteRowsAtIndexPaths:@[indexPathToRemove] withRowAnimation:UITableViewRowAnimationFade];
+        if (_contacts.count){
+            [self.tableView deleteRowsAtIndexPaths:@[indexPathToRemove] withRowAnimation:UITableViewRowAnimationFade];
+        } else {
+            [self.tableView reloadData];
+        }
         indexPathToRemove = nil;
     } failure:^(AFHTTPRequestOperation *operation, NSError *error) {
         //NSLog(@"Failed to remove contact: %@",error.description);
@@ -347,10 +370,8 @@
 {
     if (self.manageContacts){
         return YES;
-    } else if (self.modal){
-        return NO;
     } else {
-        return YES;
+        return NO;
     }
 }
 
