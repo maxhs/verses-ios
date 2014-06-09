@@ -60,7 +60,7 @@
     
     [_circleControl addTarget:self action:@selector(selectedSegment:) forControlEvents:UIControlEventValueChanged];
     [self.view addSubview:_circleControl];
-    [_circleControl setFrame:CGRectMake(0, 20, 320, 68)];
+    [_circleControl setFrame:CGRectMake(0, 20, 320, 48)];
     
     _detailsFormatter = [[NSDateFormatter alloc] init];
     [_detailsFormatter setLocale:[NSLocale currentLocale]];
@@ -147,6 +147,8 @@
         [_chatInput.bgToolbar setBarStyle:UIBarStyleDefault];
         _chatInput.textView.keyboardAppearance = UIKeyboardAppearanceDefault;
     }
+    [self.detailsTableView reloadData];
+    [self.storiesTableView reloadData];
     if (self.view.alpha != 1.0){
         [UIView animateWithDuration:.23 animations:^{
             [self.view setAlpha:1.0];
@@ -166,7 +168,7 @@
     flow.scrollDirection = UICollectionViewScrollDirectionVertical;
     flow.minimumLineSpacing = 6;
     
-    CGRect chatFrame = (UIInterfaceOrientationIsLandscape([[UIApplication sharedApplication]statusBarOrientation])) ? CGRectMake(0, 88,screenHeight(), screenWidth() - height(_chatInput) - 88) : CGRectMake(0, 88, screenWidth(), screenHeight() - height(_chatInput) - 88);
+    CGRect chatFrame = (UIInterfaceOrientationIsLandscape([[UIApplication sharedApplication]statusBarOrientation])) ? CGRectMake(0, 68,screenHeight(), screenWidth() - height(_chatInput) - 68) : CGRectMake(0, 68, screenWidth(), screenHeight() - height(_chatInput) - 68);
     self.collectionView = [[UICollectionView alloc]initWithFrame:chatFrame collectionViewLayout:flow];
     self.collectionView.contentInset = UIEdgeInsetsMake(0, 0, 0, 0);
     self.collectionView.backgroundColor = [UIColor clearColor];
@@ -434,7 +436,7 @@
         NSAttributedString * attrStr = [[NSAttributedString alloc] initWithString:comment.body
                                                                        attributes:attributes];
         
-        int maxTextLabelWidth = UIInterfaceOrientationIsPortrait(self.interfaceOrientation) ? screenWidth()*4/5 - OUTLINE : screenHeight()*4/5 - OUTLINE;
+        int maxTextLabelWidth = UIInterfaceOrientationIsPortrait(self.interfaceOrientation) ? screenWidth()*.75 - OUTLINE : screenHeight()*.75 - OUTLINE;
         CGRect rect = [attrStr boundingRectWithSize:CGSizeMake(maxTextLabelWidth, CGFLOAT_MAX)
                                             options:NSStringDrawingUsesLineFragmentOrigin | NSStringDrawingUsesFontLeading
                                             context:nil];
@@ -550,7 +552,7 @@
         [parameters setObject:@"circle" forKey:@"comment_type"];
         
         [manager POST:[NSString stringWithFormat:@"%@/comments",kAPIBaseUrl] parameters:@{@"comment":parameters} success:^(AFHTTPRequestOperation *operation, id responseObject) {
-            NSLog(@"success posting circle comment: %@",responseObject);
+            //NSLog(@"success posting circle comment: %@",responseObject);
         } failure:^(AFHTTPRequestOperation *operation, NSError *error) {
             NSLog(@"Error posting circle comment: %@",error.description);
         }];

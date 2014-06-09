@@ -10,7 +10,7 @@
 #import "Constants.h"
 #import "XXAppDelegate.h"
 #import "XXProgress.h"
-#import "User.h"
+#import "User+helper.h"
 #import "XXMenuViewController.h"
 #import "SWRevealViewController/SWRevealViewController.h"
 #import "XXWebViewController.h"
@@ -365,7 +365,7 @@
     [self.view endEditing:YES];
 }
 
-- (void)connect:(BOOL)signup withLoginUI:(BOOL)ui{
+- (void)connect:(BOOL)signup withLoginUI:(BOOL)ui{    
     if ([self.emailTextField.text rangeOfString:@"@"].location == NSNotFound && [self.registerEmailTextField.text rangeOfString:@"@"].location == NSNotFound) {
         [ProgressHUD dismiss];
         [[[UIAlertView alloc] initWithTitle:@"Uh-oh" message:@"Please make sure you've entered a valid email address before continuing." delegate:nil cancelButtonTitle:@"Okay" otherButtonTitles:nil] show];
@@ -408,14 +408,10 @@
             if (!currentUser) {
                 currentUser = [User MR_createInContext:localContext];
             }
-            currentUser.picSmall = user.picSmallUrl;
             currentUser.picLarge = user.picLargeUrl;
-            currentUser.email = user.email;
-            currentUser.penName = user.penName;
-            currentUser.identifier = user.identifier;
             currentUser.contactCount = user.contactCount;
             currentUser.storyCount = user.storyCount;
-            
+            [currentUser populateFromDict:[responseObject objectForKey:@"user"]];
             [localContext MR_saveToPersistentStoreWithCompletion:^(BOOL success, NSError *error) {
                 delegate.currentUser = currentUser;
                 [self dismissViewControllerAnimated:YES completion:^{

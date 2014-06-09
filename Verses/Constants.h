@@ -82,4 +82,5 @@ static inline CGFloat height(UIView *view) { return view.frame.size.height; }
 #define kCrimsonRoman @"CrimsonText-Roman"
 #define kCrimsonItalic @"CrimsonText-Italic"
 #define kCrimsonSemibold @"CrimsonText-Semibold"
+#define kDesyrel @"Desyrel"
 #endif

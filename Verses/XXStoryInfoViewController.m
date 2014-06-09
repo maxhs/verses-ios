@@ -105,7 +105,6 @@
             cell = [[[NSBundle mainBundle] loadNibNamed:@"XXAuthorInfoCell" owner:nil options:nil] lastObject];
         }
         [cell configureForAuthor:author];
-        
         [cell.authorPhoto setTag:indexPath.row];
         [cell.authorPhoto addTarget:self action:@selector(goToProfile:) forControlEvents:UIControlEventTouchUpInside];
         UIView *selectedView = [[UIView alloc] initWithFrame:cell.frame];
@@ -356,15 +355,12 @@
         if (IDIOM == IPAD){
             XXUser *user = [_story.collaborators objectAtIndex:indexPath.row];
             XXProfileViewController* vc = [[self storyboard] instantiateViewControllerWithIdentifier:@"Profile"];
-            
             [vc setStoryInfoVc:self];
             [vc setUser:user];
             self.popover = [[UIPopoverController alloc] initWithContentViewController:vc];
             self.popover.delegate = self;
-            
             XXAuthorInfoCell *cell = (XXAuthorInfoCell*)[self.tableView cellForRowAtIndexPath:indexPath];
-            CGRect displayFrom = CGRectMake(cell.frame.origin.x, cell.frame.origin.y, screen.size.width/3, screen.size.height/3);
-            [self.popover presentPopoverFromRect:displayFrom inView:self.view permittedArrowDirections:UIPopoverArrowDirectionAny animated:YES];
+            [self.popover presentPopoverFromRect:cell.frame inView:self.view permittedArrowDirections:UIPopoverArrowDirectionAny animated:YES];
 
         } else {
             XXUser *user = [_story.collaborators objectAtIndex:indexPath.row];

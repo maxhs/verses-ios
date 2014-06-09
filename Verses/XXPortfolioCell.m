@@ -1,19 +1,19 @@
 //
-//  XXMyStoryCell.m
+//  XXPortfolioCell.m
 //  Verses
 //
 //  Created by Max Haines-Stiles on 3/16/14.
 //  Copyright (c) 2014 Verses. All rights reserved.
 //
 
-#import "XXMyStoryCell.h"
+#import "XXPortfolioCell.h"
 #import "XXPhoto.h"
 #import <SDWebImage/UIButton+WebCache.h>
 #import <DTCoreText/DTCoreText.h>
 #import "XXContribution.h"
 #import "UIImage+ImageEffects.h"
 
-@implementation XXMyStoryCell {
+@implementation XXPortfolioCell {
     UITapGestureRecognizer *tapGesture;
     XXTextStorage *_textStorage;
     CGRect screen;

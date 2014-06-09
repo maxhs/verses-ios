@@ -8,12 +8,12 @@
 
 #import <UIKit/UIKit.h>
 
-@interface XXAlert : UIView
+@interface XXAlert : UIView 
 
 + (XXAlert *)shared;
 
 + (void)dismiss;
-+ (void)show:(NSString *)status;
++ (void)show:(NSString *)status withTime:(CGFloat)time;
 + (void)showSuccess:(NSString *)status;
 + (void)showError:(NSString *)status;
 

@@ -50,10 +50,19 @@
         _textView.delegate = self;
         _textView.layer.cornerRadius = 7;
         _textView.font = [UIFont fontWithName:kSourceSansProRegular size:16];
-        _textView.layer.borderWidth = .5;
-        _textView.layer.borderColor = [UIColor colorWithWhite:.87 alpha:1].CGColor;
-        _textView.textColor = [UIColor darkTextColor];
-        _textView.backgroundColor = [UIColor colorWithWhite:1 alpha:0.9f];
+        
+        if ([[NSUserDefaults standardUserDefaults] boolForKey:kDarkBackground]){
+            _textView.backgroundColor = [UIColor colorWithWhite:1 alpha:0.f];
+            _textView.textColor = [UIColor whiteColor];
+            _textView.layer.borderWidth = 1;
+            _textView.layer.borderColor = [UIColor colorWithWhite:1 alpha:.87].CGColor;
+        } else {
+            _textView.backgroundColor = [UIColor colorWithWhite:1 alpha:0.9f];
+            _textView.textColor = [UIColor darkTextColor];
+            _textView.layer.borderWidth = .5;
+            _textView.layer.borderColor = [UIColor colorWithWhite:.87 alpha:1].CGColor;
+        }
+        
         [self addSubview:_textView];
         
         _sendButton = [UIButton buttonWithType:UIButtonTypeSystem];
@@ -71,7 +80,12 @@
         
         // Background
         _bgToolbar = [[UIToolbar alloc] initWithFrame:self.bounds];
-        _bgToolbar.barStyle = UIBarStyleDefault;
+        if ([[NSUserDefaults standardUserDefaults] boolForKey:kDarkBackground]){
+            _bgToolbar.barStyle = UIBarStyleBlackTranslucent;
+        } else {
+            _bgToolbar.barStyle = UIBarStyleDefault;
+        }
+        _bgToolbar.translucent = YES;
         _bgToolbar.clipsToBounds = YES;
         _bgToolbar.autoresizingMask = UIViewAutoresizingFlexibleWidth | UIViewAutoresizingFlexibleHeight;
         [self insertSubview:_bgToolbar belowSubview:_textView];

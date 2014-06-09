@@ -33,31 +33,31 @@
 }
 
 -(void)configureForAuthor:(XXUser*)author {
-    [self.authorLabel setText:author.penName];
-    [self.authorLabel setFont:[UIFont fontWithName:kSourceSansProLight size:19]];
-    [self.storiesCount setText:[NSString stringWithFormat:@"%@ stories",author.storyCount]];
-    [self.storiesCount setFont:[UIFont fontWithName:kCrimsonRoman size:16]];
-    [self.authorPhoto.titleLabel setFont:[UIFont fontWithName:kSourceSansProLight size:12]];
-    [self.authorPhoto.titleLabel setNumberOfLines:0];
-    self.authorPhoto.layer.cornerRadius = 20.f;
-    self.authorPhoto.clipsToBounds = YES;
+    [_authorLabel setText:author.penName];
+    [_authorLabel setFont:[UIFont fontWithName:kSourceSansProLight size:19]];
+    [_storiesCount setText:[NSString stringWithFormat:@"%@ stories",author.storyCount]];
+    [_storiesCount setFont:[UIFont fontWithName:kCrimsonRoman size:16]];
+    [_authorPhoto.titleLabel setFont:[UIFont fontWithName:kSourceSansProLight size:12]];
+    [_authorPhoto.titleLabel setNumberOfLines:0];
+    _authorPhoto.layer.cornerRadius = 20.f;
+    _authorPhoto.clipsToBounds = YES;
     if (author.picSmallUrl.length){
-        [self.authorPhoto setTitle:@"" forState:UIControlStateNormal];
-        self.authorPhoto.layer.borderWidth = 0.f;
-        [self.authorPhoto setImageWithURL:[NSURL URLWithString:author.picSmallUrl] forState:UIControlStateNormal completed:^(UIImage *image, NSError *error, SDImageCacheType cacheType) {
+        [_authorPhoto setTitle:@"" forState:UIControlStateNormal];
+        _authorPhoto.layer.borderWidth = 0.f;
+        [_authorPhoto setImageWithURL:[NSURL URLWithString:author.picSmallUrl] forState:UIControlStateNormal completed:^(UIImage *image, NSError *error, SDImageCacheType cacheType) {
             [UIView animateWithDuration:.25 animations:^{
-                [self.authorPhoto setAlpha:1.0];
+                [_authorPhoto setAlpha:1.0];
             }];
         }];
     } else {
-        self.authorPhoto.layer.cornerRadius = 20.f;
-        [self.authorPhoto setImage:nil forState:UIControlStateNormal];
-        [self.authorPhoto setTitle:[author.penName substringWithRange:NSMakeRange(0, 2)].uppercaseString forState:UIControlStateNormal];
-        [self.authorPhoto.titleLabel setTextAlignment:NSTextAlignmentCenter];
-        self.authorPhoto.layer.borderColor = [UIColor colorWithWhite:1 alpha:.1].CGColor;
-        self.authorPhoto.layer.borderWidth = 1.f;
+        _authorPhoto.layer.cornerRadius = 20.f;
+        [_authorPhoto setImage:nil forState:UIControlStateNormal];
+        [_authorPhoto setTitle:[author.penName substringWithRange:NSMakeRange(0, 2)].uppercaseString forState:UIControlStateNormal];
+        [_authorPhoto.titleLabel setTextAlignment:NSTextAlignmentCenter];
+        _authorPhoto.layer.borderColor = [UIColor colorWithWhite:1 alpha:.1].CGColor;
+        _authorPhoto.layer.borderWidth = 1.f;
         [UIView animateWithDuration:.25 animations:^{
-            [self.authorPhoto setAlpha:1.0];
+            [_authorPhoto setAlpha:1.0];
         }];
     }
 }

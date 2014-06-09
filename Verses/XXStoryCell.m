@@ -7,7 +7,7 @@
 //
 
 #import "XXStoryCell.h"
-#import "XXPhoto.h"
+#import "Photo+helper.h"
 #import <SDWebImage/UIButton+WebCache.h>
 #import <DTCoreText/DTCoreText.h>
 #import "UIFontDescriptor+CrimsonText.h"
@@ -17,7 +17,6 @@
 @implementation XXStoryCell {
     CGFloat width;
     CGFloat height;
-    UIImage *imageForBlur;
 }
 
 - (id)initWithStyle:(UITableViewCellStyle)style reuseIdentifier:(NSString *)reuseIdentifier
@@ -36,7 +35,9 @@
     // Configure the view for the selected state
 }
 
-- (void)configureForStory:(XXStory*)story  withOrientation:(UIInterfaceOrientation)orientation {
+- (void)configureForStory:(Story*)story  withOrientation:(UIInterfaceOrientation)orientation {
+    [_flagButton.titleLabel setFont:[UIFont fontWithName:kSourceSansProLight size:15]];
+    
     if (UIInterfaceOrientationIsPortrait(orientation)){
         width = screenWidth();
         if (IDIOM == IPAD){
@@ -57,40 +58,33 @@
     [_infoLabel setFont:[UIFont fontWithName:kCrimsonItalic size:14]];
     [_infoLabel setTextColor:[UIColor lightGrayColor]];
     [_infoLabel setAlpha:0.0];
-    [_authorLabel setText:[NSString stringWithFormat:@"by %@",story.authors]];
-    [_authorLabel setAlpha:0.0];
+    [_authorLabel setText:[NSString stringWithFormat:@"by %@",story.authorNames]];
     [_separatorView setBackgroundColor:kSeparatorColor];
-    
-    if (IDIOM == IPAD){
-        [_authorLabel setFont:[UIFont fontWithName:kCrimsonRoman size:15]];
-        [_titleLabel setFont:[UIFont fontWithName:kSourceSansProSemibold size:33]];
-        if ([[NSUserDefaults standardUserDefaults] boolForKey:kDarkBackground]){
-            [_authorLabel setTextColor:[UIColor whiteColor]];
-        } else {
-            [_authorLabel setTextColor:[UIColor lightGrayColor]];
-        }
-        [_authorPhoto setHidden:NO];
-        [_authorLabel setHidden:NO];
-    } else {
-        [_titleLabel setFont:[UIFont fontWithName:kSourceSansProSemibold size:33]];
-        [_authorPhoto setHidden:YES];
-        [_authorLabel setHidden:YES];
-    }
+    [_titleLabel setFont:[UIFont fontWithName:kSourceSansProSemibold size:33]];
     
     [_countLabel setFont:[UIFont fontWithName:kSourceSansProRegular size:15]];
+    [_authorLabel setFont:[UIFont fontWithName:kSourceSansProRegular size:15]];
+    
+    [_titleLabel setAlpha:0.0];
+    [_authorLabel setAlpha:0.0];
+    [_countLabel setAlpha:0.0];
     
     if (story.photos.count){
         [_titleLabel setTextColor:[UIColor whiteColor]];
+        [_authorLabel setTextColor:[UIColor whiteColor]];
         [_countLabel setTextColor:[UIColor whiteColor]];
         [_backgroundImageView setHidden:NO];
-        [_backgroundImageView setImageWithURL:[(XXPhoto*)story.photos.firstObject imageMediumUrl] completed:^(UIImage *image, NSError *error, SDImageCacheType cacheType) {
+        [_backgroundImageView setImageWithURL:[NSURL URLWithString:[(Photo*)story.photos.firstObject mediumUrl]] completed:^(UIImage *image, NSError *error, SDImageCacheType cacheType) {
         
             dispatch_async(dispatch_get_global_queue(DISPATCH_QUEUE_PRIORITY_HIGH, 0), ^{
                 UIImage *blurredImage = [image applyBlurWithRadius:21 blurType:BOXFILTER tintColor:[UIColor colorWithWhite:0 alpha:.13] saturationDeltaFactor:1.8 maskImage:nil];
                 dispatch_async(dispatch_get_main_queue(), ^{
                     [_backgroundImageView setImage:blurredImage];
-                    [UIView animateWithDuration:.7 animations:^{
+                    [UIView animateWithDuration:.5 animations:^{
                         [_backgroundImageView setAlpha:.75];
+                        [_titleLabel setAlpha:1.0];
+                        [_authorLabel setAlpha:1.0];
+                        [_countLabel setAlpha:1.0];
                     } completion:^(BOOL finished) {
                         _backgroundImageView.layer.rasterizationScale = [UIScreen mainScreen].scale;
                         _backgroundImageView.layer.shouldRasterize = YES;
@@ -100,9 +94,15 @@
         }];
         [_separatorView setHidden:YES];
     } else {
-        imageForBlur = nil;
         [_backgroundImageView setHidden:YES];
         [_separatorView setHidden:NO];
+        [UIView animateWithDuration:.3 animations:^{
+            [_titleLabel setAlpha:1.0];
+            [_authorLabel setAlpha:1.0];
+            [_countLabel setAlpha:1.0];
+        } completion:^(BOOL finished) {
+            
+        }];
     }
     
     XXTextStorage *_textStorage = [XXTextStorage new];
@@ -110,33 +110,28 @@
     NSLayoutManager *layoutManager = [[NSLayoutManager alloc] init];
     [_textStorage addLayoutManager:layoutManager];
     CGFloat spacer = 18;
-    if (!_bodySnippet){
-        
-        CGFloat containerHeight;
-        if (IDIOM == IPAD) {
-            containerHeight = height;
-        } else {
-            containerHeight = height*.823;
-        }
-        NSTextContainer *container = [[NSTextContainer alloc] initWithSize:CGSizeMake(width-spacer, containerHeight)];
-        container.widthTracksTextView = YES;
-        //container.heightTracksTextView = YES;
-        [layoutManager addTextContainer:container];
-        _bodySnippet = [[XXTextView alloc] initWithFrame:CGRectMake(spacer/2, 3, width - spacer, containerHeight-3) textContainer:container];
-        _bodySnippet.userInteractionEnabled = NO;
-        [self.contentView addSubview:_bodySnippet];
-    }
+    CGFloat containerHeight = height*.823;
+    
+    NSTextContainer *container = [[NSTextContainer alloc] initWithSize:CGSizeMake(width-spacer, containerHeight)];
+    container.widthTracksTextView = YES;
+    container.heightTracksTextView = YES;
+    [layoutManager addTextContainer:container];
+    _bodySnippet = [[XXTextView alloc] initWithFrame:CGRectMake(spacer/2, 3, width - spacer, containerHeight-3) textContainer:container];
+    _bodySnippet.userInteractionEnabled = NO;
+    [self.contentView addSubview:_bodySnippet];
+    
     [_bodySnippet setAlpha:0.0];
     if (IDIOM == IPAD) {
-        _bodySnippet.autoresizingMask = UIViewAutoresizingNone;
+        //_bodySnippet.autoresizingMask = UIViewAutoresizingNone;
         CGRect bodyRect = _bodySnippet.frame;
         bodyRect.size.width = width-spacer;
+        bodyRect.size.height = containerHeight;
         [_bodySnippet setFrame:bodyRect];
     } else {
         _bodySnippet.autoresizingMask = (UIViewAutoresizingFlexibleWidth | UIViewAutoresizingFlexibleBottomMargin);
     }
     
-    //_bodySnippet.clipsToBounds = YES;
+    _bodySnippet.clipsToBounds = NO;
     _bodySnippet.textContainer.maximumNumberOfLines = 0;
     _bodySnippet.textContainer.lineBreakMode = NSLineBreakByTruncatingTail;
     [_titleLabel setText:story.title];
@@ -145,19 +140,15 @@
     [_scrollView addGestureRecognizer:_scrollTouch];
 }
 
-- (void)blurImage {
-    if (imageForBlur){
-        
-    }
-}
-
 - (void)scrollViewDidScroll:(UIScrollView *)scrollView {
     CGFloat x = scrollView.contentOffset.x;
     CGFloat alpha = (x/width);
     [_bodySnippet setAlpha:alpha];
     [_authorLabel setAlpha:alpha];
     [_infoLabel setAlpha:alpha];
+    [_flagButton setAlpha:alpha];
     [_titleLabel setAlpha:1-alpha];
+    [_authorLabel setAlpha:1-alpha];
     [_backgroundImageView setAlpha:.75-alpha];
 }
 

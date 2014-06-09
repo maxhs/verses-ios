@@ -22,46 +22,28 @@
             </objects>
             <point key="canvasLocation" x="-1327" y="-363"/>
         </scene>
-        <!--Welcome View Controller-->
+        <!--Stories View Controller-->
         <scene sceneID="vuy-0Z-VuX">
             <objects>
-                <viewController storyboardIdentifier="Welcome" id="VWH-zt-taR" customClass="XXWelcomeViewController" sceneMemberID="viewController">
+                <viewController storyboardIdentifier="Stories" id="VWH-zt-taR" customClass="XXStoriesViewController" sceneMemberID="viewController">
                     <view key="view" contentMode="scaleToFill" id="DEo-3h-h06">
                         <rect key="frame" x="0.0" y="0.0" width="768" height="1024"/>
                         <autoresizingMask key="autoresizingMask" flexibleMaxX="YES" flexibleMaxY="YES"/>
                         <subviews>
-                            <tableView clipsSubviews="YES" alpha="0.0" contentMode="scaleToFill" alwaysBounceVertical="YES" dataMode="prototypes" style="plain" separatorStyle="none" rowHeight="44" sectionHeaderHeight="22" sectionFooterHeight="22" id="m8I-4f-hi6">
+                            <tableView clipsSubviews="YES" contentMode="scaleToFill" alwaysBounceVertical="YES" dataMode="prototypes" style="plain" separatorStyle="none" rowHeight="44" sectionHeaderHeight="22" sectionFooterHeight="22" id="oF3-97-vzn">
                                 <rect key="frame" x="0.0" y="0.0" width="768" height="1024"/>
                                 <autoresizingMask key="autoresizingMask" widthSizable="YES" heightSizable="YES"/>
                                 <color key="backgroundColor" white="0.0" alpha="0.0" colorSpace="calibratedWhite"/>
                                 <prototypes>
-                                    <tableViewCell contentMode="scaleToFill" selectionStyle="none" hidesAccessoryWhenEditing="NO" indentationLevel="1" indentationWidth="0.0" reuseIdentifier="NothingCell" id="gng-jF-tT2">
+                                    <tableViewCell contentMode="scaleToFill" selectionStyle="blue" hidesAccessoryWhenEditing="NO" indentationLevel="1" indentationWidth="0.0" reuseIdentifier="NothingCell" id="E2s-9G-qtf">
                                         <rect key="frame" x="0.0" y="22" width="768" height="44"/>
                                         <autoresizingMask key="autoresizingMask"/>
-                                        <tableViewCellContentView key="contentView" opaque="NO" clipsSubviews="YES" multipleTouchEnabled="YES" contentMode="center" tableViewCell="gng-jF-tT2" id="JyS-cL-KdY">
+                                        <tableViewCellContentView key="contentView" opaque="NO" clipsSubviews="YES" multipleTouchEnabled="YES" contentMode="center" tableViewCell="E2s-9G-qtf" id="2wv-JT-IMn">
                                             <rect key="frame" x="0.0" y="0.0" width="768" height="44"/>
                                             <autoresizingMask key="autoresizingMask"/>
                                         </tableViewCellContentView>
                                     </tableViewCell>
                                 </prototypes>
-                                <connections>
-                                    <outlet property="dataSource" destination="VWH-zt-taR" id="wqe-Rn-4XA"/>
-                                    <outlet property="delegate" destination="VWH-zt-taR" id="NEo-dq-k4u"/>
-                                </connections>
-                            </tableView>
-                            <tableView clipsSubviews="YES" alpha="0.0" contentMode="scaleToFill" alwaysBounceVertical="YES" dataMode="prototypes" style="plain" separatorStyle="none" rowHeight="44" sectionHeaderHeight="22" sectionFooterHeight="22" id="Shg-kh-rEJ">
-                                <rect key="frame" x="0.0" y="0.0" width="768" height="1024"/>
-                                <autoresizingMask key="autoresizingMask" widthSizable="YES" heightSizable="YES"/>
-                                <color key="backgroundColor" white="0.0" alpha="0.0" colorSpace="calibratedWhite"/>
-                                <connections>
-                                    <outlet property="dataSource" destination="VWH-zt-taR" id="QGP-lP-EVj"/>
-                                    <outlet property="delegate" destination="VWH-zt-taR" id="tdl-br-Cg9"/>
-                                </connections>
-                            </tableView>
-                            <tableView clipsSubviews="YES" contentMode="scaleToFill" alwaysBounceVertical="YES" dataMode="prototypes" style="plain" separatorStyle="none" rowHeight="44" sectionHeaderHeight="22" sectionFooterHeight="22" id="oF3-97-vzn">
-                                <rect key="frame" x="0.0" y="0.0" width="768" height="1024"/>
-                                <autoresizingMask key="autoresizingMask" widthSizable="YES" heightSizable="YES"/>
-                                <color key="backgroundColor" white="0.0" alpha="0.0" colorSpace="calibratedWhite"/>
                                 <connections>
                                     <outlet property="dataSource" destination="VWH-zt-taR" id="5lA-RJ-66W"/>
                                     <outlet property="delegate" destination="VWH-zt-taR" id="Brt-KH-eLT"/>
@@ -74,18 +56,15 @@
                         <barButtonItem key="backBarButtonItem" title=" " id="xB4-ix-nY9"/>
                     </navigationItem>
                     <connections>
-                        <outlet property="sharedTableView" destination="m8I-4f-hi6" id="fP7-yA-jAn"/>
                         <outlet property="tableView" destination="oF3-97-vzn" id="elt-Ra-Ufm"/>
-                        <outlet property="trendingTableView" destination="Shg-kh-rEJ" id="oil-2z-RN4"/>
                         <segue destination="C0i-2P-dUO" kind="push" identifier="Login" id="2Gw-HL-xYr"/>
                         <segue destination="2kg-m5-Tjo" kind="push" identifier="Write" id="ndP-ZF-bqE"/>
-                        <segue destination="6eO-lj-vvf" kind="push" identifier="Stories" id="PWm-Ef-DTf"/>
                         <segue destination="cLS-h3-KiR" kind="push" identifier="Story" id="iLI-CN-Ujs"/>
                     </connections>
                 </viewController>
                 <placeholder placeholderIdentifier="IBFirstResponder" id="wZw-D2-Z6U" userLabel="First Responder" sceneMemberID="firstResponder"/>
             </objects>
-            <point key="canvasLocation" x="-483" y="-363"/>
+            <point key="canvasLocation" x="-647" y="-363"/>
         </scene>
         <!--Menu View Controller-->
         <scene sceneID="qA4-zN-ZcV">
@@ -143,7 +122,6 @@
                         <outlet property="searchBar" destination="BH4-bb-BcS" id="Zii-gK-hl6"/>
                         <outlet property="tableView" destination="4gc-rX-kvP" id="tnr-xJ-IjS"/>
                         <segue destination="C0i-2P-dUO" kind="modal" identifier="Login" id="kj7-MX-7ei"/>
-                        <segue destination="6eO-lj-vvf" kind="push" identifier="Stories" id="ZAU-b6-YzM"/>
                     </connections>
                 </viewController>
                 <placeholder placeholderIdentifier="IBFirstResponder" id="Hmh-ZP-glf" userLabel="First Responder" sceneMemberID="firstResponder"/>
@@ -395,14 +373,22 @@
             </objects>
             <point key="canvasLocation" x="3665" y="-1602"/>
         </scene>
-        <!--Stories View Controller-->
+        <!--Guide View Controller-->
         <scene sceneID="yQ1-TY-VUB">
             <objects>
-                <viewController storyboardIdentifier="Stories" id="6eO-lj-vvf" customClass="XXStoriesViewController" sceneMemberID="viewController">
+                <viewController storyboardIdentifier="Guide" id="6eO-lj-vvf" customClass="XXGuideViewController" sceneMemberID="viewController">
                     <view key="view" contentMode="scaleToFill" id="3Ps-By-br6">
                         <rect key="frame" x="0.0" y="0.0" width="768" height="1024"/>
                         <autoresizingMask key="autoresizingMask"/>
                         <subviews>
+                            <searchBar contentMode="redraw" searchBarStyle="minimal" id="G6e-6a-zzU">
+                                <rect key="frame" x="0.0" y="0.0" width="768" height="44"/>
+                                <autoresizingMask key="autoresizingMask" widthSizable="YES" flexibleMaxY="YES"/>
+                                <textInputTraits key="textInputTraits"/>
+                                <connections>
+                                    <outlet property="delegate" destination="6eO-lj-vvf" id="EY0-Zc-wMr"/>
+                                </connections>
+                            </searchBar>
                             <tableView clipsSubviews="YES" contentMode="scaleToFill" alwaysBounceVertical="YES" pagingEnabled="YES" dataMode="prototypes" style="plain" separatorStyle="default" rowHeight="44" sectionHeaderHeight="22" sectionFooterHeight="22" id="JmB-yh-vRD">
                                 <rect key="frame" x="0.0" y="0.0" width="768" height="1024"/>
                                 <autoresizingMask key="autoresizingMask" widthSizable="YES" heightSizable="YES"/>
@@ -411,13 +397,23 @@
                                     <outlet property="delegate" destination="6eO-lj-vvf" id="0VR-2M-6VJ"/>
                                 </connections>
                             </tableView>
+                            <tableView clipsSubviews="YES" contentMode="scaleToFill" alwaysBounceVertical="YES" dataMode="prototypes" style="plain" separatorStyle="none" rowHeight="44" sectionHeaderHeight="22" sectionFooterHeight="22" id="14T-hK-XHG">
+                                <rect key="frame" x="0.0" y="44" width="768" height="980"/>
+                                <autoresizingMask key="autoresizingMask" widthSizable="YES" heightSizable="YES"/>
+                                <color key="backgroundColor" white="1" alpha="1" colorSpace="calibratedWhite"/>
+                                <connections>
+                                    <outlet property="dataSource" destination="6eO-lj-vvf" id="J5i-70-6cP"/>
+                                    <outlet property="delegate" destination="6eO-lj-vvf" id="zTy-Mc-3DO"/>
+                                </connections>
+                            </tableView>
                         </subviews>
                         <color key="backgroundColor" white="1" alpha="1" colorSpace="calibratedWhite"/>
                     </view>
                     <navigationItem key="navigationItem" id="4zj-56-65U"/>
                     <connections>
+                        <outlet property="searchBar" destination="G6e-6a-zzU" id="UD5-aK-W9E"/>
+                        <outlet property="searchResultsTableView" destination="14T-hK-XHG" id="dWf-Pu-4Zf"/>
                         <outlet property="tableView" destination="JmB-yh-vRD" id="qOM-nh-WSn"/>
-                        <segue destination="cLS-h3-KiR" kind="push" identifier="Story" id="5X8-Bx-A0W"/>
                     </connections>
                 </viewController>
                 <placeholder placeholderIdentifier="IBFirstResponder" id="Wrg-tU-b2t" userLabel="First Responder" sceneMemberID="firstResponder"/>
@@ -547,10 +543,10 @@
             </objects>
             <point key="canvasLocation" x="1165" y="780"/>
         </scene>
-        <!--My Stories View Controller-->
+        <!--Portfolio View Controller-->
         <scene sceneID="Y8z-6W-yoF">
             <objects>
-                <viewController storyboardIdentifier="My Stories" id="y8B-VY-SdE" customClass="XXMyStoriesViewController" sceneMemberID="viewController">
+                <viewController storyboardIdentifier="Portfolio" id="y8B-VY-SdE" customClass="XXPortfolioViewController" sceneMemberID="viewController">
                     <view key="view" contentMode="scaleToFill" id="8FI-da-nc4">
                         <rect key="frame" x="0.0" y="0.0" width="768" height="1024"/>
                         <autoresizingMask key="autoresizingMask" flexibleMaxX="YES" flexibleMaxY="YES"/>
@@ -732,13 +728,13 @@
                                         <fontDescription key="fontDescription" type="system" pointSize="17"/>
                                         <nil key="highlightedColor"/>
                                     </label>
-                                    <label opaque="NO" clipsSubviews="YES" userInteractionEnabled="NO" contentMode="left" horizontalHuggingPriority="251" verticalHuggingPriority="251" text="Let others join" textAlignment="right" lineBreakMode="tailTruncation" baselineAdjustment="alignBaselines" adjustsFontSizeToFit="NO" id="aZe-Mz-htj">
+                                    <label opaque="NO" clipsSubviews="YES" userInteractionEnabled="NO" contentMode="left" horizontalHuggingPriority="251" verticalHuggingPriority="251" text="Others can join" textAlignment="right" lineBreakMode="tailTruncation" baselineAdjustment="alignBaselines" adjustsFontSizeToFit="NO" id="aZe-Mz-htj">
                                         <rect key="frame" x="210" y="334" width="150" height="44"/>
                                         <autoresizingMask key="autoresizingMask" flexibleMaxY="YES"/>
                                         <fontDescription key="fontDescription" type="system" pointSize="17"/>
                                         <nil key="highlightedColor"/>
                                     </label>
-                                    <label opaque="NO" clipsSubviews="YES" userInteractionEnabled="NO" contentMode="left" horizontalHuggingPriority="251" verticalHuggingPriority="251" text="Slow reveal mode" textAlignment="right" lineBreakMode="tailTruncation" baselineAdjustment="alignBaselines" adjustsFontSizeToFit="NO" id="R7n-xr-Jdo">
+                                    <label hidden="YES" opaque="NO" clipsSubviews="YES" userInteractionEnabled="NO" contentMode="left" horizontalHuggingPriority="251" verticalHuggingPriority="251" text="Slow reveal mode" textAlignment="right" lineBreakMode="tailTruncation" baselineAdjustment="alignBaselines" adjustsFontSizeToFit="NO" id="R7n-xr-Jdo">
                                         <rect key="frame" x="221" y="386" width="140" height="44"/>
                                         <autoresizingMask key="autoresizingMask" flexibleMaxY="YES"/>
                                         <fontDescription key="fontDescription" type="system" pointSize="17"/>
@@ -752,7 +748,7 @@
                                         <rect key="frame" x="407" y="340" width="51" height="31"/>
                                         <autoresizingMask key="autoresizingMask" flexibleMinX="YES" flexibleMaxY="YES"/>
                                     </switch>
-                                    <switch opaque="NO" contentMode="scaleToFill" horizontalHuggingPriority="750" verticalHuggingPriority="750" contentHorizontalAlignment="center" contentVerticalAlignment="center" on="YES" id="5VW-7s-L7a">
+                                    <switch hidden="YES" opaque="NO" contentMode="scaleToFill" horizontalHuggingPriority="750" verticalHuggingPriority="750" contentHorizontalAlignment="center" contentVerticalAlignment="center" on="YES" id="5VW-7s-L7a">
                                         <rect key="frame" x="407" y="392" width="51" height="31"/>
                                         <autoresizingMask key="autoresizingMask" flexibleMinX="YES" flexibleMaxY="YES"/>
                                     </switch>
@@ -781,7 +777,7 @@
                                     <button opaque="NO" contentMode="scaleToFill" contentHorizontalAlignment="center" contentVerticalAlignment="center" lineBreakMode="middleTruncation" id="Xrz-vW-4wO">
                                         <rect key="frame" x="304" y="470" width="160" height="46"/>
                                         <autoresizingMask key="autoresizingMask" widthSizable="YES" flexibleMaxY="YES"/>
-                                        <state key="normal" title="COLLABORATE">
+                                        <state key="normal" title="SHARE">
                                             <color key="titleColor" white="0.0" alpha="1" colorSpace="calibratedWhite"/>
                                             <color key="titleShadowColor" white="0.0" alpha="0.0" colorSpace="calibratedWhite"/>
                                         </state>
@@ -973,7 +969,6 @@
                         <outlet property="scrollView" destination="7Ys-g8-w3r" id="g6v-qG-5Dj"/>
                         <outlet property="titleLabel" destination="fZ2-T1-g2C" id="vdv-UQ-CsB"/>
                         <segue destination="2kg-m5-Tjo" kind="push" identifier="Edit" id="hdE-Sg-TnB"/>
-                        <segue destination="6eO-lj-vvf" kind="modal" identifier="Stories" customClass="BlurryModalSegue" id="TfV-M5-qAB"/>
                     </connections>
                 </viewController>
                 <placeholder placeholderIdentifier="IBFirstResponder" id="fGC-75-LVK" userLabel="First Responder" sceneMemberID="firstResponder"/>
@@ -1102,6 +1097,66 @@
             </objects>
             <point key="canvasLocation" x="65" y="-1602"/>
         </scene>
+        <!--Gallery View Controller-->
+        <scene sceneID="M3f-JN-fdu">
+            <objects>
+                <viewController storyboardIdentifier="Gallery" id="Cap-Ua-dem" customClass="XXGalleryViewController" sceneMemberID="viewController">
+                    <view key="view" contentMode="scaleToFill" id="72L-Mr-pvZ">
+                        <rect key="frame" x="0.0" y="0.0" width="768" height="1024"/>
+                        <autoresizingMask key="autoresizingMask"/>
+                        <subviews>
+                            <collectionView opaque="NO" clipsSubviews="YES" multipleTouchEnabled="YES" contentMode="scaleToFill" minimumZoomScale="0.0" maximumZoomScale="0.0" dataMode="prototypes" id="4Zc-fP-u8x">
+                                <rect key="frame" x="0.0" y="0.0" width="768" height="1024"/>
+                                <autoresizingMask key="autoresizingMask" widthSizable="YES" heightSizable="YES"/>
+                                <collectionViewFlowLayout key="collectionViewLayout" minimumLineSpacing="0.0" minimumInteritemSpacing="0.0" id="Dqb-8v-ETc">
+                                    <size key="itemSize" width="192" height="192"/>
+                                    <size key="headerReferenceSize" width="50" height="50"/>
+                                    <size key="footerReferenceSize" width="0.0" height="0.0"/>
+                                    <inset key="sectionInset" minX="0.0" minY="0.0" maxX="0.0" maxY="0.0"/>
+                                </collectionViewFlowLayout>
+                                <cells>
+                                    <collectionViewCell opaque="NO" clipsSubviews="YES" multipleTouchEnabled="YES" contentMode="center" reuseIdentifier="PhotoCell" id="IGc-Kg-dxs" customClass="XXPhotoCollectionCell">
+                                        <rect key="frame" x="0.0" y="50" width="192" height="192"/>
+                                        <autoresizingMask key="autoresizingMask"/>
+                                        <view key="contentView" opaque="NO" clipsSubviews="YES" multipleTouchEnabled="YES" contentMode="center">
+                                            <rect key="frame" x="0.0" y="0.0" width="192" height="192"/>
+                                            <autoresizingMask key="autoresizingMask"/>
+                                            <subviews>
+                                                <button opaque="NO" contentMode="scaleToFill" contentHorizontalAlignment="center" contentVerticalAlignment="center" lineBreakMode="middleTruncation" id="Whl-XZ-Ezz">
+                                                    <rect key="frame" x="0.0" y="0.0" width="192" height="192"/>
+                                                    <autoresizingMask key="autoresizingMask" widthSizable="YES" heightSizable="YES"/>
+                                                    <state key="normal">
+                                                        <color key="titleShadowColor" white="0.5" alpha="1" colorSpace="calibratedWhite"/>
+                                                    </state>
+                                                </button>
+                                            </subviews>
+                                            <color key="backgroundColor" white="0.0" alpha="0.0" colorSpace="calibratedWhite"/>
+                                        </view>
+                                        <connections>
+                                            <outlet property="photoButton" destination="Whl-XZ-Ezz" id="wSZ-5p-RTS"/>
+                                        </connections>
+                                    </collectionViewCell>
+                                </cells>
+                                <collectionReusableView key="sectionHeaderView" opaque="NO" clipsSubviews="YES" multipleTouchEnabled="YES" contentMode="center" reuseIdentifier="PhotoHeader" id="eP7-hu-Xnh">
+                                    <rect key="frame" x="0.0" y="0.0" width="768" height="50"/>
+                                    <autoresizingMask key="autoresizingMask"/>
+                                </collectionReusableView>
+                                <connections>
+                                    <outlet property="dataSource" destination="Cap-Ua-dem" id="vPu-ZN-Ykd"/>
+                                    <outlet property="delegate" destination="Cap-Ua-dem" id="yuU-r6-8Qu"/>
+                                </connections>
+                            </collectionView>
+                        </subviews>
+                        <color key="backgroundColor" white="1" alpha="1" colorSpace="custom" customColorSpace="calibratedWhite"/>
+                    </view>
+                    <connections>
+                        <outlet property="collectionView" destination="4Zc-fP-u8x" id="8AW-Ci-wSA"/>
+                    </connections>
+                </viewController>
+                <placeholder placeholderIdentifier="IBFirstResponder" id="mle-xb-H0x" userLabel="First Responder" sceneMemberID="firstResponder"/>
+            </objects>
+            <point key="canvasLocation" x="3826" y="-363"/>
+        </scene>
     </scenes>
     <resources>
         <image name="blackX.png" width="22" height="22"/>
@@ -1114,9 +1169,8 @@
     </simulatedMetricsContainer>
     <inferredMetricsTieBreakers>
         <segue reference="FzZ-zz-bo7"/>
-        <segue reference="kj7-MX-7ei"/>
-        <segue reference="3GL-ZQ-DdE"/>
-        <segue reference="TfV-M5-qAB"/>
-        <segue reference="hdE-Sg-TnB"/>
+        <segue reference="Gi8-AQ-lXV"/>
+        <segue reference="oXd-iI-UHN"/>
+        <segue reference="2Gw-HL-xYr"/>
     </inferredMetricsTieBreakers>
 </document>

@@ -9,6 +9,11 @@
 #import "XXAlert.h"
 #import "UIImage+ImageEffects.h"
 
+@interface XXAlert () {
+    CGFloat dismissTime;
+}
+@end
+
 @implementation XXAlert
 
 @synthesize window, background, label;
@@ -26,9 +31,9 @@
 	[[self shared] hideAlert];
 }
 
-+ (void)show:(NSString *)status
++ (void)show:(NSString *)status withTime:(CGFloat)time
 {
-	[[self shared] make:status spin:YES hide:NO];
+	[[self shared] make:status spin:YES hide:NO withTime:time];
 }
 
 + (void)showSuccess:(NSString *)status
@@ -53,18 +58,20 @@
 	return self;
 }
 
-- (void)make:(NSString *)status spin:(BOOL)spin hide:(BOOL)hide
+- (void)make:(NSString *)status spin:(BOOL)spin hide:(BOOL)hide withTime:(CGFloat)time
 {
-	[self create];
+	dismissTime = time;
+    [self create];
 	label.text = status;
 	label.hidden = (status == nil) ? YES : NO;
 	//background.image = img;
 	//background.hidden = (img == nil) ? YES : NO;
-
+    
 	[self orient];
 	//[self determineSize];
 	[self showAlert];
-	if (hide) [NSThread detachNewThreadSelector:@selector(timedHide) toTarget:self withObject:nil];
+    
+    //if (hide) [NSThread detachNewThreadSelector:@selector(timedHide) toTarget:self withObject:nil];
 }
 
 - (void)create
@@ -141,10 +148,10 @@
 		self.alpha = 1;
 		background.alpha = 0;
 		NSUInteger options = UIViewAnimationOptionAllowUserInteraction | UIViewAnimationCurveEaseOut;
-		[UIView animateWithDuration:0.63 delay:0 usingSpringWithDamping:.75 initialSpringVelocity:.00001 options:options animations:^{
+		[UIView animateWithDuration:0.3 delay:0 options:options animations:^{
 			background.alpha = 1;
 		} completion:^(BOOL finished){
-            [self performSelector:@selector(hideAlert) withObject:nil afterDelay:1.5];
+            [self performSelector:@selector(hideAlert) withObject:nil afterDelay:dismissTime];
         }];
 	}
 }
@@ -153,7 +160,7 @@
 	if (self.alpha == 1)
 	{
 		NSUInteger options = UIViewAnimationOptionAllowUserInteraction | UIViewAnimationCurveEaseIn;
-		[UIView animateWithDuration:0.63 delay:0 usingSpringWithDamping:.75 initialSpringVelocity:.00001 options:options animations:^{
+		[UIView animateWithDuration:0.3 delay:0 options:options animations:^{
 			background.alpha = 0;
 		} completion:^(BOOL finished) {
              [self destroy];

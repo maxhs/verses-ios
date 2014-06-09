@@ -92,18 +92,18 @@
     if ([[NSUserDefaults standardUserDefaults] objectForKey:kUserDefaultsId]){
         [parameters setObject:[[NSUserDefaults standardUserDefaults] objectForKey:kUserDefaultsId] forKey:@"user_id"];
     }
-    NSLog(@"should be loading user details");
     [manager GET:[NSString stringWithFormat:@"%@/users/%@",kAPIBaseUrl,identifier] parameters:parameters success:^(AFHTTPRequestOperation *operation, id responseObject) {
         _user = [[XXUser alloc] initWithDictionary:[responseObject objectForKey:@"user"]];
-        NSLog(@"user stories: %d",_user.stories.count);
-        NSLog(@"success getting user details: %@",responseObject);
+
+        //NSLog(@"success getting user details: %@",responseObject);
         if (self.tableView.numberOfSections){
             [self.tableView reloadSections:[NSIndexSet indexSetWithIndex:1] withRowAnimation:UITableViewRowAnimationFade];
         } else {
             [self.tableView reloadData];
         }
     } failure:^(AFHTTPRequestOperation *operation, NSError *error) {
-        NSLog(@"Failed to get user details: %@",error.description);
+        [[[UIAlertView alloc] initWithTitle:@"Sorry" message:@"Something went wrong while trying to load this profile. Please try again soon." delegate:nil cancelButtonTitle:@"Okay" otherButtonTitles:nil] show];
+        //NSLog(@"Failed to get user details: %@",error.description);
     }];
 }
 

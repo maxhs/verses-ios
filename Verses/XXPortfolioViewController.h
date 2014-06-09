@@ -1,5 +1,5 @@
 //
-//  XXMyStoriesViewController.h
+//  XXPortfolioViewController.h
 //  Verses
 //
 //  Created by Max Haines-Stiles on 3/16/14.
@@ -8,7 +8,7 @@
 
 #import <UIKit/UIKit.h>
 
-@interface XXMyStoriesViewController : UIViewController <UITableViewDataSource, UITableViewDelegate, UISearchBarDelegate, UISearchDisplayDelegate>
+@interface XXPortfolioViewController : UIViewController <UITableViewDataSource, UITableViewDelegate, UISearchBarDelegate, UISearchDisplayDelegate>
 
 @property (weak, nonatomic) IBOutlet UITableView *tableView;
 

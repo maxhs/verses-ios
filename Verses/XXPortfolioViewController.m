@@ -1,20 +1,20 @@
 //
-//  XXMyStoriesViewController.m
+//  XXPortfolioViewController.m
 //  Verses
 //
 //  Created by Max Haines-Stiles on 3/16/14.
 //  Copyright (c) 2014 Verses. All rights reserved.
 //
 
-#import "XXMyStoriesViewController.h"
+#import "XXPortfolioViewController.h"
 #import "XXStory.h"
 #import "XXStoryCell.h"
-#import "XXMyStoryCell.h"
+#import "XXPortfolioCell.h"
 #import "XXSearchCell.h"
 #import "XXStoryViewController.h"
 #import "XXWriteViewController.h"
 
-@interface XXMyStoriesViewController () {
+@interface XXPortfolioViewController () {
     NSMutableArray *_stories;
     NSMutableArray *_titles;
     NSMutableArray *_filteredResults;
@@ -29,7 +29,7 @@
 
 @end
 
-@implementation XXMyStoriesViewController
+@implementation XXPortfolioViewController
 
 - (void)viewDidLoad {
     manager = [AFHTTPRequestOperationManager manager];
@@ -86,6 +86,7 @@
         for (id subview in [self.searchDisplayController.searchBar.subviews.firstObject subviews]){
             if ([subview isKindOfClass:[UITextField class]]){
                 [(UITextField*)subview setKeyboardAppearance:UIKeyboardAppearanceDark];
+                [(UITextField*)subview setFont:[UIFont fontWithName:kSourceSansProRegular size:15]];
                 break;
             }
         }
@@ -93,6 +94,7 @@
         for (id subview in [self.searchDisplayController.searchBar.subviews.firstObject subviews]){
             if ([subview isKindOfClass:[UITextField class]]){
                 [(UITextField*)subview setTextColor:[UIColor blackColor]];
+                [(UITextField*)subview setFont:[UIFont fontWithName:kSourceSansProRegular size:15]];
                 [(UITextField*)subview setKeyboardAppearance:UIKeyboardAppearanceDefault];
             } else if ([subview isKindOfClass:[UIButton class]]){
                 [(UIButton*)subview setTitleColor:[UIColor blackColor] forState:UIControlStateNormal];
@@ -213,9 +215,9 @@
         return cell;
     } else {
         if (_stories.count){
-            XXMyStoryCell *cell = (XXMyStoryCell *)[tableView dequeueReusableCellWithIdentifier:@"MyStoryCell"];
+            XXPortfolioCell *cell = (XXPortfolioCell *)[tableView dequeueReusableCellWithIdentifier:@"PortfolioCell"];
             if (cell == nil) {
-                cell = [[[NSBundle mainBundle] loadNibNamed:@"XXMyStoryCell" owner:nil options:nil] lastObject];
+                cell = [[[NSBundle mainBundle] loadNibNamed:@"XXPortfolioCell" owner:nil options:nil] lastObject];
             }
             XXStory *story = [_stories objectAtIndex:indexPath.row];
             [cell configureForStory:story textColor:textColor];
@@ -297,6 +299,7 @@
     XXStory *story = [_stories objectAtIndex:button.tag];
     XXWriteViewController *write = [[self storyboard] instantiateViewControllerWithIdentifier:@"Write"];
     [write setStory:story];
+    [write setEditMode:YES];
     UINavigationController *nav = [[UINavigationController alloc] initWithRootViewController:write];
     [self presentViewController:nav animated:YES completion:nil];
     if ([[NSUserDefaults standardUserDefaults] boolForKey:kDarkBackground]){
@@ -312,17 +315,17 @@
         XXStory *story = [_filteredResults objectAtIndex:indexPath.row];
         [self performSegueWithIdentifier:@"Read" sender:story];
     } else {
-        XXMyStoryCell *selectedCell = (XXMyStoryCell*)[tableView cellForRowAtIndexPath:indexPath];
+        XXPortfolioCell *selectedCell = (XXPortfolioCell*)[tableView cellForRowAtIndexPath:indexPath];
         [self swipeCell:selectedCell];
     }
     [tableView deselectRowAtIndexPath:indexPath animated:YES];
 }
 
-- (void)swipeCell:(XXMyStoryCell*)cell {
+- (void)swipeCell:(XXPortfolioCell*)cell {
     if (cell.background.alpha == 1.0){
         [_openCells removeObject:cell];
     } else {
-        for (XXMyStoryCell *cell in _openCells){
+        for (XXPortfolioCell *cell in _openCells){
             [cell swipe];
         }
         [_openCells removeAllObjects];

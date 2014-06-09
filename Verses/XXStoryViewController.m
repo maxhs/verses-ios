@@ -7,7 +7,7 @@
 //
 
 #import "XXStoryViewController.h"
-#import "XXStoriesViewController.h"
+//#import "XXStoriesViewController.h"
 #import "XXStoryInfoViewController.h"
 #import "XXStoryCell.h"
 #import "XXStoryBodyCell.h"
@@ -15,7 +15,7 @@
 #import "UIImage+ImageEffects.h"
 #import <SDWebImage/UIButton+WebCache.h>
 #import "XXBookmarksViewController.h"
-#import "XXWelcomeViewController.h"
+#import "XXStoriesViewController.h"
 #import "XXWriteViewController.h"
 #import "XXFeedback.h"
 #import "UIFontDescriptor+CrimsonText.h"
@@ -32,19 +32,17 @@
     XXAppDelegate *appDelegate;
     CGFloat width;
     CGFloat height;
-    UITableView *storiesTableView;
     UIButton *dismissButton;
     UITapGestureRecognizer *tapGesture;
     UIImage *backgroundImage;
     NSTimer *readingTimer;
     XXStoryInfoViewController *storyInfoVc;
-    XXWelcomeViewController *welcomeVc;
+    XXStoriesViewController *welcomeVc;
     XXBookmarksViewController *bookmarkVc;
     UIInterfaceOrientation orientation;
     CGFloat rowHeight;
     UIBarButtonItem *backButton;
     UIBarButtonItem *themeButton;
-    UIBarButtonItem *menuButton;
     UIBarButtonItem *editButton;
     NSDateFormatter *_formatter;
     UIImageView *navBarShadowView;
@@ -126,27 +124,9 @@
     if ([[NSUserDefaults standardUserDefaults] objectForKey:kUserDefaultsId]) signedIn = YES;
     else signedIn = NO;
     
-    storiesTableView = [[UITableView alloc] initWithFrame:CGRectMake(0, 0, width, height)];
-    [self.view addSubview:storiesTableView];
-    
     tapGesture = [[UITapGestureRecognizer alloc] initWithTarget:self action:@selector(toggleNavBar:)];
     [self.view addGestureRecognizer:tapGesture];
-    
-    storiesTableView.alpha = 0.0;
-    storiesTableView.delegate = self;
-    storiesTableView.dataSource = self;
-    [storiesTableView setBackgroundColor:[UIColor clearColor]];
-    [storiesTableView setSeparatorStyle:UITableViewCellSeparatorStyleNone];
-    storiesTableView.rowHeight = rowHeight;
-    [storiesTableView setHidden:YES];
     canLoadMore = YES;
-    
-    dismissButton = [UIButton buttonWithType:UIButtonTypeCustom];
-    [storiesTableView addSubview:dismissButton];
-    [dismissButton setFrame:CGRectMake(width-44, 0, 44, 44)];
-    dismissButton.autoresizingMask = UIViewAutoresizingFlexibleLeftMargin;
-    [dismissButton setImage:[UIImage imageNamed:@"whiteX"] forState:UIControlStateNormal];
-    [dismissButton addTarget:self action:@selector(hideStoriesMenu) forControlEvents:UIControlEventTouchUpInside];
     
     if (self.navigationController.viewControllers.firstObject == self){
         backButton = [[UIBarButtonItem alloc] initWithImage:[UIImage imageNamed:@"back"] style:UIBarButtonItemStylePlain target:self action:@selector(back)];
@@ -155,7 +135,7 @@
         NSUInteger count = self.navigationController.viewControllers.count;
         backButton = [[UIBarButtonItem alloc] initWithImage:[UIImage imageNamed:@"back"] style:UIBarButtonItemStylePlain target:self action:@selector(pop)];
         self.navigationItem.leftBarButtonItem = backButton;
-        if ([[self.navigationController.viewControllers objectAtIndex:count-2] isKindOfClass:[XXWelcomeViewController class]]) {
+        if ([[self.navigationController.viewControllers objectAtIndex:count-2] isKindOfClass:[XXStoriesViewController class]]) {
             welcomeVc = [self.navigationController.viewControllers objectAtIndex:count-2];
         } else if ([self.navigationController.viewControllers.firstObject isKindOfClass:[XXBookmarksViewController class]]){
             bookmarkVc = self.navigationController.viewControllers.firstObject;
@@ -199,7 +179,7 @@
     }
     
     if (_storyId){
-        [ProgressHUD show:@"Fetching story..."];
+        //[ProgressHUD show:@"Fetching story..."];
         [self loadStory:_storyId];
     } else if (_story.contributions.count){
         pages = 0;
@@ -252,6 +232,7 @@
 - (void)edit {
     XXWriteViewController *vc = [[self storyboard] instantiateViewControllerWithIdentifier:@"Write"];
     [vc setStory:_story];
+    [vc setEditMode:YES];
     UINavigationController *nav = [[UINavigationController alloc] initWithRootViewController:vc];
     if ([[NSUserDefaults standardUserDefaults] boolForKey:kDarkBackground]){
         [UIView animateWithDuration:.23 animations:^{
@@ -331,20 +312,20 @@
         editButton = [[UIBarButtonItem alloc] initWithImage:[UIImage imageNamed:@"bookmark"] style:UIBarButtonItemStylePlain target:self action:@selector(confirmLoginPromptBookmark)];
     }
     
-    menuButton = [[UIBarButtonItem alloc] initWithImage:[UIImage imageNamed:@"menu"] style:UIBarButtonItemStylePlain target:self action:@selector(showStoriesMenu)];
     
     if ([[NSUserDefaults standardUserDefaults] boolForKey:kDarkBackground]){
         themeButton = [[UIBarButtonItem alloc] initWithImage:[UIImage imageNamed:@"moon"] style:UIBarButtonItemStylePlain target:self action:@selector(themeSwitch)];
-        self.navigationItem.rightBarButtonItems = @[menuButton,editButton,themeButton];
+        self.navigationItem.rightBarButtonItems = @[editButton,themeButton];
         [self.view setBackgroundColor:[UIColor clearColor]];
         textColor = [UIColor whiteColor];
     } else {
         themeButton = [[UIBarButtonItem alloc] initWithImage:[UIImage imageNamed:@"sun"] style:UIBarButtonItemStylePlain target:self action:@selector(themeSwitch)];
         
-        self.navigationItem.rightBarButtonItems = @[menuButton,editButton,themeButton];
+        self.navigationItem.rightBarButtonItems = @[editButton,themeButton];
         [self.view setBackgroundColor:[UIColor whiteColor]];
         textColor = [UIColor blackColor];
     }
+    themeButton.imageInsets = UIEdgeInsetsMake(0, 0, 0, -10);
 }
 
 - (void)themeSwitch {
@@ -356,7 +337,6 @@
         textColor = [UIColor blackColor];
         [backButton setTintColor:textColor];
         [themeButton setTintColor:textColor];
-        [menuButton setTintColor:textColor];
         [_titleLabel setTextColor:textColor];
         [_authorsLabel setTextColor:textColor];
         [UIView animateWithDuration:.23 animations:^{
@@ -381,7 +361,6 @@
         [[NSUserDefaults standardUserDefaults] setBool:YES forKey:kDarkBackground];
         [backButton setTintColor:[UIColor whiteColor]];
         [themeButton setTintColor:[UIColor whiteColor]];
-        [menuButton setTintColor:[UIColor whiteColor]];
         textColor = [UIColor whiteColor];
         [_titleLabel setTextColor:textColor];
         [_authorsLabel setTextColor:textColor];
@@ -438,8 +417,6 @@
         [self resetStoryBody];
         [self drawStoryBody];
     }
-    [storiesTableView setFrame:CGRectMake(0, 0, width, height)];
-    if (storiesTableView.alpha == 1.0)[storiesTableView reloadData];
 }
 
 - (void)resetStory:(NSNotification*)notification{
@@ -583,11 +560,24 @@
         }
         
         UIButton *userImgButton = [UIButton buttonWithType:UIButtonTypeCustom];
-        [userImgButton setImageWithURL:[NSURL URLWithString:contribution.user.picSmallUrl] forState:UIControlStateNormal];
+        if (contribution.user.picSmallUrl){
+            [userImgButton setImageWithURL:[NSURL URLWithString:contribution.user.picSmallUrl] forState:UIControlStateNormal];
+            [userImgButton.imageView.layer setBackgroundColor:[UIColor clearColor].CGColor];
+            [userImgButton.imageView setBackgroundColor:[UIColor clearColor]];
+            [userImgButton.imageView.layer setCornerRadius:25.f];
+        } else {
+            [userImgButton setTitle:[contribution.user.penName substringWithRange:NSMakeRange(0, 2)].uppercaseString forState:UIControlStateNormal];
+            [userImgButton.titleLabel setTextAlignment:NSTextAlignmentCenter];
+            [userImgButton.titleLabel setFont:[UIFont fontWithName:kSourceSansProLight size:17]];
+            [userImgButton setTitleColor:[UIColor blackColor] forState:UIControlStateNormal];
+            userImgButton.layer.borderColor = [UIColor blackColor].CGColor;
+            userImgButton.layer.borderWidth = .5f;
+            [userImgButton.layer setCornerRadius:25.f];
+            [userImgButton.layer setBackgroundColor:[UIColor clearColor].CGColor];
+            [userImgButton setBackgroundColor:[UIColor clearColor]];
+        }
+        
         [userImgButton setFrame:CGRectMake(spacer/2, contributionOffset, 50, 50)];
-        [userImgButton.imageView.layer setCornerRadius:25.f];
-        [userImgButton.imageView.layer setBackgroundColor:[UIColor clearColor].CGColor];
-        [userImgButton.imageView setBackgroundColor:[UIColor clearColor]];
         [userImgButton setTag:[_story.contributions indexOfObject:contribution]];
         [userImgButton addTarget:self action:@selector(goToProfile:) forControlEvents:UIControlEventTouchUpInside];
         [_scrollView addSubview:userImgButton];
@@ -762,7 +752,7 @@
         [addSlowRevealButton setAutoresizingMask:UIViewAutoresizingFlexibleWidth];
         [addSlowRevealButton setFrame:CGRectMake(0, contributionOffset, width, 176)];
         [addSlowRevealButton setTitle:@"Add to slow reveal..." forState:UIControlStateNormal];
-        [addSlowRevealButton.titleLabel setFont:[UIFont fontWithName:kSourceSansProRegular size:20]];
+        [addSlowRevealButton.titleLabel setFont:[UIFont fontWithName:kSourceSansProRegular size:19]];
         [addSlowRevealButton addTarget:self action:@selector(addToSlowReveal) forControlEvents:UIControlEventTouchUpInside];
         if ([[NSUserDefaults standardUserDefaults] boolForKey:kDarkBackground]){
             [addSlowRevealButton setTitleColor:textColor forState:UIControlStateNormal];
@@ -771,33 +761,43 @@
         }
         [_scrollView addSubview:addSlowRevealButton];
         contributionOffset += addSlowRevealButton.frame.size.height;
+        
+        flagButton = [UIButton buttonWithType:UIButtonTypeCustom];
+        [flagButton setAutoresizingMask:UIViewAutoresizingFlexibleWidth];
+        [flagButton setFrame:CGRectMake(0, contributionOffset , width, 88)];
+        [flagButton setTitle:@"Flag" forState:UIControlStateNormal];
+        [flagButton.titleLabel setTextAlignment:NSTextAlignmentCenter];
+        [flagButton.titleLabel setFont:[UIFont fontWithName:kSourceSansProLight size:19]];
+        [flagButton addTarget:self action:@selector(flagContent) forControlEvents:UIControlEventTouchUpInside];
+        [flagButton setTitleColor:textColor forState:UIControlStateNormal];
+        [_scrollView addSubview:flagButton];
+        contributionOffset += 88;
+        
     } else {
         
         shouldShareButton = [UIButton buttonWithType:UIButtonTypeCustom];
         [shouldShareButton setAutoresizingMask:UIViewAutoresizingFlexibleWidth];
-        [shouldShareButton setFrame:CGRectMake(0, contributionOffset , width, 176)];
-        [shouldShareButton setTitle:@"Share this story" forState:UIControlStateNormal];
-        [shouldShareButton.titleLabel setFont:[UIFont fontWithName:kSourceSansProLight size:20]];
+        [shouldShareButton setFrame:CGRectMake(0, contributionOffset , width/2, 132)];
+        [shouldShareButton setTitle:@"Share" forState:UIControlStateNormal];
+        [shouldShareButton.titleLabel setFont:[UIFont fontWithName:kSourceSansProLight size:19]];
         [shouldShareButton addTarget:self action:@selector(showActivityView) forControlEvents:UIControlEventTouchUpInside];
         [shouldShareButton setTitleColor:textColor forState:UIControlStateNormal];
         [_scrollView addSubview:shouldShareButton];
-        contributionOffset += 176;
         
+        flagButton = [UIButton buttonWithType:UIButtonTypeCustom];
+        [flagButton setAutoresizingMask:UIViewAutoresizingFlexibleWidth];
+        [flagButton setFrame:CGRectMake(width/2, contributionOffset , width/2, 132)];
+        [flagButton setTitle:@"Flag" forState:UIControlStateNormal];
+        [flagButton.titleLabel setTextAlignment:NSTextAlignmentCenter];
+        [flagButton.titleLabel setFont:[UIFont fontWithName:kSourceSansProLight size:19]];
+        [flagButton addTarget:self action:@selector(flagContent) forControlEvents:UIControlEventTouchUpInside];
+        [flagButton setTitleColor:[UIColor lightGrayColor] forState:UIControlStateNormal];
+        [_scrollView addSubview:flagButton];
+        contributionOffset += 132;
     }
     
-    flagButton = [UIButton buttonWithType:UIButtonTypeCustom];
-    [flagButton setAutoresizingMask:UIViewAutoresizingFlexibleWidth];
-    [flagButton setFrame:CGRectMake(0, contributionOffset , width, 66)];
-    [flagButton setTitle:@"Flag" forState:UIControlStateNormal];
-    [flagButton.titleLabel setTextAlignment:NSTextAlignmentCenter];
-    [flagButton.titleLabel setFont:[UIFont fontWithName:kSourceSansProLight size:16]];
-    [flagButton addTarget:self action:@selector(flagContent) forControlEvents:UIControlEventTouchUpInside];
-    [flagButton setTitleColor:textColor forState:UIControlStateNormal];
-    [_scrollView addSubview:flagButton];
-    contributionOffset += 66;
-    
     [_scrollView setContentSize:CGSizeMake(width, contributionOffset)];
-    
+
     [ProgressHUD dismiss];
 }
 
@@ -819,12 +819,6 @@
 
 - (void)scrollViewDidScroll:(UIScrollView *)scrollView {
     CGFloat y = scrollView.contentOffset.y;
-
-    CGFloat contentHeight = scrollView.contentSize.height - (screenHeight()*2);
-    if (y >= contentHeight && !loading && canLoadMore && scrollView == storiesTableView) {
-        NSLog(@"should be loading more from story view");
-        [self loadMore];
-    }
     
     if (y < 0){
         CGFloat y = scrollView.contentOffset.y;
@@ -842,11 +836,6 @@
     } else {
         [self hideControls];
     }
-    if (scrollView == storiesTableView){
-        CGRect dismissFrame = dismissButton.frame;
-        dismissFrame.origin.y = y;
-        [dismissButton setFrame:dismissFrame];
-    }
     
     if (!_story.mystery){
         static NSInteger previousPage = 0;
@@ -862,35 +851,6 @@
             [self loadPage:page-1];
             [self loadPage:page-2];
         }
-    }
-}
-
-- (void)loadMore {
-    loading = YES;
-    XXStory *lastStory = _stories.lastObject;
-    if (lastStory){
-        [manager GET:[NSString stringWithFormat:@"%@/stories",kAPIBaseUrl] parameters:@{@"before_date":lastStory.epochTime, @"count":@"10"} success:^(AFHTTPRequestOperation *operation, id responseObject) {
-            //NSLog(@"more stories response from story view controller: %@",responseObject);
-            NSArray *newStories = [Utilities storiesFromJSONArray:[responseObject objectForKey:@"stories"]];
-            NSMutableArray *indexesToInsert = [NSMutableArray array];
-            for (int i = _stories.count; i < newStories.count+_stories.count; i++){
-                [indexesToInsert addObject:[NSIndexPath indexPathForRow:i inSection:0]];
-            }
-            [_stories addObjectsFromArray:newStories];
-            if (newStories.count < 10) {
-                canLoadMore = NO;
-                NSLog(@"can't load more, we now have %i stories in the storyview", _stories.count);
-            }
-            loading = NO;
-            
-            if ([storiesTableView numberOfRowsInSection:0] > 1){
-                [storiesTableView insertRowsAtIndexPaths:indexesToInsert withRowAnimation:UITableViewRowAnimationFade];
-            } else {
-                [storiesTableView reloadData];
-            }
-        } failure:^(AFHTTPRequestOperation *operation, NSError *error) {
-            
-        }];
     }
 }
 
@@ -1210,7 +1170,7 @@
     //NSLog(@"text selection: %@",textView.text);
 }
 
-#pragma mark - Table view data source
+/*#pragma mark - Table view data source
 
 - (NSInteger)numberOfSectionsInTableView:(UITableView *)tableView
 {
@@ -1219,12 +1179,8 @@
 
 - (NSInteger)tableView:(UITableView *)tableView numberOfRowsInSection:(NSInteger)section
 {
-    if (tableView == storiesTableView){
-        return _stories.count;
-    } else {
-        
-        return (int)pages;
-    }
+    return (int)pages;
+
 }
 
 - (UITableViewCell *)tableView:(UITableView *)tableView cellForRowAtIndexPath:(NSIndexPath *)indexPath
@@ -1262,7 +1218,7 @@
     return cell;
 }
 
-/*- (CGFloat)tableView:(UITableView *)tableView heightForHeaderInSection:(NSInteger)section {
+- (CGFloat)tableView:(UITableView *)tableView heightForHeaderInSection:(NSInteger)section {
     if (tableView == storiesTableView) {
         return 44;
     } else {
@@ -1287,12 +1243,7 @@
 }*/
 
 - (void)tableView:(UITableView *)tableView willDisplayCell:(UITableViewCell *)cell forRowAtIndexPath:(NSIndexPath *)indexPath {
-    if (tableView == storiesTableView) {
-        cell.backgroundColor = [UIColor clearColor];
-        UIView *selectedView = [[UIView alloc] initWithFrame:cell.frame];
-        [selectedView setBackgroundColor:kSeparatorColor];
-        cell.selectedBackgroundView = selectedView;
-    }
+
 }
 
 -(void)willShowKeyboard:(NSNotification*)notification {
@@ -1313,7 +1264,7 @@
     UIImage *snapshotImage = UIGraphicsGetImageFromCurrentImageContext();
     UIImage *blurredSnapshotImage;
     if ([[NSUserDefaults standardUserDefaults] boolForKey:kDarkBackground]){
-        blurredSnapshotImage = [snapshotImage applyBlurWithRadius:90 blurType:BOXFILTER tintColor:[UIColor colorWithWhite:0.08 alpha:0.93] saturationDeltaFactor:1.8 maskImage:nil];
+        blurredSnapshotImage = [snapshotImage applyBlurWithRadius:30 blurType:BOXFILTER tintColor:[UIColor colorWithWhite:0.08 alpha:0.93] saturationDeltaFactor:1.8 maskImage:nil];
     } else if (light){
         blurredSnapshotImage = [snapshotImage applyBlurWithRadius:10 blurType:BOXFILTER tintColor:[UIColor colorWithWhite:.93 alpha:0.23] saturationDeltaFactor:1.8 maskImage:nil];
     } else {
@@ -1321,43 +1272,6 @@
     }
     UIGraphicsEndImageContext();
     return blurredSnapshotImage;
-}
-
--(void)showStoriesMenu{
-    [self hideControls];
-    [readingTimer invalidate];
-
-    if (UIInterfaceOrientationIsPortrait(self.interfaceOrientation)){
-        _backgroundImageView = [[UIImageView alloc] initWithFrame:[UIScreen mainScreen].bounds];
-    } else {
-        _backgroundImageView = [[UIImageView alloc] initWithFrame:CGRectMake(0, 0, screenHeight(), screenWidth())];
-    }
-    backgroundImage = [self blurredSnapshot:NO];
-    [_backgroundImageView setImage:backgroundImage];
-    [storiesTableView setBackgroundView:_backgroundImageView];
-    [storiesTableView setHidden:NO];
-    
-    [UIView animateWithDuration:.33 delay:0 options:UIViewAnimationOptionCurveEaseInOut animations:^{
-        //storiesTableView.transform = CGAffineTransformIdentity;
-        [storiesTableView setAlpha:1.0];
-    } completion:^(BOOL finished) {
-        [tapGesture setEnabled:NO];
-    }];
-}
-
-- (void)hideStoriesMenu {
-    [self showControls];
-    //int randomNumber = (int)arc4random_uniform(17)-8;
-    [UIView animateWithDuration:.27 delay:0 options:UIViewAnimationOptionCurveEaseInOut animations:^{
-        //CGAffineTransform scale = CGAffineTransformMakeScale(1.2, 1.2);
-        //CGAffineTransform rotate = CGAffineTransformRotate(CGAffineTransformIdentity,RADIANS(randomNumber));
-        //storiesTableView.transform = CGAffineTransformConcat(scale, rotate);
-        storiesTableView.alpha = 0.0;
-    } completion:^(BOOL finished) {
-        [tapGesture setEnabled:YES];
-        storiesTableView.transform = CGAffineTransformIdentity;
-        [storiesTableView setHidden:YES];
-    }];
 }
 
 - (void)goToProfile:(UIButton*)button {
@@ -1393,20 +1307,6 @@
     }
     
     readingTimer = [NSTimer scheduledTimerWithTimeInterval:1.5 target:self selector:@selector(hideControls) userInfo:nil repeats:NO];
-}
-
-- (void)storyScrollViewTouched:(UITapGestureRecognizer*)scrollTapGesture {
-    XXStory *story = [_stories objectAtIndex:scrollTapGesture.view.tag];
-    [self resetWithStory:story];
-    [self hideStoriesMenu];
-}
-
-- (void)tableView:(UITableView *)tableView didSelectRowAtIndexPath:(NSIndexPath *)indexPath {
-    [tableView deselectRowAtIndexPath:indexPath animated:YES];
-    if (tableView == storiesTableView){
-        [self resetWithStory:[_stories objectAtIndex:indexPath.row]];
-        [self hideStoriesMenu];
-    }
 }
 
 - (void)storyFlagged {

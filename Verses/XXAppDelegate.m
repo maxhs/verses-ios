@@ -8,8 +8,8 @@
 
 #import "XXAppDelegate.h"
 #import "XXStoriesViewController.h"
-#import "XXWelcomeViewController.h"
-#import "User.h"
+#import "XXStoriesViewController.h"
+#import "User+helper.h"
 #import <DTCoreText/DTCoreText.h>
 #import <Crashlytics/Crashlytics.h>
 #import <Mixpanel/Mixpanel.h>
@@ -25,7 +25,7 @@
 #define SYSTEM_VERSION_LESS_THAN_OR_EQUAL_TO(v)     ([[[UIDevice currentDevice] systemVersion] compare:v options:NSNumericSearch] != NSOrderedDescending)
 
 @interface XXAppDelegate () {
-    XXWelcomeViewController *welcome;
+    XXStoriesViewController *welcome;
     NSTimer *timer;
 }
 @property (nonatomic, strong) UIImageView *defaultBackground;
@@ -85,27 +85,16 @@
     
     if (launchOptions != nil && [launchOptions objectForKey:UIApplicationLaunchOptionsRemoteNotificationKey]){
         NSDictionary* dictionary = [launchOptions objectForKey:UIApplicationLaunchOptionsRemoteNotificationKey];
-        if (dictionary != nil)
-        {
-            NSLog(@"dictionary: %@",dictionary);
+        if (dictionary != nil) {
+            //NSLog(@"dictionary: %@",dictionary);
             [self redirect:dictionary];
         }
     } else {
         [self.window addSubview:self.defaultBackground];
         [self.window sendSubviewToBack:self.defaultBackground];
-        timer = [NSTimer scheduledTimerWithTimeInterval:5 target:self selector:@selector(transition) userInfo:nil repeats:NO];
-        welcome = [self.window.rootViewController.storyboard instantiateViewControllerWithIdentifier:@"Welcome"];
-        [_manager GET:[NSString stringWithFormat:@"%@/stories",kAPIBaseUrl] parameters:@{@"count":@"5"} success:^(AFHTTPRequestOperation *operation, id responseObject) {
-            [timer invalidate];
-            timer = nil;
-            NSArray *stories = [Utilities storiesFromJSONArray:[responseObject objectForKey:@"stories"]];
-            [welcome setStories:[stories mutableCopy]];
-            _stories = [stories mutableCopy];
-            [self transition];
-        } failure:^(AFHTTPRequestOperation *operation, NSError *error) {
-            [self transition];
-            NSLog(@"Failure getting stories from welcome controller: %@",error.description);
-        }];
+        welcome = [self.window.rootViewController.storyboard instantiateViewControllerWithIdentifier:@"Stories"];
+        welcome.ether = YES;
+        [self transition];
     }
 
     [self.window addSubview:self.windowBackground];
@@ -361,11 +350,16 @@
 
 - (void)applicationDidBecomeActive:(UIApplication *)application
 {
-    
     // Restart any tasks that were paused (or not yet started) while the application was inactive. If the application was previously in the background, optionally refresh the user interface.
+    
+    //refresh user data by signing them in again
     if ([[NSUserDefaults standardUserDefaults] objectForKey:kUserDefaultsId]){
         NSMutableDictionary *parameters = [NSMutableDictionary dictionary];
         [parameters setObject:[[NSUserDefaults standardUserDefaults] objectForKey:kUserDefaultsEmail] forKey:@"email"];
+        if ([[NSUserDefaults standardUserDefaults] objectForKey:kUserDefaultsDeviceToken]){
+            [parameters setObject:[[NSUserDefaults standardUserDefaults] objectForKey:kUserDefaultsDeviceToken] forKey:@"device_token"];
+        }
+        
         if ([[NSUserDefaults standardUserDefaults] objectForKey:kUserDefaultsPassword]) {
             [parameters setObject:[[NSUserDefaults standardUserDefaults] objectForKey:kUserDefaultsPassword] forKey:@"password"];
             [[AFHTTPRequestOperationManager manager] POST:[NSString stringWithFormat:@"%@/sessions", kAPIBaseUrl] parameters:@{@"user":parameters} success:^(AFHTTPRequestOperation *operation, id responseObject) {
@@ -377,23 +371,15 @@
                 [[NSUserDefaults standardUserDefaults] setObject:user.picLargeUrl forKey:kUserDefaultsPicLarge];
                 [[NSUserDefaults standardUserDefaults] synchronize];
                 
-                NSManagedObjectContext *localContext = [NSManagedObjectContext MR_contextForCurrentThread];
+                NSManagedObjectContext *defaultContext = [NSManagedObjectContext MR_defaultContext];
                 NSPredicate *predicate = [NSPredicate predicateWithFormat:@"identifier == %@", user.identifier];
-                _currentUser = [User MR_findFirstWithPredicate:predicate inContext:localContext];
-                if (_currentUser) {
-                    _currentUser.picThumb = user.picSmallUrl;
-                    _currentUser.email = user.email;
-                    _currentUser.penName = user.penName;
-                    _currentUser.identifier = user.identifier;
-                } else {
-                    _currentUser = [User MR_createInContext:localContext];
-                    _currentUser.picThumb = user.picSmallUrl;
-                    _currentUser.email = user.email;
-                    _currentUser.penName = user.penName;
-                    _currentUser.identifier = user.identifier;
+                _currentUser = [User MR_findFirstWithPredicate:predicate inContext:defaultContext];
+                if (!_currentUser) {
+                    _currentUser = [User MR_createInContext:defaultContext];
                 }
-                [localContext MR_saveToPersistentStoreWithCompletion:^(BOOL success, NSError *error) {
-                    //NSLog(@"Saving user to persistent store: %u %@",success, error);
+                [_currentUser populateFromDict:[responseObject objectForKey:@"user"]];
+                [defaultContext MR_saveToPersistentStoreWithCompletion:^(BOOL success, NSError *error) {
+                    NSLog(@"Saving user to persistent store: %u %@",success, error);
                 }];
             } failure:^(AFHTTPRequestOperation *operation, NSError *error) {
                 NSLog(@"Failure logging in from app delegate: %@",error.localizedRecoverySuggestion);

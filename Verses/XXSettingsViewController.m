@@ -9,7 +9,7 @@
 #import "XXSettingsViewController.h"
 #import "XXUser.h"
 #import "User.h"
-#import "XXWelcomeViewController.h"
+#import "XXStoriesViewController.h"
 #import "XXSettingsCell.h"
 #import "XXAppDelegate.h"
 #import <MessageUI/MessageUI.h>
@@ -352,7 +352,7 @@
                     [circleCommentsPushSwitch setOn:NO animated:YES];
                 }
                 cell.accessoryView = circleCommentsPushSwitch;
-                [cell.textLabel setText:@"Comments in writing circles"];
+                [cell.textLabel setText:@"Writing circle comments"];
                 break;
             case 2:
                 if (!feedbackPushSwitch) {
@@ -383,7 +383,7 @@
                     [circlePublishPushSwitch setOn:NO animated:YES];
                 }
                 cell.accessoryView = circlePublishPushSwitch;
-                [cell.textLabel setText:@"Published to writing circle"];
+                [cell.textLabel setText:@"New writing circle stories"];
                 break;
             case 4:
                 if (!subscriptionPushSwitch) {
@@ -451,17 +451,25 @@
 
 - (void)masterPushChanged {
     if (pushSwitch.isOn){
-        [pushSwitch setOn:YES animated:YES];
-        [self.tableView performSelector:@selector(reloadData) withObject:nil afterDelay:.25];
+        currentUser.pushPermissions = YES;
+        currentUser.pushDaily = YES;
+        currentUser.pushCirclePublish = YES;
+        currentUser.pushBookmarks = YES;
+        currentUser.pushFeedbacks = YES;
+        currentUser.pushSubscribe = YES;
+        currentUser.pushInvitations = YES;
+        currentUser.pushCircleComments = YES;
     } else {
-        [pushSwitch setOn:NO animated:YES];
-        [invitationsPushSwitch setOn:NO animated:YES];
-        [feedbackPushSwitch setOn:NO animated:YES];
-        [dailyPushSwitch setOn:NO animated:YES];
-        [circlePublishPushSwitch setOn:NO animated:YES];
-        [bookmarkPushSwitch setOn:NO animated:YES];
-        [subscriptionPushSwitch setOn:NO animated:YES];
+        currentUser.pushPermissions = NO;
+        currentUser.pushDaily = NO;
+        currentUser.pushCirclePublish = NO;
+        currentUser.pushBookmarks = NO;
+        currentUser.pushFeedbacks = NO;
+        currentUser.pushSubscribe = NO;
+        currentUser.pushInvitations = NO;
+        currentUser.pushCircleComments = NO;
     }
+    [self.tableView performSelector:@selector(reloadData) withObject:nil afterDelay:.25];
 }
 
 - (void)switchChanged:(UISwitch*)theSwitch {
@@ -628,11 +636,11 @@
     } else {
         [parameters setObject:@NO forKey:@"push_circle_publish"];
     }
-    if (contributionsPushSwitch.isOn){
+    /*if (contributionsPushSwitch.isOn){
         [parameters setObject:@YES forKey:@"push_contributions"];
     } else {
         [parameters setObject:@NO forKey:@"push_contributions"];
-    }
+    }*/
     if (feedbackPushSwitch.isOn){
         [parameters setObject:@YES forKey:@"push_feedbacks"];
     } else {
@@ -794,10 +802,11 @@
     [[NSUserDefaults standardUserDefaults] setBool:YES forKey:kExistingUser];
     [[NSUserDefaults standardUserDefaults] synchronize];
     [[[SDWebImageManager sharedManager] imageCache] clearDisk];
-    
-    XXWelcomeViewController *welcomeVC = [[self storyboard] instantiateViewControllerWithIdentifier:@"Welcome"];
+    //re-fetch the user's push credentials
+    [[UIApplication sharedApplication] registerForRemoteNotificationTypes:(UIRemoteNotificationTypeAlert | UIRemoteNotificationTypeBadge | UIRemoteNotificationTypeSound)];
+    XXStoriesViewController *welcomeVC = [[self storyboard] instantiateViewControllerWithIdentifier:@"Stories"];
+    welcomeVC.ether = YES;
     [self.navigationController pushViewController:welcomeVC animated:YES];
-    [welcomeVC loadEtherStories];
 }
 
 /*

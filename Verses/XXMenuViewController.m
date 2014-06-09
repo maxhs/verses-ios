@@ -11,20 +11,18 @@
 #import "SWRevealViewController/SWRevealViewController.h"
 #import "XXUserNameCell.h"
 #import "User.h"
-#import "XXStoriesViewController.h"
 #import "XXStoryViewController.h"
 #import "XXSettingsViewController.h"
 #import "XXNotificationCell.h"
 #import "XXDraftsViewController.h"
-#import "XXMyStoriesViewController.h"
+#import "XXPortfolioViewController.h"
 #import "XXCirclesViewController.h"
-#import "XXWelcomeViewController.h"
+#import "XXStoriesViewController.h"
 #import "XXFeedbackViewController.h"
 #import "XXWriteViewController.h"
 #import "XXMenuCell.h"
 #import "XXSearchCell.h"
 #import "XXBookmarksViewController.h"
-#import "XXStoriesViewController.h"
 #import "XXCircleDetailViewController.h"
 #import "XXProfileViewController.h"
 
@@ -56,7 +54,6 @@
 {
     manager = [(XXAppDelegate*)[UIApplication sharedApplication].delegate manager];
     dynamicsViewController = [(XXAppDelegate*)[UIApplication sharedApplication].delegate dynamicsDrawerViewController];
-    [[UIApplication sharedApplication] setStatusBarHidden:YES];
     [self.view setBackgroundColor:[UIColor clearColor]];
     _filteredResults = [NSMutableArray array];
     notifications = [NSMutableArray array];
@@ -74,12 +71,12 @@
     [_timeFormatter setDateFormat:@"h:mm a"];
     
     [super viewDidLoad];
-    
     searchPlaceholder = [[NSAttributedString alloc] initWithString:@"Search stories" attributes:@{ NSForegroundColorAttributeName : [UIColor whiteColor] }];
 }
 
 - (void)viewWillAppear:(BOOL)animated {
     [[UIApplication sharedApplication] setApplicationIconBadgeNumber:0];
+    [[UIApplication sharedApplication] setStatusBarHidden:YES withAnimation:UIStatusBarAnimationFade];
     [[NSNotificationCenter defaultCenter] postNotificationName:@"MenuRevealed" object:nil];
     if ([[NSUserDefaults standardUserDefaults] objectForKey:kUserDefaultsId]) {
         savedUser = [User MR_findFirstByAttribute:@"identifier" withValue:[[NSUserDefaults standardUserDefaults] objectForKey:kUserDefaultsId]];
@@ -110,6 +107,7 @@
                 searchTextField.layer.cornerRadius = 14.f;
                 searchTextField.clipsToBounds = YES;
                 searchTextField.attributedPlaceholder = searchPlaceholder;
+                [searchTextField setFont:[UIFont fontWithName:kSourceSansProRegular size:15]];
                 break;
             }
         }
@@ -124,6 +122,7 @@
                 searchTextField.layer.cornerRadius = 14.f;
                 searchTextField.clipsToBounds = YES;
                 searchTextField.attributedPlaceholder = searchPlaceholder;
+                [searchTextField setFont:[UIFont fontWithName:kSourceSansProRegular size:15]];
                 break;
             }
         }
@@ -361,7 +360,7 @@
             [_loginButton setBackgroundColor:[UIColor clearColor]];
             [cell addSubview:_loginButton];
         }
-        [_loginButton setFrame:CGRectMake(0, 0, screenWidth()*.923, screenHeight()-self.searchBar.frame.size.height*2)];
+        [_loginButton setFrame:CGRectMake(0, 0, screenWidth()*.923, self.tableView.frame.size.height-self.tableView.tableHeaderView.frame.size.height-44)];
         [_loginButton setAutoresizingMask:UIViewAutoresizingFlexibleWidth];
         [_loginButton setAutoresizingMask:UIViewAutoresizingFlexibleHeight];
         [_loginButton setAutoresizingMask:UIViewAutoresizingFlexibleRightMargin];
@@ -384,11 +383,12 @@
 }
 
 - (void)goHome {
-    if ([[(UINavigationController*)dynamicsViewController.paneViewController viewControllers].lastObject isKindOfClass:[XXWelcomeViewController class]]){
+    if ([[(UINavigationController*)dynamicsViewController.paneViewController viewControllers].lastObject isKindOfClass:[XXStoriesViewController class]]){
         [dynamicsViewController setPaneState:MSDynamicsDrawerPaneStateClosed inDirection:MSDynamicsDrawerDirectionLeft animated:YES allowUserInterruption:YES completion:nil];
     } else {
         [ProgressHUD show:@"Fetching the latest..."];
-        XXWelcomeViewController *vc = [[self storyboard] instantiateViewControllerWithIdentifier:@"Welcome"];
+        XXStoriesViewController *vc = [[self storyboard] instantiateViewControllerWithIdentifier:@"Stories"];
+        vc.ether = YES;
         UINavigationController *nav = [[UINavigationController alloc] initWithRootViewController:vc];
         [dynamicsViewController setPaneViewController:nav animated:YES completion:^{
             
@@ -408,7 +408,7 @@
         }];
     }
 }
-- (void)goToFeatured {
+/*- (void)goToFeatured {
     if ([[(UINavigationController*)dynamicsViewController.paneViewController viewControllers].lastObject isKindOfClass:[XXStoriesViewController class]]){
         [dynamicsViewController setPaneState:MSDynamicsDrawerPaneStateClosed inDirection:MSDynamicsDrawerDirectionLeft animated:YES allowUserInterruption:YES completion:nil];
     } else {
@@ -418,13 +418,13 @@
         UINavigationController *nav = [[UINavigationController alloc] initWithRootViewController:vc];
         [dynamicsViewController setPaneViewController:nav animated:YES completion:nil];
     }
-}
+}*/
 - (void)goToMyStories {
-    if ([[(UINavigationController*)dynamicsViewController.paneViewController viewControllers].lastObject isKindOfClass:[XXMyStoriesViewController class]]){
+    if ([[(UINavigationController*)dynamicsViewController.paneViewController viewControllers].lastObject isKindOfClass:[XXPortfolioViewController class]]){
         [dynamicsViewController setPaneState:MSDynamicsDrawerPaneStateClosed inDirection:MSDynamicsDrawerDirectionLeft animated:YES allowUserInterruption:YES completion:nil];
     } else {
         [ProgressHUD show:@"Grabbing your work..."];
-        XXMyStoriesViewController *vc = [[self storyboard] instantiateViewControllerWithIdentifier:@"My Stories"];
+        XXPortfolioViewController *vc = [[self storyboard] instantiateViewControllerWithIdentifier:@"Portfolio"];
         UINavigationController *nav = [[UINavigationController alloc] initWithRootViewController:vc];
         [dynamicsViewController setPaneViewController:nav animated:YES completion:nil];
     }
@@ -438,12 +438,9 @@
             
         }];
     } else {
-        [[UIApplication sharedApplication] setStatusBarHidden:YES withAnimation:UIStatusBarAnimationFade];
         XXWriteViewController *write = [[self storyboard] instantiateViewControllerWithIdentifier:@"Write"];
         UINavigationController *nav = [[UINavigationController alloc] initWithRootViewController:write];
-        [self presentViewController:nav animated:YES completion:^{
-            //[dynamicsViewController setPaneState:MSDynamicsDrawerPaneStateClosed];
-        }];
+        [dynamicsViewController setPaneViewController:nav animated:YES completion:nil];
         
         if ([[NSUserDefaults standardUserDefaults] boolForKey:kDarkBackground]){
             [UIView animateWithDuration:.3 animations:^{

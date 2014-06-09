@@ -37,12 +37,14 @@
 }
 
 - (void)replaceCharactersInRange:(NSRange)range withString:(NSString *)str {
-    //NSLog(@"replaceCharactersInRange:%@ withString:%@", NSStringFromRange(range), str);
-    [self beginEditing];
-    [_storage replaceCharactersInRange:range withString:str];
-    [self edited:NSTextStorageEditedCharacters | NSTextStorageEditedAttributes range:range
-   changeInLength:str.length - range.length];
-    [self endEditing];
+    if (str != nil){
+        //NSLog(@"replaceCharactersInRange:%@ withString:%@", NSStringFromRange(range), str);
+        [self beginEditing];
+        [_storage replaceCharactersInRange:range withString:str];
+        [self edited:NSTextStorageEditedCharacters | NSTextStorageEditedAttributes range:range
+       changeInLength:str.length - range.length];
+        [self endEditing];
+    }
 }
 
 - (void)setAttributes:(NSDictionary *)attrs range:(NSRange)range

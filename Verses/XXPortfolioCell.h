@@ -1,5 +1,5 @@
 //
-//  XXMyStoryCell.h
+//  XXPortfolioCell.h
 //  Verses
 //
 //  Created by Max Haines-Stiles on 3/16/14.
@@ -11,7 +11,7 @@
 #import "XXTextView.h"
 #import "XXTextStorage.h"
 
-@interface XXMyStoryCell : UITableViewCell <UIScrollViewDelegate,UIGestureRecognizerDelegate>
+@interface XXPortfolioCell : UITableViewCell <UIScrollViewDelegate,UIGestureRecognizerDelegate>
 @property (weak, nonatomic) IBOutlet UILabel *titleLabel;
 @property (weak, nonatomic) IBOutlet UIButton *readButton;
 @property (weak, nonatomic) IBOutlet UIButton *editButton;

@@ -7,29 +7,29 @@
 //
 
 #import "XXWriteViewController.h"
-#import "XXStoriesViewController.h"
 #import "XXWritingCell.h"
 #import "XXWritingTitleCell.h"
 #import "XXContribution.h"
-#import "XXWelcomeViewController.h"
+#import "XXStoriesViewController.h"
 #import "UIImage+ImageEffects.h"
 #import <Mixpanel/Mixpanel.h>
 #import "XXDraftsViewController.h"
 #import "XXCollaborateViewController.h"
 #import "XXStoryViewController.h"
-#import "XXMyStoriesViewController.h"
+#import "XXPortfolioViewController.h"
 #import "XXCircle.h"
 #import <DTCoreText/DTCoreText.h>
 #import "UIFontDescriptor+CrimsonText.h"
 #import "UIFontDescriptor+SourceSansPro.h"
 #import "XXAlert.h"
+#import "XXGuideTransition.h"
+#import "XXGuideViewController.h"
 
-@interface XXWriteViewController () <UITextFieldDelegate, UITextViewDelegate, UIGestureRecognizerDelegate, UIAlertViewDelegate, UITextInputDelegate> {
+@interface XXWriteViewController () <UITextFieldDelegate, UITextViewDelegate, UIGestureRecognizerDelegate, UIAlertViewDelegate, UITextInputDelegate, UIViewControllerTransitioningDelegate> {
     CGFloat width;
     CGFloat height;
     AFHTTPRequestOperationManager *manager;
     BOOL joinable;
-    BOOL mystery;
     BOOL private;
     BOOL saving;
     BOOL keyboardIsVisible;
@@ -48,7 +48,7 @@
     UIImageView *navBarShadowView;
     NSString *_selectedText;
     UITextRange *_selectedRange;
-    UIBarButtonItem *leftBarButtonItem;
+    UIBarButtonItem *backButton;
     XXTextStorage *_textStorage;
     XXTextView *_bodyTextView;
     CGFloat widthSpacer;
@@ -69,25 +69,24 @@
 @synthesize welcomeViewController;
 
 - (void)viewDidLoad {
-    if ([self respondsToSelector:@selector(edgesForExtendedLayout)]){
-        self.automaticallyAdjustsScrollViewInsets = NO;
-    }
+    self.automaticallyAdjustsScrollViewInsets = NO;
     
     //set left bar button item
     if (self.navigationController.viewControllers.firstObject == self){
-        leftBarButtonItem = [[UIBarButtonItem alloc]initWithImage:[UIImage imageNamed:@"blackX"] style:UIBarButtonItemStylePlain target:self action:@selector(back)];
+        backButton = [[UIBarButtonItem alloc]initWithImage:[UIImage imageNamed:@"blackX"] style:UIBarButtonItemStylePlain target:self action:@selector(back)];
     } else {
         if ([[NSUserDefaults standardUserDefaults] boolForKey:kDarkBackground]){
-            leftBarButtonItem = [[UIBarButtonItem alloc] initWithImage:[UIImage imageNamed:@"whiteBack"] style:UIBarButtonItemStylePlain target:self action:@selector(pop)];
+            backButton = [[UIBarButtonItem alloc] initWithImage:[UIImage imageNamed:@"whiteBack"] style:UIBarButtonItemStylePlain target:self action:@selector(pop)];
         } else {
-            leftBarButtonItem = [[UIBarButtonItem alloc] initWithImage:[UIImage imageNamed:@"back"] style:UIBarButtonItemStylePlain target:self action:@selector(pop)];
+            backButton = [[UIBarButtonItem alloc] initWithImage:[UIImage imageNamed:@"back"] style:UIBarButtonItemStylePlain target:self action:@selector(pop)];
         }
     }
-    self.navigationItem.leftBarButtonItem = leftBarButtonItem;
+    self.navigationItem.rightBarButtonItem = backButton;
     
     manager = [(XXAppDelegate*)[UIApplication sharedApplication].delegate manager];
     width = screenWidth();
     height = screenHeight();
+    
     publishButton = [[UIBarButtonItem alloc] initWithTitle:@"   PUBLISH   " style:UIBarButtonItemStylePlain target:self action:@selector(confirmPublish)];
     doneButton = [[UIBarButtonItem alloc] initWithBarButtonSystemItem:UIBarButtonSystemItemDone target:self action:@selector(doneEditing)];
     optionsButton = [[UIBarButtonItem alloc] initWithTitle:@"   OPTIONS   " style:UIBarButtonItemStylePlain target:self action:@selector(showOptions)];
@@ -110,6 +109,15 @@
         for (XXCircle *circle in _story.circles){
             [_circleCollaborators addObject:circle.identifier];
         }
+    }
+    
+    if (_mystery){
+        [_slowRevealLabel setHidden:NO];
+        [_slowRevealSwitch setOn:YES];
+        [_slowRevealSwitch setHidden:NO];
+    } else {
+        [_slowRevealLabel setHidden:YES];
+        [_slowRevealSwitch setHidden:YES];
     }
     
     navBarShadowView = [Utilities findNavShadow:self.navigationController.navigationBar];
@@ -146,17 +154,17 @@
         [self.doneOptionsButton setTitleColor:[UIColor darkGrayColor] forState:UIControlStateNormal];
         _bodyTextView.keyboardAppearance = UIKeyboardAppearanceDefault;
     }
-    [self.draftLabel setTextColor:textColor];
-    [self.privateLabel setTextColor:textColor];
-    [self.feedbackLabel setTextColor:textColor];
-    [self.joinableLabel setTextColor:textColor];
-    [self.slowRevealLabel setTextColor:textColor];
+    [_draftLabel setTextColor:textColor];
+    [_privateLabel setTextColor:textColor];
+    [_feedbackLabel setTextColor:textColor];
+    [_joinableLabel setTextColor:textColor];
+    [_slowRevealLabel setTextColor:textColor];
 
     [_titleTextField setTextColor:textColor];
     [_titleTextField setFont:[UIFont fontWithName:kSourceSansProSemibold size:33]];
     [_titleTextField setAutocapitalizationType:UITextAutocapitalizationTypeWords];
     
-    if (_story.collaborators.count) {
+    if (_mystery || (_story.privateStory && _story.collaborators.count)) {
         [publishButton setTitle:@"   SHARE   "];
     }
     navBarShadowView.hidden = YES;
@@ -176,13 +184,10 @@
 - (void)setupControls {
     if (_story.contributions.count){
         saveButton = [[UIBarButtonItem alloc] initWithTitle:@"   SAVE   " style:UIBarButtonItemStylePlain target:self action:@selector(save)];
-        self.navigationItem.rightBarButtonItems = @[saveButton,optionsButton];
+        self.navigationItem.leftBarButtonItems = @[saveButton,optionsButton];
         if ([_story.owner.identifier isEqualToNumber:[[NSUserDefaults standardUserDefaults] objectForKey:kUserDefaultsId]]){
             [self.deleteButton setHidden:NO];
         } else {
-            CGRect doneRect = self.doneOptionsButton.frame;
-            doneRect.origin.x = width/2-doneRect.size.width/2;
-            [self.doneOptionsButton setFrame:doneRect];
             [self.deleteButton setHidden:YES];
         }
         
@@ -191,13 +196,14 @@
         _story = [[XXStory alloc] init];
         _story.saved = YES;
         _story.privateStory = YES;
+        if (_mystery) _story.mystery = YES;
         [_titleTextField setPlaceholder:kTitlePlaceholder];
         
         XXContribution *firstContribution = [[XXContribution alloc] init];
         [firstContribution setAllowFeedback:NO];
         _story.contributions = [NSMutableArray arrayWithObject:firstContribution];
         saveButton = [[UIBarButtonItem alloc] initWithTitle:@"   SAVE   " style:UIBarButtonItemStylePlain target:self action:@selector(save)];
-        self.navigationItem.rightBarButtonItems = @[saveButton,publishButton,optionsButton];
+        self.navigationItem.leftBarButtonItems = @[saveButton,publishButton,optionsButton];
         CGRect doneRect = _doneOptionsButton.frame;
         doneRect.origin.x = (self.optionsContainerView.frame.size.width/2-doneRect.size.width/2) + width;
         [_doneOptionsButton setFrame:doneRect];
@@ -225,6 +231,12 @@
     self.draftLabel.transform = CGAffineTransformMakeTranslation(width, 0);
     self.draftSwitch.transform = CGAffineTransformMakeTranslation(width, 0);
     [self.draftSwitch addTarget:self action:@selector(shareButton) forControlEvents:UIControlEventValueChanged];
+    
+    if (![_story.owner.identifier isEqualToNumber:[[NSUserDefaults standardUserDefaults] objectForKey:kUserDefaultsId]]){
+        CGRect doneRect = _doneOptionsButton.frame;
+        doneRect.origin.x = (width/2)-(doneRect.size.width/2);
+        [_doneOptionsButton setFrame:doneRect];
+    }
     
     self.doneOptionsButton.transform = CGAffineTransformMakeTranslation(width, 0);
     self.deleteButton.transform = CGAffineTransformMakeTranslation(-width, 0);
@@ -258,7 +270,8 @@
     } else {
         [self.joinableSwitch setOn:NO animated:NO];
     }
-    if (_story.mystery){
+    if (_story.mystery || _mystery){
+        _story.mystery = YES;
         [self.slowRevealSwitch setOn:YES animated:NO];
     } else {
         [self.slowRevealSwitch setOn:NO animated:NO];
@@ -276,6 +289,7 @@
 }
 
 - (void)showOptions {
+    [self doneEditing];
     if (self.optionsContainerView.hidden == YES){
         [self.optionsContainerView setHidden:NO];
         [self blurredSnapshot];
@@ -407,7 +421,7 @@
     [manager DELETE:[NSString stringWithFormat:@"%@/stories/%@",kAPIBaseUrl,_story.identifier] parameters:@{@"user_id":[[NSUserDefaults standardUserDefaults] objectForKey:kUserDefaultsId]} success:^(AFHTTPRequestOperation *operation, id responseObject) {
         NSLog(@"success deleting story: %@",responseObject);
         [[NSNotificationCenter defaultCenter] postNotificationName:@"RemoveStory" object:nil userInfo:@{@"story_id":_story.identifier}];
-        if ([self.navigationController.viewControllers.firstObject isKindOfClass:[XXDraftsViewController class]] || [self.navigationController.viewControllers.firstObject isKindOfClass:[XXMyStoriesViewController class]]) {
+        if ([self.navigationController.viewControllers.firstObject isKindOfClass:[XXDraftsViewController class]] || [self.navigationController.viewControllers.firstObject isKindOfClass:[XXPortfolioViewController class]]) {
             [self.navigationController popViewControllerAnimated:YES];
         } else {
             _story = nil;
@@ -495,7 +509,7 @@
             _story = [[XXStory alloc] initWithDictionary:[responseObject objectForKey:@"story"]];
             [self doneOptions];
             
-            [XXAlert show:@"Story saved"];
+            [XXAlert show:@"Story saved" withTime:1.5f];
             //[[[UIAlertView alloc] initWithTitle:@"Story saved" message:nil delegate:nil cancelButtonTitle:@"Okay" otherButtonTitles:nil] show];
             //[self.tableView reloadData];
             [ProgressHUD dismiss];
@@ -509,7 +523,7 @@
         [ProgressHUD show:@"Saving..."];
         [manager POST:[NSString stringWithFormat:@"%@/stories",kAPIBaseUrl] parameters:@{@"story":storyParameters,@"contribution":contributionParameters} success:^(AFHTTPRequestOperation *operation, id responseObject) {
             NSLog(@"Success creating and then savign your story: %@",responseObject);
-            [XXAlert show:@"Story saved"];
+            [XXAlert show:@"Story saved" withTime:1.5f];
             //[[[UIAlertView alloc] initWithTitle:@"Story saved" message:nil delegate:nil cancelButtonTitle:@"Okay" otherButtonTitles:nil] show];
             [ProgressHUD dismiss];
         } failure:^(AFHTTPRequestOperation *operation, NSError *error) {
@@ -626,7 +640,10 @@
     [self drawTextView];
     
     [_bodyTextView setupButtons];
-    [_bodyTextView setTextColor:textColor];
+    if (![_bodyTextView.text isEqualToString:kStoryPlaceholder]){
+        [_bodyTextView setTextColor:textColor];
+    }
+    
     
     if ([[NSUserDefaults standardUserDefaults] boolForKey:kDarkBackground] && !_story.title.length){
         _bodyTextView.keyboardAppearance = UIKeyboardAppearanceDark;
@@ -694,6 +711,9 @@
         _bodyTextView = [[XXTextView alloc] initWithFrame:bodyRect /*textContainer:container*/];
         [_bodyTextView setAttributedText:sections.firstObject];
         bodyRect.size.height = [_bodyTextView sizeThatFits:CGSizeMake(width-widthSpacer, CGFLOAT_MAX)].height;
+        if (bodyRect.size.height < screenHeight()){
+            bodyRect.size.height = screenHeight()-44;
+        }
         [_bodyTextView setFrame:bodyRect];
         offset += bodyRect.size.height;
         
@@ -731,8 +751,6 @@
         }
         
         [_scrollView setContentSize:CGSizeMake(_bodyTextView.frame.size.width, offset)];
-    } else {
-        NSLog(@"already had a bodytextview");
     }
 }
 
@@ -765,10 +783,7 @@
     _bodyTextView.keyboardEnabled = NO;
     [_bodyTextView setTextColor:textColor];
     
-    //[_scrollView addSubview:_bodyTextView];
-    
     if (sections.count){
-        //[loadMoreButton setFrame:CGRectMake(0, 0, screenWidth(), 88)];
         [loadMoreButton setTag:button.tag+1];
         [loadMoreButton setTitleColor:textColor forState:UIControlStateNormal];
         //[_scrollView addSubview:loadMoreButton];
@@ -781,10 +796,11 @@
 
 -(void)doneEditing {
     [self.view endEditing:YES];
+    self.navigationItem.rightBarButtonItem = backButton;
     if (_story.identifier){
-        self.navigationItem.rightBarButtonItems = @[saveButton,optionsButton];
+        self.navigationItem.leftBarButtonItems = @[saveButton,optionsButton];
     } else {
-        self.navigationItem.rightBarButtonItems = @[saveButton,publishButton,optionsButton];
+        self.navigationItem.leftBarButtonItems = @[saveButton,publishButton,optionsButton];
     }
 }
 
@@ -816,7 +832,7 @@
 }*/
 
 - (void)textFieldDidBeginEditing:(UITextField *)textField {
-    self.navigationItem.rightBarButtonItems = nil;
+
     self.navigationItem.rightBarButtonItem = doneButton;
     if ([textField.text isEqual:kTitlePlaceholder]){
         textField.text = @"";
@@ -836,11 +852,9 @@
     } else if ([[NSUserDefaults standardUserDefaults] boolForKey:kDarkBackground]) {
         [textField setTextColor:[UIColor whiteColor]];
     }
-    self.navigationItem.leftBarButtonItem = leftBarButtonItem;
 }
 
 - (void)textViewDidBeginEditing:(UITextView *)textView {
-    self.navigationItem.rightBarButtonItems = nil;
     self.navigationItem.rightBarButtonItem = doneButton;
     if ([textView.text isEqualToString:kStoryPlaceholder]) {
         textView.text = @"";
@@ -851,7 +865,6 @@
                                                         @"pen_name":[[NSUserDefaults standardUserDefaults] objectForKey:kUserDefaultsPenName]
                                                         }];
     }
-    self.navigationItem.leftBarButtonItem = nil;
     if ([[NSUserDefaults standardUserDefaults] boolForKey:kDarkBackground]){
         textView.keyboardAppearance = UIKeyboardAppearanceDark;
     } else {
@@ -864,7 +877,6 @@
         textView.text = kStoryPlaceholder;
         textView.textColor = [UIColor lightGrayColor];
     }
-    self.navigationItem.leftBarButtonItem = leftBarButtonItem;
 }
 
 - (void)textViewDidChange:(UITextView *)textView {
@@ -1101,14 +1113,40 @@
 }
 
 - (void)back{
-    XXAppDelegate *delegate = (XXAppDelegate*)[UIApplication sharedApplication].delegate;
-    [self dismissViewControllerAnimated:YES completion:nil];
-    if ([[NSUserDefaults standardUserDefaults] boolForKey:kDarkBackground]){
-        [UIView animateWithDuration:.3 animations:^{
-            [[delegate.dynamicsDrawerViewController paneViewController].view setAlpha:1.0];
+    if (_editMode){
+        [self dismissViewControllerAnimated:YES completion:^{
+            
         }];
+    } else {
+        XXGuideViewController *vc = [[self storyboard] instantiateViewControllerWithIdentifier:@"Guide"];
+        vc.transitioningDelegate = self;
+        vc.modalPresentationStyle = UIModalPresentationCustom;
+        [self presentViewController:vc animated:YES completion:nil];
+       
+        //[self dismissViewControllerAnimated:YES completion:nil];
+         XXAppDelegate *delegate = (XXAppDelegate*)[UIApplication sharedApplication].delegate;
+        if ([[NSUserDefaults standardUserDefaults] boolForKey:kDarkBackground]){
+            [UIView animateWithDuration:.3 animations:^{
+                [[delegate.dynamicsDrawerViewController paneViewController].view setAlpha:1.0];
+            }];
+        }
     }
 }
+
+- (id<UIViewControllerAnimatedTransitioning>)animationControllerForPresentedController:(UIViewController *)presented
+                                                                  presentingController:(UIViewController *)presenting
+                                                                      sourceController:(UIViewController *)source {
+
+    XXGuideTransition *animator = [XXGuideTransition new];
+    animator.presenting = YES;
+    return animator;
+}
+
+- (id<UIViewControllerAnimatedTransitioning>)animationControllerForDismissedController:(UIViewController *)dismissed {
+    XXGuideTransition *animator = [XXGuideTransition new];
+    return animator;
+}
+
 
 - (void)viewDidDisappear:(BOOL)animated {
     [super viewDidDisappear:animated];

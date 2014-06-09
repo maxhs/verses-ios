@@ -34,5 +34,7 @@
 @dynamic lastName;
 @dynamic ownedStory;
 @dynamic stories;
+@dynamic contributions;
+@dynamic photos;
 
 @end

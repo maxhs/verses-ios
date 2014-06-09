@@ -52,15 +52,8 @@
     delegate = (XXAppDelegate*)[UIApplication sharedApplication].delegate;
     if ([[NSUserDefaults standardUserDefaults] boolForKey:kDarkBackground]){
         [self.view setBackgroundColor:[UIColor clearColor]];
-        
         textColor = [UIColor whiteColor];
         backButton = [[UIBarButtonItem alloc] initWithImage:[UIImage imageNamed:@"whiteBack"] style:UIBarButtonItemStylePlain target:self action:@selector(back)];
-        if (self.tableView.alpha != 1.0){
-            [UIView animateWithDuration:.23 animations:^{
-                [self.tableView setAlpha:1.0];
-                self.tableView.transform = CGAffineTransformIdentity;
-            }];
-        }
     } else {
         [self.view setBackgroundColor:[UIColor whiteColor]];
         textColor = [UIColor blackColor];
@@ -70,9 +63,11 @@
     self.navigationItem.rightBarButtonItem = contactsButton;
     self.navigationItem.leftBarButtonItem = backButton;
     navBarShadowView.hidden = YES;
+    
     if (self.tableView.alpha != 1.0){
         [UIView animateWithDuration:.23 animations:^{
             [self.tableView setAlpha:1.0];
+            self.tableView.transform = CGAffineTransformIdentity;
         }];
     }
     if (self.navigationController.view.alpha != 1.0){
@@ -88,7 +83,6 @@
 - (void)viewDidAppear:(BOOL)animated {
     [delegate.dynamicsDrawerViewController setPaneDragRevealEnabled:NO forDirection:MSDynamicsDrawerDirectionRight];
     [super viewDidAppear:animated];
-    
 }
 
 - (void)back {

@@ -32,9 +32,9 @@
 }
 
 - (void)configure:(XXStory *)story {
-    [self.storyTitle setFont:[UIFont fontWithName:kSourceSansProRegular size:18]];
-    [self.storyTitle setText:story.title];
-    [self.authorLabel setFont:[UIFont fontWithName:kSourceSansProRegular size:15]];
-    [self.authorLabel setText:story.author];
+    [_storyTitle setFont:[UIFont fontWithName:kSourceSansProRegular size:19]];
+    [_storyTitle setText:story.title];
+    [_authorLabel setFont:[UIFont fontWithName:kSourceSansProRegular size:15]];
+    [_authorLabel setText:story.author];
 }
 @end

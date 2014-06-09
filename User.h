@@ -35,6 +35,8 @@
 @property (nonatomic, retain) NSString * lastName;
 @property (nonatomic, retain) NSManagedObject *ownedStory;
 @property (nonatomic, retain) NSOrderedSet *stories;
+@property (nonatomic, retain) NSOrderedSet *contributions;
+@property (nonatomic, retain) NSOrderedSet *photos;
 @end
 
 @interface User (CoreDataGeneratedAccessors)

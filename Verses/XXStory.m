@@ -48,15 +48,13 @@
         }
         
         NSDictionary *options = @{DTUseiOS6Attributes: [NSNumber numberWithBool:YES],
-                                  DTDefaultFontSize: @22,
+                                  DTDefaultFontSize: @21,
                                   DTDefaultFontFamily: @"Crimson Text",
                                   NSTextEncodingNameDocumentOption: @"UTF-8"};
         DTHTMLAttributedStringBuilder *stringBuilder = [[DTHTMLAttributedStringBuilder alloc] initWithHTML:[[[self.contributions.firstObject body] substringWithRange:range] dataUsingEncoding:NSUTF8StringEncoding] options:options documentAttributes:nil];
         
         self.attributedSnippet = [stringBuilder generatedAttributedString];
     
-    } else if ([key isEqualToString:@"tags"]) {
-        self.tags = value;
     } else if ([key isEqualToString:@"photos"]) {
         self.photos = [Utilities photosFromJSONArray:value];
     } else if ([key isEqualToString:@"user_photos"]) {

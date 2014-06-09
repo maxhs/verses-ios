@@ -17,6 +17,7 @@
 #import "XXFeedback.h"
 #import "XXBookmark.h"
 #import "XXComment.h"
+#import "Story+helper.h"
 
 @implementation Utilities
 
@@ -35,9 +36,14 @@
 
 + (NSArray *)storiesFromJSONArray:(NSMutableArray *) array {
     NSMutableArray *stories = [NSMutableArray arrayWithCapacity:array.count];
-    for (NSDictionary *storyDictionary in array) {
-        XXStory *story = [[XXStory alloc] initWithDictionary:storyDictionary];
-        [stories addObject:story];
+    for (NSDictionary *dict in array){
+        if ([dict objectForKey:@"id"] && [dict objectForKey:@"id"] != [NSNull null]){
+            Story *story = [Story MR_findFirstByAttribute:@"identifier" withValue:[dict objectForKey:@"id"]];
+            if (!story){
+                story = [Story MR_createInContext:[NSManagedObjectContext MR_defaultContext]];
+            }
+            [story populateFromDict:dict];
+        }
     }
     return stories;
 }

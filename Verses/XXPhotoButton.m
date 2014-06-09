@@ -8,6 +8,7 @@
 
 #import "XXPhotoButton.h"
 #import <SDWebImage/UIButton+WebCache.h>
+#import <SDWebImage/UIImageView+WebCache.h>
 #import "UIImage+ImageEffects.h"
 
 @implementation XXPhotoButton {
@@ -54,8 +55,12 @@
                 dispatch_async(dispatch_get_global_queue(DISPATCH_QUEUE_PRIORITY_DEFAULT, 0), ^{
                     
                     [delegate.windowBackground setContentMode:UIViewContentModeScaleAspectFill];
-                    UIImage *blurred = [image applyBlurWithRadius:50 blurType:BOXFILTER tintColor:[UIColor colorWithWhite:0 alpha:.527] saturationDeltaFactor:1.8 maskImage:nil];
-                    
+                    UIImage *blurred;
+                    if (IDIOM == IPAD){
+                        blurred = [image applyBlurWithRadius:33 blurType:BOXFILTER tintColor:[UIColor colorWithWhite:0 alpha:.63] saturationDeltaFactor:1.8 maskImage:nil];
+                    } else {
+                        blurred = [image applyBlurWithRadius:39 blurType:BOXFILTER tintColor:[UIColor colorWithWhite:0 alpha:.43] saturationDeltaFactor:1.8 maskImage:nil];
+                    }
                     dispatch_async(dispatch_get_main_queue(), ^{
                         CATransition *transition = [CATransition animation];
                         transition.duration = 1.0f;
@@ -73,7 +78,9 @@
             }
         }];
     }];
+    
     [self addTarget:self action:@selector(expandPhoto) forControlEvents:UIControlEventTouchUpInside];
+    
 }
 
 - (void)expandPhoto {

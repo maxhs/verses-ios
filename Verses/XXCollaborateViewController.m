@@ -333,7 +333,7 @@
                 if (newContact && _contacts.count > 1)[self.tableView insertRowsAtIndexPaths:@[[NSIndexPath indexPathForRow:0 inSection:0]] withRowAnimation:UITableViewRowAnimationTop];
                 else [self.tableView reloadSections:[NSIndexSet indexSetWithIndex:0] withRowAnimation:UITableViewRowAnimationFade];
             } else if ([[responseObject objectForKey:@"failure"] isEqualToNumber:[NSNumber numberWithBool:YES]]) {
-                [XXAlert show:[NSString stringWithFormat:@"%@ doesn't user Verses yet. We've sent them an invite.",email]];
+                [XXAlert show:[NSString stringWithFormat:@"%@ doesn't user Verses yet. We've sent them an invite.",email] withTime:2.7f];
             } else {
                 [[[UIAlertView alloc] initWithTitle:@"Sorry" message:@"Something went wrong while trying to send this invitation. Please try again soon." delegate:nil cancelButtonTitle:@"Okay" otherButtonTitles:nil] show];
             }

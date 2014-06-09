@@ -66,7 +66,7 @@ static int minimumHeight = 30;
         
         if (!_timestamp) {
             _timestamp = [UILabel new];
-            _timestamp.font = [UIFont fontWithName:kSourceSansProLight size:11.f];
+            _timestamp.font = [UIFont fontWithName:kSourceSansProRegular size:10.f];
             _timestamp.textColor = [UIColor lightGrayColor];
             _timestamp.numberOfLines = 0;
             [self.contentView addSubview:_timestamp];

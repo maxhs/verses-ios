@@ -153,7 +153,7 @@
             if ([[responseObject objectForKey:@"success"] isEqualToNumber:[NSNumber numberWithBool:YES]]){
                 [self back];
             }
-            [XXAlert show:[NSString stringWithFormat:@"Thanks for flagging \"%@\"",_story.title]];
+            [XXAlert show:[NSString stringWithFormat:@"Thanks for flagging \"%@\"",_story.title] withTime:2.7f];
         } failure:^(AFHTTPRequestOperation *operation, NSError *error) {
             NSLog(@"error creating flag: %@",error.description);
             [[[UIAlertView alloc] initWithTitle:@"Sorry" message:@"Something went wrong while trying to flag this content. Please try again soon." delegate:nil cancelButtonTitle:@"Okay" otherButtonTitles:nil] show];

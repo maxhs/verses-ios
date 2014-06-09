@@ -14,7 +14,7 @@
 #import <MSDynamicsDrawerViewController/MSDynamicsDrawerViewController.h>
 #import "XXPhotoButton.h"
 
-@interface XXStoryViewController : UIViewController <UIScrollViewDelegate, UITableViewDataSource, UITableViewDelegate, UITextViewDelegate>
+@interface XXStoryViewController : UIViewController <UIScrollViewDelegate, UITextViewDelegate>
 @property (weak, nonatomic) IBOutlet UIScrollView *scrollView;
 @property (strong, nonatomic) UILabel *titleLabel;
 @property (strong, nonatomic) UILabel *authorsLabel;
@@ -24,6 +24,5 @@
 @property (strong, nonatomic) NSMutableArray *stories;
 @property (weak, nonatomic) MSDynamicsDrawerViewController *dynamicsViewController;
 @property (strong, nonatomic) UIImageView *backgroundImageView;
-
 - (void)resetWithStory:(XXStory*)newStory;
 @end

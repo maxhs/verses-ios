@@ -7,7 +7,7 @@
 //
 
 #import <UIKit/UIKit.h>
-#import "XXWelcomeViewController.h"
+#import "XXStoriesViewController.h"
 #import "XXTextView.h"
 
 @interface XXWriteViewController : UIViewController <UIScrollViewDelegate, UITextFieldDelegate, UITextViewDelegate>
@@ -29,7 +29,9 @@
 @property (weak, nonatomic) IBOutlet UIButton *doneOptionsButton;
 @property (weak, nonatomic) IBOutlet UIButton *deleteButton;
 @property (weak, nonatomic) IBOutlet UIButton *collaborateButton;
-@property (strong, nonatomic) XXWelcomeViewController *welcomeViewController;
+@property (strong, nonatomic) XXStoriesViewController *welcomeViewController;
+@property BOOL mystery;
+@property BOOL editMode;
 - (IBAction)doneOptions;
 - (IBAction)deleteStory;
 - (IBAction)collaborate;
