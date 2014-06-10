@@ -17,7 +17,7 @@
 #import "XXCollaborateViewController.h"
 #import "XXStoryViewController.h"
 #import "XXPortfolioViewController.h"
-#import "XXCircle.h"
+#import "Circle+helper.h"
 #import <DTCoreText/DTCoreText.h>
 #import "UIFontDescriptor+CrimsonText.h"
 #import "UIFontDescriptor+SourceSansPro.h"
@@ -99,14 +99,14 @@
     [super viewDidLoad];
     
     _collaborators = [NSMutableArray array];
-    if (_story.collaborators.count){
-        for (XXUser *user in _story.collaborators){
+    if (_story.users.count){
+        for (User *user in _story.users){
             [_collaborators addObject:user.identifier];
         }
     }
     _circleCollaborators = [NSMutableArray array];
     if (_story.circles.count){
-        for (XXCircle *circle in _story.circles){
+        for (Circle *circle in _story.circles){
             [_circleCollaborators addObject:circle.identifier];
         }
     }
@@ -164,7 +164,7 @@
     [_titleTextField setFont:[UIFont fontWithName:kSourceSansProSemibold size:33]];
     [_titleTextField setAutocapitalizationType:UITextAutocapitalizationTypeWords];
     
-    if (_mystery || (_story.privateStory && _story.collaborators.count)) {
+    if (_mystery || (_story.privateStory && _story.users.count)) {
         [publishButton setTitle:@"   SHARE   "];
     }
     navBarShadowView.hidden = YES;
@@ -193,15 +193,15 @@
         
         [self setupStoryBooleans];
     } else {
-        _story = [[XXStory alloc] init];
-        _story.saved = YES;
-        _story.privateStory = YES;
-        if (_mystery) _story.mystery = YES;
+        _story = [Story MR_createInContext:[NSManagedObjectContext MR_defaultContext]];
+        _story.saved = [NSNumber numberWithBool:YES];
+        _story.privateStory = [NSNumber numberWithBool:YES];
+        if (_mystery) _story.mystery = [NSNumber numberWithBool:YES];
         [_titleTextField setPlaceholder:kTitlePlaceholder];
         
-        XXContribution *firstContribution = [[XXContribution alloc] init];
-        [firstContribution setAllowFeedback:NO];
-        _story.contributions = [NSMutableArray arrayWithObject:firstContribution];
+        Contribution *firstContribution = [Contribution MR_createInContext:[NSManagedObjectContext MR_defaultContext]];
+        [firstContribution setAllowFeedback:[NSNumber numberWithBool:NO]];
+        [_story addContribution:firstContribution];
         saveButton = [[UIBarButtonItem alloc] initWithTitle:@"   SAVE   " style:UIBarButtonItemStylePlain target:self action:@selector(save)];
         self.navigationItem.leftBarButtonItems = @[saveButton,publishButton,optionsButton];
         CGRect doneRect = _doneOptionsButton.frame;
@@ -271,7 +271,7 @@
         [self.joinableSwitch setOn:NO animated:NO];
     }
     if (_story.mystery || _mystery){
-        _story.mystery = YES;
+        _story.mystery = [NSNumber numberWithBool:YES];
         [self.slowRevealSwitch setOn:YES animated:NO];
     } else {
         [self.slowRevealSwitch setOn:NO animated:NO];
@@ -281,7 +281,7 @@
     } else {
         [self.privateSwitch setOn:NO animated:NO];
     }
-    if (_story.lastContribution.allowFeedback){
+    if ([(Contribution*)_story.contributions.lastObject allowFeedback]){
         [self.feedbackSwitch setOn:YES animated:NO];
     } else {
         [self.feedbackSwitch setOn:NO animated:NO];
@@ -506,7 +506,7 @@
         [ProgressHUD show:@"Saving..."];
         [manager PUT:[NSString stringWithFormat:@"%@/stories/%@",kAPIBaseUrl,_story.identifier] parameters:@{@"story":storyParameters,@"contribution":contributionParameters} success:^(AFHTTPRequestOperation *operation, id responseObject) {
             NSLog(@"Success saving your story: %@",responseObject);
-            _story = [[XXStory alloc] initWithDictionary:[responseObject objectForKey:@"story"]];
+            [_story populateFromDict:[responseObject objectForKey:@"story"]];
             [self doneOptions];
             
             [XXAlert show:@"Story saved" withTime:1.5f];
@@ -534,7 +534,7 @@
         [ProgressHUD show:@"Publishing..."];
         [manager POST:[NSString stringWithFormat:@"%@/stories",kAPIBaseUrl] parameters:@{@"story":storyParameters,@"contribution":contributionParameters} success:^(AFHTTPRequestOperation *operation, id responseObject) {
             NSLog(@"Success creating your story: %@",responseObject);
-            _story = [[XXStory alloc] initWithDictionary:[responseObject objectForKey:@"story"]];
+            [_story populateFromDict:[responseObject objectForKey:@"story"]];
             [self showStory];
             [ProgressHUD dismiss];
         } failure:^(AFHTTPRequestOperation *operation, NSError *error) {
@@ -548,7 +548,6 @@
     XXStoryViewController *vc = [[self storyboard] instantiateViewControllerWithIdentifier:@"Story"];
     [vc setStory:_story];
     XXAppDelegate *delegate = [UIApplication sharedApplication].delegate;
-    [vc setStories:delegate.stories];
     [vc setTitle:_story.title];
     UINavigationController *nav = [[UINavigationController alloc] initWithRootViewController:vc];
     [delegate.dynamicsDrawerViewController setPaneState:MSDynamicsDrawerPaneStateClosed];
@@ -558,39 +557,39 @@
 }
 
 - (void)shareButton {
-    if (_story.collaborators.count || self.joinableSwitch.isOn){
+    if (_story.users.count || self.joinableSwitch.isOn){
         [publishButton setTitle:@"   SHARE   "];
     } else {
         [publishButton setTitle:@"   PUBLISH   "];
     }
     
     if (self.draftSwitch.isOn){
-        _story.saved = YES;
+        _story.saved = [NSNumber numberWithBool:YES];
     } else {
-        _story.saved = NO;
+        _story.saved = [NSNumber numberWithBool:NO];
     }
     
     if (self.privateSwitch.isOn){
-        _story.privateStory = YES;
+        _story.privateStory = [NSNumber numberWithBool:YES];
     } else {
-        _story.privateStory = NO;
+        _story.privateStory = [NSNumber numberWithBool:NO];
     }
     
     if (self.joinableSwitch.isOn){
-        _story.joinable = YES;
+        _story.joinable = [NSNumber numberWithBool:YES];
     } else {
-        _story.joinable = NO;
+        _story.joinable = [NSNumber numberWithBool:NO];
     }
     
     if (self.slowRevealSwitch.isOn){
-        _story.mystery = YES;
+        _story.mystery = [NSNumber numberWithBool:YES];
     } else {
-        _story.mystery = NO;
+        _story.mystery = [NSNumber numberWithBool:NO];
     }
     if (self.feedbackSwitch.isOn){
-        _story.lastContribution.allowFeedback = YES;
+        [(Contribution*)_story.contributions.lastObject setAllowFeedback:[NSNumber numberWithBool:YES]];
     } else {
-        _story.lastContribution.allowFeedback = NO;
+        [(Contribution*)_story.contributions.lastObject setAllowFeedback:[NSNumber numberWithBool:NO]];
     }
 }
 

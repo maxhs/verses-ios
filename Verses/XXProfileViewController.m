@@ -93,8 +93,7 @@
         [parameters setObject:[[NSUserDefaults standardUserDefaults] objectForKey:kUserDefaultsId] forKey:@"user_id"];
     }
     [manager GET:[NSString stringWithFormat:@"%@/users/%@",kAPIBaseUrl,identifier] parameters:parameters success:^(AFHTTPRequestOperation *operation, id responseObject) {
-        _user = [[XXUser alloc] initWithDictionary:[responseObject objectForKey:@"user"]];
-
+        [_user populateFromDict:[responseObject objectForKey:@"user"]];
         //NSLog(@"success getting user details: %@",responseObject);
         if (self.tableView.numberOfSections){
             [self.tableView reloadSections:[NSIndexSet indexSetWithIndex:1] withRowAnimation:UITableViewRowAnimationFade];
@@ -200,7 +199,7 @@
     if (indexPath.section == 1){
         [tableView deselectRowAtIndexPath:indexPath animated:YES];
         if (IDIOM == IPAD){
-            XXStory *story = [_user.stories objectAtIndex:indexPath.row];
+            Story *story = [_user.stories objectAtIndex:indexPath.row];
             [ProgressHUD show:@"Fetching story..."];
             [[NSNotificationCenter defaultCenter] postNotificationName:@"ResetStory" object:nil userInfo:@{@"story":story}];
             _storyInfoVc.story = story;
@@ -221,7 +220,7 @@
     
     if ([segue.identifier isEqualToString:@"Read"]){
         XXStoryViewController *storyVC = [segue destinationViewController];
-        XXStory *story = [_user.stories objectAtIndex:indexPath.row];
+        Story *story = [_user.stories objectAtIndex:indexPath.row];
         [storyVC setStory:story];
         [ProgressHUD show:@"Fetching story..."];
         if ([[NSUserDefaults standardUserDefaults] boolForKey:kDarkBackground]){

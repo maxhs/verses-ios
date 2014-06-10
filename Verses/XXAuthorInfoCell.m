@@ -32,19 +32,18 @@
     // Configure the view for the selected state
 }
 
--(void)configureForAuthor:(XXUser*)author {
+-(void)configureForAuthor:(User*)author {
     [_authorLabel setText:author.penName];
     [_authorLabel setFont:[UIFont fontWithName:kSourceSansProLight size:19]];
-    [_storiesCount setText:[NSString stringWithFormat:@"%@ stories",author.storyCount]];
-    [_storiesCount setFont:[UIFont fontWithName:kCrimsonRoman size:16]];
+
     [_authorPhoto.titleLabel setFont:[UIFont fontWithName:kSourceSansProLight size:12]];
     [_authorPhoto.titleLabel setNumberOfLines:0];
     _authorPhoto.layer.cornerRadius = 20.f;
     _authorPhoto.clipsToBounds = YES;
-    if (author.picSmallUrl.length){
+    if (author.picSmall.length){
         [_authorPhoto setTitle:@"" forState:UIControlStateNormal];
         _authorPhoto.layer.borderWidth = 0.f;
-        [_authorPhoto setImageWithURL:[NSURL URLWithString:author.picSmallUrl] forState:UIControlStateNormal completed:^(UIImage *image, NSError *error, SDImageCacheType cacheType) {
+        [_authorPhoto setImageWithURL:[NSURL URLWithString:author.picSmall] forState:UIControlStateNormal completed:^(UIImage *image, NSError *error, SDImageCacheType cacheType) {
             [UIView animateWithDuration:.25 animations:^{
                 [_authorPhoto setAlpha:1.0];
             }];

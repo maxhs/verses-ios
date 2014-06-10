@@ -13,8 +13,17 @@
     if ([dictionary objectForKey:@"id"] && [dictionary objectForKey:@"id"] != [NSNull null]) {
         self.identifier = [dictionary objectForKey:@"id"];
     }
-    if ([dictionary objectForKey:@"pen_name"] && [dictionary objectForKey:@"pen_name"] != [NSNull null]) {
+    if ([dictionary objectForKey:@"pen_name"] != [NSNull null]) {
         self.penName = [dictionary objectForKey:@"pen_name"];
+    }
+    if ([dictionary objectForKey:@"bio"] != [NSNull null]) {
+        self.bio = [dictionary objectForKey:@"bio"];
+    }
+    if ([dictionary objectForKey:@"day_job"] != [NSNull null]) {
+        self.dayJob = [dictionary objectForKey:@"day_job"];
+    }
+    if ([dictionary objectForKey:@"night_job"] != [NSNull null]) {
+        self.nightJob = [dictionary objectForKey:@"night_job"];
     }
     if ([dictionary objectForKey:@"email"] && [dictionary objectForKey:@"email"] != [NSNull null]) {
         self.email = [dictionary objectForKey:@"email"];

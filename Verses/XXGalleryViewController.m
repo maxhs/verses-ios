@@ -79,7 +79,7 @@
 
 - (void)loadGallery {
     [manager GET:[NSString stringWithFormat:@"%@/photos",kAPIBaseUrl] parameters:nil success:^(AFHTTPRequestOperation *operation, id responseObject) {
-        NSLog(@"Success fetching gallery: %@",responseObject);
+        //NSLog(@"Success fetching gallery: %@",responseObject);
         for (NSDictionary *dict in [responseObject objectForKey:@"photos"]){
             if ([dict objectForKey:@"id"] && [dict objectForKey:@"id"] != [NSNull null]){
                 Photo *photo = [Photo MR_findFirstByAttribute:@"identifier" withValue:[dict objectForKey:@"id"]];

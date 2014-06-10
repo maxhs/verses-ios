@@ -77,11 +77,11 @@
 - (NSInteger)tableView:(UITableView *)tableView numberOfRowsInSection:(NSInteger)section
 {
     if (section == 1){
-        return _story.collaborators.count;
+        return _story.users.count;
     } else if (section == 0 || section == 2){
         return 1;
     } else {
-        XXFeedback *feedback = [_story.feedbacks objectAtIndex:section-3];
+        Feedback *feedback = [_story.feedbacks objectAtIndex:section-3];
         return feedback.comments.count;
     }
 }
@@ -99,7 +99,7 @@
 
         return cell;
     } else if (indexPath.section == 1){
-        XXUser *author = [_story.collaborators objectAtIndex:indexPath.row];
+        User *author = [_story.users objectAtIndex:indexPath.row];
         XXAuthorInfoCell *cell = (XXAuthorInfoCell *)[tableView dequeueReusableCellWithIdentifier:@"AuthorInfoCell"];
         if (cell == nil) {
             cell = [[[NSBundle mainBundle] loadNibNamed:@"XXAuthorInfoCell" owner:nil options:nil] lastObject];
@@ -188,11 +188,11 @@
         [parameters setObject:_story.identifier forKey:@"story_id"];
         [parameters setObject:feedbackTextView.text forKey:@"feedback"];
         [manager POST:[NSString stringWithFormat:@"%@/feedbacks",kAPIBaseUrl] parameters:parameters success:^(AFHTTPRequestOperation *operation, id responseObject) {
-            //NSLog(@"Success sending feedback: %@",responseObject);
-            XXFeedback *newFeedback = [[XXFeedback alloc] initWithDictionary:[responseObject objectForKey:@"feedback"]];
-            [_story.feedbacks enumerateObjectsUsingBlock:^(XXFeedback *feedback, NSUInteger idx, BOOL *stop) {
+            NSLog(@"Success sending feedback: %@",responseObject);
+            //XXFeedback *newFeedback = [[XXFeedback alloc] initWithDictionary:];
+            /*[_story.feedbacks enumerateObjectsUsingBlock:^(XXFeedback *feedback, NSUInteger idx, BOOL *stop) {
                 if ([feedback.identifier isEqualToNumber:newFeedback.identifier]){
-                    [_story.feedbacks replaceObjectAtIndex:idx withObject:newFeedback];
+                    [_story replaceFeedback:newFeedback];
                     //[self.tableView reloadSections:[NSIndexSet indexSetWithIndexesInRange:NSMakeRange(3, 1)] withRowAnimation:UITableViewRowAnimationFade];
                     [self.tableView reloadData];
                     *stop = YES;
@@ -201,7 +201,7 @@
                     [_story.feedbacks addObject:newFeedback];
                     *stop = YES;
                 }
-            }];
+            }];*/
     
             [ProgressHUD dismiss];
             
@@ -321,7 +321,7 @@
 
 -(void)goToProfile:(UIButton*)button {
     if (IDIOM == IPAD){
-        XXUser *user = [_story.collaborators objectAtIndex:button.tag];
+        User *user = [_story.users objectAtIndex:button.tag];
         XXProfileViewController* vc = [[self storyboard] instantiateViewControllerWithIdentifier:@"Profile"];
         [vc setStoryInfoVc:self];
         [vc setUser:user];
@@ -331,7 +331,7 @@
         [self.popover presentPopoverFromRect:cell.frame inView:self.view permittedArrowDirections:UIPopoverArrowDirectionAny animated:YES];
         
     } else {
-        XXUser *user = [_story.collaborators objectAtIndex:button.tag];
+        User *user = [_story.users objectAtIndex:button.tag];
         XXProfileViewController* vc = [[self storyboard] instantiateViewControllerWithIdentifier:@"Profile"];
         [vc setUser:user];
         UINavigationController *nav = [[UINavigationController alloc] initWithRootViewController:vc];
@@ -353,7 +353,7 @@
     } else if (indexPath.section == 1){
         //[ProgressHUD show:@"Fetching profile..."];
         if (IDIOM == IPAD){
-            XXUser *user = [_story.collaborators objectAtIndex:indexPath.row];
+            User *user = [_story.users objectAtIndex:indexPath.row];
             XXProfileViewController* vc = [[self storyboard] instantiateViewControllerWithIdentifier:@"Profile"];
             [vc setStoryInfoVc:self];
             [vc setUser:user];
@@ -363,7 +363,7 @@
             [self.popover presentPopoverFromRect:cell.frame inView:self.view permittedArrowDirections:UIPopoverArrowDirectionAny animated:YES];
 
         } else {
-            XXUser *user = [_story.collaborators objectAtIndex:indexPath.row];
+            User *user = [_story.users objectAtIndex:indexPath.row];
             XXProfileViewController* vc = [[self storyboard] instantiateViewControllerWithIdentifier:@"Profile"];
             [vc setUser:user];
             UINavigationController *nav = [[UINavigationController alloc] initWithRootViewController:vc];

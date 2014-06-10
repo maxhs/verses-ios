@@ -296,7 +296,7 @@
 }
 
 - (void)editStory:(UIButton*)button {
-    XXStory *story = [_stories objectAtIndex:button.tag];
+    Story *story = [_stories objectAtIndex:button.tag];
     XXWriteViewController *write = [[self storyboard] instantiateViewControllerWithIdentifier:@"Write"];
     [write setStory:story];
     [write setEditMode:YES];
@@ -339,16 +339,14 @@
 - (void)prepareForSegue:(UIStoryboardSegue *)segue sender:(id)sender
 {
     [super prepareForSegue:segue sender:sender];
-    
     if ([segue.identifier isEqualToString:@"Read"]){
         XXStoryViewController *vc = [segue destinationViewController];
         
-        if ([sender isKindOfClass:[XXStory class]]){
+        if ([sender isKindOfClass:[Story class]]){
             [ProgressHUD show:@"Fetching story..."];
-            [vc setStory:(XXStory*)sender];
+            [vc setStory:(Story*)sender];
         }
         
-        [vc setStories:[(XXAppDelegate*)[UIApplication sharedApplication].delegate stories]];
         NSLog(@"should be seguing to story");
         [UIView animateWithDuration:.23 animations:^{
             [self.tableView setAlpha:0.0];

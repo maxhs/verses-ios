@@ -182,7 +182,7 @@
     [super prepareForSegue:segue sender:indexPath];
     
     if ([segue.identifier isEqualToString:@"Edit"]){
-        XXStory *story = [_drafts objectAtIndex:indexPath.row];
+        Story *story = [_drafts objectAtIndex:indexPath.row];
         XXWriteViewController *vc = [segue destinationViewController];
         [vc setStory:story];
     }

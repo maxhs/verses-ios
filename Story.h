@@ -33,9 +33,11 @@
 @property (nonatomic, retain) NSNumber * featured;
 @property (nonatomic, retain) NSOrderedSet *footnotes;
 @property (nonatomic, retain) User *owner;
-@property (nonatomic, retain) NSSet *users;
+@property (nonatomic, retain) NSOrderedSet *users;
+@property (nonatomic, retain) NSOrderedSet *circles;
 @property (nonatomic, retain) NSOrderedSet *contributions;
 @property (nonatomic, retain) NSOrderedSet *photos;
+@property (nonatomic, retain) NSOrderedSet *feedbacks;
 @property (nonatomic, retain) NSManagedObject *tags;
 @property (nonatomic, retain) id attributedSnippet;
 @end

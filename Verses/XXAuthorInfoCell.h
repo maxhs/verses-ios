@@ -7,12 +7,11 @@
 //
 
 #import <UIKit/UIKit.h>
-#import "XXUser.h"
-#import "XXStory.h"
+#import "User+helper.h"
+#import "Story+helper.h"
 
 @interface XXAuthorInfoCell : UITableViewCell
 @property (weak, nonatomic) IBOutlet UILabel *authorLabel;
-@property (weak, nonatomic) IBOutlet UILabel *storiesCount;
 @property (weak, nonatomic) IBOutlet UIButton *authorPhoto;
--(void)configureForAuthor:(XXUser*)author;
+-(void)configureForAuthor:(User*)author;
 @end

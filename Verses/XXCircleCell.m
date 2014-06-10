@@ -30,7 +30,7 @@
 
     // Configure the view for the selected state
 }
-- (void)configureCell:(XXCircle*)circle withTextColor:(UIColor *)textColor {
+- (void)configureCell:(Circle*)circle withTextColor:(UIColor *)textColor {
     [_circleName setText:circle.name];
     [_circleName setFont:[UIFont fontWithName:kCrimsonRoman size:24]];
     [_circleName setTextColor:textColor];
@@ -48,8 +48,8 @@
         }
     }
     
-    int count = circle.unreadCommentCount;
-    if (circle.fresh) count ++;
+    int count = circle.unreadCommentCount.intValue;
+    if ([circle.fresh isEqualToNumber:[NSNumber numberWithBool:YES]]) count ++;
     
     if (count == 0){
         [_alertLabel setText:@""];

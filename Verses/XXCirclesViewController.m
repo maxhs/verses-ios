@@ -164,7 +164,7 @@
         if (cell == nil) {
             cell = [[[NSBundle mainBundle] loadNibNamed:@"XXCircleCell" owner:nil options:nil] lastObject];
         }
-        XXCircle *circle = [_circles objectAtIndex:indexPath.row];
+        Circle *circle = [_circles objectAtIndex:indexPath.row];
         [cell configureCell:circle withTextColor:textColor];
         return cell;
     }
@@ -188,7 +188,7 @@
 }
 
 - (void)tableView:(UITableView *)tableView didSelectRowAtIndexPath:(NSIndexPath *)indexPath {
-    XXCircle *circle = [_circles objectAtIndex:indexPath.row];
+    Circle *circle = [_circles objectAtIndex:indexPath.row];
     circle.unreadCommentCount = 0;
     circle.fresh = NO;
     [self.tableView reloadSections:[NSIndexSet indexSetWithIndex:0] withRowAnimation:UITableViewRowAnimationFade];
@@ -203,7 +203,7 @@
     
     if ([[segue identifier] isEqualToString:@"CircleDetail"]){
         XXCircleDetailViewController *vc = [segue destinationViewController];
-        [vc setCircle:(XXCircle*)sender];
+        [vc setCircle:(Circle*)sender];
         if ([[NSUserDefaults standardUserDefaults] boolForKey:kDarkBackground]){
             [UIView animateWithDuration:.23 animations:^{
                 [self.tableView setAlpha:0.0];

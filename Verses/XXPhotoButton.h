@@ -7,10 +7,10 @@
 //
 
 #import <UIKit/UIKit.h>
-#import "XXStory.h"
-#import "XXPhoto.h"
+#import "Story+helper.h"
+#import "Photo+helper.h"
 #import "MWPhotoBrowser.h"
 
 @interface XXPhotoButton : UIButton <MWPhotoBrowserDelegate>
-- (void)initializeWithPhoto:(XXPhoto*)photo forStory:(XXStory*)story inVC:(UIViewController*)vc;
+- (void)initializeWithPhoto:(Photo*)photo forStory:(Story*)story inVC:(UIViewController*)vc;
 @end

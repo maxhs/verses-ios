@@ -7,7 +7,7 @@
 //
 
 #import <UIKit/UIKit.h>
-#import "XXCircle.h"
+#import "Circle+helper.h"
 #import "XXUser.h"
 #import "XXStory.h"
 #import "XXChat.h"
@@ -19,7 +19,7 @@
 @property (weak, nonatomic) IBOutlet UITableView *detailsTableView;
 @property (weak, nonatomic) IBOutlet UITableView *storiesTableView;
 @property (weak, nonatomic) NSNumber *circleId;
-@property (strong, nonatomic) XXCircle *circle;
+@property (strong, nonatomic) Circle *circle;
 @property (strong, nonatomic) UICollectionView *collectionView;
 @property (strong, nonatomic) XXChat *chatInput;
 @property (nonatomic) BOOL needsNavigation;

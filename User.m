@@ -15,6 +15,9 @@
 @dynamic email;
 @dynamic identifier;
 @dynamic location;
+@dynamic dayJob;
+@dynamic nightJob;
+@dynamic bio;
 @dynamic penName;
 @dynamic picSmall;
 @dynamic picThumb;
@@ -28,8 +31,10 @@
 @dynamic pushSubscribe;
 @dynamic pushWeekly;
 @dynamic pushFeedbacks;
+@dynamic subscribed;
 @dynamic thumbImage;
 @dynamic picLarge;
+@dynamic picMedium;
 @dynamic firstName;
 @dynamic lastName;
 @dynamic ownedStory;

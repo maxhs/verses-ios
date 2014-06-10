@@ -17,7 +17,7 @@
 #import "XXBookmarksViewController.h"
 #import "XXStoriesViewController.h"
 #import "XXWriteViewController.h"
-#import "XXFeedback.h"
+#import "Feedback+helper.h"
 #import "UIFontDescriptor+CrimsonText.h"
 #import "UIFontDescriptor+SourceSansPro.h"
 #import "XXTextView.h"
@@ -84,7 +84,6 @@
 
 @synthesize story = _story;
 @synthesize storyId = _storyId;
-@synthesize stories = _stories;
 @synthesize dynamicsViewController = _dynamicsViewController;
 
 - (void)viewDidLoad
@@ -144,7 +143,6 @@
     readingTimer = [NSTimer scheduledTimerWithTimeInterval:3 target:self selector:@selector(hideControls) userInfo:nil repeats:NO];
     
     _attributedPages = [NSMutableArray array];
-    if (!_stories) _stories = [appDelegate stories];
     storyInfoVc = (XXStoryInfoViewController*)[appDelegate.dynamicsDrawerViewController drawerViewControllerForDirection:MSDynamicsDrawerDirectionRight];
 
     _formatter= [[NSDateFormatter alloc] init];
@@ -177,7 +175,7 @@
         [self.view setBackgroundColor:[UIColor whiteColor]];
         textColor = [UIColor blackColor];
     }
-    
+
     if (_storyId){
         //[ProgressHUD show:@"Fetching story..."];
         [self loadStory:_storyId];
@@ -211,8 +209,12 @@
     }
     
     [manager GET:[NSString stringWithFormat:@"%@/stories/%@",kAPIBaseUrl,identifier] parameters:parameters success:^(AFHTTPRequestOperation *operation, id responseObject) {
-        //NSLog(@"load story response: %@",responseObject);
-        _story = [[XXStory alloc] initWithDictionary:[responseObject objectForKey:@"story"]];
+        NSLog(@"load story response: %@",responseObject);
+        _story = [Story MR_findFirstByAttribute:@"identifier" withValue:identifier];
+        if (_story) {
+            _story = [Story MR_createInContext:[NSManagedObjectContext MR_defaultContext]];
+        }
+        [_story populateFromDict:[responseObject objectForKey:@"story"]];
         [self drawStoryBody];
         [self loadFeedbacks];
         storyInfoVc.story = _story;
@@ -248,7 +250,7 @@
     if (_story && _story.identifier){
         [manager POST:[NSString stringWithFormat:@"%@/bookmarks",kAPIBaseUrl] parameters:@{@"user_id":[[NSUserDefaults standardUserDefaults] objectForKey:kUserDefaultsId],@"story_id":_story.identifier} success:^(AFHTTPRequestOperation *operation, id responseObject) {
             //NSLog(@"Success creating a bookmark: %@",responseObject);
-            _story.bookmarked = YES;
+            _story.bookmarked = [NSNumber numberWithBool:YES];
             [self setupNavButtons];
         } failure:^(AFHTTPRequestOperation *operation, NSError *error) {
             NSLog(@"Error creating a bookmark: %@",error.description);
@@ -291,14 +293,33 @@
         NSMutableDictionary *parameters = [NSMutableDictionary dictionary];
         [parameters setObject:[[NSUserDefaults standardUserDefaults] objectForKey:kUserDefaultsId] forKey:@"user_id"];
         [manager GET:[NSString stringWithFormat:@"%@/feedbacks/%@",kAPIBaseUrl,_story.identifier] parameters:parameters success:^(AFHTTPRequestOperation *operation, id responseObject) {
-            //NSLog(@"success getting feedbacks for story %@, %@",_story.title,responseObject);
-            _story.feedbacks = [[Utilities feedbacksFromJSONArray:[responseObject objectForKey:@"feedbacks"]] mutableCopy];
-            _story.bookmarked = [(XXFeedback*)_story.feedbacks.firstObject story].bookmarked;
+            NSLog(@"success getting feedbacks for story %@, %@",_story.title,responseObject);
+            [self updateStoryFeedback:[responseObject objectForKey:@"feedbacks"]];
+            _story.bookmarked = [(Feedback*)_story.feedbacks.firstObject story].bookmarked;
             [self setupNavButtons];
         } failure:^(AFHTTPRequestOperation *operation, NSError *error) {
             NSLog(@"Failed to get feedbacks for %@, %@",_story.title,error.description);
         }];
     }
+}
+
+- (void)updateStoryFeedback:(NSArray*)array{
+    NSMutableOrderedSet *feedbacks = [NSMutableOrderedSet orderedSet];
+    for (NSDictionary *dict in array){
+        Feedback *feedback = [Feedback MR_findFirstByAttribute:@"identifier" withValue:[dict objectForKey:@"id"]];
+        if (!feedback){
+            feedback = [Feedback MR_createInContext:[NSManagedObjectContext MR_defaultContext]];
+        }
+        [feedback populateFromDict:dict];
+        [feedbacks addObject:feedback];
+    }
+    for (Feedback *feedback in _story.feedbacks){
+        if (![feedbacks containsObject:feedback]){
+            NSLog(@"Deleting feedback that no longer exists.");
+            [feedback MR_inContext:[NSManagedObjectContext MR_defaultContext]];
+        }
+    }
+    _story.feedbacks = feedbacks;
 }
 
 - (void)setupNavButtons {
@@ -468,7 +489,7 @@
     if (_authorsLabel == nil) {
         _authorsLabel = [[UILabel alloc] initWithFrame:CGRectZero];
     }
-    NSString *authorsText = [NSString stringWithFormat:@"by %@",_story.authors];
+    NSString *authorsText = [NSString stringWithFormat:@"by %@",_story.authorNames];
     [_authorsLabel setText:authorsText];
     
     NSMutableParagraphStyle *centerStyle = [[NSMutableParagraphStyle alloc] init];
@@ -489,7 +510,7 @@
     [_authorsLabel setFrame:authorsFrame];
 }
 
-- (void)generateAttributedString:(XXContribution*)contribution {
+- (void)generateAttributedString:(Contribution*)contribution {
     
     if (IDIOM == IPAD){
         header1spacing = 23;
@@ -547,8 +568,8 @@
     [self drawContributionBody:attributedContributionBody forContribution:contribution];
 }
 
-- (void)drawContributionBody:(NSMutableAttributedString*)attributedContributionBody forContribution:(XXContribution*)contribution {
-    if (_story.mystery){
+- (void)drawContributionBody:(NSMutableAttributedString*)attributedContributionBody forContribution:(Contribution*)contribution {
+    if ([_story.mystery isEqualToNumber:[NSNumber numberWithBool:YES]]){
         NSString *tempString = [attributedContributionBody string];
         NSString *mysteryString;
         if (tempString.length > 250){
@@ -560,8 +581,8 @@
         }
         
         UIButton *userImgButton = [UIButton buttonWithType:UIButtonTypeCustom];
-        if (contribution.user.picSmallUrl){
-            [userImgButton setImageWithURL:[NSURL URLWithString:contribution.user.picSmallUrl] forState:UIControlStateNormal];
+        if (contribution.user.picSmall){
+            [userImgButton setImageWithURL:[NSURL URLWithString:contribution.user.picSmall] forState:UIControlStateNormal];
             [userImgButton.imageView.layer setBackgroundColor:[UIColor clearColor].CGColor];
             [userImgButton.imageView setBackgroundColor:[UIColor clearColor]];
             [userImgButton.imageView.layer setCornerRadius:25.f];
@@ -635,7 +656,7 @@
         
         if (_story.contributions.count > 1) {
             UIButton *userImgButton = [UIButton buttonWithType:UIButtonTypeCustom];
-            [userImgButton setImageWithURL:[NSURL URLWithString:contribution.user.picSmallUrl] forState:UIControlStateNormal];
+            [userImgButton setImageWithURL:[NSURL URLWithString:contribution.user.picSmall] forState:UIControlStateNormal];
             [userImgButton setFrame:CGRectMake(spacer/2, contributionOffset, 50, 50)];
             [userImgButton.imageView.layer setCornerRadius:25.f];
             [userImgButton.imageView.layer setBackgroundColor:[UIColor clearColor].CGColor];
@@ -714,7 +735,7 @@
             [_imageButton setFrame:CGRectMake(0, 0, width, imageHeight)];
         }
         [_imageButton.imageView setContentMode:UIViewContentModeScaleAspectFill];
-        [_imageButton initializeWithPhoto:(XXPhoto*)_story.photos.firstObject forStory:_story inVC:self];
+        [_imageButton initializeWithPhoto:(Photo*)_story.photos.firstObject forStory:_story inVC:self];
         [_imageButton setUserInteractionEnabled:NO];
         [_titleLabel setTextColor:textColor];
         [_authorsLabel setTextColor:textColor];
@@ -739,15 +760,15 @@
     }
     
     contributionOffset = height;
-    if (!_story.mystery && _story.contributions.count == 1){
-        [self generateAttributedString:_story.firstContribution];
+    if ([_story.mystery isEqualToNumber:[NSNumber numberWithBool:NO]] && _story.contributions.count == 1){
+        [self generateAttributedString:_story.contributions.firstObject];
     } else {
-        for (XXContribution *contribution in _story.contributions){
+        for (Contribution *contribution in _story.contributions){
             [self generateAttributedString:contribution];
         }
     }
     
-    if (_story.mystery){
+    if ([_story.mystery isEqualToNumber:[NSNumber numberWithBool:YES]]){
         addSlowRevealButton = [UIButton buttonWithType:UIButtonTypeCustom];
         [addSlowRevealButton setAutoresizingMask:UIViewAutoresizingFlexibleWidth];
         [addSlowRevealButton setFrame:CGRectMake(0, contributionOffset, width, 176)];
@@ -888,7 +909,7 @@
             //NSLog(@"no more text, scrollview height: %f",_scrollView.contentSize.height);
         }
         if (_story.contributions.count == 1){
-            [textView setContribution:_story.firstContribution];
+            [textView setContribution:_story.contributions.firstObject];
         }
         
         [textView setupButtons];
@@ -996,8 +1017,14 @@
         [parameters setObject:[newContributionTextView.attributedText htmlFragment] forKey:@"body"];
         [manager POST:[NSString stringWithFormat:@"%@/contributions",kAPIBaseUrl] parameters:@{@"contribution":parameters} success:^(AFHTTPRequestOperation *operation, id responseObject) {
             NSLog(@"success posting a new contribution: %@",responseObject);
-            XXContribution *newContribution = [[XXContribution alloc] initWithDictionary:[responseObject objectForKey:@"contribution"]];
-            [_story.contributions addObject:newContribution];
+            
+            Contribution *newContribution = [Contribution MR_findFirstByAttribute:@"identifier" withValue:[[responseObject objectForKey:@"contribution"] objectForKey:@"id"]];
+            if (!newContribution){
+                newContribution = [Contribution MR_createInContext:[NSManagedObjectContext MR_defaultContext]];
+            }
+            [newContribution populateFromDict:[responseObject objectForKey:@"contribution"]];
+            
+            [_story addContribution:newContribution];
             [newContributionTextView removeFromSuperview];
             [self resetStoryBody];
             [self drawStoryBody];
@@ -1170,77 +1197,6 @@
     //NSLog(@"text selection: %@",textView.text);
 }
 
-/*#pragma mark - Table view data source
-
-- (NSInteger)numberOfSectionsInTableView:(UITableView *)tableView
-{
-    return 1;
-}
-
-- (NSInteger)tableView:(UITableView *)tableView numberOfRowsInSection:(NSInteger)section
-{
-    return (int)pages;
-
-}
-
-- (UITableViewCell *)tableView:(UITableView *)tableView cellForRowAtIndexPath:(NSIndexPath *)indexPath
-{
-    XXStoryCell *cell = (XXStoryCell *)[tableView dequeueReusableCellWithIdentifier:@"StoryCell"];
-    if (cell == nil) {
-        cell = [[[NSBundle mainBundle] loadNibNamed:@"XXStoryCell" owner:nil options:nil] lastObject];
-    }
-    XXStory *story = [_stories objectAtIndex:indexPath.row];
-    [cell resetCell];
-    [cell configureForStory:story withOrientation:orientation];
-    [cell.scrollView setTag:indexPath.row];
-    [cell.scrollTouch addTarget:self action:@selector(storyScrollViewTouched:)];
-    
-    if (story.views && ![story.views isEqualToNumber:[NSNumber numberWithInt:0]]) {
-        [cell.countLabel setHidden:NO];
-        if ([story.views isEqualToNumber:[NSNumber numberWithInt:1]]){
-            [cell.countLabel setText:@"1 view"];
-        } else {
-            [cell.countLabel setText:[NSString stringWithFormat:@"%@ views",story.views]];
-        }
-    } else {
-        [cell.countLabel setHidden:YES];
-    }
-    
-    if (story.minutesToRead == [NSNumber numberWithInt:0]){
-        [cell.infoLabel setText:[NSString stringWithFormat:@"%@ words  |  Quick Read  |  %@",story.wordCount,[_formatter stringFromDate:story.updatedDate]]];
-    } else {
-        [cell.infoLabel setText:[NSString stringWithFormat:@"%@ words  |  %@ min to read  |  %@",story.wordCount,story.minutesToRead,[_formatter stringFromDate:story.updatedDate]]];
-    }
-    [cell.titleLabel setTextColor:[UIColor whiteColor]];
-    [cell.bodySnippet setTextColor:[UIColor whiteColor]];
-    [cell.infoLabel setTextColor:[UIColor whiteColor]];
-    
-    return cell;
-}
-
-- (CGFloat)tableView:(UITableView *)tableView heightForHeaderInSection:(NSInteger)section {
-    if (tableView == storiesTableView) {
-        return 44;
-    } else {
-        return 0;
-    }
-}
-
-- (UIView*)tableView:(UITableView *)tableView viewForHeaderInSection:(NSInteger)section {
-    if (tableView == storiesTableView) {
-        UIView *headerView = [[UIView alloc] initWithFrame:CGRectMake(0, 0, width, 0)];
-        [headerView setAutoresizingMask:UIViewAutoresizingFlexibleWidth];
-        UIButton *dismissButton = [UIButton buttonWithType:UIButtonTypeCustom];
-        [headerView addSubview:dismissButton];
-        [dismissButton setFrame:CGRectMake(width-44, 0, 44, 44)];
-        dismissButton.autoresizingMask = UIViewAutoresizingFlexibleLeftMargin;
-        [dismissButton setImage:[UIImage imageNamed:@"whiteX"] forState:UIControlStateNormal];
-        [dismissButton addTarget:self action:@selector(hideStoriesMenu) forControlEvents:UIControlEventTouchUpInside];
-        return headerView;
-    } else {
-        return [[UIView alloc] initWithFrame:CGRectMake(0, 0, 0, 0)];
-    }
-}*/
 
 - (void)tableView:(UITableView *)tableView willDisplayCell:(UITableViewCell *)cell forRowAtIndexPath:(NSIndexPath *)indexPath {
 
@@ -1276,7 +1232,7 @@
 
 - (void)goToProfile:(UIButton*)button {
     XXProfileViewController *vc = [[self storyboard] instantiateViewControllerWithIdentifier:@"Profile"];
-    XXContribution *contribution = [_story.contributions objectAtIndex:button.tag];
+    Contribution *contribution = [_story.contributions objectAtIndex:button.tag];
     [vc setUser:contribution.user];
     UINavigationController *nav = [[UINavigationController alloc] initWithRootViewController:vc];
     [self presentViewController:nav animated:YES completion:^{
@@ -1290,7 +1246,7 @@
     readingTimer = nil;
 }
 
-- (void)resetWithStory:(XXStory*)newStory {
+- (void)resetWithStory:(Story*)newStory {
     [self.scrollView setContentOffset:CGPointZero animated:NO];
     [self resetStoryBody];
     _story = newStory;

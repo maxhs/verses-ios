@@ -7,15 +7,15 @@
 //
 
 #import <UIKit/UIKit.h>
-#import "XXContribution.h"
+#import "Contribution+helper.h"
 #import "XXStoryViewController.h"
 
 @interface XXAddFeedbackViewController : UIViewController <UITableViewDataSource, UITableViewDelegate, UITextViewDelegate>
 
 @property (weak, nonatomic) IBOutlet UITableView *tableView;
 @property (strong, nonatomic) NSString *snippet;
-@property (strong, nonatomic) XXStory *story;
-@property (strong, nonatomic) XXContribution *contribution;
+@property (strong, nonatomic) Story *story;
+@property (strong, nonatomic) Contribution *contribution;
 @property (strong, nonatomic) XXStoryViewController *storyViewController;
 @property (strong, nonatomic) UIColor *textColor;
 @property (strong, nonatomic) NSNumber *stringLocation;

@@ -26,7 +26,7 @@
     BOOL sent;
     NSDateFormatter *_detailsFormatter;
     NSDateFormatter *_formatter;
-    XXComment *commentForDeletion;
+    Comment *commentForDeletion;
     NSIndexPath *indexPathForDeletion;
     UIInterfaceOrientation currentOrientation;
     NSMutableArray *_notifications;
@@ -96,7 +96,7 @@
 - (void)loadDetails:(NSNumber*)identifier {
     [manager GET:[NSString stringWithFormat:@"%@/circles/%@",kAPIBaseUrl,identifier] parameters:@{@"user_id":[[NSUserDefaults standardUserDefaults] objectForKey:kUserDefaultsId]} success:^(AFHTTPRequestOperation *operation, id responseObject) {
         //NSLog(@"success getting circle details: %@", responseObject);
-        _circle = [[XXCircle alloc] initWithDictionary:[responseObject objectForKey:@"circle"]];
+        [_circle populateFromDict:[responseObject objectForKey:@"circle"]];
         [self.collectionView reloadData];
         
         NSString *storyCount;
@@ -400,7 +400,7 @@
     
     if ([segue.identifier isEqualToString:@"Read"]){
         XXStoryViewController *storyVC = [segue destinationViewController];
-        XXStory *story = (XXStory*)[_circle.stories objectAtIndex:indexPath.row];
+        Story *story = (Story*)[_circle.stories objectAtIndex:indexPath.row];
         [storyVC setStory:story];
         [ProgressHUD show:@"Fetching story..."];
         if ([[NSUserDefaults standardUserDefaults] boolForKey:kDarkBackground]){
@@ -500,7 +500,7 @@
         } failure:^(AFHTTPRequestOperation *operation, NSError *error) {
             NSLog(@"Failed to delete comment: %@",error.description);
         }];
-        [_circle.comments removeObject:commentForDeletion];
+        [_circle removeComment:commentForDeletion];
         [self.collectionView deleteItemsAtIndexPaths:@[indexPathForDeletion]];
        
     }
@@ -534,17 +534,17 @@
         [commentDict setObject:@{@"id":[[NSUserDefaults standardUserDefaults] objectForKey:kUserDefaultsId],@"pen_name":[[NSUserDefaults standardUserDefaults] objectForKey:kUserDefaultsPenName],} forKey:@"user"];
     }
     
-    XXComment *newComment = [[XXComment alloc] initWithDictionary:commentDict];
+    Comment *newComment = [Comment MR_createInContext:[NSManagedObjectContext MR_defaultContext]];
+    [newComment populateFromDict:commentDict];
     [self addNewComment:newComment];
 }
 
 #pragma mark ADD NEW MESSAGE
 
-- (void) addNewComment:(XXComment *)comment {
+- (void) addNewComment:(Comment *)comment {
     if (_circle.identifier && comment.body.length){
         sent = YES;
-        if (_circle.comments == nil)  _circle.comments = [NSMutableArray array];
-        [_circle.comments addObject:comment];
+        [_circle addComment:comment];
         NSMutableDictionary *parameters = [NSMutableDictionary dictionary];
         [parameters setObject:_circle.identifier forKey:@"circle_id"];
         [parameters setObject:comment.body forKey:@"body"];

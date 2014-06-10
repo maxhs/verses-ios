@@ -1,5 +1,31 @@
 <?xml version="1.0" encoding="UTF-8" standalone="yes"?>
 <model userDefinedModelVersionIdentifier="" type="com.apple.IDECoreDataModeler.DataModel" documentVersion="1.0" lastSavedToolsVersion="5064" systemVersion="13D65" minimumToolsVersion="Xcode 4.3" macOSVersion="Automatic" iOSVersion="Automatic">
+    <entity name="Bookmark" representedClassName="Bookmark" syncable="YES">
+        <attribute name="createdDate" optional="YES" attributeType="Date" syncable="YES"/>
+        <attribute name="identifier" optional="YES" attributeType="Integer 32" defaultValueString="0" syncable="YES"/>
+        <relationship name="contribution" optional="YES" maxCount="1" deletionRule="Nullify" destinationEntity="Contribution" inverseName="bookmarks" inverseEntity="Contribution" syncable="YES"/>
+        <relationship name="story" optional="YES" maxCount="1" deletionRule="Nullify" destinationEntity="Story" inverseName="bookmarks" inverseEntity="Story" syncable="YES"/>
+    </entity>
+    <entity name="Circle" representedClassName="Circle" syncable="YES">
+        <attribute name="blurb" optional="YES" attributeType="String" syncable="YES"/>
+        <attribute name="createdDate" optional="YES" attributeType="Date" syncable="YES"/>
+        <attribute name="fresh" optional="YES" attributeType="Boolean" syncable="YES"/>
+        <attribute name="identifier" optional="YES" attributeType="Integer 32" defaultValueString="0" syncable="YES"/>
+        <attribute name="name" optional="YES" attributeType="String" syncable="YES"/>
+        <attribute name="titles" optional="YES" attributeType="String" syncable="YES"/>
+        <attribute name="unreadCommentCount" optional="YES" attributeType="Integer 16" defaultValueString="0" syncable="YES"/>
+        <relationship name="comments" optional="YES" toMany="YES" deletionRule="Nullify" ordered="YES" destinationEntity="Comment" inverseName="circle" inverseEntity="Comment" syncable="YES"/>
+        <relationship name="members" optional="YES" toMany="YES" deletionRule="Nullify" destinationEntity="User" inverseName="circles" inverseEntity="User" syncable="YES"/>
+        <relationship name="notifications" optional="YES" toMany="YES" deletionRule="Nullify" ordered="YES" destinationEntity="Notification" inverseName="circle" inverseEntity="Notification" syncable="YES"/>
+        <relationship name="stories" optional="YES" toMany="YES" deletionRule="Nullify" ordered="YES" destinationEntity="Story" inverseName="circles" inverseEntity="Story" syncable="YES"/>
+    </entity>
+    <entity name="Comment" representedClassName="Comment" syncable="YES">
+        <attribute name="body" optional="YES" attributeType="String" syncable="YES"/>
+        <attribute name="identifier" optional="YES" attributeType="Integer 32" defaultValueString="0" syncable="YES"/>
+        <relationship name="circle" optional="YES" maxCount="1" deletionRule="Nullify" destinationEntity="Circle" inverseName="comments" inverseEntity="Circle" syncable="YES"/>
+        <relationship name="feedback" optional="YES" maxCount="1" deletionRule="Nullify" destinationEntity="Feedback" inverseName="comments" inverseEntity="Feedback" syncable="YES"/>
+        <relationship name="user" optional="YES" maxCount="1" deletionRule="Nullify" destinationEntity="User" inverseName="comments" inverseEntity="User" syncable="YES"/>
+    </entity>
     <entity name="Contribution" representedClassName="Contribution" syncable="YES">
         <attribute name="allowFeedback" optional="YES" attributeType="Boolean" syncable="YES"/>
         <attribute name="body" optional="YES" attributeType="String" syncable="YES"/>
@@ -8,14 +34,31 @@
         <attribute name="publishedDate" optional="YES" attributeType="Date" syncable="YES"/>
         <attribute name="updatedDate" optional="YES" attributeType="Date" syncable="YES"/>
         <attribute name="wordCount" optional="YES" attributeType="Integer 32" defaultValueString="0" syncable="YES"/>
+        <relationship name="bookmarks" optional="YES" toMany="YES" deletionRule="Nullify" ordered="YES" destinationEntity="Bookmark" inverseName="contribution" inverseEntity="Bookmark" syncable="YES"/>
         <relationship name="photos" optional="YES" toMany="YES" deletionRule="Nullify" ordered="YES" destinationEntity="Photo" inverseName="contribution" inverseEntity="Photo" syncable="YES"/>
         <relationship name="story" optional="YES" maxCount="1" deletionRule="Nullify" destinationEntity="Story" inverseName="contributions" inverseEntity="Story" syncable="YES"/>
         <relationship name="user" optional="YES" maxCount="1" deletionRule="Nullify" destinationEntity="User" inverseName="contributions" inverseEntity="User" syncable="YES"/>
+    </entity>
+    <entity name="Feedback" representedClassName="Feedback" syncable="YES">
+        <attribute name="identifier" optional="YES" attributeType="Integer 32" defaultValueString="0" syncable="YES"/>
+        <attribute name="snippet" optional="YES" attributeType="String" syncable="YES"/>
+        <relationship name="comments" optional="YES" toMany="YES" deletionRule="Nullify" ordered="YES" destinationEntity="Comment" inverseName="feedback" inverseEntity="Comment" syncable="YES"/>
+        <relationship name="story" optional="YES" maxCount="1" deletionRule="Nullify" destinationEntity="Story" inverseName="feedbacks" inverseEntity="Story" syncable="YES"/>
     </entity>
     <entity name="Footnote" representedClassName="Footnote" syncable="YES">
         <attribute name="body" optional="YES" attributeType="String" syncable="YES"/>
         <attribute name="identifier" optional="YES" attributeType="Integer 64" defaultValueString="0" syncable="YES"/>
         <relationship name="story" optional="YES" maxCount="1" deletionRule="Nullify" destinationEntity="Story" inverseName="footnotes" inverseEntity="Story" syncable="YES"/>
+    </entity>
+    <entity name="Notification" representedClassName="Notification" syncable="YES">
+        <attribute name="createdDate" optional="YES" attributeType="Date" syncable="YES"/>
+        <attribute name="identifier" optional="YES" attributeType="Integer 32" defaultValueString="0" syncable="YES"/>
+        <attribute name="message" optional="YES" attributeType="String" syncable="YES"/>
+        <attribute name="type" optional="YES" attributeType="String" syncable="YES"/>
+        <relationship name="circle" optional="YES" maxCount="1" deletionRule="Nullify" destinationEntity="Circle" inverseName="notifications" inverseEntity="Circle" syncable="YES"/>
+        <relationship name="story" optional="YES" maxCount="1" deletionRule="Nullify" destinationEntity="Story" inverseName="notifications" inverseEntity="Story" syncable="YES"/>
+        <relationship name="targetUser" optional="YES" maxCount="1" deletionRule="Nullify" destinationEntity="User" inverseName="targetNotifications" inverseEntity="User" syncable="YES"/>
+        <relationship name="user" optional="YES" maxCount="1" deletionRule="Nullify" destinationEntity="User" inverseName="notifications" inverseEntity="User" syncable="YES"/>
     </entity>
     <entity name="Photo" representedClassName="Photo" syncable="YES">
         <attribute name="createdDate" optional="YES" attributeType="Date" syncable="YES"/>
@@ -49,12 +92,16 @@
         <attribute name="updatedDate" optional="YES" attributeType="Date" syncable="YES"/>
         <attribute name="views" optional="YES" attributeType="Integer 32" defaultValueString="0" syncable="YES"/>
         <attribute name="wordCount" optional="YES" attributeType="Integer 32" defaultValueString="0" syncable="YES"/>
+        <relationship name="bookmarks" optional="YES" toMany="YES" deletionRule="Nullify" ordered="YES" destinationEntity="Bookmark" inverseName="story" inverseEntity="Bookmark" syncable="YES"/>
+        <relationship name="circles" optional="YES" toMany="YES" deletionRule="Nullify" ordered="YES" destinationEntity="Circle" inverseName="stories" inverseEntity="Circle" syncable="YES"/>
         <relationship name="contributions" optional="YES" toMany="YES" deletionRule="Nullify" ordered="YES" destinationEntity="Contribution" inverseName="story" inverseEntity="Contribution" syncable="YES"/>
+        <relationship name="feedbacks" optional="YES" toMany="YES" deletionRule="Nullify" ordered="YES" destinationEntity="Feedback" inverseName="story" inverseEntity="Feedback" syncable="YES"/>
         <relationship name="footnotes" optional="YES" toMany="YES" deletionRule="Nullify" ordered="YES" destinationEntity="Footnote" inverseName="story" inverseEntity="Footnote" syncable="YES"/>
+        <relationship name="notifications" optional="YES" toMany="YES" deletionRule="Nullify" ordered="YES" destinationEntity="Notification" inverseName="story" inverseEntity="Notification" syncable="YES"/>
         <relationship name="owner" optional="YES" maxCount="1" deletionRule="Nullify" destinationEntity="User" inverseName="ownedStory" inverseEntity="User" syncable="YES"/>
         <relationship name="photos" optional="YES" toMany="YES" deletionRule="Nullify" ordered="YES" destinationEntity="Photo" inverseName="story" inverseEntity="Photo" syncable="YES"/>
         <relationship name="tags" optional="YES" maxCount="1" deletionRule="Nullify" destinationEntity="Tag" inverseName="story" inverseEntity="Tag" syncable="YES"/>
-        <relationship name="users" optional="YES" toMany="YES" deletionRule="Nullify" destinationEntity="User" inverseName="stories" inverseEntity="User" syncable="YES"/>
+        <relationship name="users" optional="YES" toMany="YES" deletionRule="Nullify" ordered="YES" destinationEntity="User" inverseName="stories" inverseEntity="User" syncable="YES"/>
     </entity>
     <entity name="Tag" syncable="YES">
         <attribute name="identifier" optional="YES" attributeType="Integer 32" defaultValueString="0" syncable="YES"/>
@@ -62,14 +109,18 @@
         <relationship name="story" optional="YES" maxCount="1" deletionRule="Nullify" destinationEntity="Story" inverseName="tags" inverseEntity="Story" syncable="YES"/>
     </entity>
     <entity name="User" representedClassName="User" syncable="YES">
+        <attribute name="bio" optional="YES" attributeType="String" syncable="YES"/>
         <attribute name="contactCount" optional="YES" attributeType="Integer 16" defaultValueString="0" syncable="YES"/>
+        <attribute name="dayJob" optional="YES" attributeType="String" syncable="YES"/>
         <attribute name="email" optional="YES" attributeType="String" syncable="YES"/>
         <attribute name="firstName" optional="YES" attributeType="String" syncable="YES"/>
         <attribute name="identifier" optional="YES" attributeType="Integer 64" defaultValueString="0" syncable="YES"/>
         <attribute name="lastName" optional="YES" attributeType="String" syncable="YES"/>
         <attribute name="location" optional="YES" attributeType="String" syncable="YES"/>
+        <attribute name="nightJob" optional="YES" attributeType="String" syncable="YES"/>
         <attribute name="penName" optional="YES" attributeType="String" syncable="YES"/>
         <attribute name="picLarge" optional="YES" attributeType="String" syncable="YES"/>
+        <attribute name="picMedium" optional="YES" attributeType="String" syncable="YES"/>
         <attribute name="picSmall" optional="YES" attributeType="String" syncable="YES"/>
         <attribute name="picThumb" optional="YES" attributeType="String" syncable="YES"/>
         <attribute name="pushBookmarks" optional="YES" attributeType="Boolean" syncable="YES"/>
@@ -82,18 +133,28 @@
         <attribute name="pushSubscribe" optional="YES" attributeType="Boolean" syncable="YES"/>
         <attribute name="pushWeekly" optional="YES" attributeType="Boolean" syncable="YES"/>
         <attribute name="storyCount" optional="YES" attributeType="Integer 16" defaultValueString="0" syncable="YES"/>
+        <attribute name="subscribed" optional="YES" attributeType="Boolean" syncable="YES"/>
         <attribute name="thumbImage" optional="YES" attributeType="Transformable" syncable="YES"/>
+        <relationship name="circles" optional="YES" toMany="YES" deletionRule="Nullify" ordered="YES" destinationEntity="Circle" inverseName="members" inverseEntity="Circle" syncable="YES"/>
+        <relationship name="comments" optional="YES" toMany="YES" deletionRule="Nullify" ordered="YES" destinationEntity="Comment" inverseName="user" inverseEntity="Comment" syncable="YES"/>
         <relationship name="contributions" optional="YES" toMany="YES" deletionRule="Nullify" ordered="YES" destinationEntity="Contribution" inverseName="user" inverseEntity="Contribution" syncable="YES"/>
+        <relationship name="notifications" optional="YES" maxCount="1" deletionRule="Nullify" destinationEntity="Notification" inverseName="user" inverseEntity="Notification" syncable="YES"/>
         <relationship name="ownedStory" optional="YES" maxCount="1" deletionRule="Nullify" destinationEntity="Story" inverseName="owner" inverseEntity="Story" syncable="YES"/>
         <relationship name="photos" optional="YES" toMany="YES" deletionRule="Nullify" ordered="YES" destinationEntity="Photo" inverseName="user" inverseEntity="Photo" syncable="YES"/>
         <relationship name="stories" optional="YES" toMany="YES" deletionRule="Nullify" ordered="YES" destinationEntity="Story" inverseName="users" inverseEntity="Story" syncable="YES"/>
+        <relationship name="targetNotifications" optional="YES" maxCount="1" deletionRule="Nullify" destinationEntity="Notification" inverseName="targetUser" inverseEntity="Notification" syncable="YES"/>
     </entity>
     <elements>
-        <element name="Contribution" positionX="18" positionY="153" width="128" height="193"/>
+        <element name="Contribution" positionX="18" positionY="153" width="128" height="208"/>
         <element name="Footnote" positionX="36" positionY="90" width="128" height="88"/>
         <element name="Photo" positionX="27" positionY="162" width="128" height="193"/>
-        <element name="Story" positionX="18" positionY="81" width="128" height="418"/>
+        <element name="Story" positionX="18" positionY="81" width="128" height="478"/>
         <element name="Tag" positionX="36" positionY="171" width="128" height="88"/>
-        <element name="User" positionX="0" positionY="0" width="128" height="420"/>
+        <element name="User" positionX="0" positionY="0" width="128" height="553"/>
+        <element name="Feedback" positionX="27" positionY="162" width="128" height="103"/>
+        <element name="Comment" positionX="36" positionY="171" width="128" height="118"/>
+        <element name="Bookmark" positionX="54" positionY="180" width="128" height="103"/>
+        <element name="Notification" positionX="63" positionY="189" width="128" height="163"/>
+        <element name="Circle" positionX="72" positionY="198" width="128" height="208"/>
     </elements>
 </model>

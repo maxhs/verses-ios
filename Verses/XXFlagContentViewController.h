@@ -10,5 +10,5 @@
 
 @interface XXFlagContentViewController : UIViewController <UITableViewDataSource, UITableViewDelegate>
 @property (weak, nonatomic) IBOutlet UITableView *tableView;
-@property (strong, nonatomic) XXStory *story;
+@property (strong, nonatomic) Story *story;
 @end

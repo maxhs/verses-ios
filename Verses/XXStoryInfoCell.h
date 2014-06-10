@@ -7,12 +7,12 @@
 //
 
 #import <UIKit/UIKit.h>
-#import "XXStory.h"
+#import "Story+helper.h"
 
 @interface XXStoryInfoCell : UITableViewCell
 @property (weak, nonatomic) IBOutlet UILabel *storyTitle;
 @property (weak, nonatomic) IBOutlet UILabel *viewsLabel;
 @property (weak, nonatomic) IBOutlet UILabel *lastUpdatedAt;
 @property CGFloat cellHeight;
-- (void)configureForStory:(XXStory*)story;
+- (void)configureForStory:(Story*)story;
 @end

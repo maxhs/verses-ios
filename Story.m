@@ -33,10 +33,12 @@
 @dynamic footnotes;
 @dynamic owner;
 @dynamic users;
+@dynamic circles;
 @dynamic contributions;
 @dynamic photos;
 @dynamic tags;
 @dynamic attributedSnippet;
 @dynamic featured;
+@dynamic feedbacks;
 
 @end

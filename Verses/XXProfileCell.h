@@ -18,5 +18,5 @@
 @property (weak, nonatomic) IBOutlet UILabel *dayJobLabel;
 @property (weak, nonatomic) IBOutlet UILabel *nightJobLabel;
 @property (weak, nonatomic) IBOutlet UIButton *subscribeButton;
-- (void)configureForUser:(XXUser*)user;
+- (void)configureForUser:(User*)user;
 @end

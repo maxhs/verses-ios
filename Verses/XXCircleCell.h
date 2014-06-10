@@ -7,12 +7,12 @@
 //
 
 #import <UIKit/UIKit.h>
-#import "XXCircle.h"
+#import "Circle+helper.h"
 
 @interface XXCircleCell : UITableViewCell
 @property (weak, nonatomic) IBOutlet UILabel *circleName;
 @property (weak, nonatomic) IBOutlet UILabel *infoLabel;
 @property (weak, nonatomic) IBOutlet UIImageView *separatorView;
 @property (weak, nonatomic) IBOutlet UILabel *alertLabel;
-- (void)configureCell:(XXCircle*)circle withTextColor:(UIColor*)textColor;
+- (void)configureCell:(Circle*)circle withTextColor:(UIColor*)textColor;
 @end

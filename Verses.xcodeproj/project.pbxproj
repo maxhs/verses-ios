@@ -77,6 +77,16 @@
 		F227B63B19450C36007DE86F /* Photo.m in Sources */ = {isa = PBXBuildFile; fileRef = F227B63A19450C36007DE86F /* Photo.m */; };
 		F227B63E19450C45007DE86F /* Photo+helper.m in Sources */ = {isa = PBXBuildFile; fileRef = F227B63D19450C45007DE86F /* Photo+helper.m */; };
 		F227B64119450C6A007DE86F /* XXPhotoCollectionCell.m in Sources */ = {isa = PBXBuildFile; fileRef = F227B64019450C6A007DE86F /* XXPhotoCollectionCell.m */; };
+		F227B66F19478D02007DE86F /* Feedback.m in Sources */ = {isa = PBXBuildFile; fileRef = F227B66E19478D02007DE86F /* Feedback.m */; };
+		F227B67219478D02007DE86F /* Comment.m in Sources */ = {isa = PBXBuildFile; fileRef = F227B67119478D02007DE86F /* Comment.m */; };
+		F227B67519478D47007DE86F /* Feedback+helper.m in Sources */ = {isa = PBXBuildFile; fileRef = F227B67419478D47007DE86F /* Feedback+helper.m */; };
+		F227B6781947907D007DE86F /* Bookmark.m in Sources */ = {isa = PBXBuildFile; fileRef = F227B6771947907D007DE86F /* Bookmark.m */; };
+		F227B67B19479089007DE86F /* Bookmark+helper.m in Sources */ = {isa = PBXBuildFile; fileRef = F227B67A19479089007DE86F /* Bookmark+helper.m */; };
+		F227B67E19479805007DE86F /* Notification.m in Sources */ = {isa = PBXBuildFile; fileRef = F227B67D19479805007DE86F /* Notification.m */; };
+		F227B68419479812007DE86F /* Notification+helper.m in Sources */ = {isa = PBXBuildFile; fileRef = F227B68319479812007DE86F /* Notification+helper.m */; };
+		F227B68719479AB1007DE86F /* Circle+helper.m in Sources */ = {isa = PBXBuildFile; fileRef = F227B68619479AB1007DE86F /* Circle+helper.m */; };
+		F227B68A19479BC9007DE86F /* Circle.m in Sources */ = {isa = PBXBuildFile; fileRef = F227B68919479BC9007DE86F /* Circle.m */; };
+		F227B68D19479C2A007DE86F /* Comment+helper.m in Sources */ = {isa = PBXBuildFile; fileRef = F227B68C19479C2A007DE86F /* Comment+helper.m */; };
 		F231107A18DB63B90054062B /* Crashlytics.framework in Frameworks */ = {isa = PBXBuildFile; fileRef = F231107918DB63B90054062B /* Crashlytics.framework */; };
 		F231108618DF5BB40054062B /* QuartzCore.framework in Frameworks */ = {isa = PBXBuildFile; fileRef = F28976D61807B74800B9E8A5 /* QuartzCore.framework */; };
 		F231108818DF5BB90054062B /* Accelerate.framework in Frameworks */ = {isa = PBXBuildFile; fileRef = F231108718DF5BB90054062B /* Accelerate.framework */; };
@@ -436,6 +446,26 @@
 		F227B63D19450C45007DE86F /* Photo+helper.m */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.objc; path = "Photo+helper.m"; sourceTree = "<group>"; };
 		F227B63F19450C6A007DE86F /* XXPhotoCollectionCell.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = XXPhotoCollectionCell.h; sourceTree = "<group>"; };
 		F227B64019450C6A007DE86F /* XXPhotoCollectionCell.m */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.objc; path = XXPhotoCollectionCell.m; sourceTree = "<group>"; };
+		F227B66D19478D02007DE86F /* Feedback.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; name = Feedback.h; path = ../Feedback.h; sourceTree = "<group>"; };
+		F227B66E19478D02007DE86F /* Feedback.m */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.objc; name = Feedback.m; path = ../Feedback.m; sourceTree = "<group>"; };
+		F227B67019478D02007DE86F /* Comment.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; name = Comment.h; path = ../Comment.h; sourceTree = "<group>"; };
+		F227B67119478D02007DE86F /* Comment.m */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.objc; name = Comment.m; path = ../Comment.m; sourceTree = "<group>"; };
+		F227B67319478D47007DE86F /* Feedback+helper.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = "Feedback+helper.h"; sourceTree = "<group>"; };
+		F227B67419478D47007DE86F /* Feedback+helper.m */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.objc; path = "Feedback+helper.m"; sourceTree = "<group>"; };
+		F227B6761947907D007DE86F /* Bookmark.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; name = Bookmark.h; path = ../Bookmark.h; sourceTree = "<group>"; };
+		F227B6771947907D007DE86F /* Bookmark.m */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.objc; name = Bookmark.m; path = ../Bookmark.m; sourceTree = "<group>"; };
+		F227B67919479089007DE86F /* Bookmark+helper.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = "Bookmark+helper.h"; sourceTree = "<group>"; };
+		F227B67A19479089007DE86F /* Bookmark+helper.m */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.objc; path = "Bookmark+helper.m"; sourceTree = "<group>"; };
+		F227B67C19479805007DE86F /* Notification.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; name = Notification.h; path = ../Notification.h; sourceTree = "<group>"; };
+		F227B67D19479805007DE86F /* Notification.m */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.objc; name = Notification.m; path = ../Notification.m; sourceTree = "<group>"; };
+		F227B68219479812007DE86F /* Notification+helper.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = "Notification+helper.h"; sourceTree = "<group>"; };
+		F227B68319479812007DE86F /* Notification+helper.m */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.objc; path = "Notification+helper.m"; sourceTree = "<group>"; };
+		F227B68519479AB1007DE86F /* Circle+helper.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = "Circle+helper.h"; sourceTree = "<group>"; };
+		F227B68619479AB1007DE86F /* Circle+helper.m */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.objc; path = "Circle+helper.m"; sourceTree = "<group>"; };
+		F227B68819479BC9007DE86F /* Circle.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; name = Circle.h; path = ../Circle.h; sourceTree = "<group>"; };
+		F227B68919479BC9007DE86F /* Circle.m */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.objc; name = Circle.m; path = ../Circle.m; sourceTree = "<group>"; };
+		F227B68B19479C2A007DE86F /* Comment+helper.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = "Comment+helper.h"; sourceTree = "<group>"; };
+		F227B68C19479C2A007DE86F /* Comment+helper.m */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.objc; path = "Comment+helper.m"; sourceTree = "<group>"; };
 		F231107918DB63B90054062B /* Crashlytics.framework */ = {isa = PBXFileReference; lastKnownFileType = wrapper.framework; path = Crashlytics.framework; sourceTree = "<group>"; };
 		F231108718DF5BB90054062B /* Accelerate.framework */ = {isa = PBXFileReference; lastKnownFileType = wrapper.framework; name = Accelerate.framework; path = System/Library/Frameworks/Accelerate.framework; sourceTree = SDKROOT; };
 		F231108D18DF5E110054062B /* dark.png */ = {isa = PBXFileReference; lastKnownFileType = image.png; path = dark.png; sourceTree = "<group>"; };
@@ -1213,6 +1243,26 @@
 				F227B63A19450C36007DE86F /* Photo.m */,
 				F227B63C19450C45007DE86F /* Photo+helper.h */,
 				F227B63D19450C45007DE86F /* Photo+helper.m */,
+				F227B67019478D02007DE86F /* Comment.h */,
+				F227B67119478D02007DE86F /* Comment.m */,
+				F227B68B19479C2A007DE86F /* Comment+helper.h */,
+				F227B68C19479C2A007DE86F /* Comment+helper.m */,
+				F227B66D19478D02007DE86F /* Feedback.h */,
+				F227B66E19478D02007DE86F /* Feedback.m */,
+				F227B67319478D47007DE86F /* Feedback+helper.h */,
+				F227B67419478D47007DE86F /* Feedback+helper.m */,
+				F227B6761947907D007DE86F /* Bookmark.h */,
+				F227B6771947907D007DE86F /* Bookmark.m */,
+				F227B67919479089007DE86F /* Bookmark+helper.h */,
+				F227B67A19479089007DE86F /* Bookmark+helper.m */,
+				F227B68819479BC9007DE86F /* Circle.h */,
+				F227B68919479BC9007DE86F /* Circle.m */,
+				F227B68519479AB1007DE86F /* Circle+helper.h */,
+				F227B68619479AB1007DE86F /* Circle+helper.m */,
+				F227B67C19479805007DE86F /* Notification.h */,
+				F227B67D19479805007DE86F /* Notification.m */,
+				F227B68219479812007DE86F /* Notification+helper.h */,
+				F227B68319479812007DE86F /* Notification+helper.m */,
 				F2EA26E219140D5B00EEF2CC /* Footnote.h */,
 				F2EA26E319140D5B00EEF2CC /* Footnote.m */,
 				F2021B7C1802965C008B1BAE /* XXUser.h */,
@@ -1820,11 +1870,13 @@
 				F2BFE42218EA15CA002A27FE /* DACircularProgressView.m in Sources */,
 				F279DA1118D628A900E0DB8B /* XXTextStorage.m in Sources */,
 				F23D50C718E8A0E80050D219 /* XXCircleDetailViewController.m in Sources */,
+				F227B68D19479C2A007DE86F /* Comment+helper.m in Sources */,
 				F29F26A71902F20000B283D8 /* UIFontDescriptor+CrimsonText.m in Sources */,
 				F21F6ED219329D1F003BC323 /* XXNewUserWalkthroughViewController.m in Sources */,
 				F2BFE43018EA15CA002A27FE /* PSTGridLayoutRow.m in Sources */,
 				F227B63B19450C36007DE86F /* Photo.m in Sources */,
 				F29F269519017AD700B283D8 /* XXChatCell.m in Sources */,
+				F227B68419479812007DE86F /* Notification+helper.m in Sources */,
 				F28C782618E2B0440088B4C9 /* XXSettingsCell.m in Sources */,
 				F279DA6118D67A0D00E0DB8B /* XXFeedbackViewController.m in Sources */,
 				F2BFE3D518EA14F3002A27FE /* MWPhoto.m in Sources */,
@@ -1837,6 +1889,7 @@
 				F28976E61808FFBA00B9E8A5 /* XXStoryCell.m in Sources */,
 				F279DA2918D6343E00E0DB8B /* XXCircleCell.m in Sources */,
 				F279DA7518D7551C00E0DB8B /* XXComment.m in Sources */,
+				F227B68A19479BC9007DE86F /* Circle.m in Sources */,
 				F29F26A21901AB7500B283D8 /* XXCircleDetailsCell.m in Sources */,
 				F26F95381906E80B0022F968 /* XXCircleNotificationCell.m in Sources */,
 				F2021B7B18029626008B1BAE /* XXLoginController.m in Sources */,
@@ -1852,10 +1905,13 @@
 				F2BFE3D318EA14F3002A27FE /* MWGridCell.m in Sources */,
 				F2E41F111943A9F9006C7583 /* Story.m in Sources */,
 				F285E97718E7600D008FFEC1 /* XXPhotoButton.m in Sources */,
+				F227B67219478D02007DE86F /* Comment.m in Sources */,
 				F28C782B18E3866A0088B4C9 /* XXBookmarkCell.m in Sources */,
+				F227B6781947907D007DE86F /* Bookmark.m in Sources */,
 				F29F26AA1903364B00B283D8 /* UIFontDescriptor+SourceSansPro.m in Sources */,
 				F2BFE3D618EA14F3002A27FE /* MWPhotoBrowser.m in Sources */,
 				F29224791827BB4C00BEB9EF /* XXStoryViewController.m in Sources */,
+				F227B67B19479089007DE86F /* Bookmark+helper.m in Sources */,
 				F28976E31808EC0000B9E8A5 /* XXProgress.m in Sources */,
 				F231109618DF715D0054062B /* XXMenuCell.m in Sources */,
 				F2139D431938E85400EE5C96 /* XXFlagContentViewController.m in Sources */,
@@ -1892,6 +1948,7 @@
 				F2BFE42B18EA15CA002A27FE /* PSTCollectionViewItemKey.m in Sources */,
 				F2BFE3D918EA14F3002A27FE /* MWZoomingScrollView.m in Sources */,
 				F2BFE42E18EA15CA002A27FE /* PSTGridLayoutInfo.m in Sources */,
+				F227B67519478D47007DE86F /* Feedback+helper.m in Sources */,
 				F279DA2218D6335100E0DB8B /* XXPortfolioCell.m in Sources */,
 				F2BFE3D818EA14F3002A27FE /* MWTapDetectingView.m in Sources */,
 				F2BFE43118EA15CA002A27FE /* PSTGridLayoutSection.m in Sources */,
@@ -1903,6 +1960,7 @@
 				F292247C18282C0100BEB9EF /* XXSettingsViewController.m in Sources */,
 				F2BFE42618EA15CA002A27FE /* PSTCollectionView.m in Sources */,
 				F260FD8318D3C87A00D7C645 /* XXDraftsViewController.m in Sources */,
+				F227B67E19479805007DE86F /* Notification.m in Sources */,
 				F2E41F0819439600006C7583 /* User+helper.m in Sources */,
 				F28BF53F190988E700392471 /* XXWritingTitleCell.m in Sources */,
 				F231109318DF6B280054062B /* UIImage+ImageEffects.m in Sources */,
@@ -1912,6 +1970,7 @@
 				F2BFE42D18EA15CA002A27FE /* PSTCollectionViewUpdateItem.m in Sources */,
 				F2BFE3D218EA14F3002A27FE /* MWCaptionView.m in Sources */,
 				F29224BD18286B0200BEB9EF /* XXWritingCell.m in Sources */,
+				F227B66F19478D02007DE86F /* Feedback.m in Sources */,
 				F28976EF180901E000B9E8A5 /* Utilities.m in Sources */,
 				F2F2F17518BBED9A00840F31 /* XXStoryBodyCell.m in Sources */,
 				F28BF53C190977C600392471 /* XXLoginNavController.m in Sources */,
@@ -1920,6 +1979,7 @@
 				F279DA6D18D6C0A700E0DB8B /* XXFeedbackCell.m in Sources */,
 				F29224181827A46D00BEB9EF /* XXUserNameCell.m in Sources */,
 				F227B64119450C6A007DE86F /* XXPhotoCollectionCell.m in Sources */,
+				F227B68719479AB1007DE86F /* Circle+helper.m in Sources */,
 				F29224CD1828AAC000BEB9EF /* XXNotification.m in Sources */,
 				F2021B471802908C008B1BAE /* main.m in Sources */,
 				F2BFE42718EA15CA002A27FE /* PSTCollectionViewCell.m in Sources */,

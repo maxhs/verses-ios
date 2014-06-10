@@ -8,7 +8,7 @@
 
 #import "XXBookmarksViewController.h"
 #import "XXBookmarkCell.h"
-#import "XXBookmark.h"
+#import "Bookmark+helper.h"
 #import "XXStoryViewController.h"
 
 @interface XXBookmarksViewController () <UIAlertViewDelegate> {
@@ -174,9 +174,8 @@
     
     if ([segue.identifier isEqualToString:@"Read"]){
         XXStoryViewController *storyVC = [segue destinationViewController];
-        XXStory *story = [(XXBookmark*)[_bookmarks objectAtIndex:indexPath.row] story];
+        Story *story = [(Bookmark*)[_bookmarks objectAtIndex:indexPath.row] story];
         [storyVC setStory:story];
-        [storyVC setStories:delegate.stories];
         [ProgressHUD show:@"Fetching story..."];
         if ([[NSUserDefaults standardUserDefaults] boolForKey:kDarkBackground]){
             [UIView animateWithDuration:.23 animations:^{

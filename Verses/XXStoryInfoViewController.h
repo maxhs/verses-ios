@@ -15,7 +15,7 @@
 @interface XXStoryInfoViewController : UIViewController <UITableViewDataSource, UITableViewDelegate>
 
 @property (weak, nonatomic) IBOutlet UITableView *tableView;
-@property (strong, nonatomic) XXStory *story;
+@property (strong, nonatomic) Story *story;
 @property (nonatomic, weak) MSDynamicsDrawerViewController *dynamicsDrawerViewController;
 @property (strong, nonatomic) UIPopoverController *popover;
 @end

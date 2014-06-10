@@ -51,8 +51,11 @@
         NSTimeInterval _interval = [[dictionary objectForKey:@"published_date"] doubleValue];
         self.published = [NSDate dateWithTimeIntervalSince1970:_interval];
     }
-    if ([dictionary objectForKey:@"authors"] && [dictionary objectForKey:@"authors"] != [NSNull null]) {
+    if ([dictionary objectForKey:@"authors"] != [NSNull null]) {
         self.authorNames = [dictionary objectForKey:@"authors"];
+    }
+    if ([dictionary objectForKey:@"to_param"] != [NSNull null]) {
+        self.storyUrl = [NSString stringWithFormat:@"%@/stories/%@",kBaseUrl,[dictionary objectForKey:@"to_param"]];
     }
     if ([dictionary objectForKey:@"owner"] && [dictionary objectForKey:@"owner"] != [NSNull null]) {
         User *owner = [User MR_findFirstByAttribute:@"identifier" withValue:[[dictionary objectForKey:@"owner"] objectForKey:@"id"]];
@@ -61,6 +64,25 @@
         }
         [owner populateFromDict:[dictionary objectForKey:@"owner"]];
         self.owner = owner;
+    }
+    if ([dictionary objectForKey:@"users"] != [NSNull null]) {
+        NSMutableOrderedSet *orderedUsers = [NSMutableOrderedSet orderedSet];
+        NSLog(@"users: %@",[dictionary objectForKey:@"users"]);
+        for (NSDictionary *dict in [dictionary objectForKey:@"users"]){
+            User *user = [User MR_findFirstByAttribute:@"identifier" withValue:[dict objectForKey:@"id"]];
+            if (!user){
+                user = [User MR_createInContext:[NSManagedObjectContext MR_defaultContext]];
+            }
+            [user populateFromDict:dict];
+            [orderedUsers addObject:user];
+            
+        }
+        for (User *user in self.photos){
+            if (![orderedUsers containsObject:user]){
+                [user MR_deleteInContext:[NSManagedObjectContext MR_defaultContext]];
+            }
+        }
+        self.users = orderedUsers;
     }
     if ([dictionary objectForKey:@"photos"] && [dictionary objectForKey:@"photos"] != [NSNull null]) {
         NSMutableOrderedSet *orderedPhotos = [NSMutableOrderedSet orderedSet];
@@ -122,5 +144,42 @@
         self.attributedSnippet = [stringBuilder generatedAttributedString];
     }
 }
+
+- (void)addContribution:(Contribution*)contribution{
+    NSMutableOrderedSet *contributionSet = [NSMutableOrderedSet orderedSetWithOrderedSet:self.contributions];
+    [contributionSet addObject:contribution];
+    self.contributions = contributionSet;
+}
+
+- (void)removeContribution:(Contribution*)contribution{
+    NSMutableOrderedSet *contributionSet = [NSMutableOrderedSet orderedSetWithOrderedSet:self.contributions];
+    [contributionSet removeObject:contribution];
+    self.contributions = contributionSet;
+}
+
+- (void)replaceFeedback:(Feedback*)newFeedback{
+    NSMutableOrderedSet *orderedFeedbacks = [NSMutableOrderedSet orderedSetWithOrderedSet:self.feedbacks];
+    [self.feedbacks enumerateObjectsUsingBlock:^(Feedback *feedback, NSUInteger idx, BOOL *stop) {
+        if ([feedback.identifier isEqualToNumber:newFeedback.identifier]){
+            [orderedFeedbacks replaceObjectAtIndex:idx withObject:newFeedback];
+            self.feedbacks = orderedFeedbacks;
+            *stop = YES;
+        }
+    }];
+}
+
+- (void)addFeedback:(Feedback*)feedback{
+    NSMutableOrderedSet *set = [[NSMutableOrderedSet alloc] initWithOrderedSet:self.feedbacks];
+    [set addObject:feedback];
+    self.feedbacks = set;
+}
+
+- (void)removeFeedback:(Feedback*)feedback{
+    NSMutableOrderedSet *set = [[NSMutableOrderedSet alloc] initWithOrderedSet:self.feedbacks];
+    [set removeObject:feedback];
+    self.feedbacks = set;
+}
+
+
 @end
 

@@ -29,8 +29,6 @@
 
 @interface XXStoriesViewController () <UIScrollViewDelegate, SWTableViewCellDelegate, XXSegmentedControlDelegate, UIViewControllerTransitioningDelegate>{
     AFHTTPRequestOperationManager *manager;
-    XXStory *story1;
-    XXStory *story2;
     CGFloat width;
     CGFloat height;
     CGFloat lastY;
@@ -45,7 +43,6 @@
     XXAppDelegate *delegate;
     NSDateFormatter *_formatter;
     UIColor *textColor;
-    XXSegmentedControl *_browseControl;
     NSMutableArray *_sharedStories;
     NSMutableArray *_trendingStories;
     NSMutableArray *_featuredStories;
@@ -598,7 +595,7 @@
 }
 
 - (void)storyScrollViewTouched:(UITapGestureRecognizer*)tapGesture {
-    XXStory *story = nil;
+    Story *story = nil;
     if (_featured && _featuredStories.count > tapGesture.view.tag){
         story = [_featuredStories objectAtIndex:tapGesture.view.tag];
     } else if (_shared && _sharedStories.count > tapGesture.view.tag){
@@ -624,7 +621,7 @@
     [super prepareForSegue:segue sender:sender];
     if ([segue.identifier isEqualToString:@"Story"]) {
         if ([sender isKindOfClass:[NSIndexPath class]]) {
-            XXStory *story;
+            Story *story;
             if (_featured){
                 story = [_featuredStories objectAtIndex:[(NSIndexPath*)sender row]];
             } else if (_shared){
@@ -637,11 +634,9 @@
             
             XXStoryViewController *vc = [segue destinationViewController];
             [vc setStory:story];
-            [vc setStories:_stories];
-        } else if ([sender isKindOfClass:[XXStory class]]){
+        } else if ([sender isKindOfClass:[Story class]]){
             XXStoryViewController *vc = [segue destinationViewController];
-            [vc setStory:(XXStory*)sender];
-            [vc setStories:_stories];
+            [vc setStory:(Story*)sender];
         }
         
         [UIView animateWithDuration:.25 animations:^{
@@ -652,7 +647,7 @@
 }
 
 - (void)flagStory:(UIButton*)button {
-    XXStory *story = [_stories objectAtIndex:button.tag];
+    Story *story = [_stories objectAtIndex:button.tag];
     NSLog(@"should be flagging story: %@",story.title);
     XXFlagContentViewController *flagVC = [[self storyboard] instantiateViewControllerWithIdentifier:@"Flag"];
     [flagVC setStory:story];
@@ -664,7 +659,7 @@
 
 - (void)storyFlagged:(NSNotification*)notification {
     NSLog(@"story flagged");
-    XXStory *story = [notification.userInfo objectForKey:@"story"];
+    Story *story = [notification.userInfo objectForKey:@"story"];
     if ([_stories containsObject:story]){
         NSIndexPath *indexPath = [NSIndexPath indexPathForRow:[_stories indexOfObject:story] inSection:0];
         [_stories removeObject:story];

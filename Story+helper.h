@@ -7,7 +7,14 @@
 //
 
 #import "Story.h"
+#import "Contribution+helper.h"
+#import "Feedback+helper.h"
 
 @interface Story (helper)
 - (void)populateFromDict:(NSDictionary*)dict;
+- (void)addContribution:(Contribution*)contribution;
+- (void)removeContribution:(Contribution*)contribution;
+- (void)replaceFeedback:(Feedback*)feedback;
+- (void)addFeedback:(Feedback*)feedback;
+- (void)removeFeedback:(Feedback*)feedback;
 @end

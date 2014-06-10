@@ -7,7 +7,7 @@
 //
 
 #import <UIKit/UIKit.h>
-#import "XXContribution.h"
+#import "Contribution+helper.h"
 
 @protocol TextViewDelegate <UITextViewDelegate>
 
@@ -24,7 +24,7 @@
 @property (strong, nonatomic) UIButton *boldButton;
 @property (strong, nonatomic) UIButton *italicsButton;
 @property (strong, nonatomic) UIButton *underlineButton;
-@property (strong, nonatomic) XXContribution *contribution;
+@property (strong, nonatomic) Contribution *contribution;
 @property BOOL keyboardEnabled;
 @property BOOL feedbackEnabled;
 - (void)setupButtons;

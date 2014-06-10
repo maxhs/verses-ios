@@ -7,7 +7,7 @@
 //
 
 #import <UIKit/UIKit.h>
-#import "XXStory.h"
+#import "Story+helper.h"
 #import "XXContribution.h"
 #import "XXUser.h"
 #import "User.h"
@@ -19,10 +19,9 @@
 @property (strong, nonatomic) UILabel *titleLabel;
 @property (strong, nonatomic) UILabel *authorsLabel;
 @property (strong, nonatomic) XXPhotoButton *imageButton;
-@property (strong, nonatomic) XXStory *story;
+@property (strong, nonatomic) Story *story;
 @property (strong, nonatomic) NSNumber *storyId;
-@property (strong, nonatomic) NSMutableArray *stories;
 @property (weak, nonatomic) MSDynamicsDrawerViewController *dynamicsViewController;
 @property (strong, nonatomic) UIImageView *backgroundImageView;
-- (void)resetWithStory:(XXStory*)newStory;
+- (void)resetWithStory:(Story*)newStory;
 @end

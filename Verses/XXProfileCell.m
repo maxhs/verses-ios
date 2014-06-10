@@ -35,7 +35,7 @@
     // Configure the view for the selected state
 }
 
-- (void)configureForUser:(XXUser*)user {
+- (void)configureForUser:(User*)user {
     if (user.location.length){
         [_locationLabel setFont:[UIFont fontWithName:kCrimsonItalic size:18]];
         [_locationLabel setText:user.location];
@@ -63,7 +63,7 @@
     if ([[[NSUserDefaults standardUserDefaults] objectForKey:kUserDefaultsId] isEqualToNumber:user.identifier]){
         [_subscribeButton setHidden:YES];
     } else {
-        if (user.subscribed){
+        if ([user.subscribed isEqualToNumber:[NSNumber numberWithBool:YES]]){
             [_subscribeButton setTitle:@"Unsubscribe" forState:UIControlStateNormal];
             [_subscribeButton addTarget:self action:@selector(unsubscribe:) forControlEvents:UIControlEventTouchUpInside];
         } else {
@@ -81,9 +81,9 @@
     
     NSString *urlString;
     if (IDIOM == IPAD){
-        urlString = user.picLargeUrl;
+        urlString = user.picLarge;
     } else {
-        urlString = user.picMediumUrl;
+        urlString = user.picMedium;
     }
     if (urlString.length){
         [_imageButton setImageWithURL:[NSURL URLWithString:urlString] forState:UIControlStateNormal completed:^(UIImage *image, NSError *error, SDImageCacheType cacheType) {

@@ -16,6 +16,9 @@
 @property (nonatomic, retain) NSString * email;
 @property (nonatomic, retain) NSNumber * identifier;
 @property (nonatomic, retain) NSString * location;
+@property (nonatomic, retain) NSString * bio;
+@property (nonatomic, retain) NSString * dayJob;
+@property (nonatomic, retain) NSString * nightJob;
 @property (nonatomic, retain) NSString * penName;
 @property (nonatomic, retain) NSString * picSmall;
 @property (nonatomic, retain) NSString * picThumb;
@@ -29,8 +32,10 @@
 @property (nonatomic, retain) NSNumber * pushSubscribe;
 @property (nonatomic, retain) NSNumber * pushWeekly;
 @property (nonatomic, retain) NSNumber * pushFeedbacks;
+@property (nonatomic, retain) NSNumber * subscribed;
 @property (nonatomic, retain) id thumbImage;
 @property (nonatomic, retain) NSString * picLarge;
+@property (nonatomic, retain) NSString * picMedium;
 @property (nonatomic, retain) NSString * firstName;
 @property (nonatomic, retain) NSString * lastName;
 @property (nonatomic, retain) NSManagedObject *ownedStory;

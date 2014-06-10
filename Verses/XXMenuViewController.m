@@ -10,7 +10,9 @@
 #import "XXLoginController.h"
 #import "SWRevealViewController/SWRevealViewController.h"
 #import "XXUserNameCell.h"
-#import "User.h"
+#import "User+helper.h"
+#import "Notification+helper.h"
+#import "Circle+helper.h"
 #import "XXStoryViewController.h"
 #import "XXSettingsViewController.h"
 #import "XXNotificationCell.h"
@@ -511,7 +513,7 @@
     if (searching) {
         if (_filteredResults.count){
             [self.view endEditing:YES];
-            XXStory *story;
+            Story *story;
             if (_filteredResults.count && searching && self.searchBar.text){
                 story = [_filteredResults objectAtIndex:indexPath.row];
             } else if (_searchResults.count) {
@@ -520,7 +522,6 @@
             XXStoryViewController *vc = [[self storyboard] instantiateViewControllerWithIdentifier:@"Story"];
             if (story && story.identifier){
                 [ProgressHUD show:@"Fetching story..."];
-                [vc setStories:[(XXAppDelegate*)[UIApplication sharedApplication].delegate stories]];
                 [vc setStory:story];
                 UINavigationController *nav = [[UINavigationController alloc] initWithRootViewController:vc];
                 [dynamicsViewController setPaneViewController:nav animated:YES completion:nil];
@@ -554,14 +555,11 @@
                     break;
             }
         } else if (indexPath.section == 1){
-            XXNotification *notification = [notifications objectAtIndex:indexPath.row];
-            if (notification.storyId){
+            Notification *notification = [notifications objectAtIndex:indexPath.row];
+            if (notification.story.identifier){
                 XXStoryViewController *vc = [[self storyboard] instantiateViewControllerWithIdentifier:@"Story"];
                 [ProgressHUD show:@"Fetching story..."];
-                [vc setStories:[(XXAppDelegate*)[UIApplication sharedApplication].delegate stories]];
-                XXStory *storyObject = [[XXStory alloc] init];
-                storyObject.identifier = notification.storyId;
-                [vc setStory:storyObject];
+                [vc setStoryId:notification.story.identifier];
                 UINavigationController *nav = [[UINavigationController alloc] initWithRootViewController:vc];
                 [dynamicsViewController setPaneViewController:nav animated:YES completion:nil];
             } else if (notification.circle.identifier){
@@ -661,7 +659,6 @@
     [self filterContentForSearchText:newText scope:nil];
     return YES;
 }
-
 
 - (BOOL)tableView:(UITableView *)tableView canEditRowAtIndexPath:(NSIndexPath *)indexPath {
     if (indexPath.section == 1){

@@ -9,12 +9,13 @@
 #import <UIKit/UIKit.h>
 #import "XXStoriesViewController.h"
 #import "XXTextView.h"
+#import "Story+helper.h"
 
 @interface XXWriteViewController : UIViewController <UIScrollViewDelegate, UITextFieldDelegate, UITextViewDelegate>
 
 @property (weak, nonatomic) IBOutlet UIScrollView *scrollView;
 @property (weak, nonatomic) IBOutlet UITextField *titleTextField;
-@property (strong, nonatomic) XXStory *story;
+@property (strong, nonatomic) Story *story;
 @property (weak, nonatomic) IBOutlet UIView *optionsContainerView;
 @property (weak, nonatomic) IBOutlet UISwitch *privateSwitch;
 @property (weak, nonatomic) IBOutlet UILabel *privateLabel;
