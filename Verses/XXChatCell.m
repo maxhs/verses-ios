@@ -90,7 +90,7 @@ static int minimumHeight = 30;
     return self;
 }
 
-- (void)drawCell:(XXComment *)comment withTextColor:(UIColor *)textColor{
+- (void)drawCell:(Comment *)comment withTextColor:(UIColor *)textColor{
     _textSize = comment.rectSize;
     _textLabel.text = comment.body;
     CGFloat height = self.contentView.bounds.size.height - 10;
@@ -131,8 +131,8 @@ static int minimumHeight = 30;
         }
     }
     
-    if (comment.user.picSmallUrl) {
-        [_imageButton setImageWithURL:[NSURL URLWithString:comment.user.picSmallUrl] forState:UIControlStateNormal];
+    if (comment.user.picSmall) {
+        [_imageButton setImageWithURL:[NSURL URLWithString:comment.user.picSmall] forState:UIControlStateNormal];
         [_imageButton.imageView setBackgroundColor:[UIColor clearColor]];
         _imageButton.layer.borderColor = [UIColor colorWithWhite:0 alpha:0].CGColor;
         _imageButton.layer.borderWidth = 0.f;

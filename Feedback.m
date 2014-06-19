@@ -16,5 +16,7 @@
 @dynamic snippet;
 @dynamic story;
 @dynamic comments;
+@dynamic user;
+@dynamic recipient;
 
 @end

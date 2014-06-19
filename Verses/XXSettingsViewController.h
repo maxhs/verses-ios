@@ -8,7 +8,7 @@
 
 #import <UIKit/UIKit.h>
 #import "MSDynamicsDrawerViewController/MSDynamicsDrawerViewController.h"
-#import "XXUser.h"
+#import "User.h"
 
 @interface XXSettingsViewController : UIViewController <UITableViewDataSource, UITableViewDelegate>
 

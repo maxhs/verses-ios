@@ -17,4 +17,6 @@
 - (void)replaceFeedback:(Feedback*)feedback;
 - (void)addFeedback:(Feedback*)feedback;
 - (void)removeFeedback:(Feedback*)feedback;
+- (void)addPhoto:(Photo*)photo;
+- (void)removePhoto:(Photo*)photo;
 @end

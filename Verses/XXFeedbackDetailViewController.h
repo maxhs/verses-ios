@@ -7,9 +7,9 @@
 //
 
 #import "XXFeedbackViewController.h"
-#import "XXFeedback.h"
+#import "Feedback.h"
 
 @interface XXFeedbackDetailViewController : UIViewController <UITableViewDelegate,UITableViewDataSource>
 @property (weak, nonatomic) IBOutlet UITableView *tableView;
-@property (strong, nonatomic) XXFeedback *feedback;
+@property (strong, nonatomic) Feedback *feedback;
 @end

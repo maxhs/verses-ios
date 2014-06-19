@@ -7,11 +7,11 @@
 //
 
 #import <UIKit/UIKit.h>
-#import "XXStory.h"
+#import "Story.h"
 
 @interface XXDraftCell : UITableViewCell
 @property (weak, nonatomic) IBOutlet UILabel *titleLabel;
 @property (weak, nonatomic) IBOutlet UILabel *lastUpdatedLabel;
 @property (weak, nonatomic) IBOutlet UILabel *wordCountLabel;
-- (void)configure:(XXStory*)story;
+- (void)configure:(Story*)story;
 @end

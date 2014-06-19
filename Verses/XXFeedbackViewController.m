@@ -8,7 +8,7 @@
 
 #import "XXFeedbackViewController.h"
 #import "XXFeedbackCell.h"
-#import "XXFeedback.h"
+#import "Feedback.h"
 #import "XXFeedbackDetailViewController.h"
 
 @interface XXFeedbackViewController () {
@@ -62,7 +62,14 @@
     loading = YES;
     [manager GET:[NSString stringWithFormat:@"%@/feedbacks",kAPIBaseUrl] parameters:@{@"user_id":[[NSUserDefaults standardUserDefaults] objectForKey:kUserDefaultsId]} success:^(AFHTTPRequestOperation *operation, id responseObject) {
         NSLog(@"success fetching feedback: %@",responseObject);
-        _feedbacks = [[Utilities feedbacksFromJSONArray:[responseObject objectForKey:@"feedbacks"]] mutableCopy];
+        for (NSDictionary *feedbackDict in [responseObject objectForKey:@"feedbacks"]){
+            Feedback *feedback = [Feedback MR_findFirstByAttribute:@"identifier" withValue:[feedbackDict objectForKey:@"id"]];
+            if (!feedback){
+                feedback = [Feedback MR_createInContext:[NSManagedObjectContext MR_defaultContext]];
+            }
+            [feedback populateFromDict:feedbackDict];
+        }
+        
         loading = NO;
         [self.tableView reloadData];
     } failure:^(AFHTTPRequestOperation *operation, NSError *error) {
@@ -100,7 +107,7 @@
         if (cell == nil) {
             cell = [[[NSBundle mainBundle] loadNibNamed:@"XXFeedbackCell" owner:nil options:nil] lastObject];
         }
-        XXFeedback *feedback = [_feedbacks objectAtIndex:indexPath.row];
+        Feedback *feedback = [_feedbacks objectAtIndex:indexPath.row];
         [cell configure:feedback textColor:[UIColor blackColor]];
         return cell;
     } else {
@@ -122,7 +129,7 @@
 
 - (CGFloat)tableView:(UITableView *)tableView heightForRowAtIndexPath:(NSIndexPath *)indexPath {
     if (_feedbacks.count && !loading){
-        XXFeedback *feedback = [_feedbacks objectAtIndex:indexPath.row];
+        Feedback *feedback = [_feedbacks objectAtIndex:indexPath.row];
         if (feedback.snippet.length){
             return 150;
         } else {

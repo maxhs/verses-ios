@@ -57,9 +57,9 @@
                     [delegate.windowBackground setContentMode:UIViewContentModeScaleAspectFill];
                     UIImage *blurred;
                     if (IDIOM == IPAD){
-                        blurred = [image applyBlurWithRadius:39 blurType:BOXFILTER tintColor:[UIColor colorWithWhite:0 alpha:.53] saturationDeltaFactor:1.8 maskImage:nil];
+                        blurred = [image applyBlurWithRadius:31 blurType:BOXFILTER tintColor:[UIColor colorWithWhite:0 alpha:.43] saturationDeltaFactor:1.8 maskImage:nil];
                     } else {
-                        blurred = [image applyBlurWithRadius:39 blurType:BOXFILTER tintColor:[UIColor colorWithWhite:0 alpha:.43] saturationDeltaFactor:1.8 maskImage:nil];
+                        blurred = [image applyBlurWithRadius:39 blurType:BOXFILTER tintColor:[UIColor colorWithWhite:.2 alpha:.37] saturationDeltaFactor:1.8 maskImage:nil];
                     }
                     dispatch_async(dispatch_get_main_queue(), ^{
                         CATransition *transition = [CATransition animation];

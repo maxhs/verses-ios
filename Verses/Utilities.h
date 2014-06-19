@@ -23,14 +23,4 @@ typedef NS_ENUM(NSUInteger, MSPaneViewControllerType) {
 @interface Utilities : NSObject
 
 + (UIImageView *)findNavShadow:(UIView *)view;
-+ (NSArray *)storiesFromJSONArray:(NSMutableArray *) array;
-+ (NSArray *)contributionsFromJSONArray:(NSMutableArray *) array;
-+ (NSArray *)tagsFromJSONArray:(NSMutableArray *) array;
-+ (NSArray *)photosFromJSONArray:(NSMutableArray *) array;
-+ (NSArray *)notificationsFromJSONArray:(NSMutableArray *) array;
-+ (NSArray *)circlesFromJSONArray:(NSMutableArray *) array;
-+ (NSArray *)usersFromJSONArray:(NSMutableArray *) array;
-+ (NSArray *)feedbacksFromJSONArray:(NSMutableArray *) array;
-+ (NSArray *)commentsFromJSONArray:(NSMutableArray *) array;
-+ (NSArray *)bookmarksFromJSONArray:(NSMutableArray *) array;
 @end

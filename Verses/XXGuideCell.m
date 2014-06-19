@@ -42,7 +42,7 @@
 - (void)setSmallAndHidden:(UIButton*)button {
     CGFloat opacity = 1 - fabs(MIN(width*.625,width/2)/width*.625);
     button.alpha = opacity;
-    button.transform = CGAffineTransformMakeScale(1 - fabs(MIN(width,width/2)/width), 1 - fabs(MIN(width,width/2)/width));
+    button.transform = CGAffineTransformMakeScale(1 - fabs(MIN(width,width/2)/width*1.3), 1 - fabs(MIN(width,width/2)/width*1.1));
 }
 
 - (void)scrollViewDidScroll:(UIScrollView *)scrollView {
@@ -57,7 +57,7 @@
             CGFloat distanceFromCenterScreen = fabs(button.center.x - scrollView.frame.size.width/2 - scrollView.contentOffset.x);
             CGFloat opacity = 1 - fabs(MIN(width*.625,distanceFromCenterScreen)/width*.625);
             button.alpha = opacity;
-            button.transform = CGAffineTransformMakeScale(1 - fabs(MIN(width,distanceFromCenterScreen)/width), 1 - fabs(MIN(width,distanceFromCenterScreen)/width));
+            button.transform = CGAffineTransformMakeScale(1 - fabs(MIN(width,distanceFromCenterScreen)/width*1.3), 1 - fabs(MIN(width,distanceFromCenterScreen)/width*1.1));
         }
     }
 }

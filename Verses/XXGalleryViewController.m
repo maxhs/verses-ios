@@ -41,6 +41,8 @@
 - (void)viewDidLoad
 {
     [super viewDidLoad];
+    self.automaticallyAdjustsScrollViewInsets = NO;
+
     if (UIInterfaceOrientationIsPortrait(self.interfaceOrientation)){
         width = screenWidth();
         height = screenHeight();
@@ -51,7 +53,6 @@
     [self.navigationController setNavigationBarHidden:YES];
     manager = [(XXAppDelegate*)[UIApplication sharedApplication].delegate manager];
     photos = [Photo MR_findAllSortedBy:@"createdDate" ascending:NO];
-    [self loadGallery];
     menuButton = [UIButton buttonWithType:UIButtonTypeCustom];
     [menuButton setImage:[UIImage imageNamed:@"moreWhite"] forState:UIControlStateNormal];
     [menuButton addTarget:self action:@selector(back) forControlEvents:UIControlEventTouchUpInside];
@@ -61,16 +62,25 @@
     sortButton = [UIButton buttonWithType:UIButtonTypeCustom];
     [sortButton setTitle:@"Sort" forState:UIControlStateNormal];
     [sortButton.titleLabel setFont:[UIFont fontWithName:kSourceSansProRegular size:16]];
+    [_captionButton.titleLabel setFont:[UIFont fontWithName:kSourceSansProRegular size:15]];
+    [_captionButton addTarget:self action:@selector(goToStory:) forControlEvents:UIControlEventTouchUpInside];
     [sortButton addTarget:self action:@selector(sort) forControlEvents:UIControlEventTouchUpInside];
     [sortButton setFrame:CGRectMake(0, 0, 44, 44)];
     //[self.view addSubview:sortButton];
     
+    [self loadGallery];
     cancelButton = [UIButton buttonWithType:UIButtonTypeCustom];
     [cancelButton setImage:[UIImage imageNamed:@"whiteX"] forState:UIControlStateNormal];
     [cancelButton addTarget:self action:@selector(unfocus) forControlEvents:UIControlEventTouchUpInside];
     [cancelButton setFrame:CGRectMake(width-44, 0, 44, 44)];
     [cancelButton setHidden:YES];
     [self.view addSubview:cancelButton];
+}
+
+- (void)viewWillAppear:(BOOL)animated {
+    [super viewWillAppear:animated];
+    [[UIApplication sharedApplication] setStatusBarHidden:YES withAnimation:UIStatusBarAnimationFade];
+    [self.navigationController setNavigationBarHidden:YES animated:YES];
 }
 
 - (void)sort {
@@ -87,11 +97,16 @@
                     photo = [Photo MR_createInContext:[NSManagedObjectContext MR_defaultContext]];
                 }
                 [photo populateFromDict:dict];
+                if (!photo.contribution){
+                    NSLog(@"Photo removed becuase it did not have a contribution relationship.");
+                    [photo MR_deleteInContext:[NSManagedObjectContext MR_defaultContext]];
+                }
             }
         }
-        photos = [Photo MR_findAllSortedBy:@"createdDate" ascending:NO];
-        [self.collectionView reloadData];
-        [self saveContext];
+        [[NSManagedObjectContext MR_defaultContext] MR_saveToPersistentStoreWithCompletion:^(BOOL success, NSError *error) {
+            photos = [Photo MR_findAllSortedBy:@"createdDate" ascending:NO];
+            [self.collectionView reloadData];
+        }];
     } failure:^(AFHTTPRequestOperation *operation, NSError *error) {
         NSLog(@"Error fetching gallery: %@",error.description);
     }];
@@ -116,7 +131,7 @@
 - (UICollectionViewCell *)collectionView:(UICollectionView *)cv cellForItemAtIndexPath:(NSIndexPath *)indexPath {
     XXPhotoCollectionCell *cell = [cv dequeueReusableCellWithReuseIdentifier:@"PhotoCell" forIndexPath:indexPath];
     Photo *photo = photos[indexPath.row];
-    [cell.photoButton setTag:[photos indexOfObject:photo]];
+    [cell.photoButton setTag:indexPath.row];
     [cell configureForPhoto:photo];
     [cell.photoButton setUserInteractionEnabled:NO];
     return cell;
@@ -125,7 +140,13 @@
 #pragma mark - UICollectionViewDelegate
 - (void)collectionView:(UICollectionView *)collectionView didSelectItemAtIndexPath:(NSIndexPath *)indexPath
 {
+    [self unfocus];
     selectedCell = (XXPhotoCollectionCell*)[collectionView cellForItemAtIndexPath:indexPath];
+    if (selectedCell.photo.story.title.length){
+        [_captionButton setTitle:[NSString stringWithFormat:@"\"%@\"",selectedCell.photo.story.title] forState:UIControlStateNormal];
+        [_captionButton setTag:indexPath.row];
+    }
+    
     [collectionView bringSubviewToFront:selectedCell];
     [self dimCollectionBackground];
     originalPhotoFrame = selectedCell.frame;
@@ -134,15 +155,20 @@
     photoFrame.origin.y = (height/2)-(width/2);
     photoFrame.size.width = width;
     photoFrame.size.height = width;
+    
     [UIView animateWithDuration:.77 delay:0 usingSpringWithDamping:.87 initialSpringVelocity:.0001 options:UIViewAnimationOptionCurveEaseInOut animations:^{
         [selectedCell setFrame:photoFrame];
+        [_captionButton setAlpha:1.0];
     } completion:^(BOOL finished) {
+        [_captionButton setUserInteractionEnabled:YES];
     }];
 }
+
 - (void)collectionView:(UICollectionView *)collectionView didDeselectItemAtIndexPath:(NSIndexPath *)indexPath {
     [self deselectCell];
     [self unfocus];
 }
+
 - (void)willAnimateRotationToInterfaceOrientation:(UIInterfaceOrientation)toInterfaceOrientation duration:(NSTimeInterval)duration {
     if (UIInterfaceOrientationIsPortrait(toInterfaceOrientation)){
         width = screenWidth();
@@ -155,6 +181,7 @@
 }
 
 - (void)dimCollectionBackground {
+    [_captionButton setHidden:NO];
     [UIView animateWithDuration:.33 animations:^{
         for (NSIndexPath *indexPath in _collectionView.indexPathsForVisibleItems){
             XXPhotoCollectionCell *cell = (XXPhotoCollectionCell*)[_collectionView cellForItemAtIndexPath:indexPath];
@@ -171,8 +198,9 @@
 - (void)deselectCell {
     [UIView animateWithDuration:.4 delay:0 usingSpringWithDamping:.87 initialSpringVelocity:.0001 options:UIViewAnimationOptionCurveEaseInOut animations:^{
         [selectedCell setFrame:originalPhotoFrame];
+        [_captionButton setAlpha:0.0];
     } completion:^(BOOL finished) {
-
+        [_captionButton setUserInteractionEnabled:NO];
     }];
 }
 
@@ -186,12 +214,26 @@
     }completion:^(BOOL finished) {
         [menuButton setHidden:NO];
         [cancelButton setHidden:YES];
+        
     }];
+}
+
+- (void)goToStory:(UIButton*) button{
+    Photo *photo = photos[button.tag];
+    NSLog(@"should be goign to story; %@",photo.story.title);
+    XXStoryViewController *vc = [[self storyboard] instantiateViewControllerWithIdentifier:@"Story"];
+    [vc setStory:photo.story];
+    [self.navigationController pushViewController:vc animated:YES];
 }
 
 #pragma mark – UICollectionViewDelegateFlowLayout
 - (CGSize)collectionView:(UICollectionView *)collectionView layout:(UICollectionViewLayout*)collectionViewLayout sizeForItemAtIndexPath:(NSIndexPath *)indexPath {
-    return CGSizeMake(screenWidth()/4,screenWidth()/4);
+    if (IDIOM == IPAD){
+        return CGSizeMake(screenWidth()/4,screenWidth()/4);
+    } else {
+        return CGSizeMake(screenWidth()/3,screenWidth()/3);
+    }
+    
 }
 
 - (UIEdgeInsets)collectionView:(UICollectionView *)collectionView layout:(UICollectionViewLayout*)collectionViewLayout insetForSectionAtIndex:(NSInteger)section {

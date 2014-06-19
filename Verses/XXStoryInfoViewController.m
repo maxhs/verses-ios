@@ -14,8 +14,9 @@
 #import "XXStoryViewController.h"
 #import "XXWriteViewController.h"
 #import "XXLoginController.h"
+#import "XXNoRotateNavController.h"
 #import "XXProfileViewController.h"
-
+#import "Feedback+helper.h"
 
 @interface XXStoryInfoViewController () <UITextViewDelegate, UIAlertViewDelegate, UIPopoverControllerDelegate> {
     AFHTTPRequestOperationManager *manager;
@@ -142,8 +143,8 @@
         if (cell == nil) {
             cell = [[[NSBundle mainBundle] loadNibNamed:@"XXCommentCell" owner:nil options:nil] lastObject];
         }
-        XXFeedback *feedback = [_story.feedbacks objectAtIndex:indexPath.section-3];
-        XXComment *comment = [feedback.comments objectAtIndex:indexPath.row];
+        Feedback *feedback = [_story.feedbacks objectAtIndex:indexPath.section-3];
+        Comment *comment = [feedback.comments objectAtIndex:indexPath.row];
         [cell configureComment:comment];
         [cell.timestampLabel setText:[NSString stringWithFormat:@"- %@  |  %@",comment.user.penName,[_formatter stringFromDate:comment.createdDate]]];
         return cell;
@@ -152,7 +153,12 @@
 
 - (CGFloat)tableView:(UITableView *)tableView heightForHeaderInSection:(NSInteger)section {
     if (section > 2){
-        return 34;
+        Feedback *feedback = [_story.feedbacks objectAtIndex:section-3];
+        if (feedback.comments.count){
+            return 34;
+        } else {
+            return 0;
+        }
     } else {
         return 0;
     }
@@ -168,7 +174,7 @@
         } else {
             [headerLabel setFont:[UIFont fontWithName:kSourceSansProLight size:15]];
         }
-        XXFeedback *feedback = [_story.feedbacks objectAtIndex:section-3];
+        Feedback *feedback = [_story.feedbacks objectAtIndex:section-3];
         [headerLabel setText:[NSString stringWithFormat:@"FROM:  %@",feedback.user.penName.uppercaseString]];
         [headerLabel setTextAlignment:NSTextAlignmentCenter];
         headerLabel.autoresizingMask = UIViewAutoresizingFlexibleWidth;
@@ -189,20 +195,26 @@
         [parameters setObject:feedbackTextView.text forKey:@"feedback"];
         [manager POST:[NSString stringWithFormat:@"%@/feedbacks",kAPIBaseUrl] parameters:parameters success:^(AFHTTPRequestOperation *operation, id responseObject) {
             NSLog(@"Success sending feedback: %@",responseObject);
-            //XXFeedback *newFeedback = [[XXFeedback alloc] initWithDictionary:];
-            /*[_story.feedbacks enumerateObjectsUsingBlock:^(XXFeedback *feedback, NSUInteger idx, BOOL *stop) {
-                if ([feedback.identifier isEqualToNumber:newFeedback.identifier]){
-                    [_story replaceFeedback:newFeedback];
-                    //[self.tableView reloadSections:[NSIndexSet indexSetWithIndexesInRange:NSMakeRange(3, 1)] withRowAnimation:UITableViewRowAnimationFade];
+            Feedback *feedback = [Feedback MR_findFirstByAttribute:@"identifier" withValue:[[responseObject objectForKey:@"feedback"] objectForKey:@"id"]];
+            if (!feedback){
+                feedback = [Feedback MR_createInContext:[NSManagedObjectContext MR_defaultContext]];
+            }
+            [feedback populateFromDict:[responseObject objectForKey:@"feedback"]];
+            
+            BOOL new = YES;
+            for (Feedback *f in _story.feedbacks) {
+                if ([f.identifier isEqualToNumber:feedback.identifier]){
+                    [_story replaceFeedback:feedback];
+                    new = NO;
                     [self.tableView reloadData];
-                    *stop = YES;
-                } else {
-                    _story.feedbacks = [NSMutableArray array];
-                    [_story.feedbacks addObject:newFeedback];
-                    *stop = YES;
+                    break;
                 }
-            }];*/
-    
+            }
+            if (new){
+                [_story addFeedback:feedback];
+                [self.tableView reloadData];
+            }
+            
             [ProgressHUD dismiss];
             
         } failure:^(AFHTTPRequestOperation *operation, NSError *error) {
@@ -388,7 +400,8 @@
 - (void)alertView:(UIAlertView *)alertView clickedButtonAtIndex:(NSInteger)buttonIndex {
     if ([[alertView buttonTitleAtIndex:buttonIndex] isEqualToString:@"Login"]){
         XXLoginController *login = [[self storyboard] instantiateViewControllerWithIdentifier:@"Login"];
-        [self presentViewController:login animated:YES completion:^{
+        XXNoRotateNavController *nav = [[XXNoRotateNavController alloc] initWithRootViewController:login];
+        [self presentViewController:nav animated:YES completion:^{
             
         }];
     } else if ([[alertView buttonTitleAtIndex:buttonIndex] isEqualToString:@"Delete"]){
@@ -397,11 +410,11 @@
 }
 
 - (void)deleteComment {
-    XXFeedback *feedback = [_story.feedbacks objectAtIndex:indexPathForDeletion.section-3];
-    XXComment *comment = [feedback.comments objectAtIndex:indexPathForDeletion.row];
+    Feedback *feedback = [_story.feedbacks objectAtIndex:indexPathForDeletion.section-3];
+    Comment *comment = [feedback.comments objectAtIndex:indexPathForDeletion.row];
     [manager DELETE:[NSString stringWithFormat:@"%@/comments/%@",kAPIBaseUrl,comment.identifier] parameters:nil success:^(AFHTTPRequestOperation *operation, id responseObject) {
         //NSLog(@"Success deleting comment: %@",responseObject);
-        [feedback.comments removeObject:comment];
+        [feedback removeComment:comment];
         [self.tableView deleteRowsAtIndexPaths:@[indexPathForDeletion] withRowAnimation:UITableViewRowAnimationFade];
     } failure:^(AFHTTPRequestOperation *operation, NSError *error) {
         NSLog(@"Error deleting comment: %@",error.description);
@@ -411,8 +424,8 @@
 
 - (BOOL)tableView:(UITableView *)tableView canEditRowAtIndexPath:(NSIndexPath *)indexPath {
     if (indexPath.section == 3){
-        XXFeedback *feedback = [_story.feedbacks objectAtIndex:indexPath.section-3];
-        XXComment *comment = [feedback.comments objectAtIndex:indexPath.row];
+        Feedback *feedback = [_story.feedbacks objectAtIndex:indexPath.section-3];
+        Comment *comment = [feedback.comments objectAtIndex:indexPath.row];
         if (signedIn && comment.user.identifier && [[[NSUserDefaults standardUserDefaults] objectForKey:kUserDefaultsId] isEqualToNumber:comment.user.identifier]){
             return YES;
         }

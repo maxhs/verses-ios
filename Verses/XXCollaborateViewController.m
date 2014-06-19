@@ -8,7 +8,7 @@
 
 #import "XXCollaborateViewController.h"
 #import "XXContactCell.h"
-#import "XXCircle.h"
+#import "Circle+helper.h"
 #import "XXAlert.h"
 
 @interface XXCollaborateViewController () {
@@ -24,6 +24,7 @@
     UIColor *textColor;
     UIImageView *navBarShadowView;
     UIBarButtonItem *addButton;
+    User *currentUser;
 }
 
 @end
@@ -37,6 +38,9 @@
     [super viewDidLoad];
     screen = [UIScreen mainScreen].bounds;
     manager = [(XXAppDelegate*)[UIApplication sharedApplication].delegate manager];
+    currentUser = [(XXAppDelegate*)[UIApplication sharedApplication].delegate currentUser];
+    _contacts = currentUser.contacts.array.mutableCopy;
+    _circles = currentUser.circles.array.mutableCopy;
     
     if (self.navigationController.viewControllers.firstObject == self){
         cancelButton = [[UIBarButtonItem alloc] initWithImage:[UIImage imageNamed:@"blackX"] style:UIBarButtonItemStylePlain target:self action:@selector(dismissView)];
@@ -51,12 +55,12 @@
         [self loadContacts];
     } else {
         self.navigationItem.rightBarButtonItem = nil;
+        _contacts = currentUser.contacts.array.mutableCopy;
         [self loadContacts];
+        _circles = currentUser.circles.array.mutableCopy;
         [self loadCircles];
     }
     
-    _collaborators = [NSMutableArray array];
-    _circleCollaborators = [NSMutableArray array];
     [self.tableView setSeparatorColor:[UIColor colorWithWhite:0 alpha:.05]];
     navBarShadowView = [Utilities findNavShadow:self.navigationController.navigationBar];
 }
@@ -79,10 +83,35 @@
     [ProgressHUD show:@"Finding your contacts..."];
     loadingContacts = YES;
     [manager GET:[NSString stringWithFormat:@"%@/users/%@/contacts",kAPIBaseUrl,[[NSUserDefaults standardUserDefaults] objectForKey:kUserDefaultsId]] parameters:nil success:^(AFHTTPRequestOperation *operation, id responseObject) {
-        _contacts = [[Utilities usersFromJSONArray:[responseObject objectForKey:@"users"]] mutableCopy];
         //NSLog(@"success getting user's contacts: %@",[responseObject objectForKey:@"users"]);
+        NSMutableOrderedSet *contactSet = [NSMutableOrderedSet orderedSet];
+        for (NSDictionary *userDict in [responseObject objectForKey:@"users"]){
+            User *user = [User MR_findFirstByAttribute:@"identifier" withValue:[userDict objectForKey:@"id"]];
+            if (!user){
+                user = [User MR_createInContext:[NSManagedObjectContext MR_defaultContext]];
+            }
+            [user populateFromDict:userDict];
+            [contactSet addObject:user];
+        }
+        for (User *user in currentUser.contacts){
+            if (![contactSet containsObject:user]){
+                NSLog(@"Deleting a contact that no longer exists: %@",user.penName);
+                [user MR_deleteInContext:[NSManagedObjectContext MR_defaultContext]];
+            }
+        }
+        
+        currentUser.contacts = contactSet;
+        _contacts = contactSet.array.mutableCopy;
         loadingContacts = NO;
-        [self.tableView reloadData];
+        
+        if (_manageContacts){
+            [self.tableView reloadData];
+        } else {
+            [self.tableView beginUpdates];
+            [self.tableView reloadSections:[NSIndexSet indexSetWithIndex:1] withRowAnimation:UITableViewRowAnimationFade];
+            [self.tableView endUpdates];
+        }
+        
     } failure:^(AFHTTPRequestOperation *operation, NSError *error) {
         loadingContacts = NO;
         NSLog(@"error getting user's contacts: %@",error.description);
@@ -92,13 +121,30 @@
 - (void)loadCircles {
     loadingCircles = YES;
     [manager GET:[NSString stringWithFormat:@"%@/circles",kAPIBaseUrl] parameters:@{@"user_id":[[NSUserDefaults standardUserDefaults] objectForKey:kUserDefaultsId]} success:^(AFHTTPRequestOperation *operation, id responseObject) {
-        //NSLog(@"success getting circles: %@",responseObject);
-        _circles = [[Utilities circlesFromJSONArray:[responseObject objectForKey:@"circles"]] mutableCopy];
+        //NSLog(@"success fetching circles: %@",responseObject);
+        NSMutableOrderedSet *circleSet = [NSMutableOrderedSet orderedSet];
+        for (NSDictionary *circleDict in [responseObject objectForKey:@"circles"]){
+            Circle *circle = [Circle MR_findFirstByAttribute:@"identifier" withValue:[circleDict objectForKey:@"id"]];
+            if (!circle){
+                circle = [Circle MR_createInContext:[NSManagedObjectContext MR_defaultContext]];
+            }
+            [circle populateFromDict:circleDict];
+            [circleSet addObject:circle];
+        }
+        for (Circle *circle in currentUser.circles){
+            if (![circleSet containsObject:circle]){
+                NSLog(@"Deleting a circle that no longer exists: %@",circle.name);
+                [circle MR_deleteInContext:[NSManagedObjectContext MR_defaultContext]];
+            }
+        }
+        currentUser.circles = circleSet;
+        _circles = circleSet.array.mutableCopy;
         loadingCircles = NO;
-        [self.tableView reloadData];
+        [self.tableView reloadSections:[NSIndexSet indexSetWithIndex:0] withRowAnimation:UITableViewRowAnimationFade];
     } failure:^(AFHTTPRequestOperation *operation, NSError *error) {
+        NSLog(@"Failure getting circles: %@",error.description);
         loadingCircles = NO;
-        NSLog(@"error getting user's circles: %@",error.description);
+        [ProgressHUD dismiss];
     }];
 }
 
@@ -111,10 +157,10 @@
 
 - (NSInteger)numberOfSectionsInTableView:(UITableView *)tableView
 {
-    if (self.manageContacts && loadingContacts){
+    if (_manageContacts && loadingContacts){
         return 0;
     } else {
-        if (self.manageContacts){
+        if (_manageContacts){
             return 1;
         } else {
             return 2;
@@ -153,7 +199,7 @@
             if (cell == nil) {
                 cell = [[[NSBundle mainBundle] loadNibNamed:@"XXContactCell" owner:nil options:nil] lastObject];
             }
-            XXCircle *circle = [_circles objectAtIndex:indexPath.row];
+            Circle *circle = [_circles objectAtIndex:indexPath.row];
             [cell configureCircle:circle];
             [cell.locationLabel setTextColor:textColor];
             [cell.nameLabel setTextColor:textColor];
@@ -187,7 +233,7 @@
             if (cell == nil) {
                 cell = [[[NSBundle mainBundle] loadNibNamed:@"XXContactCell" owner:nil options:nil] lastObject];
             }
-            XXUser *contact = [_contacts objectAtIndex:indexPath.row];
+            User *contact = [_contacts objectAtIndex:indexPath.row];
             [cell configureContact:contact];
             [cell.locationLabel setTextColor:textColor];
             [cell.nameLabel setTextColor:textColor];
@@ -255,7 +301,7 @@
     }
     
     [headerLabel setTextAlignment:NSTextAlignmentCenter];
-    if (!self.manageContacts){
+    if (!_manageContacts){
         switch (section) {
             case 0:
                 [headerLabel setText:@"CIRCLES"];
@@ -280,21 +326,21 @@
 - (void)tableView:(UITableView *)tableView didSelectRowAtIndexPath:(NSIndexPath *)indexPath {
     if (!self.manageContacts){
         if (indexPath.section == 0){
-            XXCircle *circle= [_circles objectAtIndex:indexPath.row];
+            Circle *circle= [_circles objectAtIndex:indexPath.row];
             if ([_circleCollaborators containsObject:circle.identifier]){
                 [_circleCollaborators removeObject:circle.identifier];
             } else {
                 [_circleCollaborators addObject:circle.identifier];
             }
         } else {
-            XXUser *contact = [_contacts objectAtIndex:indexPath.row];
+            User *contact = [_contacts objectAtIndex:indexPath.row];
             if ([_collaborators containsObject:contact.identifier]){
                 [_collaborators removeObject:contact.identifier];
             } else {
                 [_collaborators addObject:contact.identifier];
             }
         }
-        [self.tableView reloadData];
+        [self.tableView reloadRowsAtIndexPaths:@[indexPath] withRowAnimation:UITableViewRowAnimationFade];
     }
     [tableView deselectRowAtIndexPath:indexPath animated:YES];
 }
@@ -328,7 +374,11 @@
         [manager POST:[NSString stringWithFormat:@"%@/users/%@/add_contact",kAPIBaseUrl,[[NSUserDefaults standardUserDefaults] objectForKey:kUserDefaultsId]] parameters:@{@"email":email} success:^(AFHTTPRequestOperation *operation, id responseObject) {
             //NSLog(@"Successfully created contact: %@",responseObject);
             if ([responseObject objectForKey:@"user"]){
-                XXUser *newContact = [[XXUser alloc] initWithDictionary:[responseObject objectForKey:@"user"]];
+                User *newContact = [User MR_findFirstByAttribute:@"identifier" withValue:[[responseObject objectForKey:@"user"] objectForKey:@"id"]];
+                if (!newContact){
+                    newContact = [User MR_createInContext:[NSManagedObjectContext MR_defaultContext]];
+                }
+                [newContact populateFromDict:[responseObject objectForKey:@"user"]];
                 [_contacts insertObject:newContact atIndex:0];
                 if (newContact && _contacts.count > 1)[self.tableView insertRowsAtIndexPaths:@[[NSIndexPath indexPathForRow:0 inSection:0]] withRowAnimation:UITableViewRowAnimationTop];
                 else [self.tableView reloadSections:[NSIndexSet indexSetWithIndex:0] withRowAnimation:UITableViewRowAnimationFade];
@@ -349,9 +399,11 @@
 }
 
 - (void)removeContact {
-    XXUser *removeContact = [_contacts objectAtIndex:indexPathToRemove.row];
+    User *removeContact = [_contacts objectAtIndex:indexPathToRemove.row];
     [manager DELETE:[NSString stringWithFormat:@"%@/users/%@/remove_contact",kAPIBaseUrl,removeContact.identifier] parameters:@{@"user_id":[[NSUserDefaults standardUserDefaults] objectForKey:kUserDefaultsId]} success:^(AFHTTPRequestOperation *operation, id responseObject) {
         //NSLog(@"successfully removed contact: %@",responseObject);
+        [currentUser removeContact:removeContact];
+        [removeContact MR_deleteInContext:[NSManagedObjectContext MR_defaultContext]];
         [_contacts removeObject:removeContact];
         if (_contacts.count){
             [self.tableView deleteRowsAtIndexPaths:@[indexPathToRemove] withRowAnimation:UITableViewRowAnimationFade];
@@ -395,8 +447,14 @@
 
 - (void)viewWillDisappear:(BOOL)animated {
     [super viewWillDisappear:animated];
-    [[NSNotificationCenter defaultCenter] postNotificationName:@"Collaborators" object:nil userInfo:@{@"collaborators":_collaborators}];
-    [[NSNotificationCenter defaultCenter] postNotificationName:@"CircleCollaborators" object:nil userInfo:@{@"circleCollaborators":_circleCollaborators}];
+    if (!_manageContacts){
+        if (_collaborators){
+            [[NSNotificationCenter defaultCenter] postNotificationName:@"Collaborators" object:nil userInfo:@{@"collaborators":_collaborators}];
+        }
+        if (_circleCollaborators){
+            [[NSNotificationCenter defaultCenter] postNotificationName:@"CircleCollaborators" object:nil userInfo:@{@"circleCollaborators":_circleCollaborators}];
+        }
+    }
 }
 
 

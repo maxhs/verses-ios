@@ -12,7 +12,6 @@
 #import "XXStoryViewController.h"
 
 @interface XXBookmarksViewController () <UIAlertViewDelegate> {
-    NSMutableArray *_bookmarks;
     AFHTTPRequestOperationManager *manager;
     NSDateFormatter *_formatter;
     UIBarButtonItem *backButton;
@@ -21,6 +20,7 @@
     BOOL loading;
     UIColor *textColor;
     UIImageView *navBarShadowView;
+    User *currentUser;
 }
 
 @end
@@ -37,9 +37,14 @@
     [_formatter setTimeStyle:NSDateFormatterShortStyle];
     self.reloadTheme = NO;
     delegate = (XXAppDelegate*)[UIApplication sharedApplication].delegate;
+    if (delegate.currentUser){
+        currentUser = delegate.currentUser;
+    } else {
+        currentUser = [User MR_findFirstByAttribute:@"identifier" withValue:[[NSUserDefaults standardUserDefaults] objectForKey:kUserDefaultsId]];
+    }
+    
     manager = delegate.manager;
     [delegate.dynamicsDrawerViewController registerTouchForwardingClass:[XXBookmarkCell class]];
-    [self loadBookmarks];
     navBarShadowView = [Utilities findNavShadow:self.navigationController.navigationBar];
 }
 
@@ -56,6 +61,7 @@
 
 - (void)viewWillAppear:(BOOL)animated {
     [super viewWillAppear:animated];
+    [self loadBookmarks];
     [[UIApplication sharedApplication] setStatusBarHidden:NO withAnimation:UIStatusBarAnimationFade];
     [delegate.dynamicsDrawerViewController setPaneDragRevealEnabled:NO forDirection:MSDynamicsDrawerDirectionRight];
     if ([[NSUserDefaults standardUserDefaults] boolForKey:kDarkBackground]){
@@ -77,9 +83,7 @@
     navBarShadowView.hidden = YES;
     
     if (self.reloadTheme){
-        NSLog(@"should be resetting theme for bookmarks vc: %@",textColor);
         loading = NO;
-        [self.tableView reloadData];
     }
 }
 
@@ -87,10 +91,27 @@
     loading = YES;
     [manager GET:[NSString stringWithFormat:@"%@/bookmarks",kAPIBaseUrl] parameters:@{@"user_id":[[NSUserDefaults standardUserDefaults]objectForKey:kUserDefaultsId]} success:^(AFHTTPRequestOperation *operation, id responseObject) {
         //NSLog(@"success getting bookmarks: %@",responseObject);
-        _bookmarks = [[Utilities bookmarksFromJSONArray:[responseObject objectForKey:@"bookmarks"]] mutableCopy];
-        loading = NO;
-        [self.tableView reloadData];
-        [ProgressHUD dismiss];
+        NSMutableOrderedSet *bookmarkSet = [NSMutableOrderedSet orderedSet];
+        for (NSDictionary *bookmarkDict in [responseObject objectForKey:@"bookmarks"]){
+            Bookmark *bookmark = [Bookmark MR_findFirstByAttribute:@"identifier" withValue:[bookmarkDict objectForKey:@"id"]];
+            if (!bookmark){
+                bookmark = [Bookmark MR_createInContext:[NSManagedObjectContext MR_defaultContext]];
+            }
+            [bookmark populateFromDict:bookmarkDict];
+            [currentUser addBookmark:bookmark];
+            [bookmarkSet addObject:bookmark];
+        }
+        for (Bookmark *bookmark in currentUser.bookmarks){
+            if (![bookmarkSet containsObject:bookmark]){
+                NSLog(@"Deleting a bookmark that no longer exists: %@",bookmark.story.title);
+                [bookmark MR_deleteInContext:[NSManagedObjectContext MR_defaultContext]];
+            }
+        }
+        [[NSManagedObjectContext MR_defaultContext] MR_saveToPersistentStoreWithCompletion:^(BOOL success, NSError *error) {
+            loading = NO;
+            [self.tableView reloadData];
+            [ProgressHUD dismiss];
+        }];
     } failure:^(AFHTTPRequestOperation *operation, NSError *error) {
         NSLog(@"Failure getting bookmarks; %@",error.description);
         [ProgressHUD dismiss];
@@ -106,22 +127,22 @@
 
 - (NSInteger)tableView:(UITableView *)tableView numberOfRowsInSection:(NSInteger)section
 {
-    if (_bookmarks.count == 0 && !loading){
+    if (currentUser.bookmarks.count == 0 && !loading){
         return 1;
     } else {
-        return _bookmarks.count;
+        return currentUser.bookmarks.count;
     }
 }
 
 
 - (UITableViewCell *)tableView:(UITableView *)tableView cellForRowAtIndexPath:(NSIndexPath *)indexPath
 {
-    if (_bookmarks.count){
+    if (currentUser.bookmarks.count){
         XXBookmarkCell *cell = (XXBookmarkCell *)[tableView dequeueReusableCellWithIdentifier:@"BookmarkCell"];
         if (cell == nil) {
             cell = [[[NSBundle mainBundle] loadNibNamed:@"XXBookmarkCell" owner:nil options:nil] lastObject];
         }
-        XXBookmark *bookmark = [_bookmarks objectAtIndex:indexPath.row];
+        Bookmark *bookmark = [currentUser.bookmarks objectAtIndex:indexPath.row];
         [cell configureBookmark:bookmark];
         [cell.createdLabel setText:[_formatter stringFromDate:bookmark.createdDate]];
         [cell.createdLabel setTextColor:textColor];
@@ -157,7 +178,7 @@
 }
 
 - (CGFloat)tableView:(UITableView *)tableView heightForRowAtIndexPath:(NSIndexPath *)indexPath {
-    if (_bookmarks.count && !loading){
+    if (currentUser.bookmarks.count && !loading){
         return 80;
     } else {
         return screenHeight()-64;
@@ -174,7 +195,7 @@
     
     if ([segue.identifier isEqualToString:@"Read"]){
         XXStoryViewController *storyVC = [segue destinationViewController];
-        Story *story = [(Bookmark*)[_bookmarks objectAtIndex:indexPath.row] story];
+        Story *story = [(Bookmark*)[currentUser.bookmarks objectAtIndex:indexPath.row] story];
         [storyVC setStory:story];
         [ProgressHUD show:@"Fetching story..."];
         if ([[NSUserDefaults standardUserDefaults] boolForKey:kDarkBackground]){
@@ -214,11 +235,12 @@
 
 - (void)deleteBookmark {
     if (indexPathForDeletion){
-        XXBookmark *bookmark = [_bookmarks objectAtIndex:indexPathForDeletion.row];
+        Bookmark *bookmark = [currentUser.bookmarks objectAtIndex:indexPathForDeletion.row];
         [manager DELETE:[NSString stringWithFormat:@"%@/bookmarks/%@",kAPIBaseUrl,bookmark.identifier] parameters:@{@"story_id":bookmark.story.identifier,@"user_id":[[NSUserDefaults standardUserDefaults] objectForKey:kUserDefaultsId]} success:^(AFHTTPRequestOperation *operation, id responseObject) {
             NSLog(@"Success deleting bookmark: %@",responseObject);
-            [_bookmarks removeObject:bookmark];
-            if (_bookmarks.count == 0){
+            [currentUser removeBookmark:bookmark];
+            [bookmark MR_deleteInContext:[NSManagedObjectContext MR_defaultContext]];
+            if (currentUser.bookmarks.count == 0){
                 [self.tableView reloadData];
             } else {
                 [self.tableView deleteRowsAtIndexPaths:@[indexPathForDeletion] withRowAnimation:UITableViewRowAnimationFade];
@@ -236,31 +258,14 @@
         [self deleteBookmark];
     }
 }
-/*
-// Override to support rearranging the table view.
-- (void)tableView:(UITableView *)tableView moveRowAtIndexPath:(NSIndexPath *)fromIndexPath toIndexPath:(NSIndexPath *)toIndexPath
-{
+- (void)viewWillDisappear:(BOOL)animated {
+    [super viewWillDisappear:animated];
+    [self saveContext];
 }
-*/
 
-/*
-// Override to support conditional rearranging of the table view.
-- (BOOL)tableView:(UITableView *)tableView canMoveRowAtIndexPath:(NSIndexPath *)indexPath
-{
-    // Return NO if you do not want the item to be re-orderable.
-    return YES;
+- (void)saveContext {
+    [[NSManagedObjectContext MR_defaultContext] MR_saveToPersistentStoreWithCompletion:^(BOOL success, NSError *error) {
+        NSLog(@"Saving bookmarks: %u",success);
+    }];
 }
-*/
-
-/*
-#pragma mark - Navigation
-
-// In a storyboard-based application, you will often want to do a little preparation before navigation
-- (void)prepareForSegue:(UIStoryboardSegue *)segue sender:(id)sender
-{
-    // Get the new view controller using [segue destinationViewController].
-    // Pass the selected object to the new view controller.
-}
-*/
-
 @end

@@ -31,11 +31,11 @@
     // Configure the view for the selected state
 }
 
--(void)configure:(XXUser*)user {
+-(void)configure:(User*)user {
     [_textField setFont:[UIFont fontWithName:kSourceSansProRegular size:15]];
     [_imageLabel setFont:[UIFont fontWithName:kSourceSansProRegular size:15]];
     if (user){
-        if (user.picSmallUrl || user.userImage){
+        if (user.picSmall || user.thumbImage){
             [_imageLabel setText:@"Change your profile photo"];
             _imageButton.imageView.layer.cornerRadius = self.imageButton.frame.size.height/2;
             _imageButton.imageView.layer.backgroundColor = [UIColor clearColor].CGColor;

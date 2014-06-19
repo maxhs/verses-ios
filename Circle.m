@@ -2,29 +2,27 @@
 //  Circle.m
 //  Verses
 //
-//  Created by Max Haines-Stiles on 6/10/14.
+//  Created by Max Haines-Stiles on 6/15/14.
 //  Copyright (c) 2014 Verses. All rights reserved.
 //
 
 #import "Circle.h"
-#import "Comment.h"
-#import "Notification.h"
-#import "Story.h"
-#import "User.h"
-
 
 @implementation Circle
 
-@dynamic identifier;
-@dynamic name;
 @dynamic blurb;
-@dynamic fresh;
 @dynamic createdDate;
+@dynamic fresh;
+@dynamic identifier;
 @dynamic members;
-@dynamic notifications;
-@dynamic stories;
-@dynamic comments;
+@dynamic name;
+@dynamic publicCircle;
 @dynamic titles;
 @dynamic unreadCommentCount;
+@dynamic comments;
+@dynamic notifications;
+@dynamic stories;
+@dynamic users;
+@dynamic owner;
 
 @end

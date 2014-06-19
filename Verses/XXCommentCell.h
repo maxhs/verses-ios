@@ -7,7 +7,7 @@
 //
 
 #import <UIKit/UIKit.h>
-#import "XXComment.h"
+#import "Comment.h"
 
 @interface XXCommentCell : UITableViewCell
 @property (weak, nonatomic) IBOutlet UILabel *userLabel;
@@ -15,5 +15,5 @@
 @property (weak, nonatomic) IBOutlet UILabel *commentLabel;
 @property (weak, nonatomic) IBOutlet UIView *separatorView;
 
--(void)configureComment:(XXComment*)comment;
+-(void)configureComment:(Comment*)comment;
 @end

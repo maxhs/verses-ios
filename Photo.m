@@ -2,7 +2,7 @@
 //  Photo.m
 //  Verses
 //
-//  Created by Max Haines-Stiles on 6/8/14.
+//  Created by Max Haines-Stiles on 6/16/14.
 //  Copyright (c) 2014 Verses. All rights reserved.
 //
 
@@ -14,15 +14,16 @@
 
 @implementation Photo
 
+@dynamic createdDate;
 @dynamic identifier;
+@dynamic image;
 @dynamic largeUrl;
-@dynamic smallUrl;
 @dynamic mediumUrl;
+@dynamic smallUrl;
 @dynamic thumbUrl;
+@dynamic updatedDate;
 @dynamic contribution;
 @dynamic story;
 @dynamic user;
-@dynamic createdDate;
-@dynamic updatedDate;
 
 @end

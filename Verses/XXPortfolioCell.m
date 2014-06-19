@@ -7,16 +7,16 @@
 //
 
 #import "XXPortfolioCell.h"
-#import "XXPhoto.h"
+#import "Photo+helper.h"
 #import <SDWebImage/UIButton+WebCache.h>
 #import <DTCoreText/DTCoreText.h>
-#import "XXContribution.h"
 #import "UIImage+ImageEffects.h"
+#import "XXTextStorage.h"
 
 @implementation XXPortfolioCell {
     UITapGestureRecognizer *tapGesture;
-    XXTextStorage *_textStorage;
-    CGRect screen;
+    CGFloat width;
+    CGFloat height;
     int readY;
     int editY;
 }
@@ -37,8 +37,30 @@
     // Configure the view for the selected state
 }
 
-- (void)configureForStory:(XXStory*)story textColor:(UIColor*)color {
-    screen = [UIScreen mainScreen].bounds;
+- (void)configureForStory:(Story*)story textColor:(UIColor*)color withOrientation:(UIInterfaceOrientation)orientation {
+    //remove existing textviews from reused cells
+    for (id view in self.contentView.subviews){
+        if ([view isKindOfClass:[XXTextView class]]){
+            [view removeFromSuperview];
+            break;
+        }
+    }
+    if (UIInterfaceOrientationIsPortrait(orientation)){
+        width = screenWidth();
+        if (IDIOM == IPAD){
+            height = screenHeight()/3;
+        } else {
+            height = screenHeight()/2;
+        }
+    } else {
+        width = screenHeight();
+        if (IDIOM == IPAD){
+            height = screenWidth()/3;
+        } else {
+            height = screenWidth()/2;
+        }
+    }
+    
     [_wordCountLabel setFont:[UIFont fontWithName:kCrimsonItalic size:15]];
     if ([[NSUserDefaults standardUserDefaults] boolForKey:kDarkBackground]){
         [_wordCountLabel setTextColor:[UIColor whiteColor]];
@@ -80,64 +102,59 @@
         range = NSMakeRange(0, [storyBody length]);
     }
     
-    NSDictionary *options = @{DTUseiOS6Attributes: [NSNumber numberWithBool:YES],
-                              DTDefaultFontSize: @21,
-                              DTDefaultFontFamily: @"Crimson Text"};
+    XXTextStorage *_textStorage = [XXTextStorage new];
+    [_textStorage setAttributedString:story.attributedSnippet];
+    NSLayoutManager *layoutManager = [[NSLayoutManager alloc] init];
+    [_textStorage addLayoutManager:layoutManager];
+    CGFloat spacer = 10;
+    CGFloat titleOffset = (_titleLabel.frame.size.height + _titleLabel.frame.origin.y);
+    CGFloat containerHeight = height*.823 - titleOffset;
     
-    DTHTMLAttributedStringBuilder *stringBuilder = [[DTHTMLAttributedStringBuilder alloc] initWithHTML:[[storyBody substringWithRange:range] dataUsingEncoding:NSUTF8StringEncoding] options:options documentAttributes:nil];
-    NSAttributedString *aString = [stringBuilder generatedAttributedString];
-    /*[[aString mutableString] replaceOccurrencesOfString:@"\n" withString:@"" options:NSCaseInsensitiveSearch range:NSMakeRange(0, aString.length)];
-    NSMutableAttributedString *ellipsis = [[NSMutableAttributedString alloc] initWithString:@"..."];*/
+    NSTextContainer *container = [[NSTextContainer alloc] initWithSize:CGSizeMake(width-spacer, containerHeight)];
+    container.widthTracksTextView = YES;
+    container.heightTracksTextView = YES;
+    [layoutManager addTextContainer:container];
+    _bodySnippet = [[XXTextView alloc] initWithFrame:CGRectMake(spacer/2, titleOffset, width - spacer, containerHeight-3) textContainer:container];
+    _bodySnippet.userInteractionEnabled = NO;
+    [self.contentView addSubview:_bodySnippet];
+    [self.contentView sendSubviewToBack:_bodySnippet];
     
-    if (!_bodySnippet){
-        _bodySnippet = [[XXTextView alloc] init];
-        [_bodySnippet setUserInteractionEnabled:NO];
-        [_bodySnippet setScrollEnabled:NO];
-        [_bodySnippet setAutoresizingMask:UIViewAutoresizingFlexibleWidth];
-        [_bodySnippet.textContainer setMaximumNumberOfLines:0];
-        [_bodySnippet.textContainer setLineBreakMode:NSLineBreakByTruncatingTail];
-
-        CGFloat textContainerHeight;
-        if (IDIOM == IPAD){
-            textContainerHeight = self.contentView.frame.size.height*2/3;
-        } else {
-            if (screenHeight() == 568){
-                textContainerHeight = self.contentView.frame.size.height*2/3;
-            } else {
-                textContainerHeight = self.contentView.frame.size.height/2;
-            }
-            
-        }
-        CGFloat spacer = 10;
-        
-        [_bodySnippet setFrame:CGRectMake(spacer/2, _titleLabel.frame.size.height+_titleLabel.frame.origin.y, self.contentView.frame.size.width-spacer, textContainerHeight)];
-        [self.contentView insertSubview:_bodySnippet belowSubview:_background];
+    [_bodySnippet setAlpha:0.0];
+    if (IDIOM == IPAD) {
+        //_bodySnippet.autoresizingMask = UIViewAutoresizingNone;
+        CGRect bodyRect = _bodySnippet.frame;
+        bodyRect.size.width = width-spacer;
+        bodyRect.size.height = containerHeight;
+        [_bodySnippet setFrame:bodyRect];
+    } else {
+        _bodySnippet.autoresizingMask = (UIViewAutoresizingFlexibleWidth | UIViewAutoresizingFlexibleBottomMargin);
     }
     
-    [_bodySnippet setAttributedText:aString];
-    [_bodySnippet setTextColor:color];
+    _bodySnippet.clipsToBounds = NO;
+    _bodySnippet.textContainer.maximumNumberOfLines = 0;
+    _bodySnippet.textContainer.lineBreakMode = NSLineBreakByTruncatingTail;
     
-    [_readButton.titleLabel setFont:[UIFont fontWithName:kSourceSansProSemibold size:17]];
+    [_readButton.titleLabel setFont:[UIFont fontWithName:kSourceSansProSemibold size:16]];
     [self buttonTreatment:_readButton];
-    [_editButton.titleLabel setFont:[UIFont fontWithName:kSourceSansProSemibold size:17]];
+    [_editButton.titleLabel setFont:[UIFont fontWithName:kSourceSansProSemibold size:16]];
     [self buttonTreatment:_editButton];
     
     readY = (int)arc4random_uniform(320)-160;
     editY = (int)arc4random_uniform(320)-160;
     
-    _editButton.transform = CGAffineTransformMakeTranslation(screen.size.width, editY);
-    _readButton.transform = CGAffineTransformMakeTranslation(-screen.size.width, readY);
+    _editButton.transform = CGAffineTransformMakeTranslation(width, editY);
+    _readButton.transform = CGAffineTransformMakeTranslation(-width, readY);
     
-    if (story.saved){
+    if ([story.draft isEqualToNumber:[NSNumber numberWithBool:YES]]){
         [_draftLabel setHidden:NO];
-        if (story.mystery){
+        if ([story.mystery isEqualToNumber:[NSNumber numberWithBool:YES]]){
             [_revealLabel setHidden:NO];
         } else {
             [_revealLabel setHidden:YES];
         }
     } else {
         [_draftLabel setHidden:YES];
-        if (story.mystery){
+        if ([story.mystery isEqualToNumber:[NSNumber numberWithBool:YES]]){
             _revealLabel.transform = CGAffineTransformMakeTranslation(0, -24);
             [_revealLabel setHidden:NO];
         } else {
@@ -152,18 +169,20 @@
 }
 
 - (void)buttonTreatment:(UIButton*)button {
-    //button.layer.borderColor = kElectricBlue.CGColor;
-    [button setBackgroundColor:kElectricBlue];
-    //button.layer.borderWidth = .5f;
+    button.layer.borderColor = kElectricBlue.CGColor;
+    [button setBackgroundColor:[UIColor clearColor]];
+    button.layer.borderWidth = .5f;
     button.layer.cornerRadius = 14.f;
     button.clipsToBounds = YES;
-    [button setTitleColor:[UIColor whiteColor] forState:UIControlStateNormal];
+    [button setTitleColor:kElectricBlue forState:UIControlStateNormal];
+    button.layer.rasterizationScale = [UIScreen mainScreen].scale;
+    button.layer.shouldRasterize = YES;
 }
 
 -(UIImage *)blurredSnapshot
 {
-    UIGraphicsBeginImageContextWithOptions(CGSizeMake(screen.size.width, 140), NO, self.window.screen.scale);
-    [self drawViewHierarchyInRect:CGRectMake(0, 0, screen.size.width, 140) afterScreenUpdates:NO];
+    UIGraphicsBeginImageContextWithOptions(CGSizeMake(width, 140), NO, self.window.screen.scale);
+    [self drawViewHierarchyInRect:CGRectMake(0, 0, width, 140) afterScreenUpdates:NO];
     UIImage *snapshotImage = UIGraphicsGetImageFromCurrentImageContext();
     UIImage *blurredSnapshotImage;
     if ([[NSUserDefaults standardUserDefaults] boolForKey:kDarkBackground]){
@@ -194,8 +213,8 @@
         editY = (int)arc4random_uniform(320)-160;
         [UIView animateWithDuration:1 delay:0 usingSpringWithDamping:.4 initialSpringVelocity:.0001 options:UIViewAnimationOptionCurveEaseInOut animations:^{
             [_background setAlpha:0];
-            _editButton.transform = CGAffineTransformMakeTranslation(screen.size.width, editY);
-            _readButton.transform = CGAffineTransformMakeTranslation(-screen.size.width, readY);
+            _editButton.transform = CGAffineTransformMakeTranslation(width, editY);
+            _readButton.transform = CGAffineTransformMakeTranslation(-width, readY);
             [_readButton setAlpha:0.0];
             [_editButton setAlpha:0.0];
         } completion:^(BOOL finished) {

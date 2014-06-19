@@ -7,7 +7,7 @@
 //
 
 #import <UIKit/UIKit.h>
-#import "XXContribution.h"
+#import "Contribution.h"
 #import "Story+helper.h"
 #import "XXTextView.h"
 #import "XXTextStorage.h"
@@ -23,7 +23,6 @@
 @property (weak, nonatomic) IBOutlet UIImageView *backgroundImageView;
 @property (weak, nonatomic) IBOutlet UIScrollView *scrollView;
 @property (weak, nonatomic) IBOutlet UIButton *flagButton;
-@property (strong, nonatomic) UITextView *textView;
 @property (strong, nonatomic) XXTextView *bodySnippet;
 @property (strong, nonatomic) UITapGestureRecognizer *scrollTouch;
 - (void)configureForStory:(Story*)story withOrientation:(UIInterfaceOrientation)orientation;

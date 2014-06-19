@@ -7,11 +7,11 @@
 //
 
 #import <UIKit/UIKit.h>
-#import "XXCircle.h"
+#import "Circle.h"
 
 @interface XXContactCell : UITableViewCell
 @property (weak, nonatomic) IBOutlet UILabel *nameLabel;
 @property (weak, nonatomic) IBOutlet UILabel *locationLabel;
--(void)configureContact:(XXUser*)contact;
--(void)configureCircle:(XXCircle*)circle;
+-(void)configureContact:(User*)contact;
+-(void)configureCircle:(Circle*)circle;
 @end

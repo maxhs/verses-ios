@@ -52,6 +52,7 @@ static inline CGFloat height(UIView *view) { return view.frame.size.height; }
 
 #define kSeparatorColor [UIColor colorWithWhite:.77 alpha:.23]
 #define kElectricBlue [UIColor colorWithRed:(0.0/255.0) green:(128.0/255.0) blue:(255.0/255.0) alpha:1]
+#define kHotOrange [UIColor colorWithRed:(255.0/255.0) green:(92.0/255.0) blue:(22.0/255.0) alpha:1]
 #define kStyleButtonBorderColor [UIColor colorWithWhite:1 alpha:.2].CGColor
 
 //String constants

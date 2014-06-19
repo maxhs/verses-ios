@@ -29,7 +29,7 @@
     [super setSelected:selected animated:animated];
 }
 
-- (void)configureBookmark:(XXBookmark*)bookmark {
+- (void)configureBookmark:(Bookmark*)bookmark {
     [self.bookmarkLabel setText:bookmark.story.title];
     [self.bookmarkLabel setFont:[UIFont fontWithName:kSourceSansProSemibold size:23]];
     [self.createdLabel setFont:[UIFont fontWithName:kCrimsonRoman size:17]];

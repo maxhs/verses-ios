@@ -7,9 +7,6 @@
 //
 
 #import "Bookmark.h"
-#import "Contribution.h"
-#import "Story.h"
-
 
 @implementation Bookmark
 
@@ -17,5 +14,6 @@
 @dynamic createdDate;
 @dynamic contribution;
 @dynamic story;
+@dynamic user;
 
 @end

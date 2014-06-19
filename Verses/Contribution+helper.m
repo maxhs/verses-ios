@@ -28,6 +28,14 @@
         [user populateFromDict:[dictionary objectForKey:@"user"]];
         self.user = user;
     }
+    if ([dictionary objectForKey:@"story"] && [dictionary objectForKey:@"story"] != [NSNull null]) {
+        Story *story = [Story MR_findFirstByAttribute:@"identifier" withValue:[[dictionary objectForKey:@"story"] objectForKey:@"id"]];
+        if (!story){
+            story = [Story MR_createInContext:[NSManagedObjectContext MR_defaultContext]];
+        }
+        [story populateFromDict:[dictionary objectForKey:@"story"]];
+        self.story = story;
+    }
     if ([dictionary objectForKey:@"created_date"] && [dictionary objectForKey:@"created_date"] != [NSNull null]) {
         NSTimeInterval _interval = [[dictionary objectForKey:@"created_date"] doubleValue];
         self.createdDate = [NSDate dateWithTimeIntervalSince1970:_interval];
@@ -40,5 +48,39 @@
         NSTimeInterval _interval = [[dictionary objectForKey:@"published_date"] doubleValue];
         self.publishedDate = [NSDate dateWithTimeIntervalSince1970:_interval];
     }
+    if ([dictionary objectForKey:@"photos"] && [dictionary objectForKey:@"photos"] != [NSNull null]) {
+        NSMutableOrderedSet *orderedPhotos = [NSMutableOrderedSet orderedSet];
+        for (NSDictionary *photoDict in [dictionary objectForKey:@"photos"]){
+            if ([photoDict objectForKey:@"id"] && [photoDict objectForKey:@"id"] != [NSNull null]){
+                Photo *photo = [Photo MR_findFirstByAttribute:@"identifier" withValue:[photoDict objectForKey:@"id"]];
+                if (!photo){
+                    photo = [Photo MR_createInContext:[NSManagedObjectContext MR_defaultContext]];
+                }
+                [photo populateFromDict:photoDict];
+                [orderedPhotos addObject:photo];
+            }
+        }
+        for (Photo *photo in self.photos){
+            if (![orderedPhotos containsObject:photo]){
+                [photo MR_deleteInContext:[NSManagedObjectContext MR_defaultContext]];
+            }
+        }
+        self.photos = orderedPhotos;
+    }
 }
+
+- (void)addPhoto:(Photo*)photo {
+    NSMutableOrderedSet *photoSet = [NSMutableOrderedSet orderedSetWithOrderedSet:self.photos];
+    [photoSet addObject:photo];
+    [self.story addPhoto:photo];
+    self.photos = photoSet;
+}
+
+- (void)removePhoto:(Photo*)photo {
+    NSMutableOrderedSet *photoSet = [NSMutableOrderedSet orderedSetWithOrderedSet:self.photos];
+    [photoSet removeObject:photo];
+    [self.story removePhoto:photo];
+    self.photos = photoSet;
+}
+
 @end

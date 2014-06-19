@@ -7,11 +7,11 @@
 //
 
 #import <UIKit/UIKit.h>
-#import "XXBookmark.h"
+#import "Bookmark.h"
 
 @interface XXBookmarkCell : UITableViewCell
 @property (weak, nonatomic) IBOutlet UILabel *bookmarkLabel;
 @property (weak, nonatomic) IBOutlet UILabel *createdLabel;
 @property (weak, nonatomic) IBOutlet UIImageView *separatorView;
-- (void)configureBookmark:(XXBookmark*)bookmark;
+- (void)configureBookmark:(Bookmark*)bookmark;
 @end

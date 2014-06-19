@@ -9,7 +9,7 @@
 #import <UIKit/UIKit.h>
 #import "XXTextView.h"
 #import "XXTextStorage.h"
-#import "XXStory.h"
+#import "Story.h"
 
 @interface XXWritingCell : UITableViewCell
 

@@ -7,7 +7,7 @@
 //
 
 #import <UIKit/UIKit.h>
-#import "XXStory.h"
+#import "Story+helper.h"
 #import "XXFeedbackCell.h"
 #import "XXStoryViewController.h"
 #import "MSDynamicsDrawerViewController/MSDynamicsDrawerViewController.h"

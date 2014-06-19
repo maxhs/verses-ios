@@ -9,7 +9,7 @@
 #import "XXPhotoCollectionCell.h"
 #import <SDWebImage/UIButton+WebCache.h>
 @implementation XXPhotoCollectionCell
-
+@synthesize photo = _photo;
 - (id)initWithFrame:(CGRect)frame
 {
     self = [super initWithFrame:frame];
@@ -29,8 +29,14 @@
 */
 
 -(void)configureForPhoto:(Photo*)photo{
+    _photo = photo;
     [_photoButton setBackgroundColor:[UIColor clearColor]];
-    [_photoButton setImageWithURL:[NSURL URLWithString:photo.mediumUrl] forState:UIControlStateNormal];
+    if (!_photoButton.imageView.image)[_photoButton setAlpha:0.0];
+    [_photoButton setImageWithURL:[NSURL URLWithString:photo.mediumUrl] forState:UIControlStateNormal completed:^(UIImage *image, NSError *error, SDImageCacheType cacheType) {
+        [UIView animateWithDuration:.3 animations:^{
+            [_photoButton setAlpha:1.0];
+        }];
+    }];
     _photoButton.imageView.contentMode = UIViewContentModeScaleAspectFill;
     _photoButton.imageView.clipsToBounds = YES;
     _photoButton.layer.shouldRasterize = YES;

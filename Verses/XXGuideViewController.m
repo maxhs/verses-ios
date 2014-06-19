@@ -14,6 +14,7 @@
 #import "XXAlert.h"
 #import "XXLoginController.h"
 #import "XXStoryViewController.h"
+#import "XXNoRotateNavController.h"
 #import "XXGalleryViewController.h"
 
 @interface XXGuideViewController () <UISearchBarDelegate> {
@@ -62,15 +63,16 @@
     self.tableView.rowHeight = screenHeight()/5;
     self.searchResultsTableView.rowHeight = 60.f;
     if ([[NSUserDefaults standardUserDefaults] boolForKey:kDarkBackground]){
-        [backgroundImageView setAlpha:.43];
+        [backgroundImageView setAlpha:.14];
     } else {
-        [backgroundImageView setAlpha:.87];
+        [backgroundImageView setAlpha:1];
     }
     
     [self.view addSubview:backgroundImageView];
     [self.view sendSubviewToBack:backgroundImageView];
     [self.searchBar setImage:[UIImage imageNamed:@"whiteSearchIcon"] forSearchBarIcon:UISearchBarIconSearch state:UIControlStateNormal];
     
+    [self.searchBar setBackgroundColor:[UIColor clearColor]];
     searchPlaceholder = [[NSAttributedString alloc] initWithString:@"Search stories" attributes:@{ NSForegroundColorAttributeName : [UIColor whiteColor] }];
     for (id subview in [self.searchBar.subviews.firstObject subviews]){
         [subview setTintColor:[UIColor whiteColor]];
@@ -100,6 +102,14 @@
     [[NSNotificationCenter defaultCenter] addObserver:self
                                              selector:@selector(willShowKeyboard:)
                                                  name:UIKeyboardWillShowNotification object:nil];
+    [[NSNotificationCenter defaultCenter] addObserver:self
+                                             selector:@selector(reloadUser)
+                                                 name:@"ReloadGuide"
+                                               object:nil];
+}
+
+- (void)reloadUser{
+    [self.tableView reloadRowsAtIndexPaths:@[[NSIndexPath indexPathForRow:1 inSection:0],[NSIndexPath indexPathForRow:2 inSection:0]] withRowAnimation:UITableViewRowAnimationFade];
 }
 
 - (void)willRotateToInterfaceOrientation:(UIInterfaceOrientation)toInterfaceOrientation duration:(NSTimeInterval)duration {
@@ -123,7 +133,7 @@
     if (!_searchResults.count && !self.searchBar.text.length){
         [manager GET:[NSString stringWithFormat:@"%@/stories/titles",kAPIBaseUrl] parameters:nil success:^(AFHTTPRequestOperation *operation, id responseObject) {
             //NSLog(@"success fetching titles from guide view: %@",responseObject);
-            _searchResults = [[Utilities storiesFromJSONArray:[responseObject objectForKey:@"titles"]] mutableCopy];
+            _searchResults = [self updateLocalStories:[responseObject objectForKey:@"titles"]];
             [_filteredResults removeAllObjects];
             [_filteredResults addObjectsFromArray:_searchResults];
             [self.searchResultsTableView reloadSections:[NSIndexSet indexSetWithIndex:0] withRowAnimation:UITableViewRowAnimationAutomatic];
@@ -134,6 +144,23 @@
     }
 }
 
+- (NSMutableArray*)updateLocalStories:(NSArray*)array{
+    NSMutableArray *storyArray = [NSMutableArray array];
+    for (NSDictionary *dict in array){
+        if ([dict objectForKey:@"id"] && [dict objectForKey:@"id"] != [NSNull null]){
+            Story *story = [Story MR_findFirstByAttribute:@"identifier" withValue:[dict objectForKey:@"id"]];
+            if (!story){
+                story = [Story MR_createInContext:[NSManagedObjectContext MR_defaultContext]];
+            }
+            [story populateFromDict:dict];
+            [storyArray addObject:story];
+        }
+    }
+    [self.tableView reloadData];
+    [self saveContext];
+    return storyArray;
+}
+
 - (void)searchBarCancelButtonClicked:(UISearchBar *)searchBar {
     searching = NO;
     [self.searchBar setText:@""];
@@ -142,7 +169,6 @@
     [UIView animateWithDuration:.33 animations:^{
         [self.searchResultsTableView setAlpha:0.0];
     }];
-    
 }
 
 - (BOOL)searchBar:(UISearchBar *)searchBar shouldChangeTextInRange:(NSRange)range replacementText:(NSString *)text {
@@ -153,7 +179,7 @@
 
 - (void)filterContentForSearchText:(NSString*)searchText scope:(NSString*)scope {
     [_filteredResults removeAllObjects]; // First clear the filtered array.
-    for (XXStory *story in _searchResults){
+    for (Story *story in _searchResults){
         NSPredicate *predicate = [NSPredicate predicateWithFormat:@"SELF contains[cd] %@", searchText];
         if([predicate evaluateWithObject:story.title]) {
             [_filteredResults addObject:story];
@@ -190,7 +216,7 @@
 
 - (NSInteger)tableView:(UITableView *)tableView numberOfRowsInSection:(NSInteger)section
 {
-    if (searching){
+    if (tableView == self.searchResultsTableView && searching){
         if (_filteredResults.count){
             return _filteredResults.count;
         } else if (self.searchBar.text) {
@@ -211,7 +237,7 @@
             if (cell == nil) {
                 cell = [[[NSBundle mainBundle] loadNibNamed:@"XXSearchCell" owner:nil options:nil] lastObject];
             }
-            XXStory *story;
+            Story *story;
             if (searching){
                 story = [_filteredResults objectAtIndex:indexPath.row];
             } else {
@@ -255,16 +281,24 @@
                 [cell.firstButton addTarget:self action:@selector(goBrowse) forControlEvents:UIControlEventTouchUpInside];
                 [cell.secondButton setTitle:@"FEATURED" forState:UIControlStateNormal];
                 [cell.secondButton addTarget:self action:@selector(goFeatured) forControlEvents:UIControlEventTouchUpInside];
-                [cell.thirdButton setTitle:@"TRENDING" forState:UIControlStateNormal];
-                [cell.thirdButton addTarget:self action:@selector(goTrending) forControlEvents:UIControlEventTouchUpInside];
-                [cell.scrollView setContentSize:CGSizeMake(buttonWidth*3, 0)];
+                
+                    [cell.thirdButton setTitle:@"TRENDING" forState:UIControlStateNormal];
+                    [cell.thirdButton addTarget:self action:@selector(goTrending) forControlEvents:UIControlEventTouchUpInside];
+                    [cell.scrollView setContentSize:CGSizeMake(buttonWidth*3, 0)];
+                
                 break;
             case 1:
                 [cell.firstButton setTitle:@"WRITE" forState:UIControlStateNormal];
                 [cell.firstButton addTarget:self action:@selector(goWrite) forControlEvents:UIControlEventTouchUpInside];
                 [cell.secondButton setTitle:@"SLOW REVEAL" forState:UIControlStateNormal];
                 [cell.secondButton addTarget:self action:@selector(goSlowReveal) forControlEvents:UIControlEventTouchUpInside];
-                [cell.scrollView setContentSize:CGSizeMake(buttonWidth*2, 0)];
+                if ([[NSUserDefaults standardUserDefaults] objectForKey:kUserDefaultsId]){
+                    [cell.thirdButton setTitle:@"DRAFTS" forState:UIControlStateNormal];
+                    [cell.thirdButton addTarget:self action:@selector(goToDrafts) forControlEvents:UIControlEventTouchUpInside];
+                    [cell.scrollView setContentSize:CGSizeMake(buttonWidth*3, 0)];
+                } else {
+                    [cell.scrollView setContentSize:CGSizeMake(buttonWidth*2, 0)];
+                }
                 break;
             case 2:
                 if ([[NSUserDefaults standardUserDefaults] objectForKey:kUserDefaultsId]){
@@ -279,7 +313,9 @@
                 } else {
                     [cell.firstButton setTitle:@"PORTFOLIO" forState:UIControlStateNormal];
                     [cell.firstButton addTarget:self action:@selector(login) forControlEvents:UIControlEventTouchUpInside];
-                    cell.scrollView.scrollEnabled = NO;
+                    [cell.secondButton setTitle:@"PHOTO GALLERY" forState:UIControlStateNormal];
+                    [cell.secondButton addTarget:self action:@selector(goGallery) forControlEvents:UIControlEventTouchUpInside];
+                    [cell.scrollView setContentSize:CGSizeMake(buttonWidth*2, 0)];
                 }
                 
                 break;
@@ -301,10 +337,13 @@
 - (void)tableView:(UITableView *)tableView didSelectRowAtIndexPath:(NSIndexPath *)indexPath {
     [tableView deselectRowAtIndexPath:indexPath animated:YES];
     if (tableView == self.searchResultsTableView && _filteredResults.count){
-        XXStory *story = [_filteredResults objectAtIndex:indexPath.row];
-        XXStoryViewController *vc = [[self storyboard] instantiateViewControllerWithIdentifier:@"Story"];
-        [vc setStoryId:story.identifier];
-        UINavigationController *nav = [[UINavigationController alloc] initWithRootViewController:vc];
+        Story *story = [_filteredResults objectAtIndex:indexPath.row];
+        XXStoryViewController *storyVC = [[self storyboard] instantiateViewControllerWithIdentifier:@"Story"];
+        XXStoriesViewController *vc = [[self storyboard] instantiateViewControllerWithIdentifier:@"Stories"];
+        [vc setEther:YES];
+        [storyVC setStoryId:story.identifier];
+        UINavigationController *nav = [[UINavigationController alloc] init];
+        nav.viewControllers = @[vc,storyVC];
         [[(XXAppDelegate*)[UIApplication sharedApplication].delegate dynamicsDrawerViewController] setPaneViewController:nav];
         [self dismissViewControllerAnimated:YES completion:^{
             
@@ -392,7 +431,8 @@
 - (void)login {
     [[UIApplication sharedApplication] setStatusBarHidden:YES withAnimation:UIStatusBarAnimationFade];
     XXLoginController *login = [[self storyboard] instantiateViewControllerWithIdentifier:@"Login"];
-    [self presentViewController:login animated:YES completion:^{
+    XXNoRotateNavController *nav = [[XXNoRotateNavController alloc] initWithRootViewController:login];
+    [self presentViewController:nav animated:YES completion:^{
         
     }];
 }
@@ -400,6 +440,7 @@
 - (void)goToPortfolio {
     [[UIApplication sharedApplication] setStatusBarHidden:YES withAnimation:UIStatusBarAnimationFade];
     XXPortfolioViewController *portfolio = [[self storyboard] instantiateViewControllerWithIdentifier:@"Portfolio"];
+    [portfolio setDraftMode:NO];
     UINavigationController *nav = [[UINavigationController alloc] initWithRootViewController:portfolio];
     [[(XXAppDelegate*)[UIApplication sharedApplication].delegate dynamicsDrawerViewController] setPaneViewController:nav];
     [self dismissViewControllerAnimated:YES completion:^{
@@ -407,6 +448,22 @@
     }];
 }
 
+- (void)goToDrafts {
+    [[UIApplication sharedApplication] setStatusBarHidden:YES withAnimation:UIStatusBarAnimationFade];
+    XXPortfolioViewController *portfolio = [[self storyboard] instantiateViewControllerWithIdentifier:@"Portfolio"];
+    [portfolio setDraftMode:YES];
+    UINavigationController *nav = [[UINavigationController alloc] initWithRootViewController:portfolio];
+    [[(XXAppDelegate*)[UIApplication sharedApplication].delegate dynamicsDrawerViewController] setPaneViewController:nav];
+    [self dismissViewControllerAnimated:YES completion:^{
+        
+    }];
+}
+
+-(void)saveContext {
+    [[NSManagedObjectContext MR_defaultContext] MR_saveToPersistentStoreWithCompletion:^(BOOL success, NSError *error) {
+        NSLog(@"%u success saving stories.",success);
+    }];
+}
 
 - (void)dismiss {
     [self dismissViewControllerAnimated:YES completion:nil];

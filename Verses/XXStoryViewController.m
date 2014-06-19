@@ -11,7 +11,7 @@
 #import "XXStoryInfoViewController.h"
 #import "XXStoryCell.h"
 #import "XXStoryBodyCell.h"
-#import "XXPhoto.h"
+#import "Photo.h"
 #import "UIImage+ImageEffects.h"
 #import <SDWebImage/UIButton+WebCache.h>
 #import "XXBookmarksViewController.h"
@@ -26,10 +26,12 @@
 #import <DTCoreText/DTCoreText.h>
 #import "XXProfileViewController.h"
 #import "XXFlagContentViewController.h"
+#import "XXNoRotateNavController.h"
+#import "XXLoginController.h"
 
-@interface XXStoryViewController () <UIViewControllerTransitioningDelegate> {
+@interface XXStoryViewController () <UIViewControllerTransitioningDelegate, UIAlertViewDelegate> {
     AFHTTPRequestOperationManager *manager;
-    XXAppDelegate *appDelegate;
+    XXAppDelegate *delegate;
     CGFloat width;
     CGFloat height;
     UIButton *dismissButton;
@@ -63,7 +65,7 @@
     XXTextView *newContributionTextView;
     NSString *_selectedText;
     UITextRange *_selectedRange;
-    
+    User *currentUser;
     CGFloat keyboardHeight;
     UIButton *publishButton;
     UIButton *cancelButton;
@@ -116,9 +118,14 @@
         rowHeight = height/2;
     }
     
-    appDelegate = (XXAppDelegate*)[UIApplication sharedApplication].delegate;
-    [appDelegate.dynamicsDrawerViewController setPaneDragRevealEnabled:YES forDirection:MSDynamicsDrawerDirectionRight];
-    manager = appDelegate.manager;
+    delegate = (XXAppDelegate*)[UIApplication sharedApplication].delegate;
+    [delegate.dynamicsDrawerViewController setPaneDragRevealEnabled:YES forDirection:MSDynamicsDrawerDirectionRight];
+    manager = delegate.manager;
+    if (delegate.currentUser){
+        currentUser = delegate.currentUser;
+    } else {
+        currentUser = [User MR_findFirstByAttribute:@"identifier" withValue:[[NSUserDefaults standardUserDefaults] objectForKey:kUserDefaultsId]];
+    }
     
     if ([[NSUserDefaults standardUserDefaults] objectForKey:kUserDefaultsId]) signedIn = YES;
     else signedIn = NO;
@@ -143,7 +150,7 @@
     readingTimer = [NSTimer scheduledTimerWithTimeInterval:3 target:self selector:@selector(hideControls) userInfo:nil repeats:NO];
     
     _attributedPages = [NSMutableArray array];
-    storyInfoVc = (XXStoryInfoViewController*)[appDelegate.dynamicsDrawerViewController drawerViewControllerForDirection:MSDynamicsDrawerDirectionRight];
+    storyInfoVc = (XXStoryInfoViewController*)[delegate.dynamicsDrawerViewController drawerViewControllerForDirection:MSDynamicsDrawerDirectionRight];
 
     _formatter= [[NSDateFormatter alloc] init];
     [_formatter setLocale:[NSLocale currentLocale]];
@@ -177,7 +184,6 @@
     }
 
     if (_storyId){
-        //[ProgressHUD show:@"Fetching story..."];
         [self loadStory:_storyId];
     } else if (_story.contributions.count){
         pages = 0;
@@ -196,7 +202,6 @@
             _scrollView.transform = CGAffineTransformIdentity;
         }];
     }
-    
     //_scrollView.pagingEnabled = YES;
 }
 
@@ -209,7 +214,7 @@
     }
     
     [manager GET:[NSString stringWithFormat:@"%@/stories/%@",kAPIBaseUrl,identifier] parameters:parameters success:^(AFHTTPRequestOperation *operation, id responseObject) {
-        NSLog(@"load story response: %@",responseObject);
+        //NSLog(@"load story response: %@",responseObject);
         _story = [Story MR_findFirstByAttribute:@"identifier" withValue:identifier];
         if (_story) {
             _story = [Story MR_createInContext:[NSManagedObjectContext MR_defaultContext]];
@@ -231,6 +236,14 @@
     [[[UIAlertView alloc] initWithTitle:@"Slow those horses!" message:@"You'll need to log in if you want to create bookmarks." delegate:self cancelButtonTitle:@"No Thanks" otherButtonTitles:@"Login", nil] show];
 }
 
+- (void)alertView:(UIAlertView *)alertView clickedButtonAtIndex:(NSInteger)buttonIndex {
+    if ([[alertView buttonTitleAtIndex:buttonIndex] isEqualToString:@"Login"]){
+        XXLoginController *vc = [[self storyboard] instantiateViewControllerWithIdentifier:@"Login"];
+        XXNoRotateNavController *nav = [[XXNoRotateNavController alloc] initWithRootViewController:vc];
+        [self presentViewController:nav animated:YES completion:nil];
+    }
+}
+
 - (void)edit {
     XXWriteViewController *vc = [[self storyboard] instantiateViewControllerWithIdentifier:@"Write"];
     [vc setStory:_story];
@@ -247,11 +260,19 @@
 }
 
 - (void)createBookmark {
-    if (_story && _story.identifier){
+    if (![_story.identifier isEqualToNumber:[NSNumber numberWithInt:0]]){
+        Bookmark *bookmark = [Bookmark MR_findFirstByAttribute:@"story.identifier" withValue:_story.identifier];
+        if (!bookmark) {
+            bookmark = [Bookmark MR_createInContext:[NSManagedObjectContext MR_defaultContext]];
+        }
+        bookmark.user = currentUser;
+        bookmark.story = _story;
+        bookmark.createdDate = [NSDate date];
+        [_story setBookmarked:[NSNumber numberWithBool:YES]];
+        [self setupNavButtons];
+        
         [manager POST:[NSString stringWithFormat:@"%@/bookmarks",kAPIBaseUrl] parameters:@{@"user_id":[[NSUserDefaults standardUserDefaults] objectForKey:kUserDefaultsId],@"story_id":_story.identifier} success:^(AFHTTPRequestOperation *operation, id responseObject) {
             //NSLog(@"Success creating a bookmark: %@",responseObject);
-            _story.bookmarked = [NSNumber numberWithBool:YES];
-            [self setupNavButtons];
         } failure:^(AFHTTPRequestOperation *operation, NSError *error) {
             NSLog(@"Error creating a bookmark: %@",error.description);
         }];
@@ -259,13 +280,21 @@
 }
 
 - (void)destroyBookmark {
-    if (_story && _story.identifier){
-        [manager DELETE:[NSString stringWithFormat:@"%@/bookmarks/%@",kAPIBaseUrl,_story.identifier] parameters:@{@"story_id":_story.identifier,@"user_id":[[NSUserDefaults standardUserDefaults] objectForKey:kUserDefaultsId]} success:^(AFHTTPRequestOperation *operation, id responseObject) {
-            //NSLog(@"success deleting a bookmark: %@",responseObject);
-            _story.bookmarked = NO;
-            [self setupNavButtons];
-        } failure:^(AFHTTPRequestOperation *operation, NSError *error) {
-            NSLog(@"Failed to delete the bookmark: %@",error.description);
+    if (![_story.identifier isEqualToNumber:[NSNumber numberWithInt:0]]){
+        [_story setBookmarked:[NSNumber numberWithBool:NO]];
+        [self setupNavButtons];
+        __block NSNumber *bookmarkId;
+        [currentUser.bookmarks enumerateObjectsUsingBlock:^(Bookmark *bookmark, NSUInteger idx, BOOL *stop) {
+            if ([bookmark.story.identifier isEqualToNumber:_story.identifier] || [bookmark.contribution.story.identifier isEqualToNumber:_story.identifier]){
+                bookmarkId = bookmark.identifier;
+                [manager DELETE:[NSString stringWithFormat:@"%@/bookmarks/%@",kAPIBaseUrl,bookmarkId] parameters:@{@"user_id":[[NSUserDefaults standardUserDefaults] objectForKey:kUserDefaultsId]} success:^(AFHTTPRequestOperation *operation, id responseObject) {
+                    //NSLog(@"success deleting a bookmark: %@",responseObject);
+                } failure:^(AFHTTPRequestOperation *operation, NSError *error) {
+                    NSLog(@"Failed to delete the bookmark: %@",error.description);
+                }];
+                [bookmark MR_deleteInContext:[NSManagedObjectContext MR_defaultContext]];
+                *stop = YES;
+            }
         }];
     }
 }
@@ -293,10 +322,21 @@
         NSMutableDictionary *parameters = [NSMutableDictionary dictionary];
         [parameters setObject:[[NSUserDefaults standardUserDefaults] objectForKey:kUserDefaultsId] forKey:@"user_id"];
         [manager GET:[NSString stringWithFormat:@"%@/feedbacks/%@",kAPIBaseUrl,_story.identifier] parameters:parameters success:^(AFHTTPRequestOperation *operation, id responseObject) {
-            NSLog(@"success getting feedbacks for story %@, %@",_story.title,responseObject);
+            //NSLog(@"success getting feedbacks for story %@, %@",_story.title,responseObject);
             [self updateStoryFeedback:[responseObject objectForKey:@"feedbacks"]];
-            _story.bookmarked = [(Feedback*)_story.feedbacks.firstObject story].bookmarked;
-            [self setupNavButtons];
+            if ([responseObject objectForKey:@"bookmarked"]){
+                [_story setBookmarked:[NSNumber numberWithBool:YES]];
+                [self setupNavButtons];
+            } else {
+                
+                [currentUser.bookmarks enumerateObjectsUsingBlock:^(Bookmark *bookmark, NSUInteger idx, BOOL *stop) {
+                    if ([_story.identifier isEqualToNumber:bookmark.story.identifier]){
+                        [_story setBookmarked:[NSNumber numberWithBool:YES]];
+                        [self setupNavButtons];
+                        *stop = YES;
+                    }
+                }];
+            }
         } failure:^(AFHTTPRequestOperation *operation, NSError *error) {
             NSLog(@"Failed to get feedbacks for %@, %@",_story.title,error.description);
         }];
@@ -320,19 +360,19 @@
         }
     }
     _story.feedbacks = feedbacks;
+    [self saveContext];
 }
 
 - (void)setupNavButtons {
     if (signedIn && [_story.owner.identifier isEqualToNumber:[[NSUserDefaults standardUserDefaults] objectForKey:kUserDefaultsId]]){
         editButton = [[UIBarButtonItem alloc] initWithImage:[UIImage imageNamed:@"whitePencil"] style:UIBarButtonItemStylePlain target:self action:@selector(edit)];
-    } else if (signedIn && _story.bookmarked){
+    } else if (signedIn && [_story.bookmarked isEqualToNumber:[NSNumber numberWithBool:YES]]){
         editButton = [[UIBarButtonItem alloc] initWithImage:[UIImage imageNamed:@"bookmarked"] style:UIBarButtonItemStylePlain target:self action:@selector(destroyBookmark)];
     } else if (signedIn){
         editButton = [[UIBarButtonItem alloc] initWithImage:[UIImage imageNamed:@"bookmark"] style:UIBarButtonItemStylePlain target:self action:@selector(createBookmark)];
     } else {
         editButton = [[UIBarButtonItem alloc] initWithImage:[UIImage imageNamed:@"bookmark"] style:UIBarButtonItemStylePlain target:self action:@selector(confirmLoginPromptBookmark)];
     }
-    
     
     if ([[NSUserDefaults standardUserDefaults] boolForKey:kDarkBackground]){
         themeButton = [[UIBarButtonItem alloc] initWithImage:[UIImage imageNamed:@"moon"] style:UIBarButtonItemStylePlain target:self action:@selector(themeSwitch)];
@@ -441,6 +481,7 @@
 }
 
 - (void)resetStory:(NSNotification*)notification{
+    [self resetStoryBody];
     _story = [notification.userInfo objectForKey:@"story"];
     [self loadStory:_story.identifier];
 }
@@ -521,12 +562,11 @@
     }
     NSMutableParagraphStyle *paragraphStyle = [[NSMutableParagraphStyle alloc] init];
     paragraphStyle.lineHeightMultiple = 1.f;
-    paragraphStyle.lineSpacing = 5.f;
-    paragraphStyle.paragraphSpacing = 17.f;
+    paragraphStyle.lineSpacing = 3.f;
+    paragraphStyle.paragraphSpacing = 27.f;
     
     
     NSDictionary* attributes = @{NSFontAttributeName:[UIFont fontWithDescriptor:[UIFontDescriptor preferredCrimsonTextFontDescriptorWithTextStyle:UIFontTextStyleBody] size:0],
-
                                  NSParagraphStyleAttributeName : paragraphStyle,
                                  NSDocumentTypeDocumentAttribute:NSHTMLTextDocumentType,
                                  };
@@ -581,7 +621,7 @@
         }
         
         UIButton *userImgButton = [UIButton buttonWithType:UIButtonTypeCustom];
-        if (contribution.user.picSmall){
+        if (contribution.user.picSmall.length){
             [userImgButton setImageWithURL:[NSURL URLWithString:contribution.user.picSmall] forState:UIControlStateNormal];
             [userImgButton.imageView.layer setBackgroundColor:[UIColor clearColor].CGColor];
             [userImgButton.imageView setBackgroundColor:[UIColor clearColor]];
@@ -605,12 +645,12 @@
         UILabel *nameLabel = [[UILabel alloc] initWithFrame:CGRectMake(spacer+50, contributionOffset, screenWidth()-50-spacer, 50)];
         [nameLabel setTextColor:textColor];
         [nameLabel setText:[NSString stringWithFormat:@"%@\n%@",contribution.user.penName, [_formatter stringFromDate:contribution.updatedDate]]];
-        [nameLabel setFont:[UIFont fontWithName:kSourceSansProRegular size:14]];
+        [nameLabel setFont:[UIFont fontWithName:kSourceSansProBold size:13]];
         [nameLabel setNumberOfLines:0];
         [nameLabel setTag:kSeparatorTag];
         [_scrollView addSubview:nameLabel];
         
-        contributionOffset += 50;
+        contributionOffset += 53;
         
         XXTextView *textView = [[XXTextView alloc] initWithFrame:CGRectMake(spacer/2,contributionOffset,width-spacer,height)];
         [textView setContribution:contribution];
@@ -656,22 +696,33 @@
         
         if (_story.contributions.count > 1) {
             UIButton *userImgButton = [UIButton buttonWithType:UIButtonTypeCustom];
-            [userImgButton setImageWithURL:[NSURL URLWithString:contribution.user.picSmall] forState:UIControlStateNormal];
-            [userImgButton setFrame:CGRectMake(spacer/2, contributionOffset, 50, 50)];
-            [userImgButton.imageView.layer setCornerRadius:25.f];
-            [userImgButton.imageView.layer setBackgroundColor:[UIColor clearColor].CGColor];
-            [userImgButton.imageView setBackgroundColor:[UIColor clearColor]];
+            if (contribution.user.picSmall.length){
+                [userImgButton setImageWithURL:[NSURL URLWithString:contribution.user.picSmall] forState:UIControlStateNormal];
+                [userImgButton.imageView.layer setBackgroundColor:[UIColor clearColor].CGColor];
+                [userImgButton.imageView setBackgroundColor:[UIColor clearColor]];
+                [userImgButton.imageView.layer setCornerRadius:25.f];
+            } else {
+                [userImgButton setTitle:[contribution.user.penName substringWithRange:NSMakeRange(0, 2)].uppercaseString forState:UIControlStateNormal];
+                [userImgButton.titleLabel setTextAlignment:NSTextAlignmentCenter];
+                [userImgButton.titleLabel setFont:[UIFont fontWithName:kSourceSansProLight size:17]];
+                [userImgButton setTitleColor:[UIColor blackColor] forState:UIControlStateNormal];
+                userImgButton.layer.borderColor = [UIColor blackColor].CGColor;
+                userImgButton.layer.borderWidth = .5f;
+                [userImgButton.layer setCornerRadius:25.f];
+                [userImgButton.layer setBackgroundColor:[UIColor clearColor].CGColor];
+                [userImgButton setBackgroundColor:[UIColor clearColor]];
+            }
             [userImgButton setTag:[_story.contributions indexOfObject:contribution]];
             [userImgButton addTarget:self action:@selector(goToProfile:) forControlEvents:UIControlEventTouchUpInside];
             [_scrollView addSubview:userImgButton];
             UILabel *nameLabel = [[UILabel alloc] initWithFrame:CGRectMake(spacer+50, contributionOffset, screenWidth()-50-spacer, 50)];
             [nameLabel setTextColor:textColor];
-            [nameLabel setText:[NSString stringWithFormat:@"%@\n%@",contribution.user.penName, [_formatter stringFromDate:contribution.updatedDate]]];
-            [nameLabel setFont:[UIFont fontWithName:kSourceSansProRegular size:14]];
+            [nameLabel setText:[NSString stringWithFormat:@"%@ | %@",contribution.user.penName, [_formatter stringFromDate:contribution.updatedDate]]];
+            [nameLabel setFont:[UIFont fontWithName:kSourceSansProBold size:14]];
             [nameLabel setNumberOfLines:0];
             [nameLabel setTag:kSeparatorTag];
             [_scrollView addSubview:nameLabel];
-            contributionOffset += 50;
+            contributionOffset += 53;
         }
         
         NSTextContainer *textContainer = [[NSTextContainer alloc] initWithSize:CGSizeMake(width-spacer, textViewHeight)];
@@ -761,10 +812,14 @@
     
     contributionOffset = height;
     if ([_story.mystery isEqualToNumber:[NSNumber numberWithBool:NO]] && _story.contributions.count == 1){
-        [self generateAttributedString:_story.contributions.firstObject];
+        if ([_story.contributions.firstObject body].length) {
+            [self generateAttributedString:_story.contributions.firstObject];
+        }
     } else {
         for (Contribution *contribution in _story.contributions){
-            [self generateAttributedString:contribution];
+            if (contribution.body.length){
+                [self generateAttributedString:contribution];
+            }
         }
     }
     
@@ -785,12 +840,17 @@
         
         flagButton = [UIButton buttonWithType:UIButtonTypeCustom];
         [flagButton setAutoresizingMask:UIViewAutoresizingFlexibleWidth];
-        [flagButton setFrame:CGRectMake(0, contributionOffset , width, 88)];
+        [flagButton setFrame:CGRectMake(width/2-41, contributionOffset+20, 82, 48)];
         [flagButton setTitle:@"Flag" forState:UIControlStateNormal];
         [flagButton.titleLabel setTextAlignment:NSTextAlignmentCenter];
-        [flagButton.titleLabel setFont:[UIFont fontWithName:kSourceSansProLight size:19]];
+        [flagButton.titleLabel setFont:[UIFont fontWithName:kSourceSansProSemibold size:16]];
         [flagButton addTarget:self action:@selector(flagContent) forControlEvents:UIControlEventTouchUpInside];
         [flagButton setTitleColor:textColor forState:UIControlStateNormal];
+        [flagButton.layer setBorderColor:textColor.CGColor];
+        [flagButton setBackgroundColor:[UIColor clearColor]];
+        flagButton.layer.borderWidth = .5f;
+        flagButton.layer.cornerRadius = 14.f;
+        flagButton.clipsToBounds = YES;
         [_scrollView addSubview:flagButton];
         contributionOffset += 88;
         
@@ -798,21 +858,30 @@
         
         shouldShareButton = [UIButton buttonWithType:UIButtonTypeCustom];
         [shouldShareButton setAutoresizingMask:UIViewAutoresizingFlexibleWidth];
-        [shouldShareButton setFrame:CGRectMake(0, contributionOffset , width/2, 132)];
+        [shouldShareButton setFrame:CGRectMake(width/4-41, contributionOffset + 42, 82, 48)];
         [shouldShareButton setTitle:@"Share" forState:UIControlStateNormal];
-        [shouldShareButton.titleLabel setFont:[UIFont fontWithName:kSourceSansProLight size:19]];
+        [shouldShareButton.titleLabel setFont:[UIFont fontWithName:kSourceSansProRegular size:16]];
         [shouldShareButton addTarget:self action:@selector(showActivityView) forControlEvents:UIControlEventTouchUpInside];
         [shouldShareButton setTitleColor:textColor forState:UIControlStateNormal];
+        [shouldShareButton.layer setBorderColor:textColor.CGColor];
+        [shouldShareButton setBackgroundColor:[UIColor clearColor]];
+        shouldShareButton.layer.borderWidth = .5f;
+        shouldShareButton.layer.cornerRadius = 14.f;
         [_scrollView addSubview:shouldShareButton];
         
         flagButton = [UIButton buttonWithType:UIButtonTypeCustom];
         [flagButton setAutoresizingMask:UIViewAutoresizingFlexibleWidth];
-        [flagButton setFrame:CGRectMake(width/2, contributionOffset , width/2, 132)];
+        [flagButton setFrame:CGRectMake(width*.75-41, contributionOffset + 42, 82, 48)];
         [flagButton setTitle:@"Flag" forState:UIControlStateNormal];
         [flagButton.titleLabel setTextAlignment:NSTextAlignmentCenter];
-        [flagButton.titleLabel setFont:[UIFont fontWithName:kSourceSansProLight size:19]];
+        [flagButton.titleLabel setFont:[UIFont fontWithName:kSourceSansProRegular size:16]];
         [flagButton addTarget:self action:@selector(flagContent) forControlEvents:UIControlEventTouchUpInside];
         [flagButton setTitleColor:[UIColor lightGrayColor] forState:UIControlStateNormal];
+        [flagButton setTitleColor:textColor forState:UIControlStateNormal];
+        [flagButton.layer setBorderColor:textColor.CGColor];
+        [flagButton setBackgroundColor:[UIColor clearColor]];
+        flagButton.layer.borderWidth = .5f;
+        flagButton.layer.cornerRadius = 14.f;
         [_scrollView addSubview:flagButton];
         contributionOffset += 132;
     }
@@ -1273,18 +1342,19 @@
     }
 }
 
+- (void)saveContext {
+    [[NSManagedObjectContext MR_defaultContext] MR_saveToPersistentStoreWithCompletion:^(BOOL success, NSError *error) {
+        NSLog(@"%u success with saving story.",success);
+        storyInfoVc.story = _story;
+    }];
+}
+
 - (void)didReceiveMemoryWarning
 {
     [super didReceiveMemoryWarning];
-    // Dispose of any resources that can be recreated.
     NSLog(@"received memory warning");
     if (multiPage){
         [self removeNonVisible];
     }
-    /*if (IDIOM == IPAD){
-        [[(XXAppDelegate*)[UIApplication sharedApplication].delegate windowBackground] setImage:[UIImage imageNamed:@"background_ipad"]];
-    } else {
-        [[(XXAppDelegate*)[UIApplication sharedApplication].delegate windowBackground] setImage:[UIImage imageNamed:@"background"]];
-    }*/
 }
 @end

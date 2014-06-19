@@ -8,8 +8,8 @@
 
 #import <Foundation/Foundation.h>
 #import <CoreData/CoreData.h>
-
-@class Footnote, User;
+#import "User+helper.h"
+@class Footnote;
 
 @interface Story : NSManagedObject
 
@@ -20,19 +20,19 @@
 @property (nonatomic, retain) NSNumber * wordCount;
 @property (nonatomic, retain) NSNumber * views;
 @property (nonatomic, retain) NSNumber * trendingCount;
-@property (nonatomic, retain) NSDate * published;
+@property (nonatomic, retain) NSDate * publishedDate;
 @property (nonatomic, retain) NSString * authorNames;
 @property (nonatomic, retain) NSString * storyUrl;
-@property (nonatomic, retain) NSNumber * epochTime;
 @property (nonatomic, retain) NSNumber * minutesToRead;
 @property (nonatomic, retain) NSNumber * joinable;
-@property (nonatomic, retain) NSNumber * saved;
-@property (nonatomic, retain) NSNumber * privateStory;
+@property (nonatomic, retain) NSNumber * draft;
+@property (nonatomic, retain) NSNumber * inviteOnly;
 @property (nonatomic, retain) NSNumber * bookmarked;
 @property (nonatomic, retain) NSNumber * mystery;
 @property (nonatomic, retain) NSNumber * featured;
 @property (nonatomic, retain) NSOrderedSet *footnotes;
 @property (nonatomic, retain) User *owner;
+@property (nonatomic, retain) NSNumber *ownerId;
 @property (nonatomic, retain) NSOrderedSet *users;
 @property (nonatomic, retain) NSOrderedSet *circles;
 @property (nonatomic, retain) NSOrderedSet *contributions;

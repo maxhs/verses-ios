@@ -11,5 +11,6 @@
 
 @interface XXPhotoCollectionCell : UICollectionViewCell
 @property (weak, nonatomic) IBOutlet UIButton *photoButton;
+@property (strong, nonatomic) Photo *photo;
 -(void)configureForPhoto:(Photo*)photo;
 @end

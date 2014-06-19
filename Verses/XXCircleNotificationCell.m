@@ -24,7 +24,7 @@
     [self.timestamp setFont:[UIFont fontWithName:kSourceSansProLight size:13]];
 }
 
-- (void)configureNotification:(XXNotification *)notification {
+- (void)configureNotification:(Notification *)notification {
     if ([notification.type isEqualToString:kCircleComment]){
         [self.notificationLabel setText:[NSString stringWithFormat:@"%@ added a comment.",notification.targetUser.penName]];
     } else if ([notification.type isEqualToString:kCircle]){

@@ -57,13 +57,24 @@
     } else {
         [_alertLabel setText:[NSString stringWithFormat:@"%d",count]];
         [_alertLabel setHidden:NO];
+        CGFloat alertWidth;
+        
+        if (count > 999){
+            alertWidth = 34;
+        } else if (count > 99){
+            alertWidth = 27;
+        } else {
+            alertWidth = 20;
+        }
+        
         CGRect unreadFrame = _alertLabel.frame;
+        unreadFrame.size.width = alertWidth;
         CGRect expectedSize = [_circleName.text boundingRectWithSize:_circleName.frame.size options:NSStringDrawingUsesLineFragmentOrigin attributes:@{NSFontAttributeName:_circleName.font} context:nil];
         unreadFrame.origin.x = expectedSize.size.width;
         [_alertLabel setFrame:unreadFrame];
         [_alertLabel setBackgroundColor:[UIColor redColor]];
         [_alertLabel setTextColor:[UIColor whiteColor]];
-        [_alertLabel setFont:[UIFont fontWithName:kSourceSansProRegular size:14]];
+        [_alertLabel setFont:[UIFont systemFontOfSize:13]];
         [_alertLabel.layer setBackgroundColor:[UIColor clearColor].CGColor];
         _alertLabel.layer.cornerRadius = _alertLabel.frame.size.height/2;
         [_alertLabel setTextAlignment:NSTextAlignmentCenter];

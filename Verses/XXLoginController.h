@@ -7,7 +7,7 @@
 //
 
 #import <UIKit/UIKit.h>
-#import "XXUser.h"
+#import "User.h"
 
 @interface XXLoginController : UIViewController
 @property (strong, nonatomic) IBOutlet UITextField *emailTextField;

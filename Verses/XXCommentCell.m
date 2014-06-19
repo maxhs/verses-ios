@@ -30,7 +30,7 @@
 
     // Configure the view for the selected state
 }
--(void)configureComment:(XXComment*)comment{
+-(void)configureComment:(Comment*)comment{
     [_commentLabel setFont:[UIFont fontWithName:kCrimsonRoman size:17]];
     NSString *commentText = [NSString stringWithFormat:@"\"%@\"",comment.body];
     [_commentLabel setText:commentText];

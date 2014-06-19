@@ -7,10 +7,10 @@
 //
 
 #import <UIKit/UIKit.h>
-#import "XXStory.h"
+#import "Story+helper.h"
 
 @interface XXSearchCell : UITableViewCell
 @property (weak, nonatomic) IBOutlet UILabel *storyTitle;
 @property (weak, nonatomic) IBOutlet UILabel *authorLabel;
-- (void)configure:(XXStory*)story;
+- (void)configure:(Story*)story;
 @end

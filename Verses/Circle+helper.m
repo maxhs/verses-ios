@@ -10,24 +10,81 @@
 
 @implementation Circle (helper)
 - (void)populateFromDict:(NSDictionary*)dictionary {
-    if ([dictionary objectForKey:@"id"] != [NSNull null]) {
+    if ([dictionary objectForKey:@"id"] && [dictionary objectForKey:@"id"] != [NSNull null]) {
         self.identifier = [dictionary objectForKey:@"id"];
     }
-    if ([dictionary objectForKey:@"description"] != [NSNull null]) {
+    if ([dictionary objectForKey:@"name"] && [dictionary objectForKey:@"name"] != [NSNull null]) {
+        self.name = [dictionary objectForKey:@"name"];
+    }
+    if ([dictionary objectForKey:@"description"] && [dictionary objectForKey:@"description"] != [NSNull null]) {
         self.blurb = [dictionary objectForKey:@"description"];
     }
-    if ([dictionary objectForKey:@"story_title"] != [NSNull null]) {
-        self.titles = [dictionary objectForKey:@"story_title"];
+    if ([dictionary objectForKey:@"story_titles"] && [dictionary objectForKey:@"story_titles"] != [NSNull null]) {
+        self.titles = [dictionary objectForKey:@"story_titles"];
     }
-    if ([dictionary objectForKey:@"fresh"] != [NSNull null]) {
+    if ([dictionary objectForKey:@"fresh"] && [dictionary objectForKey:@"fresh"] != [NSNull null]) {
         self.fresh = [dictionary objectForKey:@"fresh"];
     }
-    if ([dictionary objectForKey:@"created_date"] != [NSNull null]) {
+    if ([dictionary objectForKey:@"public_circle"] && [dictionary objectForKey:@"public_circle"] != [NSNull null]) {
+        self.publicCircle = [dictionary objectForKey:@"public_circle"];
+    }
+    if ([dictionary objectForKey:@"members"] && [dictionary objectForKey:@"members"] != [NSNull null]) {
+        self.members = [dictionary objectForKey:@"members"];
+    }
+    if ([dictionary objectForKey:@"created_date"] && [dictionary objectForKey:@"created_date"] != [NSNull null]) {
         NSTimeInterval _interval = [[dictionary objectForKey:@"created_date"] doubleValue];
         self.createdDate = [NSDate dateWithTimeIntervalSince1970:_interval];
     }
-    if ([dictionary objectForKey:@"unread_comments"] != [NSNull null]) {
+    if ([dictionary objectForKey:@"unread_comments"] && [dictionary objectForKey:@"unread_comments"] != [NSNull null]) {
         self.unreadCommentCount = [NSNumber numberWithInteger:[self unreadComments:[dictionary objectForKey:@"unread_comments"]]];
+    }
+    if ([dictionary objectForKey:@"comments"] && [dictionary objectForKey:@"comments"] != [NSNull null]) {
+        NSMutableOrderedSet *orderedComments = [NSMutableOrderedSet orderedSet];
+        for (NSDictionary *commentDict in [dictionary objectForKey:@"comments"]){
+            if ([commentDict objectForKey:@"id"] != [NSNull null]){
+                Comment *comment = [Comment MR_findFirstByAttribute:@"identifier" withValue:[commentDict objectForKey:@"id"]];
+                if (!comment){
+                    comment = [Comment MR_createInContext:[NSManagedObjectContext MR_defaultContext]];
+                }
+                [comment populateFromDict:commentDict];
+                [orderedComments addObject:comment];
+            }
+        }
+        for (Comment *comment in self.comments){
+            if (![orderedComments containsObject:comment]){
+                NSLog(@"Deleting a circle comment that no longer exist.");
+                [comment MR_deleteInContext:[NSManagedObjectContext MR_defaultContext]];
+            }
+        }
+        self.comments = orderedComments;
+    }
+    if ([dictionary objectForKey:@"stories"] && [dictionary objectForKey:@"stories"] != [NSNull null]) {
+        //NSLog(@"stories dict: %@",[dictionary objectForKey:@"stories"]);
+        NSMutableOrderedSet *orderedStories = [NSMutableOrderedSet orderedSet];
+        for (NSDictionary *storyDict in [dictionary objectForKey:@"stories"]){
+            if ([storyDict objectForKey:@"id"] != [NSNull null]){
+                Story *story = [Story MR_findFirstByAttribute:@"identifier" withValue:[storyDict objectForKey:@"id"]];
+                if (!story){
+                    story = [Story MR_createInContext:[NSManagedObjectContext MR_defaultContext]];
+                }
+                [story populateFromDict:storyDict];
+                [orderedStories addObject:story];
+            }
+        }
+        for (Story *story in self.stories){
+            if (![orderedStories containsObject:story]){
+                [self removeStory:story];
+            }
+        }
+        self.stories = orderedStories;
+    }
+    if ([dictionary objectForKey:@"user"] && [dictionary objectForKey:@"user"] != [NSNull null]) {
+        User *user = [User MR_findFirstByAttribute:@"identifier" withValue:[[dictionary objectForKey:@"user"] objectForKey:@"id"]];
+        if (!user){
+            user = [User MR_createInContext:[NSManagedObjectContext MR_defaultContext]];
+        }
+        [user populateFromDict:[dictionary objectForKey:@"user"]];
+        self.owner = user;
     }
 }
 
@@ -49,6 +106,12 @@
     NSMutableOrderedSet *set = [[NSMutableOrderedSet alloc] initWithOrderedSet:self.comments];
     [set removeObject:comment];
     self.comments = set;
+}
+
+- (void)removeStory:(Story*)story{
+    NSMutableOrderedSet *set = [[NSMutableOrderedSet alloc] initWithOrderedSet:self.stories];
+    [set removeObject:story];
+    self.stories = set;
 }
 
 @end

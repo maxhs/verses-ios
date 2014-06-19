@@ -44,7 +44,7 @@
         [_authorPhoto setTitle:@"" forState:UIControlStateNormal];
         _authorPhoto.layer.borderWidth = 0.f;
         [_authorPhoto setImageWithURL:[NSURL URLWithString:author.picSmall] forState:UIControlStateNormal completed:^(UIImage *image, NSError *error, SDImageCacheType cacheType) {
-            [UIView animateWithDuration:.25 animations:^{
+            [UIView animateWithDuration:.27 animations:^{
                 [_authorPhoto setAlpha:1.0];
             }];
         }];
@@ -55,7 +55,7 @@
         [_authorPhoto.titleLabel setTextAlignment:NSTextAlignmentCenter];
         _authorPhoto.layer.borderColor = [UIColor colorWithWhite:1 alpha:.1].CGColor;
         _authorPhoto.layer.borderWidth = 1.f;
-        [UIView animateWithDuration:.25 animations:^{
+        [UIView animateWithDuration:.27 animations:^{
             [_authorPhoto setAlpha:1.0];
         }];
     }

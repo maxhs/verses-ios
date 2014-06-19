@@ -7,12 +7,12 @@
 //
 
 #import <UIKit/UIKit.h>
-#import "XXFeedback.h"
+#import "Feedback+helper.h"
 
 @interface XXFeedbackCell : UITableViewCell
 @property (weak, nonatomic) IBOutlet UILabel *titleLabel;
 @property (weak, nonatomic) IBOutlet UILabel *timeStampLabel;
 @property (weak, nonatomic) IBOutlet UILabel *messageLabel;
 @property (weak, nonatomic) IBOutlet UITextView *snippetTextView;
-- (void)configure:(XXFeedback*)feedback textColor:(UIColor*)color;
+- (void)configure:(Feedback*)feedback textColor:(UIColor*)color;
 @end

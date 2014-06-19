@@ -11,5 +11,5 @@
 @interface XXWritingTitleCell : UITableViewCell
 
 @property (weak, nonatomic) IBOutlet UITextField *titleTextField;
-- (void)configure:(XXStory*)storyInput withOrientation:(UIInterfaceOrientation)orientation;
+- (void)configure:(Story*)storyInput withOrientation:(UIInterfaceOrientation)orientation;
 @end

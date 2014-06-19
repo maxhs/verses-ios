@@ -31,7 +31,7 @@
     // Configure the view for the selected state
 }
 
--(void)configureContact:(XXUser*)contact {
+-(void)configureContact:(User*)contact {
     [self.nameLabel setText:contact.penName];
     [self.nameLabel setFont:[UIFont fontWithName:kCrimsonRoman size:23]];
     if (contact.location.length){
@@ -44,7 +44,7 @@
         [self.locationLabel setTextColor:[UIColor lightGrayColor]];
     }
 }
--(void)configureCircle:(XXCircle *)circle {
+-(void)configureCircle:(Circle *)circle {
     [self.nameLabel setText:circle.name];
     [self.nameLabel setFont:[UIFont fontWithName:kCrimsonRoman size:23]];
     [self.locationLabel setText:circle.members];

@@ -8,7 +8,7 @@
 
 #import "XXMenuViewController.h"
 #import "XXLoginController.h"
-#import "SWRevealViewController/SWRevealViewController.h"
+#import "XXNoRotateNavController.h"
 #import "XXUserNameCell.h"
 #import "User+helper.h"
 #import "Notification+helper.h"
@@ -16,7 +16,6 @@
 #import "XXStoryViewController.h"
 #import "XXSettingsViewController.h"
 #import "XXNotificationCell.h"
-#import "XXDraftsViewController.h"
 #import "XXPortfolioViewController.h"
 #import "XXCirclesViewController.h"
 #import "XXStoriesViewController.h"
@@ -34,8 +33,6 @@
     BOOL loading;
     BOOL canLoadMore;
     BOOL searching;
-    User *savedUser;
-    NSMutableArray *notifications;
     NSIndexPath *indexPathForDeletion;
     NSMutableArray *_searchResults;
     NSMutableArray *_filteredResults;
@@ -46,6 +43,7 @@
     NSInteger _circleAlertCount;
     NSAttributedString *searchPlaceholder;
     MSDynamicsDrawerViewController *dynamicsViewController;
+    User *currentUser;
 }
 
 @end
@@ -58,7 +56,6 @@
     dynamicsViewController = [(XXAppDelegate*)[UIApplication sharedApplication].delegate dynamicsDrawerViewController];
     [self.view setBackgroundColor:[UIColor clearColor]];
     _filteredResults = [NSMutableArray array];
-    notifications = [NSMutableArray array];
     self.tableView.backgroundColor = [UIColor clearColor];
     self.tableView.separatorColor = [UIColor colorWithWhite:1.0 alpha:0.05];
 
@@ -71,9 +68,18 @@
     _timeFormatter = [[NSDateFormatter alloc] init];
     [_timeFormatter setLocale:[NSLocale currentLocale]];
     [_timeFormatter setDateFormat:@"h:mm a"];
-    
+    currentUser = [User MR_findFirstByAttribute:@"identifier" withValue:[[NSUserDefaults standardUserDefaults] objectForKey:kUserDefaultsId]];
     [super viewDidLoad];
     searchPlaceholder = [[NSAttributedString alloc] initWithString:@"Search stories" attributes:@{ NSForegroundColorAttributeName : [UIColor whiteColor] }];
+    [[NSNotificationCenter defaultCenter] addObserver:self
+                                             selector:@selector(reloadMenu)
+                                                 name:@"ReloadMenu"
+                                               object:nil];
+}
+
+- (void)reloadMenu {
+    currentUser = [(XXAppDelegate*)[UIApplication sharedApplication].delegate currentUser];
+    [self loadNotifications];
 }
 
 - (void)viewWillAppear:(BOOL)animated {
@@ -81,7 +87,6 @@
     [[UIApplication sharedApplication] setStatusBarHidden:YES withAnimation:UIStatusBarAnimationFade];
     [[NSNotificationCenter defaultCenter] postNotificationName:@"MenuRevealed" object:nil];
     if ([[NSUserDefaults standardUserDefaults] objectForKey:kUserDefaultsId]) {
-        savedUser = [User MR_findFirstByAttribute:@"identifier" withValue:[[NSUserDefaults standardUserDefaults] objectForKey:kUserDefaultsId]];
         loggedIn = YES;
         self.tableView.scrollEnabled = YES;
         [self loadNotifications];
@@ -89,7 +94,6 @@
         [self.searchBar setHidden:NO];
     } else {
         [self.searchBar setHidden:YES];
-        savedUser = nil;
         self.tableView.rowHeight = screenHeight();
         self.tableView.scrollEnabled = NO;
         loggedIn = NO;
@@ -145,8 +149,6 @@
             [self.tableView setAlpha:1.0];
         }];
     }
-    [self loadCirclesAlert];
-    
     canLoadMore = YES;
     [super viewWillAppear:animated];
     [[UIApplication sharedApplication] setApplicationIconBadgeNumber:0];
@@ -165,8 +167,12 @@
         [manager GET:[NSString stringWithFormat:@"%@/circles/alert",kAPIBaseUrl] parameters:@{@"user_id":[[NSUserDefaults standardUserDefaults] objectForKey:kUserDefaultsId]} success:^(AFHTTPRequestOperation *operation, id responseObject) {
             //NSLog(@"circle alert response: %@",responseObject);
             _circleAlertCount = [[responseObject objectForKeyedSubscript:@"count"] integerValue];
+            
+            [self.tableView beginUpdates];
             if (self.tableView.visibleCells)[self.tableView reloadSections:[NSIndexSet indexSetWithIndex:0] withRowAnimation:UITableViewRowAnimationFade];
             else [self.tableView reloadData];
+            [self.tableView endUpdates];
+            
         } failure:^(AFHTTPRequestOperation *operation, NSError *error) {
             NSLog(@"Failure getting circle alerts: %@",error.description);
         }];
@@ -175,11 +181,24 @@
 
 - (void)loadNotifications {
     if (loggedIn){
-        [manager.requestSerializer setValue:[[NSUserDefaults standardUserDefaults] objectForKey:kUserDefaultsAuthToken] forHTTPHeaderField:@"Authorization"];
+        //[manager.requestSerializer setValue:[[NSUserDefaults standardUserDefaults] objectForKey:kUserDefaultsAuthToken] forHTTPHeaderField:@"Authorization"];
         [manager GET:[NSString stringWithFormat:@"%@/notifications",kAPIBaseUrl] parameters:@{@"user_id":[[NSUserDefaults standardUserDefaults] objectForKey:kUserDefaultsId],@"count":@"30"} success:^(AFHTTPRequestOperation *operation, id responseObject) {
             //NSLog(@"success fetching user notifications: %@",responseObject);
-            notifications = [[Utilities notificationsFromJSONArray:[responseObject objectForKey:@"notifications"]] mutableCopy];
-            [self.tableView reloadData];
+            NSMutableOrderedSet *notificationSet = [NSMutableOrderedSet orderedSet];
+            for (NSDictionary *dict in [responseObject objectForKey:@"notifications"]){
+                Notification *notification = [Notification MR_findFirstByAttribute:@"identifier" withValue:[dict objectForKey:@"id"]];
+                if (!notification){
+                    notification = [Notification MR_createInContext:[NSManagedObjectContext MR_defaultContext]];
+                }
+                [notification populateFromDict:dict];
+                [notificationSet addObject:notification];
+            }
+            currentUser.notifications = notificationSet;
+            [[NSManagedObjectContext MR_defaultContext] MR_saveToPersistentStoreWithCompletion:^(BOOL success, NSError *error) {
+                [self.tableView reloadData];
+                [self loadCirclesAlert];
+            }];
+            
         } failure:^(AFHTTPRequestOperation *operation, NSError *error) {
             NSLog(@"Failure getting user notifications: %@",error.description);
         }];
@@ -187,25 +206,44 @@
 }
 
 - (void)loadMoreNotifications {
-    loading = YES;
-    XXNotification *lastNotification = notifications.lastObject;
-    if (lastNotification){
-        [manager GET:[NSString stringWithFormat:@"%@/stories",kAPIBaseUrl] parameters:@{@"before_date":lastNotification.epochTime, @"count":@"30"} success:^(AFHTTPRequestOperation *operation, id responseObject) {
-            //NSLog(@"more notificaitons response: %@",responseObject);
-            NSArray *newNotificaitons = [Utilities notificationsFromJSONArray:[responseObject objectForKey:@"notifications"]];
-            [notifications addObjectsFromArray:newNotificaitons];
-            if (newNotificaitons.count < 30) {
-                canLoadMore = NO;
-                NSLog(@"can't load more, we now have %i notifications", notifications.count);
-            }
-            [ProgressHUD dismiss];
-            loading = NO;
-            [self.tableView reloadSections:[NSIndexSet indexSetWithIndex:1] withRowAnimation:UITableViewRowAnimationFade];
-        } failure:^(AFHTTPRequestOperation *operation, NSError *error) {
-            
-        }];
-    } else {
-        [self loadNotifications];
+    if (loggedIn){
+        loading = YES;
+        Notification *lastNotification = currentUser.notifications.lastObject;
+        if (lastNotification){
+            [manager GET:[NSString stringWithFormat:@"%@/stories",kAPIBaseUrl] parameters:@{@"before_date":[NSNumber numberWithDouble:[lastNotification.createdDate timeIntervalSince1970]], @"count":@"30",@"user_id":[[NSUserDefaults standardUserDefaults] objectForKey:kUserDefaultsId]} success:^(AFHTTPRequestOperation *operation, id responseObject) {
+                //NSLog(@"more notificaitons response: %@",responseObject);
+                NSMutableOrderedSet *notificationSet = [NSMutableOrderedSet orderedSetWithOrderedSet:currentUser.notifications];
+                int count = 0;
+                for (NSDictionary *dict in [responseObject objectForKey:@"notifications"]){
+                    Notification *notification = [Notification MR_findFirstByAttribute:@"identifier" withValue:[dict objectForKey:@"id"]];
+                    if (!notification){
+                        notification = [Notification MR_createInContext:[NSManagedObjectContext MR_defaultContext]];
+                    }
+                    [notification populateFromDict:dict];
+                    [notificationSet addObject:notification];
+                    count ++;
+                }
+                for (Notification *notification in currentUser.notifications){
+                    if (![notificationSet containsObject:notification]){
+                        NSLog(@"Deleting a notification that no longer exists: %@",notification.message);
+                        [notification MR_deleteInContext:[NSManagedObjectContext MR_defaultContext]];
+                    }
+                }
+                currentUser.notifications = notificationSet;
+                
+                if (count < 30) {
+                    canLoadMore = NO;
+                    NSLog(@"Can't load more, we now have %i notifications", currentUser.notifications.count);
+                }
+                [ProgressHUD dismiss];
+                loading = NO;
+                [self.tableView reloadSections:[NSIndexSet indexSetWithIndex:1] withRowAnimation:UITableViewRowAnimationFade];
+            } failure:^(AFHTTPRequestOperation *operation, NSError *error) {
+                
+            }];
+        } else {
+            [self loadNotifications];
+        }
     }
 }
 
@@ -241,9 +279,9 @@
        
     } else if (loggedIn) {
         if (section == 0){
-            return 6;
+            return 4;
         } else {
-            return notifications.count;
+            return currentUser.notifications.count;
         }
     } else {
         return 1;
@@ -257,13 +295,12 @@
             if (cell == nil) {
                 cell = [[[NSBundle mainBundle] loadNibNamed:@"XXSearchCell" owner:nil options:nil] lastObject];
             }
-            XXStory *story;
+            Story *story;
             if (searching){
                 story = [_filteredResults objectAtIndex:indexPath.row];
             } else {
                 story = [_searchResults objectAtIndex:indexPath.row];
             }
-            
             [cell configure:story];
             return cell;
         } else {
@@ -284,7 +321,7 @@
                 cell = [[[NSBundle mainBundle] loadNibNamed:@"XXMenuCell" owner:nil options:nil] lastObject];
             }
             
-            if (indexPath.row == 3) [cell configureAlert:_circleAlertCount];
+            if (indexPath.row == 1) [cell configureAlert:_circleAlertCount];
             else [cell configureAlert:0];
             
             UIView *selectedBackgroundView = [[UIView alloc] initWithFrame:cell.frame];
@@ -294,12 +331,12 @@
             switch (indexPath.row) {
                 case 0:
                 {
-                    [cell.menuImage setImage:[UIImage imageNamed:@"menuBrowse"]];
-                    [cell.menuLabel setText:@"Read"];
+                    [cell.menuImage setImage:[UIImage imageNamed:@"menuHome"]];
+                    [cell.menuLabel setText:@"Home"];
                     return cell;
                 }
                     break;
-                case 1:
+                /*case 1:
                 {
                     [cell.menuImage setImage:[UIImage imageNamed:@"menuWrite"]];
                     [cell.menuLabel setText:@"Write"];
@@ -312,22 +349,22 @@
                     [cell.menuLabel setText:@"Portfolio"];
                     return cell;
                 }
-                    break;
-                case 3:
+                    break;*/
+                case 1:
                 {
                     [cell.menuImage setImage:[UIImage imageNamed:@"menuCircles"]];
                     [cell.menuLabel setText:@"Writing Circles"];
                     return cell;
                 }
                     break;
-                case 4:
+                case 2:
                 {
                     [cell.menuImage setImage:[UIImage imageNamed:@"menuBookmarks"]];
                     [cell.menuLabel setText:@"Bookmarks"];
                     return cell;
                 }
                     break;
-                case 5:
+                case 3:
                 {
                     [cell.menuImage setImage:[UIImage imageNamed:@"menuSettings"]];
                     [cell.menuLabel setText:@"Settings"];
@@ -343,10 +380,10 @@
             if (cell == nil) {
                 cell = [[[NSBundle mainBundle] loadNibNamed:@"XXNotificationCell" owner:nil options:nil] lastObject];
             }
-            XXNotification *notification = [notifications objectAtIndex:indexPath.row];
+            Notification *notification = [currentUser.notifications objectAtIndex:indexPath.row];
             [cell configureCell:notification];
-            [cell.monthLabel setText:[_monthFormatter stringFromDate:notification.createdAt]];
-            [cell.timeLabel setText:[_timeFormatter stringFromDate:notification.createdAt]];
+            [cell.monthLabel setText:[_monthFormatter stringFromDate:notification.createdDate]];
+            [cell.timeLabel setText:[_timeFormatter stringFromDate:notification.createdDate]];
             return cell;
         }
         
@@ -381,7 +418,11 @@
 }
 
 - (void)login {
-    [self performSegueWithIdentifier:@"Login" sender:nil];
+    XXLoginController *vc = [[self storyboard] instantiateViewControllerWithIdentifier:@"Login"];
+    XXNoRotateNavController *nav = [[XXNoRotateNavController alloc] initWithRootViewController:vc];
+    [self presentViewController:nav animated:YES completion:^{
+        
+    }];
 }
 
 - (void)goHome {
@@ -453,17 +494,6 @@
     }
 }
 
-- (void)goToDrafts {
-    if ([[(UINavigationController*)dynamicsViewController.paneViewController viewControllers].lastObject isKindOfClass:[XXDraftsViewController class]]){
-        [dynamicsViewController setPaneState:MSDynamicsDrawerPaneStateClosed inDirection:MSDynamicsDrawerDirectionLeft animated:YES allowUserInterruption:YES completion:nil];
-    } else {
-        [ProgressHUD show:@"Drying off your drafts..."];
-        XXDraftsViewController *vc = [[self storyboard] instantiateViewControllerWithIdentifier:@"Drafts"];
-        UINavigationController *nav = [[UINavigationController alloc] initWithRootViewController:vc];
-        [dynamicsViewController setPaneDragRevealEnabled:NO forDirection:MSDynamicsDrawerDirectionRight];
-        [dynamicsViewController setPaneViewController:nav animated:YES completion:nil];
-    }
-}
 - (void)goToCircles {
     if ([[(UINavigationController*)dynamicsViewController.paneViewController viewControllers].lastObject isKindOfClass:[XXCirclesViewController class]]){
         XXCirclesViewController *vc = [(UINavigationController*)dynamicsViewController.paneViewController viewControllers].lastObject;
@@ -536,26 +566,26 @@
                 case 0:
                     [self goHome];
                     break;
-                case 1:
+                /*case 1:
                     [self goWrite];
                     break;
                 case 2:
                     [self goToMyStories];
-                    break;
-                case 3:
+                    break;*/
+                case 1:
                     [self goToCircles];
                     break;
-                case 4:
+                case 2:
                     [self goToBookmarks];
                     break;
-                case 5:
+                case 3:
                     [self goToSettings];
                     break;
                 default:
                     break;
             }
         } else if (indexPath.section == 1){
-            Notification *notification = [notifications objectAtIndex:indexPath.row];
+            Notification *notification = [currentUser.notifications objectAtIndex:indexPath.row];
             if (notification.story.identifier){
                 XXStoryViewController *vc = [[self storyboard] instantiateViewControllerWithIdentifier:@"Story"];
                 [ProgressHUD show:@"Fetching story..."];
@@ -634,7 +664,7 @@
     if (!_searchResults.count && !self.searchBar.text.length){
         [manager GET:[NSString stringWithFormat:@"%@/stories/titles",kAPIBaseUrl] parameters:nil success:^(AFHTTPRequestOperation *operation, id responseObject) {
             //NSLog(@"success fetching titles: %@",responseObject);
-            _searchResults = [[Utilities storiesFromJSONArray:[responseObject objectForKey:@"titles"]] mutableCopy];
+            _searchResults = [self updateLocalStories:[responseObject objectForKey:@"titles"]];
             [_filteredResults removeAllObjects];
             [_filteredResults addObjectsFromArray:_searchResults];
             [self.tableView reloadSections:[NSIndexSet indexSetWithIndex:0] withRowAnimation:UITableViewRowAnimationAutomatic];
@@ -643,6 +673,22 @@
         }];
         [self.tableView reloadData];
     }
+}
+
+- (NSMutableArray*)updateLocalStories:(NSArray*)array{
+    NSMutableArray *storyArray = [NSMutableArray array];
+    for (NSDictionary *dict in array){
+        if ([dict objectForKey:@"id"] && [dict objectForKey:@"id"] != [NSNull null]){
+            Story *story = [Story MR_findFirstByAttribute:@"identifier" withValue:[dict objectForKey:@"id"]];
+            if (!story){
+                story = [Story MR_createInContext:[NSManagedObjectContext MR_defaultContext]];
+            }
+            [story populateFromDict:dict];
+            [storyArray addObject:story];
+        }
+    }
+    //[self saveContext];
+    return storyArray;
 }
 
 - (void)searchBarCancelButtonClicked:(UISearchBar *)searchBar {
@@ -685,9 +731,9 @@
 
 - (void)deleteNotification{
     [ProgressHUD show:@"Deleting..."];
-    XXNotification *notification = [notifications objectAtIndex:indexPathForDeletion.row];
+    Notification *notification = [currentUser.notifications objectAtIndex:indexPathForDeletion.row];
     [manager DELETE:[NSString stringWithFormat:@"%@/notifications/%@",kAPIBaseUrl,notification.identifier] parameters:nil success:^(AFHTTPRequestOperation *operation, id responseObject) {
-        [notifications removeObject:notification];
+        [currentUser removeNotification:notification];
         [self.tableView deleteRowsAtIndexPaths:@[indexPathForDeletion] withRowAnimation:UITableViewRowAnimationFade];
         [ProgressHUD dismiss];
     } failure:^(AFHTTPRequestOperation *operation, NSError *error) {
@@ -743,7 +789,7 @@
 
 - (void)filterContentForSearchText:(NSString*)searchText scope:(NSString*)scope {
     [_filteredResults removeAllObjects]; // First clear the filtered array.
-    for (XXStory *story in _searchResults){
+    for (Story *story in _searchResults){
         NSPredicate *predicate = [NSPredicate predicateWithFormat:@"SELF contains[cd] %@", searchText];
         if([predicate evaluateWithObject:story.title]) {
             [_filteredResults addObject:story];

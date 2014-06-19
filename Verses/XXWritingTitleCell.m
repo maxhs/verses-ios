@@ -19,7 +19,7 @@
     return self;
 }
 
-- (void)configure:(XXStory*)story withOrientation:(UIInterfaceOrientation)orientation {
+- (void)configure:(Story*)story withOrientation:(UIInterfaceOrientation)orientation {
     [_titleTextField setFont:[UIFont fontWithName:kSourceSansProSemibold size:31]];
     [_titleTextField setPlaceholder:kTitlePlaceholder];
     if (story.title.length) {

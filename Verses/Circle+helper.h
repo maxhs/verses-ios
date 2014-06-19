@@ -8,6 +8,7 @@
 
 #import "Circle.h"
 #import "Comment+helper.h"
+#import "User+helper.h"
 
 @interface Circle (helper)
 - (void)populateFromDict:(NSDictionary*)dictionary;

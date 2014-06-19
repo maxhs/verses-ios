@@ -8,9 +8,8 @@
 
 #import <UIKit/UIKit.h>
 #import "Story+helper.h"
-#import "XXContribution.h"
-#import "XXUser.h"
-#import "User.h"
+#import "Contribution+helper.h"
+#import "User+helper.h"
 #import <MSDynamicsDrawerViewController/MSDynamicsDrawerViewController.h>
 #import "XXPhotoButton.h"
 

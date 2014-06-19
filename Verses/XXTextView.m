@@ -82,6 +82,14 @@
         _headerButton.layer.cornerRadius = 3.f;
         [_keyboardView addSubview:_headerButton];
         
+        _cameraButton = [UIButton buttonWithType:UIButtonTypeCustom];
+        [_cameraButton setTitle:@"" forState:UIControlStateNormal];
+        [_cameraButton setImage:[UIImage imageNamed:@"camera"] forState:UIControlStateNormal];
+        _cameraButton.layer.borderColor = [UIColor colorWithWhite:1 alpha:.2].CGColor;
+        _cameraButton.layer.borderWidth = .5f;
+        _cameraButton.layer.cornerRadius = 3.f;
+        [_keyboardView addSubview:_cameraButton];
+        
         /*_footnoteButton = [UIButton buttonWithType:UIButtonTypeCustom];
         [_footnoteButton setTitle:@"Footnote" forState:UIControlStateNormal];
         [_footnoteButton.titleLabel setFont:[UIFont fontWithName:kCrimsonRoman size:16]];
@@ -106,6 +114,7 @@
         [_italicsButton setFrame:CGRectMake(48, 2, 40, 40)];
         [_underlineButton setFrame:CGRectMake(92, 2, 40, 40)];
         [_headerButton setFrame:CGRectMake(136, 2, 88, 40)];
+        [_cameraButton setFrame:CGRectMake(228, 2, 88, 40)];
         //[_footnoteButton setFrame:CGRectMake(228, 2, 88, 40)];
         
         self.editable = YES;

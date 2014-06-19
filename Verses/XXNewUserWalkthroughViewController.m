@@ -33,13 +33,15 @@
     UIImageView *readImage;
     UIImageView *rightArrow;
     UIImageView *swipeFromLeft;
-    UIImageView *swipeFromLeftImage;
+    UILabel *moreDotsLabel;
+    UILabel *swipeFromLeftLabel;
+    UILabel *swipeFromRightLabel;
     UIImageView *swipeFromRight;
-    UIImageView *swipeFromRightImage;
-    UILabel *fromRightLabel;
     UIButton *tapButton;
     UILabel *tapLabel;
     UIMotionEffectGroup *group;
+    XXAppDelegate *delegate;
+    UIPageControl *_pageControl;
 }
 
 @end
@@ -64,19 +66,21 @@
         width = screenHeight();
         height = screenWidth();
     }
-    
+    delegate = (XXAppDelegate*)[UIApplication sharedApplication].delegate;
     _scrollView = [[UIScrollView alloc] initWithFrame:CGRectMake(0, 0, width, height)];
     [_scrollView setContentSize:CGSizeMake(width*4, height)];
     [_scrollView setPagingEnabled:YES];
+    [_scrollView setShowsVerticalScrollIndicator:NO];
+    [_scrollView setShowsHorizontalScrollIndicator:NO];
     [_scrollView setAutoresizingMask:UIViewAutoresizingFlexibleWidth];
-    [_scrollView setAutoresizingMask:UIViewAutoresizingFlexibleHeight];
     _scrollView.delegate = self;
     
     _backgroundImageView = [[UIImageView alloc] initWithFrame:CGRectMake(0, 0, _scrollView.contentSize.width/2, height)];
     if (IDIOM == IPAD) {
         [_backgroundImageView setImage:[UIImage imageNamed:@"newUserBackgroundiPad"]];
     } else {
-        [_backgroundImageView setImage:[UIImage imageNamed:@"newUserBackground"]];
+        //[_backgroundImageView setImage:[UIImage imageNamed:@"newUserBackground"]];
+        [_backgroundImageView setImage:[UIImage imageNamed:@"mountains.jpg"]];
     }
     
     [_backgroundImageView setContentMode:UIViewContentModeScaleAspectFill];
@@ -101,11 +105,13 @@
     [self createPage3];
     [self createPage4];
     [super viewDidLoad];
-}
-
-- (void)viewDidAppear:(BOOL)animated {
-    [super viewDidAppear:animated];
     
+    _pageControl = [[UIPageControl alloc] initWithFrame:CGRectMake(width/2-60, height-30, 120, 30)];
+    _pageControl.numberOfPages = 4;
+    _pageControl.pageIndicatorTintColor = [UIColor colorWithWhite:1 alpha:.4];
+    _pageControl.currentPageIndicatorTintColor = [UIColor whiteColor];
+    [self.view addSubview:_pageControl];
+    [self.view bringSubviewToFront:_pageControl];
 }
 
 - (void)createPage1 {
@@ -242,7 +248,7 @@
     [portfolioLabel setAutoresizingMask:UIViewAutoresizingFlexibleWidth];
     [portfolioLabel setFont:[UIFont fontWithName:kCrimsonRoman size:20]];
     [portfolioLabel setTextColor:[UIColor whiteColor]];
-    [portfolioLabel setText:@"View your portfolio as well as all the stories shared with you."];
+    [portfolioLabel setText:@"View your own work as well as all the stories shared with you."];
     [portfolioLabel setNumberOfLines:0];
     [portfolioLabel setTextAlignment:NSTextAlignmentLeft];
     [page2 addSubview:portfolioLabel];
@@ -261,80 +267,70 @@
     [page3 setAutoresizingMask:UIViewAutoresizingFlexibleWidth];
     [page3 setBackgroundColor:[UIColor clearColor]];
     
-    UILabel *fromLeftLabel = [[UILabel alloc] initWithFrame:CGRectMake(width/2, 0, width/2-10, height/6)];
-    [fromLeftLabel setFont:[UIFont fontWithName:kCrimsonRoman size:20]];
-    [fromLeftLabel setTextColor:[UIColor whiteColor]];
-    [fromLeftLabel setText:@"Swipe to the right to see your menu."];
-    swipeFromLeft = [[UIImageView alloc] initWithFrame:CGRectMake(width/4, 60, width/2, height/5)];
+    UIImageView *moreDots = [[UIImageView alloc] initWithImage:[UIImage imageNamed:@"moreWhite"]];
+    [moreDots setFrame:CGRectMake(width-44, 0, 44, 44)];
+    [moreDots setAutoresizingMask:UIViewAutoresizingFlexibleLeftMargin];
+    [moreDots addMotionEffect:group];
+    
+    moreDotsLabel = [[UILabel alloc] initWithFrame:CGRectMake(width-234, 6, 180, 55)];
+    moreDotsLabel.numberOfLines = 0;
+    [moreDotsLabel setAlpha:0.0];
+    [moreDotsLabel setTextColor:[UIColor whiteColor]];
+    [moreDotsLabel setTextAlignment:NSTextAlignmentRight];
+    [moreDotsLabel setFont:[UIFont fontWithName:kCrimsonRoman size:20]];
+    [moreDotsLabel setText:@"Tap the dots for your navigation menu."];
+    
+    CGFloat leftY;
+    if (IDIOM == IPAD){
+        leftY = 90;
+    } else {
+        if ([UIScreen mainScreen].bounds.size.height == 568){
+            leftY = 90;
+        } else {
+            leftY = 80;
+        }
+    }
+    swipeFromLeftLabel = [[UILabel alloc] initWithFrame:CGRectMake(20, leftY, width/2, height/4)];
+    [swipeFromLeftLabel setAlpha:0.0];
+    [swipeFromLeftLabel setFont:[UIFont fontWithName:kCrimsonRoman size:20]];
+    [swipeFromLeftLabel setTextColor:[UIColor whiteColor]];
+    [swipeFromLeftLabel setText:@"Swipe to the right for updates."];
+    [swipeFromLeftLabel setTextAlignment:NSTextAlignmentRight];
+    [swipeFromLeftLabel setNumberOfLines:0];
+    swipeFromLeft = [[UIImageView alloc] initWithFrame:CGRectMake(width/4, leftY, width/2, height/4)];
     [swipeFromLeft setImage:[UIImage imageNamed:@"rightWhiteArrow"]];
+    [swipeFromLeft setAlpha:0.0];
     [swipeFromLeft setContentMode:UIViewContentModeCenter];
     
-    [fromLeftLabel setTextAlignment:NSTextAlignmentCenter];
-    [fromLeftLabel setNumberOfLines:0];
     
-    CGFloat leftx, lefty;
-    if (IDIOM == IPAD){
-        leftx = -width*.8;
-        lefty = 20;
-    } else {
-        leftx = -width+10;
-        lefty = 10;
-    }
-    swipeFromLeftImage = [[UIImageView alloc] initWithFrame:CGRectMake(leftx, lefty, 140, 200)];
-    [swipeFromLeftImage setImage:[UIImage imageNamed:@"menuScreenshot"]];
-    [swipeFromLeftImage setAlpha:0.0];
-    [swipeFromLeftImage setBackgroundColor:[UIColor colorWithWhite:1 alpha:.1]];
-    [swipeFromLeftImage setContentMode:UIViewContentModeScaleAspectFill];
-    swipeFromLeftImage.layer.shadowColor = [UIColor whiteColor].CGColor;
-    swipeFromLeftImage.layer.shadowOpacity = .13f;
-    swipeFromLeftImage.layer.shadowRadius = 5.f;
-    swipeFromLeftImage.layer.rasterizationScale = [UIScreen mainScreen].scale;
-    swipeFromLeftImage.layer.shouldRasterize = YES;
-    
-    CGFloat yoffset,yimageoffset,xoffset;
+    CGFloat yoffset,xoffset;
     if (IDIOM == IPAD) {
-        yimageoffset = height/3-height/20;
-        yoffset = height/3-height/20;
+        yoffset = height/3;
         xoffset = 1.625*width;
     } else {
         if ([UIScreen mainScreen].bounds.size.height == 568){
             yoffset = 220;
-            yimageoffset = 190;
         } else {
-            yimageoffset = 153;
-            yoffset = 210;
+            yoffset = 190;
         }
         xoffset = 1.5*width+10;
     }
-    swipeFromRight = [[UIImageView alloc] initWithFrame:CGRectMake(width/4, yoffset+40, width/2, height/4)];
+    swipeFromRight = [[UIImageView alloc] initWithFrame:CGRectMake(width/4, yoffset, width/2, height/4)];
     [swipeFromRight setImage:[UIImage imageNamed:@"leftWhiteArrow"]];
     [swipeFromRight setContentMode:UIViewContentModeCenter];
     [swipeFromRight setAlpha:0.0];
     
-    swipeFromRightImage = [[UIImageView alloc] initWithFrame:CGRectMake(xoffset, yimageoffset, 140, 200)];
-    [swipeFromRightImage setImage:[UIImage imageNamed:@"infoScreenshot"]];
-    [swipeFromRightImage setAlpha:0.0];
-    [swipeFromRightImage setContentMode:UIViewContentModeScaleAspectFill];
-    swipeFromRightImage.layer.shadowColor = [UIColor whiteColor].CGColor;
-    swipeFromRightImage.layer.shadowOpacity = .13f;
-    swipeFromRightImage.layer.shadowRadius = 5.f;
-    swipeFromRightImage.layer.rasterizationScale = [UIScreen mainScreen].scale;
-    swipeFromRightImage.layer.shouldRasterize = YES;
-    
-    [swipeFromRightImage addMotionEffect:group];
-    [swipeFromLeftImage addMotionEffect:group];
-    
-    fromRightLabel = [[UILabel alloc] initWithFrame:CGRectMake(width/20, yoffset, width/2-10, height/5)];
-    [fromRightLabel setFont:[UIFont fontWithName:kCrimsonRoman size:20]];
-    [fromRightLabel setTextColor:[UIColor whiteColor]];
-    [fromRightLabel setText:@"Swipe to the left for more story info."];
-    [fromRightLabel setTextAlignment:NSTextAlignmentLeft];
-    [fromRightLabel setNumberOfLines:0];
-    [fromRightLabel setAlpha:0.0];
+    swipeFromRightLabel = [[UILabel alloc] initWithFrame:CGRectMake(width*1.25, yoffset, width*.6, height/4)];
+    [swipeFromRightLabel setFont:[UIFont fontWithName:kCrimsonRoman size:20]];
+    [swipeFromRightLabel setTextColor:[UIColor whiteColor]];
+    [swipeFromRightLabel setText:@"Swipe to the left for more story info."];
+    [swipeFromRightLabel setTextAlignment:NSTextAlignmentLeft];
+    [swipeFromRightLabel setNumberOfLines:0];
+    [swipeFromRightLabel setAlpha:0.0];
     
     tapButton = [UIButton buttonWithType:UIButtonTypeCustom];
     [tapButton setImage:[UIImage imageNamed:@"whiteFlag"] forState:UIControlStateNormal];
-    [tapButton setFrame:CGRectMake(width/2-30, (height*5/6)+10, 60, 60)];
+    [tapButton setFrame:CGRectMake(width/2-30, height*.8, 60, 60)];
     tapButton.clipsToBounds = YES;
     [tapButton setContentMode:UIViewContentModeCenter];
     [tapButton setAlpha:0.0];
@@ -342,51 +338,54 @@
     [tapButton addTarget:self action:@selector(moveRight) forControlEvents:UIControlEventTouchUpInside];
     [tapButton addMotionEffect:group];
     
-    tapLabel = [[UILabel alloc] initWithFrame:CGRectMake(10, height*2/3, width-20, height/4)];
+    tapLabel = [[UILabel alloc] initWithFrame:CGRectMake(20, height*.6, width-40, height/4)];
     [tapLabel setFont:[UIFont fontWithName:kCrimsonRoman size:20]];
     [tapLabel setTextColor:[UIColor whiteColor]];
-    [tapLabel setText:@"Tap to bring up story controls, leave feedback, and more."];
+    [tapLabel setText:@"Tap a story for more options. Double tap text to leave feedback."];
     [tapLabel setTextAlignment:NSTextAlignmentCenter];
     [tapLabel setNumberOfLines:0];
     [tapLabel setAlpha:0.0];
     
+    [page3 addSubview:moreDots];
+    [page3 addSubview:moreDotsLabel];
     [page3 addSubview:swipeFromLeft];
-    [page3 addSubview:swipeFromLeftImage];
     [page3 addSubview:swipeFromRight];
-    [page3 addSubview:swipeFromRightImage];
-    [page3 addSubview:fromRightLabel];
-    [page3 addSubview:fromLeftLabel];
+    [page3 addSubview:swipeFromRightLabel];
+    [page3 addSubview:swipeFromLeftLabel];
     [page3 addSubview:tapLabel];
     [page3 addSubview:tapButton];
     [_scrollView addSubview:page3];
 }
 
 - (void)animateSwipeFromLeft {
-    [UIView animateWithDuration:2.3 delay:0 usingSpringWithDamping:.5 initialSpringVelocity:.0001 options:UIViewAnimationOptionCurveEaseInOut animations:^{
+    [UIView animateWithDuration:.5 delay:.1 options:UIViewAnimationOptionCurveEaseInOut animations:^{
+        [moreDotsLabel setAlpha:1.0];
+    }completion:^(BOOL finished) {
+        
+    }];
+    
+    [UIView animateWithDuration:2.3 delay:1 usingSpringWithDamping:.5 initialSpringVelocity:.0001 options:UIViewAnimationOptionCurveEaseInOut animations:^{
         swipeFromLeft.transform = CGAffineTransformMakeTranslation(width/4, 0);
-        swipeFromLeftImage.transform = CGAffineTransformMakeTranslation(width, 0);
-        [swipeFromLeftImage setAlpha:1.0];
+        swipeFromLeftLabel.transform = CGAffineTransformMakeTranslation(width/8, 0);
+        [swipeFromLeftLabel setAlpha:1.0];
+        [swipeFromLeft setAlpha:1.0];
     } completion:^(BOOL finished) {
     
     }];
     
     //swipe from right
-    [UIView animateWithDuration:.5 delay:1.5 options:UIViewAnimationOptionCurveEaseInOut animations:^{
+    [UIView animateWithDuration:2.3 delay:2 usingSpringWithDamping:.5 initialSpringVelocity:.0001 options:UIViewAnimationOptionCurveEaseInOut animations:^{
+        swipeFromRight.transform = CGAffineTransformMakeTranslation(-width/3, 0);
+        swipeFromRightLabel.transform = CGAffineTransformMakeTranslation(-width, 0);
         [swipeFromRight setAlpha:1.0];
-        [fromRightLabel setAlpha:1.0];
-    }completion:^(BOOL finished) {
-        
-    }];
-    [UIView animateWithDuration:2.3 delay:1.5 usingSpringWithDamping:.5 initialSpringVelocity:.0001 options:UIViewAnimationOptionCurveEaseInOut animations:^{
-        swipeFromRight.transform = CGAffineTransformMakeTranslation(-width/4, 0);
-        swipeFromRightImage.transform = CGAffineTransformMakeTranslation(-width, 0);
-        [swipeFromRightImage setAlpha:1.0];
+        [swipeFromRightLabel setAlpha:1.0];
     } completion:^(BOOL finished) {
         [self animateTap];
     }];
     
+    
     UIImageView *sun = [[UIImageView alloc] initWithImage:[UIImage imageNamed:@"whiteSun"]];
-    [sun setFrame:CGRectMake(width/2-90, (height*5/6)+10, 60, 60)];
+    [sun setFrame:CGRectMake(width/2-90, height*.8, 60, 60)];
     [sun setTintColor:[UIColor whiteColor]];
     [sun setContentMode:UIViewContentModeCenter];
     [page3 addSubview:sun];
@@ -395,7 +394,7 @@
     
     UIImageView *bookmark = [[UIImageView alloc] initWithImage:[UIImage imageNamed:@"whiteBookmark"]];
     [bookmark setTintColor:[UIColor whiteColor]];
-    [bookmark setFrame:CGRectMake(width/2+30, (height*5/6)+10, 60, 60)];
+    [bookmark setFrame:CGRectMake(width/2+30, height*.8, 60, 60)];
     [bookmark setContentMode:UIViewContentModeCenter];
     [page3 addSubview:bookmark];
     [bookmark setAlpha:0.0];
@@ -434,7 +433,7 @@
     page4 = [[UIView alloc] initWithFrame:CGRectMake(width*3, 0, width, height)];
     [page4 setAutoresizingMask:UIViewAutoresizingFlexibleWidth];
     [page4 setBackgroundColor:[UIColor clearColor]];
-    UILabel *endLabel = [[UILabel alloc] initWithFrame:CGRectMake(0, 0, width, height/2)];
+    UILabel *endLabel = [[UILabel alloc] initWithFrame:CGRectMake(0, 0, width, height/4)];
     if (IDIOM == IPAD){
         [endLabel setFont:[UIFont fontWithName:kCrimsonRoman size:50]];
     } else {
@@ -458,20 +457,8 @@
     [_scrollView addSubview:page4];
 }
 
-- (void)willAnimateRotationToInterfaceOrientation:(UIInterfaceOrientation)toInterfaceOrientation duration:(NSTimeInterval)duration {
-    if (toInterfaceOrientation == UIInterfaceOrientationPortrait) {
-        [_scrollView setFrame:CGRectMake(0, 0, width, height)];
-        [_scrollView setContentSize:CGSizeMake(width*4, height)];
-    } else {
-        [_scrollView setFrame:CGRectMake(0, 0, height, width)];
-        [_scrollView setContentSize:CGSizeMake(height*4, width)];
-    }
-}
-
 - (void)end {
-    [self dismissViewControllerAnimated:YES completion:^{
-        
-    }];
+    [self dismissViewControllerAnimated:YES completion:nil];
 }
 
 - (void)scrollViewDidScroll:(UIScrollView *)scrollView {
@@ -511,8 +498,9 @@
         tapGesture = [[UITapGestureRecognizer alloc] initWithTarget:self action:@selector(end)];
         tapGesture.numberOfTapsRequired = 1;
         [self.view addGestureRecognizer:tapGesture];
-        
     }
+    int currentPage = floor((scrollView.contentOffset.x - pageWidth / 2) / pageWidth) + 1;
+    _pageControl.currentPage = currentPage;
 }
 
 - (void)animateImages {
@@ -593,13 +581,19 @@
 -(UIImage *)blurredSnapshot {
     UIImage *blurredSnapshotImage;
     if (IDIOM == IPAD) {
-        blurredSnapshotImage = [[UIImage imageNamed:@"newUserBackgroundiPad"] applyBlurWithRadius:40 blurType:BOXFILTER tintColor:[UIColor clearColor] saturationDeltaFactor:1.8 maskImage:nil];
+        blurredSnapshotImage = [[UIImage imageNamed:@"newUserBackgroundiPad"] applyBlurWithRadius:33 blurType:BOXFILTER tintColor:[UIColor clearColor] saturationDeltaFactor:1.8 maskImage:nil];
     } else {
-        blurredSnapshotImage = [[UIImage imageNamed:@"newUserBackground"] applyBlurWithRadius:40 blurType:BOXFILTER tintColor:[UIColor clearColor] saturationDeltaFactor:1.8 maskImage:nil];
+        blurredSnapshotImage = [[UIImage imageNamed:@"mountains.jpg"] applyBlurWithRadius:33 blurType:BOXFILTER tintColor:[UIColor colorWithWhite:0 alpha:.1] saturationDeltaFactor:1.8 maskImage:nil];
     }
-    [[(XXAppDelegate*)[UIApplication sharedApplication].delegate windowBackground] setImage:blurredSnapshotImage];
-    
+    [[delegate windowBackground] setImage:blurredSnapshotImage];
+    [delegate.windowBackground setContentMode:UIViewContentModeScaleAspectFill];
+    [[delegate currentUser] setBackgroundImage:blurredSnapshotImage];
     return blurredSnapshotImage;
+}
+
+- (BOOL)shouldAutorotate
+{
+    return NO;
 }
 
 - (void)didReceiveMemoryWarning
@@ -607,16 +601,5 @@
     [super didReceiveMemoryWarning];
     // Dispose of any resources that can be recreated.
 }
-
-/*
-#pragma mark - Navigation
-
-// In a storyboard-based application, you will often want to do a little preparation before navigation
-- (void)prepareForSegue:(UIStoryboardSegue *)segue sender:(id)sender
-{
-    // Get the new view controller using [segue destinationViewController].
-    // Pass the selected object to the new view controller.
-}
-*/
 
 @end

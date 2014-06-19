@@ -33,5 +33,11 @@
         NSTimeInterval _interval = [[dictionary objectForKey:@"updated_date"] doubleValue];
         self.updatedDate = [NSDate dateWithTimeIntervalSince1970:_interval];
     }
+    if ([dictionary objectForKey:@"contribution_id"] && [dictionary objectForKey:@"contribution_id"] != [NSNull null]) {
+        Contribution *contribution = [Contribution MR_findFirstByAttribute:@"identifier" withValue:[dictionary objectForKey:@"contribution_id"]];
+        if (contribution){
+            self.contribution = contribution;
+        }
+    }
 }
 @end

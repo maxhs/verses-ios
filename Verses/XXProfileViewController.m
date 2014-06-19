@@ -11,6 +11,7 @@
 #import "XXProfileStoryCell.h"
 #import <SDWebImage/UIButton+WebCache.h>
 #import "XXStoryViewController.h"
+#import "XXLoginController.h"
 
 @interface XXProfileViewController () {
     AFHTTPRequestOperationManager *manager;
@@ -38,10 +39,7 @@
     } else if (_userId) {
         [self loadUserDetails:_userId];
     }
-    
-   
     [self.tableView setSeparatorColor:[UIColor colorWithWhite:1 alpha:0]];
-    self.title = _user.penName;
     
     _dateFormatter = [[NSDateFormatter alloc] init];
     [_dateFormatter setLocale:[NSLocale currentLocale]];
@@ -51,6 +49,7 @@
                              forBarMetrics:UIBarMetricsDefault];
     self.navigationController.navigationBar.shadowImage = [UIImage new];
     self.navigationController.navigationBar.translucent = YES;
+    [[NSNotificationCenter defaultCenter] addObserver:self selector:@selector(showLogin) name:@"ShowLogin" object:nil];
 }
 
 - (void)viewWillAppear:(BOOL)animated {
@@ -76,6 +75,13 @@
     }
 }
 
+- (void)showLogin {
+    XXLoginController *vc = [[self storyboard] instantiateViewControllerWithIdentifier:@"Login"];
+    [self presentViewController:vc animated:YES completion:^{
+        
+    }];
+}
+
 - (void)back {
     MSDynamicsDrawerViewController *drawerView = [(XXAppDelegate*)[UIApplication sharedApplication].delegate dynamicsDrawerViewController];
     if ([[(UINavigationController*)drawerView.paneViewController viewControllers] firstObject] == self){
@@ -95,14 +101,14 @@
     [manager GET:[NSString stringWithFormat:@"%@/users/%@",kAPIBaseUrl,identifier] parameters:parameters success:^(AFHTTPRequestOperation *operation, id responseObject) {
         [_user populateFromDict:[responseObject objectForKey:@"user"]];
         //NSLog(@"success getting user details: %@",responseObject);
-        if (self.tableView.numberOfSections){
+        [[NSManagedObjectContext MR_defaultContext] MR_saveToPersistentStoreWithCompletion:^(BOOL success, NSError *error) {
+            [self.tableView reloadSections:[NSIndexSet indexSetWithIndex:0] withRowAnimation:UITableViewRowAnimationNone];
             [self.tableView reloadSections:[NSIndexSet indexSetWithIndex:1] withRowAnimation:UITableViewRowAnimationFade];
-        } else {
-            [self.tableView reloadData];
-        }
+        }];
+    
     } failure:^(AFHTTPRequestOperation *operation, NSError *error) {
         [[[UIAlertView alloc] initWithTitle:@"Sorry" message:@"Something went wrong while trying to load this profile. Please try again soon." delegate:nil cancelButtonTitle:@"Okay" otherButtonTitles:nil] show];
-        //NSLog(@"Failed to get user details: %@",error.description);
+        NSLog(@"Failed to get user details: %@",error.description);
     }];
 }
 
@@ -140,7 +146,6 @@
         cell.imageButton.layer.backgroundColor = [UIColor clearColor].CGColor;
         cell.imageButton.backgroundColor = [UIColor clearColor];
         [cell.locationLabel setTextColor:textColor];
-        
         [cell configureForUser:_user];
         userBlurredBackground = cell.blurredBackground;
         profileCellContentView = cell.contentView;
@@ -151,7 +156,7 @@
         if (cell == nil) {
             cell = [[[NSBundle mainBundle] loadNibNamed:@"XXProfileStoryCell" owner:nil options:nil] lastObject];
         }
-        XXStory *story = [_user.stories objectAtIndex:indexPath.row];
+        Story *story = [_user.stories objectAtIndex:indexPath.row];
         [cell configureStory:story withTextColor:textColor];
         [cell.subtitleLabel setText:[_dateFormatter stringFromDate:story.updatedDate]];
         return cell;
@@ -200,8 +205,8 @@
         [tableView deselectRowAtIndexPath:indexPath animated:YES];
         if (IDIOM == IPAD){
             Story *story = [_user.stories objectAtIndex:indexPath.row];
-            [ProgressHUD show:@"Fetching story..."];
             [[NSNotificationCenter defaultCenter] postNotificationName:@"ResetStory" object:nil userInfo:@{@"story":story}];
+            [ProgressHUD show:@"Fetching story..."];
             _storyInfoVc.story = story;
             [_storyInfoVc.popover dismissPopoverAnimated:YES];
             [[(XXAppDelegate*)[UIApplication sharedApplication].delegate dynamicsDrawerViewController] setPaneState:MSDynamicsDrawerPaneStateClosed animated:YES allowUserInterruption:YES completion:^{

@@ -26,7 +26,7 @@
     // Configure the view for the selected state
 }
 
-- (void)configureForStory:(XXStory*)story {
+- (void)configureForStory:(Story*)story {
     [self.storyTitle setText:story.title];
     [self.storyTitle setFont:[UIFont fontWithName:kSourceSansProSemibold size:27]];
     [self.lastUpdatedAt setFont:[UIFont fontWithName:kCrimsonRoman size:15]];

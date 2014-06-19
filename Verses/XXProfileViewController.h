@@ -7,7 +7,7 @@
 //
 
 #import <UIKit/UIKit.h>
-#import "XXStory.h"
+#import "Story+helper.h"
 #import "User+helper.h"
 #import "XXStoryInfoViewController.h"
 

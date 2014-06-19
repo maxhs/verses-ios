@@ -7,8 +7,7 @@
 //
 
 #import "XXSettingsViewController.h"
-#import "XXUser.h"
-#import "User.h"
+#import "User+helper.h"
 #import "XXStoriesViewController.h"
 #import "XXSettingsCell.h"
 #import "XXAppDelegate.h"
@@ -35,7 +34,7 @@
     UITextField *lastNameTextField;
     UITextField *locationTextField;
     CGRect screen;
-    XXUser *currentUser;
+    User *currentUser;
     UIBarButtonItem *cancelButton;
     UIColor *textColor;
     UIImageView *navBarShadowView;
@@ -62,6 +61,12 @@
     cancelButton = [[UIBarButtonItem alloc]initWithImage:[UIImage imageNamed:@"back"] style:UIBarButtonItemStylePlain target:self action:@selector(back)];
     self.navigationItem.leftBarButtonItem = cancelButton;
     navBarShadowView = [Utilities findNavShadow:self.navigationController.navigationBar];
+    
+    if (![(XXAppDelegate*)[UIApplication sharedApplication].delegate currentUser]){
+        currentUser = [User MR_findFirstByAttribute:@"identifier" withValue:[[NSUserDefaults standardUserDefaults] objectForKey:kUserDefaultsId]];
+    } else {
+        currentUser = [(XXAppDelegate*)[UIApplication sharedApplication].delegate currentUser];
+    }
 }
 
 - (void)didReceiveMemoryWarning {
@@ -90,10 +95,13 @@
 - (void)loadProfile {
     [manager GET:[NSString stringWithFormat:@"%@/users/%@/edit",kAPIBaseUrl,[[NSUserDefaults standardUserDefaults] objectForKey:kUserDefaultsId]] parameters:@{@"user_id":[[NSUserDefaults standardUserDefaults] objectForKey:kUserDefaultsId]} success:^(AFHTTPRequestOperation *operation, id responseObject) {
         //NSLog(@"success getting profile: %@",responseObject);
-        currentUser = [[XXUser alloc] initWithDictionary:[responseObject objectForKey:@"user"]];
+        [currentUser populateFromDict:[responseObject objectForKey:@"user"]];
+        [[NSManagedObjectContext MR_defaultContext] MR_saveToPersistentStoreWithCompletion:^(BOOL success, NSError *error) {
+            NSLog(@"current user: %@",currentUser);
+            [self.tableView reloadData];
+            [ProgressHUD dismiss];
+        }];
         [self synchronizeUserDefaults];
-        [self.tableView reloadData];
-        [ProgressHUD dismiss];
     } failure:^(AFHTTPRequestOperation *operation, NSError *error) {
         if (operation.response.statusCode == 401){
             XXLoginController *login = [[self storyboard] instantiateViewControllerWithIdentifier:@"Login"];
@@ -110,7 +118,7 @@
 - (void)synchronizeUserDefaults {
     [[NSUserDefaults standardUserDefaults] setObject:currentUser.email forKey:kUserDefaultsEmail];
     [[NSUserDefaults standardUserDefaults] setObject:currentUser.penName forKey:kUserDefaultsPenName];
-    [[NSUserDefaults standardUserDefaults] setObject:currentUser.picSmallUrl forKey:kUserDefaultsPicSmall];
+    [[NSUserDefaults standardUserDefaults] setObject:currentUser.picSmall forKey:kUserDefaultsPicSmall];
     [[NSUserDefaults standardUserDefaults] setObject:currentUser.location forKey:kUserDefaultsLocation];
     [[NSUserDefaults standardUserDefaults] synchronize];
 }
@@ -209,14 +217,14 @@
                 [cell.imageLabel setTextColor:textColor];
                 [cell.imageButton setHidden:NO];
                 [cell.textField setHidden:YES];
-                if (currentUser.picSmallUrl.length){
-                    [cell.imageButton setImageWithURL:[NSURL URLWithString:currentUser.picSmallUrl] forState:UIControlStateNormal completed:^(UIImage *image, NSError *error, SDImageCacheType cacheType) {
+                if (currentUser.picSmall.length){
+                    [cell.imageButton setImageWithURL:[NSURL URLWithString:currentUser.picSmall] forState:UIControlStateNormal completed:^(UIImage *image, NSError *error, SDImageCacheType cacheType) {
                        [UIView animateWithDuration:.23 animations:^{
                            [cell.imageButton setAlpha:1.0];
                        }];
                     }];
-                } else if (currentUser.userImage) {
-                    [cell.imageButton setImage:currentUser.userImage forState:UIControlStateNormal];
+                } else if (currentUser.thumbImage) {
+                    [cell.imageButton setImage:currentUser.thumbImage forState:UIControlStateNormal];
                     [UIView animateWithDuration:.23 animations:^{
                         [cell.imageButton setAlpha:1.0];
                     }];
@@ -330,7 +338,7 @@
                     [pushSwitch addTarget:self action:@selector(masterPushChanged) forControlEvents:UIControlEventValueChanged];
                 }
                 
-                if (currentUser.pushPermissions) {
+                if ([currentUser.pushPermissions isEqualToNumber:[NSNumber numberWithBool:YES]]) {
                     [pushSwitch setOn:YES animated:YES];
                 } else {
                     [cell.textLabel setFont:[UIFont fontWithName:kSourceSansProLight size:15]];
@@ -345,7 +353,7 @@
                     [circleCommentsPushSwitch addTarget:self action:@selector(switchChanged:) forControlEvents:UIControlEventValueChanged];
                 }
                 
-                if (currentUser.pushCircleComments) {
+                if ([currentUser.pushCircleComments isEqualToNumber:[NSNumber numberWithBool:YES]]) {
                     [circleCommentsPushSwitch setOn:YES animated:YES];
                 } else {
                     [cell.textLabel setFont:[UIFont fontWithName:kSourceSansProLight size:15]];
@@ -360,7 +368,7 @@
                     [feedbackPushSwitch addTarget:self action:@selector(switchChanged:) forControlEvents:UIControlEventValueChanged];
                 }
                 
-                if (currentUser.pushFeedbacks) {
+                if ([currentUser.pushFeedbacks isEqualToNumber:[NSNumber numberWithBool:YES]]) {
                     
                     [feedbackPushSwitch setOn:YES animated:YES];
                 } else {
@@ -375,7 +383,7 @@
                     circlePublishPushSwitch = [[UISwitch alloc] init];
                     [circlePublishPushSwitch addTarget:self action:@selector(switchChanged:) forControlEvents:UIControlEventValueChanged];
                 }
-                if (currentUser.pushCirclePublish) {
+                if ([currentUser.pushCirclePublish isEqualToNumber:[NSNumber numberWithBool:YES]]) {
                     [circlePublishPushSwitch setOn:YES animated:YES];
                 
                 } else {
@@ -391,7 +399,7 @@
                     [subscriptionPushSwitch addTarget:self action:@selector(switchChanged:) forControlEvents:UIControlEventValueChanged];
                 }
                 
-                if (currentUser.pushSubscribe) {
+                if ([currentUser.pushSubscribe isEqualToNumber:[NSNumber numberWithBool:YES]]) {
                     [subscriptionPushSwitch setOn:YES animated:YES];
                 } else {
                     [cell.textLabel setFont:[UIFont fontWithName:kSourceSansProLight size:15]];
@@ -406,7 +414,7 @@
                     invitationsPushSwitch = [[UISwitch alloc] init];
                     [invitationsPushSwitch addTarget:self action:@selector(switchChanged:) forControlEvents:UIControlEventValueChanged];
                 }
-                if (currentUser.pushInvitations) {
+                if ([currentUser.pushInvitations isEqualToNumber:[NSNumber numberWithBool:YES]]) {
                     [invitationsPushSwitch setOn:YES animated:YES];
                 } else {
                     [cell.textLabel setFont:[UIFont fontWithName:kSourceSansProLight size:15]];
@@ -422,7 +430,7 @@
                     [bookmarkPushSwitch addTarget:self action:@selector(switchChanged:) forControlEvents:UIControlEventValueChanged];
                 }
                 
-                if (currentUser.pushBookmarks) {
+                if ([currentUser.pushBookmarks isEqualToNumber:[NSNumber numberWithBool:YES]]) {
                     [bookmarkPushSwitch setOn:YES animated:YES];
                 } else {
                     [cell.textLabel setFont:[UIFont fontWithName:kSourceSansProLight size:15]];
@@ -451,44 +459,44 @@
 
 - (void)masterPushChanged {
     if (pushSwitch.isOn){
-        currentUser.pushPermissions = YES;
-        currentUser.pushDaily = YES;
-        currentUser.pushCirclePublish = YES;
-        currentUser.pushBookmarks = YES;
-        currentUser.pushFeedbacks = YES;
-        currentUser.pushSubscribe = YES;
-        currentUser.pushInvitations = YES;
-        currentUser.pushCircleComments = YES;
+        [currentUser setPushPermissions:[NSNumber numberWithBool:YES]];
+        [currentUser setPushDaily: [NSNumber numberWithBool:YES]];
+        currentUser.pushCirclePublish = [NSNumber numberWithBool:YES];
+        currentUser.pushBookmarks = [NSNumber numberWithBool:YES];
+        currentUser.pushFeedbacks = [NSNumber numberWithBool:YES];
+        currentUser.pushSubscribe = [NSNumber numberWithBool:YES];
+        currentUser.pushInvitations = [NSNumber numberWithBool:YES];
+        currentUser.pushCircleComments = [NSNumber numberWithBool:YES];
     } else {
-        currentUser.pushPermissions = NO;
-        currentUser.pushDaily = NO;
-        currentUser.pushCirclePublish = NO;
-        currentUser.pushBookmarks = NO;
-        currentUser.pushFeedbacks = NO;
-        currentUser.pushSubscribe = NO;
-        currentUser.pushInvitations = NO;
-        currentUser.pushCircleComments = NO;
+        currentUser.pushPermissions = [NSNumber numberWithBool:NO];
+        currentUser.pushDaily = [NSNumber numberWithBool:NO];
+        currentUser.pushCirclePublish = [NSNumber numberWithBool:NO];
+        currentUser.pushBookmarks = [NSNumber numberWithBool:NO];
+        currentUser.pushFeedbacks = [NSNumber numberWithBool:NO];
+        currentUser.pushSubscribe = [NSNumber numberWithBool:NO];
+        currentUser.pushInvitations = [NSNumber numberWithBool:NO];
+        currentUser.pushCircleComments = [NSNumber numberWithBool:NO];
     }
     [self.tableView performSelector:@selector(reloadData) withObject:nil afterDelay:.25];
 }
 
 - (void)switchChanged:(UISwitch*)theSwitch {
     if (theSwitch == pushSwitch){
-        currentUser.pushPermissions = theSwitch.isOn;
+        currentUser.pushPermissions = [NSNumber numberWithBool:theSwitch.isOn];
     } else if (theSwitch == bookmarkPushSwitch) {
-        currentUser.pushBookmarks = theSwitch.isOn;
+        currentUser.pushBookmarks = [NSNumber numberWithBool:theSwitch.isOn];
     } else if (theSwitch == subscriptionPushSwitch) {
-        currentUser.pushSubscribe = theSwitch.isOn;
+        currentUser.pushSubscribe = [NSNumber numberWithBool:theSwitch.isOn];
     } else if (theSwitch == invitationsPushSwitch) {
-        currentUser.pushInvitations = theSwitch.isOn;
+        currentUser.pushInvitations = [NSNumber numberWithBool:theSwitch.isOn];
     } else if (theSwitch == circlePublishPushSwitch) {
-        currentUser.pushCirclePublish = theSwitch.isOn;
+        currentUser.pushCirclePublish = [NSNumber numberWithBool:theSwitch.isOn];
     } else if (theSwitch == dailyPushSwitch) {
-        currentUser.pushDaily = theSwitch.isOn;
+        currentUser.pushDaily = [NSNumber numberWithBool:theSwitch.isOn];
     } else if (theSwitch == feedbackPushSwitch) {
-        currentUser.pushFeedbacks = theSwitch.isOn;
+        currentUser.pushFeedbacks = [NSNumber numberWithBool:theSwitch.isOn];
     } else if (theSwitch == circleCommentsPushSwitch) {
-        currentUser.pushCircleComments = theSwitch.isOn;
+        currentUser.pushCircleComments = [NSNumber numberWithBool:theSwitch.isOn];
     }
     [self.tableView performSelector:@selector(reloadData) withObject:nil afterDelay:.25];
 }
@@ -670,7 +678,7 @@
     
     [manager PATCH:[NSString stringWithFormat:@"%@/users/%@",kAPIBaseUrl,[[NSUserDefaults standardUserDefaults] objectForKey:kUserDefaultsId]] parameters:@{@"user":parameters} success:^(AFHTTPRequestOperation *operation, id responseObject) {
         NSLog(@"success updating user: %@",responseObject);
-        currentUser = [[XXUser alloc] initWithDictionary:[responseObject objectForKey:@"user"]];
+        [currentUser populateFromDict:[responseObject objectForKey:@"user"]];
         [self synchronizeUserDefaults];
         [self.tableView reloadData];
         [[[UIAlertView alloc] initWithTitle:@"Word" message:@"We successfully updated your profile." delegate:nil cancelButtonTitle:@"Okay" otherButtonTitles:nil] show];
@@ -683,7 +691,7 @@
 - (void)tableView:(UITableView *)tableView didSelectRowAtIndexPath:(NSIndexPath *)indexPath {
     if (indexPath.section == 0 && indexPath.row == 2){
         if ([UIImagePickerController isSourceTypeAvailable:UIImagePickerControllerSourceTypeCamera]){
-            if (currentUser.userImage || currentUser.picSmallUrl){
+            if (currentUser.thumbImage || currentUser.picSmall){
                 [[[UIActionSheet alloc] initWithTitle:nil delegate:self cancelButtonTitle:@"Cancel" destructiveButtonTitle:@"Remove Photo" otherButtonTitles:@"Take Photo",@"Pick from Photo Library", nil] showInView:self.view];
             } else {
                 [[[UIActionSheet alloc] initWithTitle:nil delegate:self cancelButtonTitle:@"Cancel" destructiveButtonTitle:nil otherButtonTitles:@"Take Photo",@"Pick from Photo Library", nil] showInView:self.view];
@@ -717,11 +725,11 @@
 
 - (void)removePhoto {
     [ProgressHUD show:@"Removing photo..."];
-    [[SDImageCache sharedImageCache] removeImageForKey:currentUser.picSmallUrl fromDisk:YES];
+    [[SDImageCache sharedImageCache] removeImageForKey:currentUser.picSmall fromDisk:YES];
     [manager POST:[NSString stringWithFormat:@"%@/users/%@/remove_photo",kAPIBaseUrl,currentUser.identifier] parameters:nil success:^(AFHTTPRequestOperation *operation, id responseObject) {
         [ProgressHUD dismiss];
-        currentUser.userImage = nil;
-        currentUser.picSmallUrl = @"";
+        currentUser.thumbImage = nil;
+        currentUser.picSmall = @"";
         [[NSUserDefaults standardUserDefaults] setObject:nil forKey:kUserDefaultsPicSmall];
         [[NSUserDefaults standardUserDefaults] synchronize];
         [self.tableView reloadRowsAtIndexPaths:@[[NSIndexPath indexPathForRow:2 inSection:0]] withRowAnimation:UITableViewRowAnimationFade];
@@ -748,9 +756,9 @@
 
 - (void)imagePickerController:(UIImagePickerController *)picker didFinishPickingMediaWithInfo:(NSDictionary *)info {
     [picker dismissViewControllerAnimated:YES completion:nil];
-    [currentUser setUserImage:[info objectForKey:UIImagePickerControllerOriginalImage]];
+    [currentUser setThumbImage:[info objectForKey:UIImagePickerControllerOriginalImage]];
     [self.tableView reloadRowsAtIndexPaths:@[[NSIndexPath indexPathForRow:2 inSection:0]] withRowAnimation:UITableViewRowAnimationFade];
-    [self uploadImage:currentUser.userImage];
+    [self uploadImage:currentUser.thumbImage];
 }
 
 - (void)uploadImage:(UIImage*)image {

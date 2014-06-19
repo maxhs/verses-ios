@@ -12,8 +12,10 @@
 #import "XXProgress.h"
 #import "User+helper.h"
 #import "XXMenuViewController.h"
-#import "SWRevealViewController/SWRevealViewController.h"
 #import "XXWebViewController.h"
+#import "XXAlert.h"
+
+static NSString * const kShakeAnimationKey = @"XXShakeItNow";
 
 @interface XXLoginController () <UITextFieldDelegate, UIAlertViewDelegate> {
     AFHTTPRequestOperationManager *manager;
@@ -24,6 +26,9 @@
     CGRect originalLogoFrame;
     CGFloat keyboardHeight;
     BOOL smallFormFactor;
+    NSArray *views;
+    NSUInteger completedAnimations;
+    void (^completionBlock)();
 }
 
 @end
@@ -132,7 +137,7 @@
 }
 
 - (void)textFieldTreatment:(UITextField*)textField {
-    textField.layer.borderColor = [UIColor colorWithWhite:0 alpha:.03].CGColor;
+    textField.layer.borderColor = [UIColor colorWithWhite:0 alpha:.07].CGColor;
     textField.layer.borderWidth = .25f;
     textField.layer.cornerRadius = 4.f;
     UIView *paddingView = [[UIView alloc] initWithFrame:CGRectMake(0, 0, 7, 20)];
@@ -258,18 +263,19 @@
 }
 
 - (void)login{
-    [ProgressHUD show:@"Logging in..."];
+    //[ProgressHUD show:@"Logging in..."];
     [self connect:NO withLoginUI:YES];
 }
 
 - (void)signup{
-    [ProgressHUD show:@"Signing up..."];
+    //[ProgressHUD show:@"Signing up..."];
     [self connect:YES withLoginUI:YES];
 }
 
 - (IBAction)forgotPassword{
     UIAlertView *forgotAlert = [[UIAlertView alloc] initWithTitle:nil message:@"Enter your email:" delegate:self cancelButtonTitle:@"Cancel" otherButtonTitles:@"Submit", nil];
     forgotAlert.alertViewStyle = UIAlertViewStylePlainTextInput;
+    [[forgotAlert textFieldAtIndex:0] setKeyboardType:UIKeyboardTypeEmailAddress];
     [forgotAlert show];
 }
 
@@ -297,6 +303,31 @@
         [[[UIAlertView alloc] initWithTitle:@"Shoot" message:@"Something went wrong. Please try again soon." delegate:nil cancelButtonTitle:@"Okay" otherButtonTitles:nil] show];
         NSLog(@"Failed to do the forgot password thing: %@",error.description); 
     }];
+}
+
+#pragma mark - Shake Animation
+
+- (void)addShakeAnimationForView:(UIView *)view withDuration:(NSTimeInterval)duration {
+    CAKeyframeAnimation * animation = [CAKeyframeAnimation animationWithKeyPath:@"transform.translation.x"];
+    animation.delegate = self;
+    animation.duration = duration;
+    animation.values = @[ @(0), @(10), @(-8), @(8), @(-5), @(5), @(0) ];
+    animation.keyTimes = @[ @(0), @(0.225), @(0.425), @(0.6), @(0.75), @(0.875), @(1) ];
+    animation.timingFunction = [CAMediaTimingFunction functionWithName:kCAMediaTimingFunctionEaseInEaseOut];
+    [view.layer addAnimation:animation forKey:kShakeAnimationKey];
+}
+
+
+#pragma mark - CAAnimation Delegate
+
+- (void)animationDidStop:(CAAnimation *)animation finished:(BOOL)flag {
+    completedAnimations += 1;
+    if ( completedAnimations >= views.count ) {
+        completedAnimations = 0;
+        if ( completionBlock ) {
+            completionBlock();
+        }
+    }
 }
 
 - (void)textFieldDidBeginEditing:(UITextField *)textField {
@@ -387,33 +418,27 @@
 
         [manager POST:[NSString stringWithFormat:@"%@/sessions", kAPIBaseUrl] parameters:@{@"user":parameters} success:^(AFHTTPRequestOperation *operation, id responseObject) {
             //NSLog(@"success logging in: %@",responseObject);
-            XXUser *user = [[XXUser alloc] initWithDictionary:[responseObject objectForKey:@"user"]];
-            [[NSUserDefaults standardUserDefaults] setObject:user.identifier forKey:kUserDefaultsId];
-            [[NSUserDefaults standardUserDefaults] setObject:user.email forKey:kUserDefaultsEmail];
-            [[NSUserDefaults standardUserDefaults] setObject:[parameters objectForKey:@"password"] forKey:kUserDefaultsPassword];
-            [[NSUserDefaults standardUserDefaults] setObject:user.authToken forKey:kUserDefaultsAuthToken];
-            [[NSUserDefaults standardUserDefaults] setObject:user.penName forKey:kUserDefaultsPenName];
-            [[NSUserDefaults standardUserDefaults] setObject:user.picSmallUrl forKey:kUserDefaultsPicSmall];
-            [[NSUserDefaults standardUserDefaults] setObject:user.picLargeUrl forKey:kUserDefaultsPicLarge];
-            [[NSUserDefaults standardUserDefaults] synchronize];
-
-            [delegate.dynamicsDrawerViewController setPaneState:MSDynamicsDrawerPaneStateClosed animated:YES allowUserInterruption:YES completion:nil];
-            [UIView animateWithDuration:.23 animations:^{
-                [self.logo setAlpha:0.0];
-            }];
-            
+            NSPredicate *predicate = [NSPredicate predicateWithFormat:@"identifier == %@",[[responseObject objectForKey:@"user"] objectForKey:@"id"]];
             NSManagedObjectContext *localContext = [NSManagedObjectContext MR_contextForCurrentThread];
-            NSPredicate *predicate = [NSPredicate predicateWithFormat:@"identifier ==[c] %@", user.identifier];
             User *currentUser = [User MR_findFirstWithPredicate:predicate inContext:localContext];
             if (!currentUser) {
                 currentUser = [User MR_createInContext:localContext];
             }
-            currentUser.picLarge = user.picLargeUrl;
-            currentUser.contactCount = user.contactCount;
-            currentUser.storyCount = user.storyCount;
             [currentUser populateFromDict:[responseObject objectForKey:@"user"]];
+            [delegate.dynamicsDrawerViewController setPaneState:MSDynamicsDrawerPaneStateClosed animated:YES allowUserInterruption:YES completion:nil];
+        
             [localContext MR_saveToPersistentStoreWithCompletion:^(BOOL success, NSError *error) {
                 delegate.currentUser = currentUser;
+                [[NSUserDefaults standardUserDefaults] setObject:currentUser.identifier forKey:kUserDefaultsId];
+                [[NSUserDefaults standardUserDefaults] setObject:currentUser.email forKey:kUserDefaultsEmail];
+                [[NSUserDefaults standardUserDefaults] setObject:[parameters objectForKey:@"password"] forKey:kUserDefaultsPassword];
+                [[NSUserDefaults standardUserDefaults] setObject:currentUser.authToken forKey:kUserDefaultsAuthToken];
+                [[NSUserDefaults standardUserDefaults] setObject:currentUser.penName forKey:kUserDefaultsPenName];
+                [[NSUserDefaults standardUserDefaults] setObject:currentUser.picSmall forKey:kUserDefaultsPicSmall];
+                [[NSUserDefaults standardUserDefaults] setObject:currentUser.picLarge forKey:kUserDefaultsPicLarge];
+                [[NSUserDefaults standardUserDefaults] synchronize];
+                [[NSNotificationCenter defaultCenter] postNotificationName:@"ReloadGuide" object:nil];
+                [[NSNotificationCenter defaultCenter] postNotificationName:@"ReloadMenu" object:nil];
                 [self dismissViewControllerAnimated:YES completion:^{
                     [ProgressHUD dismiss];
                 }];
@@ -424,9 +449,21 @@
             NSLog(@"Response string: %@",operation.responseString);
             if (operation.response.statusCode == 401) {
                 if ([operation.responseString isEqualToString:@"Incorrect password"]){
-                    [[[UIAlertView alloc] initWithTitle:@"Incorrect password" message:@"Your email and password don't match. Please try again." delegate:nil cancelButtonTitle:@"Okay" otherButtonTitles:nil] show];
+                    [self addShakeAnimationForView:self.passwordTextField withDuration:.77];
+                    [self addShakeAnimationForView:self.registerPasswordTextField withDuration:.77];
+                
                 } else if ([operation.responseString isEqualToString:@"User already exists"]) {
-                    [[[UIAlertView alloc] initWithTitle:@"Account already exists" message:@"Sorry, but an account with that email address already exists." delegate:nil cancelButtonTitle:@"Okay" otherButtonTitles:nil] show];
+                    [self addShakeAnimationForView:self.registerEmailTextField withDuration:.77];
+                    [self alert:@"An account with that email address already exists."];
+    
+                } else if ([operation.responseString isEqualToString:@"No email"]) {
+                    [self addShakeAnimationForView:self.emailTextField withDuration:.77];
+                    //[self alert:@"Sorry, but we couldn't find an account for that email address."];
+                } else if ([operation.responseString isEqualToString:@"Pen name taken"]) {
+                    
+                    [self alert:@"Sorry, but that pen name is already taken."];
+                    [self addShakeAnimationForView:self.registerPenNameTextField withDuration:.77];
+                
                 } else {
                     [[[UIAlertView alloc] initWithTitle:@"Uh oh" message:@"Something went wrong while trying to log you in." delegate:self cancelButtonTitle:@"Okay" otherButtonTitles:nil] show];
                 }
@@ -435,6 +472,14 @@
             }
         }];
     }
+}
+
+- (void)alert:(NSString*)alert {
+    double delayInSeconds = .87;
+    dispatch_time_t popTime = dispatch_time(DISPATCH_TIME_NOW, delayInSeconds * NSEC_PER_SEC);
+    dispatch_after(popTime, dispatch_get_main_queue(), ^(void){
+        [XXAlert show:alert withTime:2.f];
+    });
 }
 
 - (IBAction)cancel{

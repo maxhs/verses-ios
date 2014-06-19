@@ -11,22 +11,22 @@
 
 @implementation Notification (helper)
 - (void)populateFromDict:(NSDictionary*)dictionary {
-    if ([dictionary objectForKey:@"id"] != [NSNull null]) {
+    if ([dictionary objectForKey:@"id"] && [dictionary objectForKey:@"id"] != [NSNull null]) {
         self.identifier = [dictionary objectForKey:@"id"];
     }
-    if ([dictionary objectForKey:@"message"] != [NSNull null]) {
+    if ([dictionary objectForKey:@"message"] && [dictionary objectForKey:@"message"] != [NSNull null]) {
         self.message = [dictionary objectForKey:@"message"];
     }
-    if ([dictionary objectForKey:@"the_story_id"] != [NSNull null]) {
-        Story *story = [Story MR_findFirstByAttribute:@"identifer" withValue:[dictionary objectForKey:@"the_story_id"]];
+    if ([dictionary objectForKey:@"the_story_id"] && [dictionary objectForKey:@"the_story_id"] != [NSNull null]) {
+        Story *story = [Story MR_findFirstByAttribute:@"identifier" withValue:[dictionary objectForKey:@"the_story_id"]];
         if (!story){
             story = [Story MR_createInContext:[NSManagedObjectContext MR_defaultContext]];
             story.identifier = [dictionary objectForKey:@"the_story_id"];
         }
         self.story = story;
     }
-    if ([dictionary objectForKey:@"circle"] != [NSNull null]) {
-        Circle *circle = [Circle MR_findFirstByAttribute:@"identifer" withValue:[[dictionary objectForKey:@"circle"] objectForKey:@"id"]];
+    if ([dictionary objectForKey:@"circle"] && [dictionary objectForKey:@"circle"] != [NSNull null]) {
+        Circle *circle = [Circle MR_findFirstByAttribute:@"identifier" withValue:[[dictionary objectForKey:@"circle"] objectForKey:@"id"]];
         if (!circle){
             circle = [Circle MR_createInContext:[NSManagedObjectContext MR_defaultContext]];
         }

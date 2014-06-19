@@ -2,44 +2,57 @@
 //  User.m
 //  Verses
 //
-//  Created by Max Haines-Stiles on 5/2/14.
+//  Created by Max Haines-Stiles on 6/16/14.
 //  Copyright (c) 2014 Verses. All rights reserved.
 //
 
 #import "User.h"
 
-
 @implementation User
 
-@dynamic contactCount;
-@dynamic email;
-@dynamic identifier;
-@dynamic location;
-@dynamic dayJob;
-@dynamic nightJob;
+@dynamic authToken;
+@dynamic backgroundImage;
 @dynamic bio;
+@dynamic contactCount;
+@dynamic dayJob;
+@dynamic email;
+@dynamic firstName;
+@dynamic identifier;
+@dynamic lastName;
+@dynamic location;
+@dynamic nightJob;
+@dynamic ownerId;
 @dynamic penName;
-@dynamic picSmall;
-@dynamic picThumb;
-@dynamic storyCount;
-@dynamic pushBookmarks;
-@dynamic pushCirclePublish;
-@dynamic pushCircleComments;
-@dynamic pushDaily;
-@dynamic pushPermissions;
-@dynamic pushInvitations;
-@dynamic pushSubscribe;
-@dynamic pushWeekly;
-@dynamic pushFeedbacks;
-@dynamic subscribed;
-@dynamic thumbImage;
 @dynamic picLarge;
 @dynamic picMedium;
-@dynamic firstName;
-@dynamic lastName;
-@dynamic ownedStory;
-@dynamic stories;
+@dynamic picSmall;
+@dynamic picThumb;
+@dynamic pushBookmarks;
+@dynamic pushCircleComments;
+@dynamic pushCirclePublish;
+@dynamic pushDaily;
+@dynamic pushFeedbacks;
+@dynamic pushInvitations;
+@dynamic pushPermissions;
+@dynamic pushSubscribe;
+@dynamic pushWeekly;
+@dynamic storyCount;
+@dynamic subscribed;
+@dynamic thumbImage;
+@dynamic bookmarks;
+@dynamic circles;
+@dynamic comments;
+@dynamic contacts;
 @dynamic contributions;
+@dynamic drafts;
+@dynamic feedbacks;
+@dynamic notifications;
+@dynamic ownedCircles;
+@dynamic ownedStories;
 @dynamic photos;
+@dynamic receivedFeedbacks;
+@dynamic stories;
+@dynamic targetComments;
+@dynamic targetNotifications;
 
 @end

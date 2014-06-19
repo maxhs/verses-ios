@@ -27,7 +27,7 @@
     // Configure the view for the selected state
 }
 
-- (void)configureCell:(XXNotification*)notification {
+- (void)configureCell:(Notification*)notification {
     [_messageLabel setText:notification.message];
     if (IDIOM == IPAD){
         [_messageLabel setFont:[UIFont fontWithName:kSourceSansProRegular size:16]];
@@ -35,7 +35,7 @@
         [_messageLabel setFont:[UIFont fontWithName:kSourceSansProRegular size:14]];
     }
     
-    XXPhoto *firstPhoto = [notification.photos firstObject];
+    /*Photo *firstPhoto = [notification.photos firstObject];
     if (firstPhoto){
         CGRect rect = _messageLabel.frame;
         CGFloat initialX = _messageLabel.frame.origin.x;
@@ -48,11 +48,10 @@
                 [_userPhotoButton setAlpha:1.0];
             }];
         }];
-    }
-    [_monthLabel setText:notification.createdMonth];
+    }*/
+    
     [_monthLabel setFont:[UIFont fontWithName:kSourceSansProRegular size:12]];
     
-    [_timeLabel setText:notification.createdTime];
     [_timeLabel setFont:[UIFont fontWithName:kSourceSansProRegular size:12]];
     [UIView animateWithDuration:.25 animations:^{
         [_messageLabel setAlpha:1.0];

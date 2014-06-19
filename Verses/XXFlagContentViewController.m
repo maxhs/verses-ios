@@ -8,6 +8,8 @@
 
 #import "XXFlagContentViewController.h"
 #import "XXAlert.h"
+#import "XXLoginController.h"
+#import "XXNoRotateNavController.h"
 
 @interface XXFlagContentViewController () {
     UIBarButtonItem *backButton;
@@ -48,12 +50,12 @@
         width = screenHeight();
         height = screenWidth();
     }
-    UIView *headerView = [[UIView alloc] initWithFrame:CGRectMake(0, 0, width, 88)];
-    UILabel *headerLabel = [[UILabel alloc] initWithFrame:CGRectMake(40, 0, width-80, 88)];
+    UIView *headerView = [[UIView alloc] initWithFrame:CGRectMake(0, 0, width, 66)];
+    UILabel *headerLabel = [[UILabel alloc] initWithFrame:CGRectMake(40, 0, width-80, 66)];
     [headerLabel setNumberOfLines:0];
     [headerLabel setTextColor:[UIColor colorWithWhite:.5 alpha:1]];
     [headerLabel setTextAlignment:NSTextAlignmentCenter];
-    [headerLabel setFont:[UIFont fontWithName:kSourceSansProLight size:15]];
+    [headerLabel setFont:[UIFont fontWithName:kSourceSansProLight size:16]];
     NSString *title;
     if (_story && _story.title.length){
         title = [NSString stringWithFormat:@"\"%@\"",_story.title];
@@ -61,6 +63,7 @@
         title = @"this content";
     }
     [headerLabel setText:[NSString stringWithFormat:@"Please tell us a little about why you're flagging %@:",title]];
+    [headerLabel setAutoresizingMask:UIViewAutoresizingFlexibleWidth];
     [headerView addSubview:headerLabel];
     self.tableView.tableHeaderView = headerView;
     
@@ -77,7 +80,7 @@
 
 - (NSInteger)tableView:(UITableView *)tableView numberOfRowsInSection:(NSInteger)section
 {
-    return 4;
+    return 5;
 }
 
 - (UITableViewCell *)tableView:(UITableView *)tableView cellForRowAtIndexPath:(NSIndexPath *)indexPath
@@ -90,15 +93,18 @@
     [cell.textLabel setTextAlignment:NSTextAlignmentCenter];
     switch (indexPath.row) {
         case 0:
-            [cell.textLabel setText:@"Inappropriate or offensive"];
+            [cell.textLabel setText:@"I don't like it"];
             break;
         case 1:
-            [cell.textLabel setText:@"Too graphic"];
+            [cell.textLabel setText:@"Inappropriate"];
             break;
         case 2:
-            [cell.textLabel setText:@"Poorly written"];
+            [cell.textLabel setText:@"Offensive"];
             break;
         case 3:
+            [cell.textLabel setText:@"Too graphic"];
+            break;
+        case 4:
             [cell.textLabel setTextColor:[UIColor redColor]];
             [cell.textLabel setText:@"Cancel"];
             break;
@@ -116,19 +122,29 @@
 }
 
 - (void)tableView:(UITableView *)tableView didSelectRowAtIndexPath:(NSIndexPath *)indexPath {
+    [tableView deselectRowAtIndexPath:indexPath animated:YES];
     BOOL cancel = NO;
     NSString *description;
     switch (indexPath.row) {
         case 0:
-            description = @"Inappropriate or offensive";
+        {
+            XXLoginController *vc = [[self storyboard] instantiateViewControllerWithIdentifier:@"Login"];
+            XXNoRotateNavController *nav = [[XXNoRotateNavController alloc] initWithRootViewController:vc];
+            return [self presentViewController:nav animated:YES completion:^{
+                [XXAlert show:@"Please log in to remove content that is not otherwise objectionable." withTime:3.f];
+            }];
+        }
             break;
         case 1:
-            description = @"Too graphic";
+            description = @"Inappropriate";
             break;
         case 2:
-            description = @"Poorly written";
+            description = @"Offensive";
             break;
         case 3:
+            description = @"Too graphic";
+            break;
+        case 4:
             cancel = YES;
             break;
         default:
@@ -147,13 +163,14 @@
         if (_story) {
             [parameters setObject:_story.identifier forKey:@"story_id"];
         }
+        [XXAlert show:[NSString stringWithFormat:@"Thanks for flagging \"%@\"",_story.title] withTime:2.7f];
         [[NSNotificationCenter defaultCenter] postNotificationName:@"StoryFlagged" object:nil userInfo:@{@"story":_story}];
         [[(XXAppDelegate*)[UIApplication sharedApplication].delegate manager] POST:[NSString stringWithFormat:@"%@/users/flag_content",kAPIBaseUrl] parameters:@{@"flag":parameters} success:^(AFHTTPRequestOperation *operation, id responseObject) {
             //NSLog(@"success creating flag: %@",responseObject);
             if ([[responseObject objectForKey:@"success"] isEqualToNumber:[NSNumber numberWithBool:YES]]){
                 [self back];
             }
-            [XXAlert show:[NSString stringWithFormat:@"Thanks for flagging \"%@\"",_story.title] withTime:2.7f];
+            
         } failure:^(AFHTTPRequestOperation *operation, NSError *error) {
             NSLog(@"error creating flag: %@",error.description);
             [[[UIAlertView alloc] initWithTitle:@"Sorry" message:@"Something went wrong while trying to flag this content. Please try again soon." delegate:nil cancelButtonTitle:@"Okay" otherButtonTitles:nil] show];

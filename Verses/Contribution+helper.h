@@ -7,7 +7,10 @@
 //
 
 #import "Contribution.h"
+#import "Photo+helper.h"
 
 @interface Contribution (helper)
 - (void)populateFromDict:(NSDictionary*)dict;
+- (void)addPhoto:(Photo*)photo;
+- (void)removePhoto:(Photo*)photo;
 @end

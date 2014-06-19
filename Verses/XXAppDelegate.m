@@ -34,7 +34,6 @@
 @implementation XXAppDelegate
 
 @synthesize manager = _manager;
-@synthesize stories = _stories;
 @synthesize backgroundURL = _backgroundURL;
 
 - (BOOL)application:(UIApplication *)application didFinishLaunchingWithOptions:(NSDictionary *)launchOptions
@@ -52,6 +51,7 @@
         }
     }*/
     
+    [[[SDWebImageManager sharedManager] imageCache] clearDisk];
     self.dynamicsDrawerViewController = (MSDynamicsDrawerViewController *)self.window.rootViewController;
     self.dynamicsDrawerViewController.bounceElasticity = 2;
     self.dynamicsDrawerViewController.gravityMagnitude = 3;
@@ -149,11 +149,16 @@
 - (UIImageView *)windowBackground
 {
     if (!_windowBackground) {
-        if (UI_USER_INTERFACE_IDIOM() == UIUserInterfaceIdiomPad){
-            _windowBackground = [[UIImageView alloc] initWithImage:[UIImage imageNamed:@"background_ipad"]];
+        if (_currentUser.backgroundImage) {
+            _windowBackground = [[UIImageView alloc] initWithImage:_currentUser.backgroundImage];
         } else {
-            _windowBackground = [[UIImageView alloc] initWithImage:[UIImage imageNamed:@"background"]];
+            if (UI_USER_INTERFACE_IDIOM() == UIUserInterfaceIdiomPad){
+                _windowBackground = [[UIImageView alloc] initWithImage:[UIImage imageNamed:@"background_ipad"]];
+            } else {
+                _windowBackground = [[UIImageView alloc] initWithImage:[UIImage imageNamed:@"background"]];
+            }
         }
+        
         [_windowBackground setAlpha:1];
     }
     return _windowBackground;
@@ -178,7 +183,7 @@
     clearShadow.shadowColor = [UIColor clearColor];
     
     [[UIBarButtonItem appearance] setTitleTextAttributes:@{
-                                                           NSFontAttributeName : [UIFont fontWithName:kSourceSansProRegular size:15],
+                                                           NSFontAttributeName : [UIFont fontWithName:kSourceSansProRegular size:16],
                                                            NSShadowAttributeName : clearShadow,
                                                            NSForegroundColorAttributeName : kElectricBlue,
                                                            } forState:UIControlStateNormal];
@@ -207,7 +212,7 @@
                                                                NSShadowAttributeName: clearShadow,
                                                                }];
         [UIView animateWithDuration:.23 animations:^{
-            [_windowBackground setAlpha:.23];
+            [_windowBackground setAlpha:.14];
             [[UIBarButtonItem appearance] setTintColor:[UIColor whiteColor]];
             [self.window setBackgroundColor:[UIColor blackColor]];
             [[UINavigationBar appearance] setBarStyle:UIBarStyleBlackTranslucent];
@@ -254,7 +259,7 @@
 - (void)application:(UIApplication *)application didReceiveRemoteNotification:(NSDictionary *)pushMessage
 {
     //[Flurry logEvent:@"Did Receive Remote Notification"];
-    [[Mixpanel sharedInstance] track:@"Just received a push message"];
+    //[[Mixpanel sharedInstance] track:@"Just received a push message"];
     //NSLog(@"Received push: %@",pushMessage);
     [self redirect:pushMessage];
 }
@@ -353,7 +358,7 @@
     // Restart any tasks that were paused (or not yet started) while the application was inactive. If the application was previously in the background, optionally refresh the user interface.
     
     //refresh user data by signing them in again
-    if ([[NSUserDefaults standardUserDefaults] objectForKey:kUserDefaultsId]){
+    /*if ([[NSUserDefaults standardUserDefaults] objectForKey:kUserDefaultsId]){
         NSMutableDictionary *parameters = [NSMutableDictionary dictionary];
         [parameters setObject:[[NSUserDefaults standardUserDefaults] objectForKey:kUserDefaultsEmail] forKey:@"email"];
         if ([[NSUserDefaults standardUserDefaults] objectForKey:kUserDefaultsDeviceToken]){
@@ -364,27 +369,40 @@
             [parameters setObject:[[NSUserDefaults standardUserDefaults] objectForKey:kUserDefaultsPassword] forKey:@"password"];
             [[AFHTTPRequestOperationManager manager] POST:[NSString stringWithFormat:@"%@/sessions", kAPIBaseUrl] parameters:@{@"user":parameters} success:^(AFHTTPRequestOperation *operation, id responseObject) {
                 //NSLog(@"success logging in from app delegate: %@",responseObject);
-                XXUser *user = [[XXUser alloc] initWithDictionary:[responseObject objectForKey:@"user"]];
-                [[NSUserDefaults standardUserDefaults] setObject:user.identifier forKey:kUserDefaultsId];
-                [[NSUserDefaults standardUserDefaults] setObject:user.authToken forKey:kUserDefaultsAuthToken];
-                [[NSUserDefaults standardUserDefaults] setObject:user.penName forKey:kUserDefaultsPenName];
-                [[NSUserDefaults standardUserDefaults] setObject:user.picLargeUrl forKey:kUserDefaultsPicLarge];
-                [[NSUserDefaults standardUserDefaults] synchronize];
                 
                 NSManagedObjectContext *defaultContext = [NSManagedObjectContext MR_defaultContext];
-                NSPredicate *predicate = [NSPredicate predicateWithFormat:@"identifier == %@", user.identifier];
+                NSPredicate *predicate = [NSPredicate predicateWithFormat:@"identifier == %@", [[responseObject objectForKey:@"user"] objectForKey:@"id"]];
                 _currentUser = [User MR_findFirstWithPredicate:predicate inContext:defaultContext];
                 if (!_currentUser) {
                     _currentUser = [User MR_createInContext:defaultContext];
                 }
                 [_currentUser populateFromDict:[responseObject objectForKey:@"user"]];
+                
+                [[NSUserDefaults standardUserDefaults] setObject:_currentUser.identifier forKey:kUserDefaultsId];
+                [[NSUserDefaults standardUserDefaults] setObject:_currentUser.authToken forKey:kUserDefaultsAuthToken];
+                [[NSUserDefaults standardUserDefaults] setObject:_currentUser.penName forKey:kUserDefaultsPenName];
+                [[NSUserDefaults standardUserDefaults] setObject:_currentUser.picSmall forKey:kUserDefaultsPicSmall];
+                [[NSUserDefaults standardUserDefaults] setObject:_currentUser.picLarge forKey:kUserDefaultsPicLarge];
+                [[NSUserDefaults standardUserDefaults] synchronize];
+                
                 [defaultContext MR_saveToPersistentStoreWithCompletion:^(BOOL success, NSError *error) {
-                    NSLog(@"Saving user to persistent store: %u %@",success, error);
+                    NSLog(@"Saving user to persistent store: %u",success);
                 }];
             } failure:^(AFHTTPRequestOperation *operation, NSError *error) {
-                NSLog(@"Failure logging in from app delegate: %@",error.localizedRecoverySuggestion);
+                //NSLog(@"Failure logging in from app delegate: %@",error.description);
             }];
         }
+    }*/
+}
+
+- (void)cleanAndResetupDB {
+    NSError *error = nil;
+    NSURL *storeURL = [NSPersistentStore MR_urlForStoreName:@"BuildHawk"];
+    [MagicalRecord cleanUp];
+    if([[NSFileManager defaultManager] removeItemAtURL:storeURL error:&error]){
+        [MagicalRecord setupCoreDataStackWithAutoMigratingSqliteStoreNamed:@"BuildHawk"];
+    } else{
+        NSLog(@"Error deleting persistent store description: %@ %@", error.description,storeURL);
     }
 }
 

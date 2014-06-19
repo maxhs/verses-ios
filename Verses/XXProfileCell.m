@@ -44,6 +44,9 @@
         [_locationLabel setFont:[UIFont fontWithName:kCrimsonItalic size:18]];
     }
     
+    [_nameLabel setText:user.penName];
+    [_nameLabel setFont:[UIFont fontWithName:kSourceSansProSemibold size:27]];
+    
     if (user.bio.length) {
         [_bioLabel setText:[NSString stringWithFormat:@"\"%@\"",user.bio]];
         [_bioLabel setFont:[UIFont fontWithName:kCrimsonRoman size:17]];
@@ -98,6 +101,7 @@
                         [_dayJobLabel setAlpha:1.0];
                         [_bioLabel setAlpha:1.0];
                         [_subscribeButton setAlpha:1.0];
+                        [_nameLabel setAlpha:1.0];
                     } completion:^(BOOL finished) {
                         [_background setImage:image];
                         [_background setAlpha:1.0];
@@ -115,34 +119,41 @@
             [_dayJobLabel setAlpha:1.0];
             [_bioLabel setAlpha:1.0];
             [_subscribeButton setAlpha:1.0];
+            [_nameLabel setAlpha:1.0];
         }];
     }
 }
 
 - (void)subscribe:(UIButton*)button{
-    [[(XXAppDelegate*)[UIApplication sharedApplication].delegate manager] POST:[NSString stringWithFormat:@"%@/users/%d/subscribe",kAPIBaseUrl,button.tag] parameters:@{@"user_id":[[NSUserDefaults standardUserDefaults] objectForKey:kUserDefaultsId]} success:^(AFHTTPRequestOperation *operation, id responseObject) {
-        if ([responseObject objectForKey:@"success"]){
-            [_subscribeButton setTitle:@"Unsubscribe" forState:UIControlStateNormal];
-            [_subscribeButton removeTarget:nil action:NULL forControlEvents:UIControlEventAllEvents];
-            [_subscribeButton addTarget:self action:@selector(unsubscribe:) forControlEvents:UIControlEventTouchUpInside];
-        }
-    } failure:^(AFHTTPRequestOperation *operation, NSError *error) {
-        //NSLog(@"Failed to subcsribe: %@",error.description);
-        [[[UIAlertView alloc] initWithTitle:@"Sorry" message:@"Something went wrong. Our bad. Please try again soon." delegate:nil cancelButtonTitle:@"Okay" otherButtonTitles:nil] show];
-    }];
+    if ([[NSUserDefaults standardUserDefaults] objectForKey:kUserDefaultsId]){
+        [[(XXAppDelegate*)[UIApplication sharedApplication].delegate manager] POST:[NSString stringWithFormat:@"%@/users/%d/subscribe",kAPIBaseUrl,button.tag] parameters:@{@"user_id":[[NSUserDefaults standardUserDefaults] objectForKey:kUserDefaultsId]} success:^(AFHTTPRequestOperation *operation, id responseObject) {
+            if ([responseObject objectForKey:@"success"]){
+                [_subscribeButton setTitle:@"Unsubscribe" forState:UIControlStateNormal];
+                [_subscribeButton removeTarget:nil action:NULL forControlEvents:UIControlEventAllEvents];
+                [_subscribeButton addTarget:self action:@selector(unsubscribe:) forControlEvents:UIControlEventTouchUpInside];
+            }
+        } failure:^(AFHTTPRequestOperation *operation, NSError *error) {
+            //NSLog(@"Failed to subcsribe: %@",error.description);
+            [[[UIAlertView alloc] initWithTitle:@"Sorry" message:@"Something went wrong. Our bad. Please try again soon." delegate:nil cancelButtonTitle:@"Okay" otherButtonTitles:nil] show];
+        }];
+    } else {
+        [[NSNotificationCenter defaultCenter] postNotificationName:@"ShowLogin" object:nil];
+    }
 }
 
 - (void)unsubscribe:(UIButton*)button{
-    [[(XXAppDelegate*)[UIApplication sharedApplication].delegate manager] POST:[NSString stringWithFormat:@"%@/users/%d/unsubscribe",kAPIBaseUrl,button.tag] parameters:@{@"user_id":[[NSUserDefaults standardUserDefaults] objectForKey:kUserDefaultsId]} success:^(AFHTTPRequestOperation *operation, id responseObject) {
-        if ([responseObject objectForKey:@"success"]){
-            [_subscribeButton setTitle:@"Subscribe" forState:UIControlStateNormal];
-            [_subscribeButton removeTarget:nil action:NULL forControlEvents:UIControlEventAllEvents];
-            [_subscribeButton addTarget:self action:@selector(subscribe:) forControlEvents:UIControlEventTouchUpInside];
-        }
-    } failure:^(AFHTTPRequestOperation *operation, NSError *error) {
-        //NSLog(@"Failed to subcsribe: %@",error.description);
-        [[[UIAlertView alloc] initWithTitle:@"Sorry" message:@"Something went wrong. Our bad. Please try again soon." delegate:nil cancelButtonTitle:@"Okay" otherButtonTitles:nil] show];
-    }];
+    if ([[NSUserDefaults standardUserDefaults] objectForKey:kUserDefaultsId]){
+        [[(XXAppDelegate*)[UIApplication sharedApplication].delegate manager] POST:[NSString stringWithFormat:@"%@/users/%d/unsubscribe",kAPIBaseUrl,button.tag] parameters:@{@"user_id":[[NSUserDefaults standardUserDefaults] objectForKey:kUserDefaultsId]} success:^(AFHTTPRequestOperation *operation, id responseObject) {
+            if ([responseObject objectForKey:@"success"]){
+                [_subscribeButton setTitle:@"Subscribe" forState:UIControlStateNormal];
+                [_subscribeButton removeTarget:nil action:NULL forControlEvents:UIControlEventAllEvents];
+                [_subscribeButton addTarget:self action:@selector(subscribe:) forControlEvents:UIControlEventTouchUpInside];
+            }
+        } failure:^(AFHTTPRequestOperation *operation, NSError *error) {
+            //NSLog(@"Failed to subcsribe: %@",error.description);
+            [[[UIAlertView alloc] initWithTitle:@"Sorry" message:@"Something went wrong. Our bad. Please try again soon." delegate:nil cancelButtonTitle:@"Okay" otherButtonTitles:nil] show];
+        }];
+    }
 }
 
 @end

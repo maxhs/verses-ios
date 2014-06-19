@@ -7,7 +7,7 @@
 //
 
 #import <UIKit/UIKit.h>
-#import "XXNotification.h"
+#import "Notification+helper.h"
 
 @interface XXNotificationCell : UITableViewCell
 
@@ -16,6 +16,6 @@
 @property (weak, nonatomic) IBOutlet UILabel *monthLabel;
 @property (weak, nonatomic) IBOutlet UILabel *timeLabel;
 
-- (void)configureCell:(XXNotification*)notification;
+- (void)configureCell:(Notification*)notification;
 
 @end

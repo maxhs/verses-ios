@@ -32,7 +32,7 @@
 }
 - (void)configureWithTextColor:(UIColor *)textColor {
     [self.headingLabel setTextColor:textColor];
-    [self.headingLabel setFont:[UIFont fontWithName:kSourceSansProLight size:14]];
+    [self.headingLabel setFont:[UIFont fontWithName:kSourceSansProRegular size:13]];
     [self.contentLabel setTextColor:textColor];
     [self.contentLabel setFont:[UIFont fontWithName:kSourceSansProRegular size:16]];
 }

@@ -21,8 +21,8 @@
 @property (nonatomic, strong) UIImageView *windowBackground;
 @property (strong, nonatomic) NSURL *backgroundURL;
 @property (strong, nonatomic) User *currentUser;
-@property (strong, nonatomic) NSMutableArray *stories;
 @property BOOL loadingBackground;
 @property BOOL offline;
 - (void)switchBackgroundTheme;
+- (void)cleanAndResetupDB;
 @end

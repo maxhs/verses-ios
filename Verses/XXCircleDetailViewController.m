@@ -29,7 +29,8 @@
     Comment *commentForDeletion;
     NSIndexPath *indexPathForDeletion;
     UIInterfaceOrientation currentOrientation;
-    NSMutableArray *_notifications;
+    NSMutableArray *_comments;
+    NSMutableArray *_stories;
 }
 
 @end
@@ -71,11 +72,14 @@
     
     if (_circleId){
         [self loadDetails:_circleId];
-    } else if (_circle.comments.count == 0){
+    } else if (_comments.count == 0){
         [self loadDetails:_circle.identifier];
     } else {
         [self loadCircleNotifications];
     }
+    _comments = _circle.comments.array.mutableCopy;
+    _stories = _circle.stories.array.mutableCopy;
+    
     if (!_chatInput){
         [self setupChat];
         [self.view addSubview:self.collectionView];
@@ -83,11 +87,10 @@
     }
     [self scrollToBottom];
     
-    //show chat by default//
+    //show chat by default
     [self reset];
     chat = YES;
     [self hideTableView];
-    //**//
     
     self.detailsTableView.rowHeight = 60;
     self.storiesTableView.rowHeight = 80;
@@ -97,17 +100,21 @@
     [manager GET:[NSString stringWithFormat:@"%@/circles/%@",kAPIBaseUrl,identifier] parameters:@{@"user_id":[[NSUserDefaults standardUserDefaults] objectForKey:kUserDefaultsId]} success:^(AFHTTPRequestOperation *operation, id responseObject) {
         //NSLog(@"success getting circle details: %@", responseObject);
         [_circle populateFromDict:[responseObject objectForKey:@"circle"]];
-        [self.collectionView reloadData];
+        [[NSManagedObjectContext MR_defaultContext] MR_saveToPersistentStoreWithCompletion:^(BOOL success, NSError *error) {
+            NSLog(@"circle comments? %d",_circle.comments.count);
+            _comments = _circle.comments.array.mutableCopy;
+            _stories = _circle.stories.array.mutableCopy;
+            [self.collectionView reloadData];
+            NSString *storyCount;
+            if (_stories.count == 1){
+                storyCount = @"1 Story";
+            } else {
+                storyCount = [NSString stringWithFormat:@"%i Stories",_stories.count];
+            }
+            
+            [_circleControl setTitle:storyCount withImage:nil forSegmentAtIndex:3];
+        }];
         
-        NSString *storyCount;
-        if (_circle.stories.count == 1){
-            storyCount = @"1 Story";
-        } else {
-            storyCount = [NSString stringWithFormat:@"%i Stories",_circle.stories.count];
-        }
-        
-        [_circleControl setTitle:storyCount withImage:nil forSegmentAtIndex:3];
-
         [self loadCircleNotifications];
         [ProgressHUD dismiss];
     } failure:^(AFHTTPRequestOperation *operation, NSError *error) {
@@ -118,7 +125,23 @@
 - (void)loadCircleNotifications {
     [manager GET:[NSString stringWithFormat:@"%@/circles/%@/notifications",kAPIBaseUrl,_circle.identifier] parameters:@{@"user_id":[[NSUserDefaults standardUserDefaults] objectForKey:kUserDefaultsId]} success:^(AFHTTPRequestOperation *operation, id responseObject) {
         //NSLog(@"success getting circle notifications: %@", responseObject);
-        _notifications = [[Utilities notificationsFromJSONArray:[responseObject objectForKey:@"notifications"]] mutableCopy];
+        NSMutableOrderedSet *circleNotifications = [NSMutableOrderedSet orderedSet];
+        for (NSDictionary *dict in [responseObject objectForKey:@"notifications"]){
+            Notification *notification = [Notification MR_findFirstByAttribute:@"identifier" withValue:[dict objectForKey:@"id"]];
+            if (!notification){
+                notification = [Notification MR_createInContext:[NSManagedObjectContext MR_defaultContext]];
+            }
+            [notification populateFromDict:dict];
+            [circleNotifications addObject:notification];
+        }
+        
+        for (Notification *notification in _circle.notifications){
+            if (![circleNotifications containsObject:notification]){
+                NSLog(@"Deleting a circle notification that no longer exists");
+                [notification MR_deleteInContext:[NSManagedObjectContext MR_defaultContext]];
+            }
+        }
+        _circle.notifications = circleNotifications;
 
     } failure:^(AFHTTPRequestOperation *operation, NSError *error) {
         NSLog(@"Failed to get circle notifications: %@",error.description);
@@ -294,15 +317,14 @@
         if (section == 0){
             return 3;
         } else {
-            return _notifications.count;
+            return _circle.notifications.count;
         }
     } else {
-        if (_circle.stories.count == 0){
+        if (_stories.count == 0){
             return 1;
         } else {
-            return _circle.stories.count;
+            return _stories.count;
         }
-        
     }
 }
 
@@ -339,10 +361,10 @@
             if (cell == nil) {
                 cell = [[[NSBundle mainBundle] loadNibNamed:@"XXCircleNotificationCell" owner:nil options:nil] lastObject];
             }
-            XXNotification *notification = [_notifications objectAtIndex:indexPath.row];
+            Notification *notification = [_circle.notifications objectAtIndex:indexPath.row];
             [cell configureNotification:notification];
             [cell.timestamp setTextColor:textColor];
-            [cell.timestamp setText:[_formatter stringFromDate:notification.createdAt]];
+            [cell.timestamp setText:[_formatter stringFromDate:notification.createdDate]];
             [cell.notificationLabel setTextColor:textColor];
             [cell setSelectionStyle:UITableViewCellSelectionStyleNone];
 
@@ -353,7 +375,7 @@
         if (cell == nil) {
             cell = [[[NSBundle mainBundle] loadNibNamed:@"XXProfileStoryCell" owner:nil options:nil] lastObject];
         }
-        if (_circle.stories.count == 0){
+        if (_stories.count == 0){
             [cell.titleLabel setText:@"No stories"];
             [cell.titleLabel setFont:[UIFont fontWithName:kSourceSansProLight size:20]];
             if ([[NSUserDefaults standardUserDefaults] objectForKey:kDarkBackground]){
@@ -363,7 +385,7 @@
             }
             [cell.titleLabel setTextAlignment:NSTextAlignmentCenter];
         } else {
-            XXStory *story = [_circle.stories objectAtIndex:indexPath.row];
+            Story *story = [_stories objectAtIndex:indexPath.row];
             [cell configureStory:story withTextColor:textColor];
             [cell.titleLabel setTextAlignment:NSTextAlignmentLeft];
             [cell.subtitleLabel setText:[_detailsFormatter stringFromDate:story.updatedDate]];
@@ -385,7 +407,7 @@
         [self performSegueWithIdentifier:@"Read" sender:indexPath];
     } else if (tableView == self.detailsTableView){
         if (indexPath.section == 1){
-            XXNotification *notification = [_notifications objectAtIndex:indexPath.row];
+            Notification *notification = [_circle.notifications objectAtIndex:indexPath.row];
             if ([notification.type isEqualToString:kCircleComment]){
                 [self reset];
                 chat = YES;
@@ -400,7 +422,7 @@
     
     if ([segue.identifier isEqualToString:@"Read"]){
         XXStoryViewController *storyVC = [segue destinationViewController];
-        Story *story = (Story*)[_circle.stories objectAtIndex:indexPath.row];
+        Story *story = (Story*)[_stories objectAtIndex:indexPath.row];
         [storyVC setStory:story];
         [ProgressHUD show:@"Fetching story..."];
         if ([[NSUserDefaults standardUserDefaults] boolForKey:kDarkBackground]){
@@ -424,7 +446,7 @@
                   layout:(UICollectionViewLayout*)collectionViewLayout
   sizeForItemAtIndexPath:(NSIndexPath *)indexPath {
     
-    XXComment *comment = _circle.comments[indexPath.row];
+    Comment *comment = _comments[indexPath.row];
     static int offset = 20;
     
     if (comment.body.length) {
@@ -450,12 +472,12 @@
 }
 
 - (NSInteger)collectionView:(UICollectionView *)collectionView numberOfItemsInSection:(NSInteger)section {
-    return _circle.comments.count;
+    return _comments.count;
 }
 
 - (UICollectionViewCell *)collectionView:(UICollectionView *)collectionView cellForItemAtIndexPath:(NSIndexPath *)indexPath {
     XXChatCell* cell = [collectionView dequeueReusableCellWithReuseIdentifier:@"ChatCell" forIndexPath:indexPath];
-    XXComment *comment = [_circle.comments objectAtIndex:indexPath.row];
+    Comment *comment = [_comments objectAtIndex:indexPath.row];
     [cell drawCell:comment withTextColor:textColor];
     cell.deleteButton.tag = indexPath.row;
     [cell.deleteButton addTarget:self action:@selector(deleteComment:) forControlEvents:UIControlEventTouchUpInside];
@@ -488,7 +510,7 @@
 }
 
 - (void)deleteComment:(UIButton*)button {
-    commentForDeletion = [_circle.comments objectAtIndex:button.tag];
+    commentForDeletion = [_comments objectAtIndex:button.tag];
     indexPathForDeletion = [NSIndexPath indexPathForRow:button.tag inSection:0];
     [[[UIAlertView alloc] initWithTitle:@"One sec..." message:@"Are you sure you want to delete this comment?" delegate:self cancelButtonTitle:@"No" otherButtonTitles:@"Delete", nil] show];
 }
@@ -501,8 +523,8 @@
             NSLog(@"Failed to delete comment: %@",error.description);
         }];
         [_circle removeComment:commentForDeletion];
+        _comments = _circle.comments.array.mutableCopy;
         [self.collectionView deleteItemsAtIndexPaths:@[indexPathForDeletion]];
-       
     }
     indexPathForDeletion = nil;
     commentForDeletion = nil;
@@ -515,7 +537,7 @@
 }
 - (void) willAnimateRotationToInterfaceOrientation:(UIInterfaceOrientation)toInterfaceOrientation duration:(NSTimeInterval)duration {
     [_chatInput isRotating];
-    self.collectionView.frame = (UIInterfaceOrientationIsLandscape(toInterfaceOrientation)) ? CGRectMake(0, 88, screenHeight(), screenWidth() - height(_chatInput) - 88) : CGRectMake(0, 88, screenWidth(), screenHeight() - height(_chatInput) - 88);
+    self.collectionView.frame = (UIInterfaceOrientationIsLandscape(toInterfaceOrientation)) ? CGRectMake(0, 68, screenHeight(), screenWidth() - height(_chatInput) - 68) : CGRectMake(0, 68, screenWidth(), screenHeight() - height(_chatInput) - 68);
     currentOrientation = toInterfaceOrientation;
     [self.collectionView reloadData];
     [self.collectionView.collectionViewLayout invalidateLayout];
@@ -533,9 +555,9 @@
     } else {
         [commentDict setObject:@{@"id":[[NSUserDefaults standardUserDefaults] objectForKey:kUserDefaultsId],@"pen_name":[[NSUserDefaults standardUserDefaults] objectForKey:kUserDefaultsPenName],} forKey:@"user"];
     }
-    
     Comment *newComment = [Comment MR_createInContext:[NSManagedObjectContext MR_defaultContext]];
     [newComment populateFromDict:commentDict];
+    newComment.createdDate = [NSDate date];
     [self addNewComment:newComment];
 }
 
@@ -552,11 +574,15 @@
         [parameters setObject:@"circle" forKey:@"comment_type"];
         
         [manager POST:[NSString stringWithFormat:@"%@/comments",kAPIBaseUrl] parameters:@{@"comment":parameters} success:^(AFHTTPRequestOperation *operation, id responseObject) {
-            //NSLog(@"success posting circle comment: %@",responseObject);
+            NSLog(@"success posting circle comment: %@",responseObject);
+            [comment populateFromDict:responseObject];
+            _comments = _circle.comments.array.mutableCopy;
+            [self.collectionView reloadItemsAtIndexPaths:@[[NSIndexPath indexPathForItem:_comments.count-1 inSection:0]]];
         } failure:^(AFHTTPRequestOperation *operation, NSError *error) {
             NSLog(@"Error posting circle comment: %@",error.description);
         }];
-        [self.collectionView insertItemsAtIndexPaths:@[[NSIndexPath indexPathForRow:_circle.comments.count-1 inSection:0]]];
+        _comments = _circle.comments.array.mutableCopy;
+        [self.collectionView insertItemsAtIndexPaths:@[[NSIndexPath indexPathForItem:_comments.count-1 inSection:0]]];
         [self scrollToBottom];
     }
 }
@@ -579,10 +605,10 @@
         self.collectionView.decelerationRate = UIScrollViewDecelerationRateFast;
         [UIView animateWithDuration:duration delay:0.0 options:(animationCurve << 16) animations:^{
             if (UIInterfaceOrientationIsLandscape([[UIApplication sharedApplication]statusBarOrientation])){
-                _circleControl.transform = CGAffineTransformMakeTranslation(0, -88);
+                _circleControl.transform = CGAffineTransformMakeTranslation(0, -68);
                 self.collectionView.frame = CGRectMake(0, 20, screenHeight(), screenWidth() - height(_chatInput) - keyboardHeight - 20);
             } else {
-                self.collectionView.frame = CGRectMake(0, 88, screenWidth(), screenHeight() - height(_chatInput) - keyboardHeight - 88);
+                self.collectionView.frame = CGRectMake(0, 68, screenWidth(), screenHeight() - height(_chatInput) - keyboardHeight - 68);
             }
             
         } completion:^(BOOL finished) {
@@ -605,7 +631,7 @@
         self.collectionView.scrollEnabled = NO;
         self.collectionView.decelerationRate = UIScrollViewDecelerationRateFast;
         [UIView animateWithDuration:duration delay:0.0 options:(animationCurve << 16) animations:^{
-            self.collectionView.frame = (UIInterfaceOrientationIsLandscape([[UIApplication sharedApplication]statusBarOrientation])) ? CGRectMake(0, 88, screenHeight(), screenWidth() - height(_chatInput) - 88) : CGRectMake(0, 88, screenWidth(), screenHeight() - height(_chatInput) - 88);
+            self.collectionView.frame = (UIInterfaceOrientationIsLandscape([[UIApplication sharedApplication]statusBarOrientation])) ? CGRectMake(0, 68, screenHeight(), screenWidth() - height(_chatInput) - 68) : CGRectMake(0, 68, screenWidth(), screenHeight() - height(_chatInput) - 68);
             _circleControl.transform = CGAffineTransformIdentity;
         } completion:^(BOOL finished) {
             if (finished) {
@@ -621,13 +647,24 @@
 #pragma mark COLLECTION VIEW METHODS
 
 - (void) scrollToBottom {
-    if (_circle.comments.count > 0) {
+    if (_comments.count > 0) {
         static NSInteger section = 0;
         NSInteger item = [self collectionView:self.collectionView numberOfItemsInSection:section] - 1;
         if (item < 0) item = 0;
         NSIndexPath *lastIndexPath = [NSIndexPath indexPathForItem:item inSection:section];
         [self.collectionView scrollToItemAtIndexPath:lastIndexPath atScrollPosition:UICollectionViewScrollPositionBottom animated:YES];
     }
+}
+
+- (void)viewWillDisappear:(BOOL)animated {
+    [super viewWillDisappear:animated];
+    [self saveContext];
+}
+
+- (void)saveContext {
+    [[NSManagedObjectContext MR_defaultContext] MR_saveToPersistentStoreWithCompletion:^(BOOL success, NSError *error) {
+        NSLog(@"Saving circle detail information: %u",success);
+    }];
 }
 
 @end

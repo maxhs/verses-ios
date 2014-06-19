@@ -7,11 +7,11 @@
 //
 
 #import <UIKit/UIKit.h>
-#import "XXNotification.h"
+#import "Notification+helper.h"
 
 @interface XXCircleNotificationCell : UITableViewCell
 @property (weak, nonatomic) IBOutlet UILabel *notificationLabel;
 @property (weak, nonatomic) IBOutlet UILabel *timestamp;
 
-- (void)configureNotification:(XXNotification*)notification;
+- (void)configureNotification:(Notification*)notification;
 @end

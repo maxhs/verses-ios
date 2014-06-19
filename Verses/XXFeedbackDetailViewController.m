@@ -62,7 +62,7 @@
         if (cell == nil) {
             cell = [[[NSBundle mainBundle] loadNibNamed:@"XXCommentCell" owner:nil options:nil] lastObject];
         }
-        XXComment *comment = [_feedback.comments objectAtIndex:indexPath.row];
+        Comment *comment = [_feedback.comments objectAtIndex:indexPath.row];
         [cell configureComment:comment];
         return cell;
     }

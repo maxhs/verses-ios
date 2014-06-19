@@ -8,18 +8,17 @@
 
 #import "XXStoriesViewController.h"
 #import "XXStoryCell.h"
+#import "XXNoRotateNavController.h"
 #import "XXProgress.h"
-#import "XXContribution.h"
-#import "XXUser.h"
-#import "XXPhoto.h"
-#import "SWTableViewCell.h"
-#import "SWRevealViewController.h"
+#import "Contribution.h"
+#import "User.h"
+#import "Photo.h"
 #import "XXStoryViewController.h"
 #import "XXAppDelegate.h"
 #import "UIImage+ImageEffects.h"
 #import <DTCoreText/DTCoreText.h>
-#import "XXSegmentedControl.h"
 #import "XXNewUserWalkthroughViewController.h"
+#import "XXNoRotateNavController.h"
 #import "XXNewUserTransition.h"
 #import "XXCollaborateViewController.h"
 #import "XXFlagContentViewController.h"
@@ -27,7 +26,7 @@
 #import "XXGuideViewController.h"
 #import "Story+helper.h"
 
-@interface XXStoriesViewController () <UIScrollViewDelegate, SWTableViewCellDelegate, XXSegmentedControlDelegate, UIViewControllerTransitioningDelegate>{
+@interface XXStoriesViewController () <UIScrollViewDelegate, UIViewControllerTransitioningDelegate>{
     AFHTTPRequestOperationManager *manager;
     CGFloat width;
     CGFloat height;
@@ -56,6 +55,7 @@
 @synthesize stories = _stories;
 
 - (void)viewDidLoad {
+    [super viewDidLoad];
     refreshControl = [[UIRefreshControl alloc] init];
     [refreshControl addTarget:self action:@selector(handleRefresh) forControlEvents:UIControlEventValueChanged];
     [refreshControl setTintColor:[UIColor darkGrayColor]];
@@ -63,6 +63,7 @@
     [self.tableView setSeparatorStyle:UITableViewCellSeparatorStyleNone];
     [self.navigationController setNavigationBarHidden:NO animated:YES];
     delegate = (XXAppDelegate*)[UIApplication sharedApplication].delegate;
+    
     manager = delegate.manager;
     self.reloadTheme = NO;
     _formatter = [[NSDateFormatter alloc] init];
@@ -88,37 +89,49 @@
     } else {
         self.tableView.rowHeight = height/2;
     }
-
+    
     _sharedStories = [NSMutableArray array];
     _trendingStories = [NSMutableArray array];
     _featuredStories = [NSMutableArray array];
     
     if (_featured){
-        NSPredicate *predicate = [NSPredicate predicateWithFormat:@"featured == %@",[NSNumber numberWithBool:YES]];
-        _featuredStories = [Story MR_findAllSortedBy:@"updatedDate" ascending:NO withPredicate:predicate].mutableCopy;
+        _featuredStories = [Story MR_findByAttribute:@"featured" withValue:[NSNumber numberWithBool:YES] andOrderBy:@"publishedDate" ascending:NO].mutableCopy;
         if (_featuredStories.count == 0) {
-            NSLog(@"no featured stories");
             [self loadFeatured];
         } else {
             [self.tableView reloadData];
+            [self loadMoreFeatured];
         }
     } else if (_shared) {
+        NSPredicate *userPredicate = [NSPredicate predicateWithFormat:@"ANY users.identifier == %@",[[NSUserDefaults standardUserDefaults] objectForKey:kUserDefaultsId]];
+        NSPredicate *ownerPredicate = [NSPredicate predicateWithFormat:@"ownerId != %@",[[NSUserDefaults standardUserDefaults] objectForKey:kUserDefaultsId]];
+        NSPredicate *compoundPredicate = [NSCompoundPredicate andPredicateWithSubpredicates:@[userPredicate,ownerPredicate]];
         
+        _sharedStories = [Story MR_findAllSortedBy:@"updatedDate" ascending:NO withPredicate:compoundPredicate].mutableCopy;
+        if (_sharedStories.count == 0) {
+            [self loadShared];
+        } else {
+            [self.tableView reloadData];
+        }
     } else if (_trending){
-        
-    } else if (_ether || _stories.count ==0) {
-        _stories = [Story MR_findAllSortedBy:@"updatedDate" ascending:NO].mutableCopy;
+        NSPredicate *predicate = [NSPredicate predicateWithFormat:@"trendingCount != %@",[NSNumber numberWithInt:0]];
+        _trendingStories = [Story MR_findAllSortedBy:@"trendingCount" ascending:NO withPredicate:predicate].mutableCopy;
+        [self loadTrending];
+    } else if (_ether || _stories.count == 0) {
+        NSPredicate *predicate = [NSPredicate predicateWithFormat:@"inviteOnly == %@ and draft == %@",[NSNumber numberWithBool:NO],[NSNumber numberWithBool:NO]];
+        _stories = [Story MR_findAllSortedBy:@"publishedDate" ascending:NO withPredicate:predicate].mutableCopy;
         if (_stories.count == 0) {
             [self loadEtherStories];
         } else [self.tableView reloadData];
     }
    
     [self.tableView reloadData];
-    [super viewDidLoad];
+    
     [[NSNotificationCenter defaultCenter] addObserver:self selector:@selector(storyFlagged:) name:@"StoryFlagged" object:nil];
 }
 
-- (void)updateLocalStories:(NSArray*)array{
+- (NSMutableArray*)updateLocalStories:(NSArray*)array{
+    NSMutableArray *storyArray = [NSMutableArray array];
     for (NSDictionary *dict in array){
         if ([dict objectForKey:@"id"] && [dict objectForKey:@"id"] != [NSNull null]){
             Story *story = [Story MR_findFirstByAttribute:@"identifier" withValue:[dict objectForKey:@"id"]];
@@ -126,11 +139,32 @@
                 story = [Story MR_createInContext:[NSManagedObjectContext MR_defaultContext]];
             }
             [story populateFromDict:dict];
+            [storyArray addObject:story];
         }
     }
-    _stories = [Story MR_findAllSortedBy:@"updatedDate" ascending:NO].mutableCopy;
-    [self.tableView reloadData];
-    [self saveContext];
+    
+    //has to be synchronous so the tableview datasource can update properly.
+    [[NSManagedObjectContext MR_defaultContext] MR_saveToPersistentStoreAndWait];
+    
+    if (_featured){
+        _featuredStories = [Story MR_findByAttribute:@"featured" withValue:[NSNumber numberWithBool:YES] andOrderBy:@"publishedDate" ascending:NO].mutableCopy;
+    } else if (_shared) {
+        NSPredicate *userPredicate = [NSPredicate predicateWithFormat:@"ANY users.identifier CONTAINS[cd] %@",[[NSUserDefaults standardUserDefaults] objectForKey:kUserDefaultsId]];
+        NSPredicate *ownerPredicate = [NSPredicate predicateWithFormat:@"ownerId != %@",[[NSUserDefaults standardUserDefaults] objectForKey:kUserDefaultsId]];
+        NSPredicate *compoundPredicate = [NSCompoundPredicate andPredicateWithSubpredicates:@[userPredicate,ownerPredicate]];
+        _sharedStories = [Story MR_findAllSortedBy:@"updatedDate" ascending:NO withPredicate:compoundPredicate].mutableCopy;
+        NSLog(@"total shared stories count: %d",_sharedStories.count);
+    } else if (_trending){
+        NSPredicate *predicate = [NSPredicate predicateWithFormat:@"trendingCount != %@",[NSNumber numberWithInt:0]];
+        _trendingStories = [Story MR_findAllSortedBy:@"trendingCount" ascending:NO withPredicate:predicate].mutableCopy;
+        NSLog(@"total trending stories count: %d",_trendingStories.count);
+    } else if (_ether || _stories.count == 0) {
+        NSPredicate *predicate = [NSPredicate predicateWithFormat:@"inviteOnly == %@ and draft == %@",[NSNumber numberWithBool:NO],[NSNumber numberWithBool:NO]];
+        _stories = [Story MR_findAllSortedBy:@"publishedDate" ascending:NO withPredicate:predicate].mutableCopy;
+    }
+    //done loading! what a relief
+    loading = NO;
+    return storyArray;
 }
 
 - (void)viewWillAppear:(BOOL)animated {
@@ -168,10 +202,11 @@
     
     if (![[NSUserDefaults standardUserDefaults] boolForKey:kExistingUser]) {
         XXNewUserWalkthroughViewController *vc = [[XXNewUserWalkthroughViewController alloc] init];
+        XXNoRotateNavController *nav = [[XXNoRotateNavController alloc] initWithRootViewController:vc];
+        nav.transitioningDelegate = self;
+        nav.modalPresentationStyle = UIModalPresentationCustom;
         newUser = YES;
-        vc.transitioningDelegate = self;
-        vc.modalPresentationStyle = UIModalPresentationCustom;
-        [self presentViewController:vc animated:YES completion:^{
+        [self presentViewController:nav animated:YES completion:^{
             [[NSUserDefaults standardUserDefaults] setBool:YES forKey:kExistingUser];
         }];
     }
@@ -210,14 +245,21 @@
 }
 
 - (void)handleRefresh{
-    canLoadMore = YES;
     if (_featured){
+        canLoadMoreFeatured = YES;
+        [_featuredStories removeAllObjects];
         [self loadFeatured];
     } else if (_shared){
+        canLoadMoreShared = YES;
+        [_sharedStories removeAllObjects];
         [self loadShared];
     } else if (_trending){
+        canLoadMoreTrending = YES;
+        [_trendingStories removeAllObjects];
         [self loadTrending];
     } else if (_ether) {
+        canLoadMore = YES;
+        [_stories removeAllObjects];
         [self loadEtherStories];
     }
 }
@@ -244,60 +286,69 @@
 }
 
 - (void)loadEtherStories {
-    loading = YES;
-    [manager GET:[NSString stringWithFormat:@"%@/stories",kAPIBaseUrl] parameters:nil success:^(AFHTTPRequestOperation *operation, id responseObject) {
-        //NSLog(@"story response: %@",responseObject);
-        [self updateLocalStories:[responseObject objectForKey:@"stories"]];
-        loading = NO;
-        if (refreshControl.isRefreshing) [refreshControl endRefreshing];
-    } failure:^(AFHTTPRequestOperation *operation, NSError *error) {
-        if (refreshControl.isRefreshing) [refreshControl endRefreshing];
-        loading = NO;
-        NSLog(@"Failure getting stories from welcome controller: %@",error.description);
-        [[[UIAlertView alloc] initWithTitle:@"Sorry" message:@"Something went wrong while trying to fetch the latest stories. Please pull down to refresh." delegate:nil cancelButtonTitle:@"Okay" otherButtonTitles:nil] show];
-    }];
-}
-
-- (void)loadShared {
-    loading = YES;
-    if ([[NSUserDefaults standardUserDefaults] objectForKey:kUserDefaultsId]){
-        [manager GET:[NSString stringWithFormat:@"%@/stories/shared",kAPIBaseUrl] parameters:@{@"user_id":[[NSUserDefaults standardUserDefaults] objectForKey:kUserDefaultsId],@"count":@"10"} success:^(AFHTTPRequestOperation *operation, id responseObject) {
-            //NSLog(@"shared stories response: %@",responseObject);
-            _sharedStories = [[Utilities storiesFromJSONArray:[responseObject objectForKey:@"stories"]] mutableCopy];
+    if (!loading){
+        loading = YES;
+        [manager GET:[NSString stringWithFormat:@"%@/stories",kAPIBaseUrl] parameters:nil success:^(AFHTTPRequestOperation *operation, id responseObject) {
+            //NSLog(@"story response: %@",responseObject);
+            [self updateLocalStories:[responseObject objectForKey:@"stories"]];
+            if (refreshControl.isRefreshing) [refreshControl endRefreshing];
             [self.tableView reloadData];
-            if (refreshControl.isRefreshing)[refreshControl endRefreshing];
         } failure:^(AFHTTPRequestOperation *operation, NSError *error) {
             if (refreshControl.isRefreshing) [refreshControl endRefreshing];
-            NSLog(@"Failure getting shared stories from welcome controller: %@",error.description);
-            //[[[UIAlertView alloc] initWithTitle:@"Sorry" message:@"Something went wrong while trying to fetch the latest featured stories. Please pull down to refresh." delegate:nil cancelButtonTitle:@"Okay" otherButtonTitles:nil] show];
+            NSLog(@"Failure getting stories from welcome controller: %@",error.description);
+            canLoadMore = NO;
+            //[[[UIAlertView alloc] initWithTitle:@"Sorry" message:@"Something went wrong while trying to fetch the latest stories. Please pull down to refresh." delegate:nil cancelButtonTitle:@"Okay" otherButtonTitles:nil] show];
         }];
     }
 }
 
+- (void)loadShared {
+    if (!loading){
+        loading = YES;
+        if ([[NSUserDefaults standardUserDefaults] objectForKey:kUserDefaultsId]){
+            [manager GET:[NSString stringWithFormat:@"%@/stories/shared",kAPIBaseUrl] parameters:@{@"user_id":[[NSUserDefaults standardUserDefaults] objectForKey:kUserDefaultsId],@"count":@"10"} success:^(AFHTTPRequestOperation *operation, id responseObject) {
+                //NSLog(@"shared stories response: %@",responseObject);
+                [self updateLocalStories:[responseObject objectForKey:@"stories"]];
+                [self.tableView reloadData];
+                if (refreshControl.isRefreshing)[refreshControl endRefreshing];
+            } failure:^(AFHTTPRequestOperation *operation, NSError *error) {
+                if (refreshControl.isRefreshing) [refreshControl endRefreshing];
+                canLoadMoreShared = NO;
+                NSLog(@"Failure getting shared stories from welcome controller: %@",error.description);
+                //[[[UIAlertView alloc] initWithTitle:@"Sorry" message:@"Something went wrong while trying to fetch the latest featured stories. Please pull down to refresh." delegate:nil cancelButtonTitle:@"Okay" otherButtonTitles:nil] show];
+            }];
+        }
+    }
+}
+
 - (void)loadTrending {
-    loading = YES;
-    [manager GET:[NSString stringWithFormat:@"%@/stories/trending",kAPIBaseUrl] parameters:nil success:^(AFHTTPRequestOperation *operation, id responseObject) {
-        //NSLog(@"trending stories response: %@",responseObject);
-        _trendingStories = [[Utilities storiesFromJSONArray:[responseObject objectForKey:@"stories"]] mutableCopy];
-        [self.tableView reloadData];
-        if (refreshControl.isRefreshing)[refreshControl endRefreshing];
-    } failure:^(AFHTTPRequestOperation *operation, NSError *error) {
-        if (refreshControl.isRefreshing) [refreshControl endRefreshing];
-        NSLog(@"Failure getting trending stories from welcome controller: %@",error.description);
-        [[[UIAlertView alloc] initWithTitle:@"Sorry" message:@"Something went wrong while trying to fetch what's trending. Please pull down to refresh." delegate:nil cancelButtonTitle:@"Okay" otherButtonTitles:nil] show];
-    }];
+    if (!loading){
+        loading = YES;
+        [manager GET:[NSString stringWithFormat:@"%@/stories/trending",kAPIBaseUrl] parameters:nil success:^(AFHTTPRequestOperation *operation, id responseObject) {
+            //NSLog(@"trending stories response: %@",responseObject);
+            [self updateLocalStories:[responseObject objectForKey:@"stories"]];
+            [self.tableView reloadData];
+            if (refreshControl.isRefreshing)[refreshControl endRefreshing];
+        } failure:^(AFHTTPRequestOperation *operation, NSError *error) {
+            if (refreshControl.isRefreshing) [refreshControl endRefreshing];
+            NSLog(@"Failure getting trending stories from welcome controller: %@",error.description);
+            canLoadMoreTrending = NO;
+            [[[UIAlertView alloc] initWithTitle:@"Sorry" message:@"Something went wrong while trying to fetch what's trending. Please pull down to refresh." delegate:nil cancelButtonTitle:@"Okay" otherButtonTitles:nil] show];
+        }];
+    }
 }
 
 - (void)loadFeatured {
     loading = YES;
     [manager GET:[NSString stringWithFormat:@"%@/stories/featured",kAPIBaseUrl] parameters:nil success:^(AFHTTPRequestOperation *operation, id responseObject) {
         //NSLog(@"featured stories response: %@",responseObject);
-        _featuredStories = [[Utilities storiesFromJSONArray:[responseObject objectForKey:@"stories"]] mutableCopy];
+        [self updateLocalStories:[responseObject objectForKey:@"stories"]];
         [self.tableView reloadData];
         if (refreshControl.isRefreshing)[refreshControl endRefreshing];
     } failure:^(AFHTTPRequestOperation *operation, NSError *error) {
         if (refreshControl.isRefreshing) [refreshControl endRefreshing];
         NSLog(@"Failure getting featured stories from welcome controller: %@",error.description);
+        canLoadMoreFeatured = NO;
         [[[UIAlertView alloc] initWithTitle:@"Sorry" message:@"Something went wrong while trying to fetch what's featured. Please pull down to refresh." delegate:nil cancelButtonTitle:@"Okay" otherButtonTitles:nil] show];
     }];
 }
@@ -318,16 +369,17 @@
     if (UIInterfaceOrientationIsPortrait(toInterfaceOrientation)){
         width = screenWidth();
         height = screenHeight();
+        if (IDIOM == IPAD){
+            self.tableView.rowHeight = height/3;
+        } else {
+            self.tableView.rowHeight = height/2;
+        }
     } else {
         height = screenWidth();
         width = screenHeight();
-    }
-    
-    if (IDIOM == IPAD){
-        self.tableView.rowHeight = height/3;
-    } else {
         self.tableView.rowHeight = height/2;
     }
+    
     [menuButton setFrame:CGRectMake(width-44, 0, 44, 44)];
     orientation = toInterfaceOrientation;
     [self.tableView reloadData];
@@ -343,20 +395,16 @@
 - (NSInteger)tableView:(UITableView *)tableView numberOfRowsInSection:(NSInteger)section
 {
     if (_featured){
-        NSLog(@"Drawing %d featured stories",_featuredStories.count);
         return _featuredStories.count;
     } else if (_shared){
         if (_sharedStories.count == 0 && !loading) {
             return 1;
         } else {
-            NSLog(@"Drawing %d shared stories",_sharedStories.count);
             return _sharedStories.count;
         }
     } else if (_trending) {
-        NSLog(@"Drawing %d trending stories",_trendingStories.count);
         return _trendingStories.count;
     } else if (_ether) {
-        NSLog(@"Drawing %d stories",_stories.count);
         return _stories.count;
     } else {
         return 0;
@@ -402,6 +450,7 @@
         [cell configureForStory:story withOrientation:orientation];
         [cell.bodySnippet setTextColor:textColor];
         [cell.flagButton setTag:indexPath.row];
+        [cell.flagButton setTitleColor:textColor forState:UIControlStateNormal];
         [cell.flagButton addTarget:self action:@selector(flagStory:) forControlEvents:UIControlEventTouchUpInside];
         
         if (_trending) {
@@ -467,10 +516,10 @@
         if (_featured && canLoadMoreFeatured){
             NSLog(@"should be loading more featured");
             [self loadMoreFeatured];
-        } else if (_trending && canLoadMoreTrending) {
+        }/* else if (_trending && canLoadMoreTrending) {
             NSLog(@"should be loading more trending");
             [self loadMoreTrending];
-        } else if (_shared && canLoadMoreShared) {
+        }*/ else if (_shared && canLoadMoreShared) {
             NSLog(@"should be loading more shared");
             [self loadMoreShared];
         } else if (_ether && canLoadMore) {
@@ -478,7 +527,6 @@
             [self loadMore];
         }
     }
-
     lastY = actualPosition;
 }
 
@@ -486,26 +534,25 @@
     loading = YES;
     Story *lastStory = _stories.lastObject;
     if (lastStory){
-        [manager GET:[NSString stringWithFormat:@"%@/stories",kAPIBaseUrl] parameters:@{@"before_date":lastStory.epochTime, @"count":@"10"} success:^(AFHTTPRequestOperation *operation, id responseObject) {
+        [manager GET:[NSString stringWithFormat:@"%@/stories",kAPIBaseUrl] parameters:@{@"before_date":[NSNumber numberWithDouble:[lastStory.publishedDate timeIntervalSince1970]], @"count":@"10"} success:^(AFHTTPRequestOperation *operation, id responseObject) {
             //NSLog(@"more stories response: %@",responseObject);
-            NSArray *newStories = [Utilities storiesFromJSONArray:[responseObject objectForKey:@"stories"]];
+            int currentCount = _stories.count;
+            NSArray *newStories = [self updateLocalStories:[responseObject objectForKey:@"stories"]];
             NSLog(@"new stories count: %d",newStories.count);
             NSMutableArray *indexesToInsert = [NSMutableArray array];
-            for (int i = _stories.count; i < newStories.count+_stories.count; i++){
+            for (int i = currentCount; i < newStories.count+currentCount; i++){
                 [indexesToInsert addObject:[NSIndexPath indexPathForRow:i inSection:0]];
             }
-            [_stories addObjectsFromArray:newStories];
             if (newStories.count < 10) {
                 canLoadMore = NO;
                 NSLog(@"Can't load more, we now have %i stories", _stories.count);
             }
-            [delegate setStories:_stories];
-            loading = NO;
-            if ([_tableView numberOfRowsInSection:0] > 1 && indexesToInsert.count){
+            
+            /*if (self.tableView.numberOfSections){
                 [_tableView insertRowsAtIndexPaths:indexesToInsert withRowAnimation:UITableViewRowAnimationFade];
-            } else {
-                [_tableView reloadData];
-            }
+            } else {*/
+                [_tableView reloadSections:[NSIndexSet indexSetWithIndex:0] withRowAnimation:UITableViewRowAnimationFade];
+            //}
             
         } failure:^(AFHTTPRequestOperation *operation, NSError *error) {
             
@@ -519,21 +566,27 @@
     loading = YES;
     Story *lastStory = _featuredStories.lastObject;
     if (lastStory){
-        [manager GET:[NSString stringWithFormat:@"%@/stories/featured",kAPIBaseUrl] parameters:@{@"before_date":lastStory.epochTime, @"count":@"10"} success:^(AFHTTPRequestOperation *operation, id responseObject) {
-            //NSLog(@"more stories response: %@",responseObject);
-            NSArray *newStories = [Utilities storiesFromJSONArray:[responseObject objectForKey:@"stories"]];
+        [manager GET:[NSString stringWithFormat:@"%@/stories/featured",kAPIBaseUrl] parameters:@{@"before_date":[NSNumber numberWithDouble:[lastStory.updatedDate timeIntervalSince1970]], @"count":@"10"} success:^(AFHTTPRequestOperation *operation, id responseObject) {
+            //NSLog(@"more featured stories response: %@",responseObject);
+            int currentCount = _featuredStories.count;
+            NSArray *newStories = [self updateLocalStories:[responseObject objectForKey:@"stories"]];
             NSMutableArray *indexesToInsert = [NSMutableArray array];
-            for (int i = _featuredStories.count; i < newStories.count+_featuredStories.count; i++){
+            for (int i = currentCount; i < newStories.count+currentCount; i++){
                 [indexesToInsert addObject:[NSIndexPath indexPathForRow:i inSection:0]];
             }
-            [_featuredStories addObjectsFromArray:newStories];
-            [_tableView insertRowsAtIndexPaths:indexesToInsert withRowAnimation:UITableViewRowAnimationFade];
             if (newStories.count < 10) {
                 canLoadMoreFeatured = NO;
-                NSLog(@"can't load more featured, we now have %i stories", _featuredStories.count);
+                NSLog(@"Can't load more featured, we now have %i stories.", _featuredStories.count);
             }
-            loading = NO;
+            
+            if (self.tableView.numberOfSections){
+                [_tableView insertRowsAtIndexPaths:indexesToInsert withRowAnimation:UITableViewRowAnimationFade];
+            } else {
+                [_tableView reloadData];
+            }
+            
         } failure:^(AFHTTPRequestOperation *operation, NSError *error) {
+            canLoadMoreFeatured = NO;
             NSLog(@"Failure loading more featured stories: %@",error.description);
         }];
     } else {
@@ -541,50 +594,58 @@
     }
 }
 
-- (void)loadMoreTrending {
+/*- (void)loadMoreTrending {
     loading = YES;
     Story *lastStory = _trendingStories.lastObject;
     if (lastStory){
-        [manager GET:[NSString stringWithFormat:@"%@/stories/trending",kAPIBaseUrl] parameters:@{@"before_date":lastStory.epochTime, @"count":@"10"} success:^(AFHTTPRequestOperation *operation, id responseObject) {
+        [manager GET:[NSString stringWithFormat:@"%@/stories/trending",kAPIBaseUrl] parameters:@{@"before_date":[NSNumber numberWithDouble:[lastStory.updatedDate timeIntervalSince1970]], @"count":@"10"} success:^(AFHTTPRequestOperation *operation, id responseObject) {
             //NSLog(@"more stories response: %@",responseObject);
-            NSArray *newStories = [Utilities storiesFromJSONArray:[responseObject objectForKey:@"stories"]];
+            int currentCount = _trendingStories.count;
+            NSArray *newStories = [self updateLocalStories:[responseObject objectForKey:@"stories"]];
             NSMutableArray *indexesToInsert = [NSMutableArray array];
-            for (int i = _trendingStories.count; i < newStories.count+_trendingStories.count; i++){
+            for (int i = currentCount; i < newStories.count+currentCount; i++){
                 [indexesToInsert addObject:[NSIndexPath indexPathForRow:i inSection:0]];
             }
-            [_trendingStories addObjectsFromArray:newStories];
-            [_tableView insertRowsAtIndexPaths:indexesToInsert withRowAnimation:UITableViewRowAnimationFade];
+            NSLog(@"new trending stories: %d",newStories.count);
+            if (newStories.count > 0){
+                [_tableView insertRowsAtIndexPaths:indexesToInsert withRowAnimation:UITableViewRowAnimationFade];
+            }
             if (newStories.count < 10) {
                 canLoadMoreTrending = NO;
                 NSLog(@"can't load more trending, we now have %i stories", _trendingStories.count);
             }
-            loading = NO;
         } failure:^(AFHTTPRequestOperation *operation, NSError *error) {
             NSLog(@"Failure loading more trending stories: %@",error.description);
         }];
     } else {
         [self loadTrending];
     }
-}
+}*/
 
 - (void)loadMoreShared {
     loading = YES;
     Story *lastStory = _sharedStories.lastObject;
     if (lastStory){
-        [manager GET:[NSString stringWithFormat:@"%@/stories/shared",kAPIBaseUrl] parameters:@{@"before_date":lastStory.epochTime, @"count":@"10",@"user_id":[[NSUserDefaults standardUserDefaults] objectForKey:kUserDefaultsId]} success:^(AFHTTPRequestOperation *operation, id responseObject) {
+        [manager GET:[NSString stringWithFormat:@"%@/stories/shared",kAPIBaseUrl] parameters:@{@"before_date":[NSNumber numberWithDouble:[lastStory.updatedDate timeIntervalSince1970]], @"count":@"10",@"user_id":[[NSUserDefaults standardUserDefaults] objectForKey:kUserDefaultsId]} success:^(AFHTTPRequestOperation *operation, id responseObject) {
             //NSLog(@"more shared stories response: %@",responseObject);
-            NSArray *newStories = [Utilities storiesFromJSONArray:[responseObject objectForKey:@"stories"]];
+            int currentCount = _sharedStories.count;
+            NSArray *newStories = [self updateLocalStories:[responseObject objectForKey:@"stories"]];
             NSMutableArray *indexesToInsert = [NSMutableArray array];
-            for (int i = _sharedStories.count; i < _sharedStories.count+newStories.count; i++){
+            for (int i = currentCount; i < newStories.count + currentCount; i++){
                 [indexesToInsert addObject:[NSIndexPath indexPathForRow:i inSection:0]];
             }
-            [_sharedStories addObjectsFromArray:newStories];
+            
             if (newStories.count < 10) {
                 canLoadMoreShared = NO;
                 NSLog(@"can't load more shared, we now have %i stories", _sharedStories.count);
             }
-            loading = NO;
-            [self.tableView insertRowsAtIndexPaths:indexesToInsert withRowAnimation:UITableViewRowAnimationFade];
+            if (newStories.count){
+                if (self.tableView.numberOfSections > 0){
+                    [self.tableView insertRowsAtIndexPaths:indexesToInsert withRowAnimation:UITableViewRowAnimationFade];
+                } else {
+                    [self.tableView reloadData];
+                }
+            }
             
         } failure:^(AFHTTPRequestOperation *operation, NSError *error) {
             NSLog(@"Failure loading more shared stories: %@",error.description);
@@ -648,7 +709,6 @@
 
 - (void)flagStory:(UIButton*)button {
     Story *story = [_stories objectAtIndex:button.tag];
-    NSLog(@"should be flagging story: %@",story.title);
     XXFlagContentViewController *flagVC = [[self storyboard] instantiateViewControllerWithIdentifier:@"Flag"];
     [flagVC setStory:story];
     UINavigationController *nav = [[UINavigationController alloc] initWithRootViewController:flagVC];
@@ -658,8 +718,8 @@
 }
 
 - (void)storyFlagged:(NSNotification*)notification {
-    NSLog(@"story flagged");
     Story *story = [notification.userInfo objectForKey:@"story"];
+    [story MR_deleteInContext:[NSManagedObjectContext MR_defaultContext]];
     if ([_stories containsObject:story]){
         NSIndexPath *indexPath = [NSIndexPath indexPathForRow:[_stories indexOfObject:story] inSection:0];
         [_stories removeObject:story];

@@ -24,6 +24,7 @@
 @property (strong, nonatomic) UIButton *boldButton;
 @property (strong, nonatomic) UIButton *italicsButton;
 @property (strong, nonatomic) UIButton *underlineButton;
+@property (strong, nonatomic) UIButton *cameraButton;
 @property (strong, nonatomic) Contribution *contribution;
 @property BOOL keyboardEnabled;
 @property BOOL feedbackEnabled;

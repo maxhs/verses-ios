@@ -31,7 +31,7 @@
     // Configure the view for the selected state
 }
 
-- (void)configureStory:(XXStory *)story withTextColor:(UIColor*)textColor {
+- (void)configureStory:(Story *)story withTextColor:(UIColor*)textColor {
     [self.titleLabel setText:story.title];
     [self.titleLabel setTextColor:textColor];
     [self.titleLabel setFont:[UIFont fontWithName:kSourceSansProSemibold size:27]];

@@ -31,10 +31,10 @@
     // Configure the view for the selected state
 }
 
-- (void)configure:(XXStory *)story {
+- (void)configure:(Story *)story {
     [_storyTitle setFont:[UIFont fontWithName:kSourceSansProRegular size:19]];
     [_storyTitle setText:story.title];
     [_authorLabel setFont:[UIFont fontWithName:kSourceSansProRegular size:15]];
-    [_authorLabel setText:story.author];
+    [_authorLabel setText:story.authorNames];
 }
 @end

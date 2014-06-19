@@ -9,13 +9,15 @@
 #import <Foundation/Foundation.h>
 #import <CoreData/CoreData.h>
 
-@class Story;
+@class Story, User;
 
 @interface Feedback : NSManagedObject
 
 @property (nonatomic, retain) NSNumber * identifier;
 @property (nonatomic, retain) NSString * snippet;
 @property (nonatomic, retain) Story *story;
+@property (nonatomic, retain) User *user;
+@property (nonatomic, retain) User *recipient;
 @property (nonatomic, retain) NSOrderedSet *comments;
 @end
 

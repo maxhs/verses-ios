@@ -8,13 +8,13 @@
 
 #import "XXCirclesViewController.h"
 #import "XXCircleCell.h"
-#import "XXCircle.h"
+#import "Circle.h"
+#import "User+helper.h"
 #import "XXCollaborateViewController.h"
 #import "XXCircleDetailViewController.h"
 
 @interface XXCirclesViewController () {
     AFHTTPRequestOperationManager *manager;
-    NSMutableArray *_circles;
     XXAppDelegate *delegate;
     UIColor *textColor;
     UIBarButtonItem *backButton;
@@ -23,6 +23,8 @@
     NSDateFormatter *_formatter;
     CGRect screen;
     BOOL loading;
+    User *currentUser;
+    NSArray *_circles;
 }
 
 @end
@@ -35,21 +37,29 @@
 {
     [super viewDidLoad];
     self.title = @"Writing Circles";
+    delegate = (XXAppDelegate*)[UIApplication sharedApplication].delegate;
     _formatter = [[NSDateFormatter alloc] init];
     [_formatter setLocale:[NSLocale currentLocale]];
     [_formatter setDateStyle:NSDateFormatterMediumStyle];
     [_formatter setTimeStyle:NSDateFormatterShortStyle];
     screen = [UIScreen mainScreen].bounds;
-    manager = [(XXAppDelegate*)[UIApplication sharedApplication].delegate manager];
+    manager = [delegate manager];
+    if (delegate.currentUser){
+        currentUser = [delegate currentUser];
+    } else {
+        currentUser = [User MR_findFirstByAttribute:@"identifier" withValue:[[NSUserDefaults standardUserDefaults] objectForKey:kUserDefaultsId]];
+    }
+    _circles = currentUser.circles.array;
+    loading = YES;
+    [self.tableView reloadData];
     navBarShadowView = [Utilities findNavShadow:self.navigationController.navigationBar];
     [self.tableView setBackgroundColor:[UIColor clearColor]];
 }
 
 - (void)viewWillAppear:(BOOL)animated {
     [super viewWillAppear:animated];
-    [self loadCircles];
     [[UIApplication sharedApplication] setStatusBarHidden:NO withAnimation:UIStatusBarAnimationFade];
-    delegate = (XXAppDelegate*)[UIApplication sharedApplication].delegate;
+    [self loadCircles];
     if ([[NSUserDefaults standardUserDefaults] boolForKey:kDarkBackground]){
         [self.view setBackgroundColor:[UIColor clearColor]];
         textColor = [UIColor whiteColor];
@@ -112,9 +122,31 @@
     loading = YES;
     [manager GET:[NSString stringWithFormat:@"%@/circles",kAPIBaseUrl] parameters:@{@"user_id":[[NSUserDefaults standardUserDefaults] objectForKey:kUserDefaultsId]} success:^(AFHTTPRequestOperation *operation, id responseObject) {
         //NSLog(@"success fetching circles: %@",responseObject);
-        _circles = [[Utilities circlesFromJSONArray:[responseObject objectForKey:@"circles"]] mutableCopy];
+        NSMutableOrderedSet *circleSet = [NSMutableOrderedSet orderedSet];
+        for (NSDictionary *circleDict in [responseObject objectForKey:@"circles"]){
+            Circle *circle = [Circle MR_findFirstByAttribute:@"identifier" withValue:[circleDict objectForKey:@"id"]];
+            if (!circle){
+                circle = [Circle MR_createInContext:[NSManagedObjectContext MR_defaultContext]];
+            }
+            [circle populateFromDict:circleDict];
+            [circleSet addObject:circle];
+        }
+        for (Circle *circle in currentUser.circles){
+            if (![circleSet containsObject:circle]){
+                NSLog(@"Deleting a circle that no longer exists: %@",circle.name);
+                [circle MR_deleteInContext:[NSManagedObjectContext MR_defaultContext]];
+            }
+        }
+        currentUser.circles = circleSet;
+        _circles = circleSet.array;
         loading = NO;
-        [self.tableView reloadData];
+        if (self.tableView.numberOfSections){
+            [self.tableView beginUpdates];
+            [self.tableView reloadSections:[NSIndexSet indexSetWithIndex:0] withRowAnimation:UITableViewRowAnimationFade];
+            [self.tableView endUpdates];
+        } else {
+            [self.tableView reloadData];
+        }
     } failure:^(AFHTTPRequestOperation *operation, NSError *error) {
         NSLog(@"Failure getting circles: %@",error.description);
         loading = NO;
@@ -213,5 +245,14 @@
     }
 }
 
+- (void)viewWillDisappear:(BOOL)animated {
+    [super viewWillDisappear:animated];
+    [self saveContext];
+}
 
+- (void)saveContext {
+    [[NSManagedObjectContext MR_defaultContext] MR_saveToPersistentStoreWithCompletion:^(BOOL success, NSError *error) {
+        NSLog(@"Saving circles: %u",success);
+    }];
+}
 @end

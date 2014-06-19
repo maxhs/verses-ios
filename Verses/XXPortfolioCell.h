@@ -7,7 +7,7 @@
 //
 
 #import <UIKit/UIKit.h>
-#import "XXStory.h"
+#import "Story+helper.h"
 #import "XXTextView.h"
 #import "XXTextStorage.h"
 
@@ -22,7 +22,7 @@
 @property (weak, nonatomic) IBOutlet UIView *separatorView;
 @property (strong, nonatomic) XXTextView *bodySnippet;
 
-- (void)configureForStory:(XXStory*)story textColor:(UIColor*)color;
+- (void)configureForStory:(Story*)story textColor:(UIColor*)color withOrientation:(UIInterfaceOrientation)orientation;
 - (void)swipe;
 
 @end

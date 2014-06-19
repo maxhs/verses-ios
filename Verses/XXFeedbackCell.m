@@ -29,7 +29,7 @@
     [super setSelected:selected animated:animated];
 }
 
-- (void)configure:(XXFeedback*)feedback textColor:(UIColor*)color{
+- (void)configure:(Feedback*)feedback textColor:(UIColor*)color{
     [self.titleLabel setTextColor:color];
     [self.titleLabel setFont:[UIFont fontWithName:kCrimsonRoman size:27]];
     [self.messageLabel setText:[feedback.comments.firstObject body]];

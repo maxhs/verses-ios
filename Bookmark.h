@@ -17,5 +17,6 @@
 @property (nonatomic, retain) NSDate * createdDate;
 @property (nonatomic, retain) Contribution *contribution;
 @property (nonatomic, retain) Story *story;
+@property (nonatomic, retain) User *user;
 
 @end

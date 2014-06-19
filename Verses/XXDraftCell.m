@@ -31,7 +31,7 @@
     // Configure the view for the selected state
 }
 
-- (void)configure:(XXStory*)story {
+- (void)configure:(Story*)story {
     if (story.title.length){
         [self.titleLabel setText:story.title];
         [self.titleLabel setTextColor:[UIColor blackColor]];

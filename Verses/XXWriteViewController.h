@@ -17,8 +17,8 @@
 @property (weak, nonatomic) IBOutlet UITextField *titleTextField;
 @property (strong, nonatomic) Story *story;
 @property (weak, nonatomic) IBOutlet UIView *optionsContainerView;
-@property (weak, nonatomic) IBOutlet UISwitch *privateSwitch;
-@property (weak, nonatomic) IBOutlet UILabel *privateLabel;
+@property (weak, nonatomic) IBOutlet UISwitch *inviteOnlySwitch;
+@property (weak, nonatomic) IBOutlet UILabel *inviteOnlyLabel;
 @property (weak, nonatomic) IBOutlet UISwitch *feedbackSwitch;
 @property (weak, nonatomic) IBOutlet UILabel *feedbackLabel;
 @property (weak, nonatomic) IBOutlet UISwitch *joinableSwitch;
