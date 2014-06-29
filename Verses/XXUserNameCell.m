@@ -31,7 +31,7 @@
     [self.nameLabel setText:user.penName];
     [self.nameLabel setFont:[UIFont fontWithName:kGothamRounded size:18]];
     [self.nameLabel setTextColor:[UIColor whiteColor]];
-    [self.storyLabel setText:[NSString stringWithFormat:@"%@ stories  |  %@ contacts",user.storyCount,user.contactCount]];
+    [self.storyLabel setText:[NSString stringWithFormat:@"%@ stories  |  %d contacts",user.storyCount,user.contacts.count]];
     [self.storyLabel setFont:[UIFont fontWithName:kGotham size:14]];
     
 

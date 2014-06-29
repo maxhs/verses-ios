@@ -19,12 +19,12 @@
 #import <DTCoreText/DTCoreText.h>
 #import "XXNewUserWalkthroughViewController.h"
 #import "XXNoRotateNavController.h"
-#import "XXNewUserTransition.h"
 #import "XXCollaborateViewController.h"
 #import "XXFlagContentViewController.h"
-#import "XXGuideTransition.h"
+#import "XXGuideInteractor.h"
 #import "XXGuideViewController.h"
 #import "Story+helper.h"
+#import "XXNothingCell.h"
 
 @interface XXStoriesViewController () <UIScrollViewDelegate, UIViewControllerTransitioningDelegate>{
     AFHTTPRequestOperationManager *manager;
@@ -34,7 +34,6 @@
     UIInterfaceOrientation orientation;
     UIRefreshControl *refreshControl;
     BOOL loading;
-    BOOL newUser;
     BOOL canLoadMore;
     BOOL canLoadMoreTrending;
     BOOL canLoadMoreShared;
@@ -47,6 +46,7 @@
     NSMutableArray *_featuredStories;
     UIButton *menuButton;
     UIImage *_backgroundImage;
+    XXGuideInteractor *interactor;
 }
 
 @end
@@ -63,13 +63,13 @@
     [self.tableView setSeparatorStyle:UITableViewCellSeparatorStyleNone];
     [self.navigationController setNavigationBarHidden:NO animated:YES];
     delegate = (XXAppDelegate*)[UIApplication sharedApplication].delegate;
-    
     manager = delegate.manager;
     self.reloadTheme = NO;
     _formatter = [[NSDateFormatter alloc] init];
     [_formatter setLocale:[NSLocale currentLocale]];
     [_formatter setDateFormat:@"MMM d - h:mm a"];
     
+    orientation = self.interfaceOrientation;
     if (UIInterfaceOrientationIsPortrait(self.interfaceOrientation)){
         width = screenWidth();
         height = screenHeight();
@@ -82,17 +82,24 @@
     [menuButton setImage:[UIImage imageNamed:@"more"] forState:UIControlStateNormal];
     [menuButton addTarget:self action:@selector(showGuide) forControlEvents:UIControlEventTouchUpInside];
     [menuButton setFrame:CGRectMake(width-44, 0, 44, 44)];
+    [menuButton setAutoresizingMask:UIViewAutoresizingFlexibleRightMargin];
     [self.view addSubview:menuButton];
-    
-    if (IDIOM == IPAD){
-        self.tableView.rowHeight = height/3;
-    } else {
-        self.tableView.rowHeight = height/2;
-    }
     
     _sharedStories = [NSMutableArray array];
     _trendingStories = [NSMutableArray array];
     _featuredStories = [NSMutableArray array];
+    
+    /*if (!interactor){
+        interactor = [[XXGuideInteractor alloc] initWithParentViewController:self];
+    }
+    
+    UIScreenEdgePanGestureRecognizer *panGesture = [[UIScreenEdgePanGestureRecognizer alloc] initWithTarget:interactor action:@selector(userDidPan:)];
+    panGesture.edges = UIRectEdgeTop;
+    [self.tableView addGestureRecognizer:panGesture];
+    
+    UIScreenEdgePanGestureRecognizer *gestureRecognizer = [[UIScreenEdgePanGestureRecognizer alloc] initWithTarget:interactor action:@selector(userDidPan:)];
+    gestureRecognizer.edges = UIRectEdgeTop;
+    [self.view addGestureRecognizer:gestureRecognizer];*/
     
     if (_featured){
         _featuredStories = [Story MR_findByAttribute:@"featured" withValue:[NSNumber numberWithBool:YES] andOrderBy:@"publishedDate" ascending:NO].mutableCopy;
@@ -114,11 +121,11 @@
             [self.tableView reloadData];
         }
     } else if (_trending){
-        NSPredicate *predicate = [NSPredicate predicateWithFormat:@"trendingCount != %@",[NSNumber numberWithInt:0]];
+        NSPredicate *predicate = [NSPredicate predicateWithFormat:@"trendingCount != %@ and publishedDate != %@",[NSNumber numberWithInt:0], [NSDate dateWithTimeIntervalSince1970:0]];
         _trendingStories = [Story MR_findAllSortedBy:@"trendingCount" ascending:NO withPredicate:predicate].mutableCopy;
         [self loadTrending];
     } else if (_ether || _stories.count == 0) {
-        NSPredicate *predicate = [NSPredicate predicateWithFormat:@"inviteOnly == %@ and draft == %@",[NSNumber numberWithBool:NO],[NSNumber numberWithBool:NO]];
+        NSPredicate *predicate = [NSPredicate predicateWithFormat:@"inviteOnly == %@ and draft == %@ and publishedDate != %@",[NSNumber numberWithBool:NO],[NSNumber numberWithBool:NO], [NSDate dateWithTimeIntervalSince1970:0]];
         _stories = [Story MR_findAllSortedBy:@"publishedDate" ascending:NO withPredicate:predicate].mutableCopy;
         if (_stories.count == 0) {
             [self loadEtherStories];
@@ -147,19 +154,22 @@
     [[NSManagedObjectContext MR_defaultContext] MR_saveToPersistentStoreAndWait];
     
     if (_featured){
+        if (_featuredStories.count) [_featuredStories removeAllObjects];
         _featuredStories = [Story MR_findByAttribute:@"featured" withValue:[NSNumber numberWithBool:YES] andOrderBy:@"publishedDate" ascending:NO].mutableCopy;
     } else if (_shared) {
+        if (_sharedStories.count) [_sharedStories removeAllObjects];
         NSPredicate *userPredicate = [NSPredicate predicateWithFormat:@"ANY users.identifier CONTAINS[cd] %@",[[NSUserDefaults standardUserDefaults] objectForKey:kUserDefaultsId]];
         NSPredicate *ownerPredicate = [NSPredicate predicateWithFormat:@"ownerId != %@",[[NSUserDefaults standardUserDefaults] objectForKey:kUserDefaultsId]];
         NSPredicate *compoundPredicate = [NSCompoundPredicate andPredicateWithSubpredicates:@[userPredicate,ownerPredicate]];
         _sharedStories = [Story MR_findAllSortedBy:@"updatedDate" ascending:NO withPredicate:compoundPredicate].mutableCopy;
         NSLog(@"total shared stories count: %d",_sharedStories.count);
     } else if (_trending){
-        NSPredicate *predicate = [NSPredicate predicateWithFormat:@"trendingCount != %@",[NSNumber numberWithInt:0]];
+        if (_trendingStories.count) [_trendingStories removeAllObjects];
+        NSPredicate *predicate = [NSPredicate predicateWithFormat:@"trendingCount != %@ and publishedDate != %@",[NSNumber numberWithInt:0], [NSDate dateWithTimeIntervalSince1970:0]];
         _trendingStories = [Story MR_findAllSortedBy:@"trendingCount" ascending:NO withPredicate:predicate].mutableCopy;
-        NSLog(@"total trending stories count: %d",_trendingStories.count);
     } else if (_ether || _stories.count == 0) {
-        NSPredicate *predicate = [NSPredicate predicateWithFormat:@"inviteOnly == %@ and draft == %@",[NSNumber numberWithBool:NO],[NSNumber numberWithBool:NO]];
+        if (_stories.count) [_stories removeAllObjects];
+        NSPredicate *predicate = [NSPredicate predicateWithFormat:@"inviteOnly == %@ and draft == %@ and publishedDate != %@",[NSNumber numberWithBool:NO],[NSNumber numberWithBool:NO], [NSDate dateWithTimeIntervalSince1970:0]];
         _stories = [Story MR_findAllSortedBy:@"publishedDate" ascending:NO withPredicate:predicate].mutableCopy;
     }
     //done loading! what a relief
@@ -190,76 +200,66 @@
     canLoadMoreTrending = YES;
     canLoadMoreFeatured = YES;
 
-    if (self.reloadTheme){
+    if (self.reloadTheme)
         [self.tableView reloadData];
-    }
     
     if (self.tableView.alpha == 0.0){
         [UIView animateWithDuration:.25 animations:^{
             [self.tableView setAlpha:1.0];
         }];
     }
-    
-    if (![[NSUserDefaults standardUserDefaults] boolForKey:kExistingUser]) {
-        XXNewUserWalkthroughViewController *vc = [[XXNewUserWalkthroughViewController alloc] init];
-        XXNoRotateNavController *nav = [[XXNoRotateNavController alloc] initWithRootViewController:vc];
-        nav.transitioningDelegate = self;
-        nav.modalPresentationStyle = UIModalPresentationCustom;
-        newUser = YES;
-        [self presentViewController:nav animated:YES completion:^{
-            [[NSUserDefaults standardUserDefaults] setBool:YES forKey:kExistingUser];
-        }];
-    }
+}
+
+- (void)viewDidAppear:(BOOL)animated {
+    [super viewDidAppear:animated];
+    double delayInSeconds = 0.0;
+    dispatch_time_t delayTime = dispatch_time(DISPATCH_TIME_NOW, (int64_t)(delayInSeconds *   NSEC_PER_SEC));
+    dispatch_after(delayTime, dispatch_get_main_queue(), ^(void){
+        if (![[NSUserDefaults standardUserDefaults] boolForKey:kExistingUser]) {
+            XXNewUserWalkthroughViewController *vc = [[XXNewUserWalkthroughViewController alloc] init];
+            XXNoRotateNavController *nav = [[XXNoRotateNavController alloc] initWithRootViewController:vc];
+            nav.modalTransitionStyle = UIModalTransitionStyleCrossDissolve;
+            [self.view.window.rootViewController presentViewController:nav animated:YES completion:^{
+                [[NSUserDefaults standardUserDefaults] setBool:YES forKey:kExistingUser];
+            }];
+        }
+    });
 }
 
 - (void)showGuide {
     XXGuideViewController *vc = [[self storyboard] instantiateViewControllerWithIdentifier:@"Guide"];
     vc.transitioningDelegate = self;
     vc.modalPresentationStyle = UIModalPresentationCustom;
-    newUser = NO;
     [self presentViewController:vc animated:YES completion:nil];
 }
 
 - (id<UIViewControllerAnimatedTransitioning>)animationControllerForPresentedController:(UIViewController *)presented
                                                                   presentingController:(UIViewController *)presenting
                                                                       sourceController:(UIViewController *)source {
-    if (newUser){
-        XXNewUserTransition *animator = [XXNewUserTransition new];
-        animator.presenting = YES;
-        return animator;
-    } else {
-        XXGuideTransition *animator = [XXGuideTransition new];
-        animator.presenting = YES;
-        return animator;
-    }
+    XXGuideInteractor *animator = [[XXGuideInteractor alloc] initWithParentViewController:presented];
+    animator.presenting = YES;
+    return animator;
 }
 
 - (id<UIViewControllerAnimatedTransitioning>)animationControllerForDismissedController:(UIViewController *)dismissed {
-    if (newUser){
-        XXNewUserTransition *animator = [XXNewUserTransition new];
-        return animator;
-    } else {
-        XXGuideTransition *animator = [XXGuideTransition new];
-        return animator;
-    }
+
+    XXGuideInteractor *animator = [XXGuideInteractor new];
+    return animator;
+
 }
 
 - (void)handleRefresh{
     if (_featured){
         canLoadMoreFeatured = YES;
-        [_featuredStories removeAllObjects];
         [self loadFeatured];
     } else if (_shared){
         canLoadMoreShared = YES;
-        [_sharedStories removeAllObjects];
         [self loadShared];
     } else if (_trending){
         canLoadMoreTrending = YES;
-        [_trendingStories removeAllObjects];
         [self loadTrending];
     } else if (_ether) {
         canLoadMore = YES;
-        [_stories removeAllObjects];
         [self loadEtherStories];
     }
 }
@@ -369,15 +369,9 @@
     if (UIInterfaceOrientationIsPortrait(toInterfaceOrientation)){
         width = screenWidth();
         height = screenHeight();
-        if (IDIOM == IPAD){
-            self.tableView.rowHeight = height/3;
-        } else {
-            self.tableView.rowHeight = height/2;
-        }
     } else {
         height = screenWidth();
         width = screenHeight();
-        self.tableView.rowHeight = height/2;
     }
     
     [menuButton setFrame:CGRectMake(width-44, 0, 44, 44)];
@@ -414,18 +408,17 @@
 - (UITableViewCell *)tableView:(UITableView *)tableView cellForRowAtIndexPath:(NSIndexPath *)indexPath
 {
     if (_shared && _sharedStories.count == 0){
-        UITableViewCell *cell = [[UITableViewCell alloc] initWithStyle:UITableViewCellStyleDefault reuseIdentifier:@"NothingCell"];
-        UIButton *nothingButton = [UIButton buttonWithType:UIButtonTypeCustom];
-        [nothingButton setTitle:@"Nothing shared with you just yet.\n\nTap here to manage your contacts." forState:UIControlStateNormal];
-        [nothingButton addTarget:self action:@selector(manageCircles) forControlEvents:UIControlEventTouchUpInside];
-        [nothingButton.titleLabel setNumberOfLines:0];
-        [nothingButton.titleLabel setFont:[UIFont fontWithName:kSourceSansProLight size:20]];
-        [nothingButton.titleLabel setTextAlignment:NSTextAlignmentCenter];
-        [nothingButton setTitleColor:[UIColor blackColor] forState:UIControlStateNormal];
-        [nothingButton setBackgroundColor:[UIColor clearColor]];
-        [cell addSubview:nothingButton];
-        [nothingButton setFrame:CGRectMake(20, 0, screenWidth()-40, screenHeight()-74)];
-        [self.tableView setScrollEnabled:NO];
+        XXNothingCell *cell = (XXNothingCell *)[tableView dequeueReusableCellWithIdentifier:@"NothingCell"];
+        if (cell == nil) {
+            cell = [[[NSBundle mainBundle] loadNibNamed:@"XXNothingCell" owner:nil options:nil] lastObject];
+        }
+        [cell.promptButton setTitle:@"Nothing shared just yet.\nTap here to manage your contacts." forState:UIControlStateNormal];
+        [cell.promptButton addTarget:self action:@selector(manageCircles) forControlEvents:UIControlEventTouchUpInside];
+        [cell.promptButton.titleLabel setNumberOfLines:0];
+        [cell.promptButton.titleLabel setFont:[UIFont fontWithName:kSourceSansProLight size:20]];
+        [cell.promptButton.titleLabel setTextAlignment:NSTextAlignmentCenter];
+        [cell.promptButton setTitleColor:textColor forState:UIControlStateNormal];
+        [cell.promptButton setBackgroundColor:[UIColor clearColor]];
         return cell;
     } else {
         XXStoryCell *cell = (XXStoryCell *)[tableView dequeueReusableCellWithIdentifier:@"StoryCell"];
@@ -494,6 +487,26 @@
     }
 }
 
+
+-(CGFloat)tableView:(UITableView *)tableView heightForRowAtIndexPath:(NSIndexPath *)indexPath {
+    if (_shared && _sharedStories.count == 0 && !loading) return screenHeight();
+    else {
+        if (UIInterfaceOrientationIsPortrait(orientation)){
+            if (IDIOM == IPAD){
+                return height/3;
+            } else {
+                return height/2;
+            }
+        } else {
+            if (IDIOM == IPAD){
+                return height/2;
+            } else {
+                return height;
+            }
+        }
+    }
+}
+
 - (void)tableView:(UITableView *)tableView willDisplayCell:(UITableViewCell *)cell forRowAtIndexPath:(NSIndexPath *)indexPath {
     cell.backgroundColor = [UIColor clearColor];
     UIView *selectedView = [[UIView alloc] initWithFrame:cell.frame];
@@ -538,7 +551,6 @@
             //NSLog(@"more stories response: %@",responseObject);
             int currentCount = _stories.count;
             NSArray *newStories = [self updateLocalStories:[responseObject objectForKey:@"stories"]];
-            NSLog(@"new stories count: %d",newStories.count);
             NSMutableArray *indexesToInsert = [NSMutableArray array];
             for (int i = currentCount; i < newStories.count+currentCount; i++){
                 [indexesToInsert addObject:[NSIndexPath indexPathForRow:i inSection:0]];
@@ -548,11 +560,11 @@
                 NSLog(@"Can't load more, we now have %i stories", _stories.count);
             }
             
-            /*if (self.tableView.numberOfSections){
-                [_tableView insertRowsAtIndexPaths:indexesToInsert withRowAnimation:UITableViewRowAnimationFade];
-            } else {*/
-                [_tableView reloadSections:[NSIndexSet indexSetWithIndex:0] withRowAnimation:UITableViewRowAnimationFade];
-            //}
+            [_tableView beginUpdates];
+            [_tableView insertRowsAtIndexPaths:indexesToInsert withRowAnimation:UITableViewRowAnimationFade];
+            [_tableView endUpdates];
+        
+            //[_tableView reloadSections:[NSIndexSet indexSetWithIndex:0] withRowAnimation:UITableViewRowAnimationFade];
             
         } failure:^(AFHTTPRequestOperation *operation, NSError *error) {
             
@@ -580,7 +592,9 @@
             }
             
             if (self.tableView.numberOfSections){
+                [_tableView beginUpdates];
                 [_tableView insertRowsAtIndexPaths:indexesToInsert withRowAnimation:UITableViewRowAnimationFade];
+                [_tableView endUpdates];
             } else {
                 [_tableView reloadData];
             }
@@ -641,7 +655,9 @@
             }
             if (newStories.count){
                 if (self.tableView.numberOfSections > 0){
+                    [self.tableView beginUpdates];
                     [self.tableView insertRowsAtIndexPaths:indexesToInsert withRowAnimation:UITableViewRowAnimationFade];
+                    [self.tableView endUpdates];
                 } else {
                     [self.tableView reloadData];
                 }
@@ -723,7 +739,10 @@
     if ([_stories containsObject:story]){
         NSIndexPath *indexPath = [NSIndexPath indexPathForRow:[_stories indexOfObject:story] inSection:0];
         [_stories removeObject:story];
+        
+        [_tableView beginUpdates];
         [_tableView deleteRowsAtIndexPaths:@[indexPath] withRowAnimation:UITableViewRowAnimationFade];
+        [_tableView endUpdates];
     }
 }
 

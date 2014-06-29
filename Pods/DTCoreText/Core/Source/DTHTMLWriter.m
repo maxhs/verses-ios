@@ -434,13 +434,12 @@
 			blockElement = @"p";
 		}
 		
-        
 		NSNumber *headerLevel = [paraAttributes objectForKey:DTHeaderLevelAttribute];
+		
 		if (headerLevel)
 		{
 			blockElement = [NSString stringWithFormat:@"h%d", (int)[headerLevel integerValue]];
 		}
-        
 		
 		if ([paragraphs lastObject] == oneParagraph)
 		{

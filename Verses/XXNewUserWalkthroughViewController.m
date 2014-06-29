@@ -42,6 +42,7 @@
     UIMotionEffectGroup *group;
     XXAppDelegate *delegate;
     UIPageControl *_pageControl;
+    User *currentUser;
 }
 
 @end
@@ -66,6 +67,12 @@
         width = screenHeight();
         height = screenWidth();
     }
+    [MagicalRecord saveWithBlock:^(NSManagedObjectContext *localContext) {
+        currentUser = [User MR_createInContext:[NSManagedObjectContext MR_defaultContext]];
+    } completion:^(BOOL success, NSError *error) {
+        NSLog(@"just created a new current user: %@",currentUser);
+    }];
+    
     delegate = (XXAppDelegate*)[UIApplication sharedApplication].delegate;
     _scrollView = [[UIScrollView alloc] initWithFrame:CGRectMake(0, 0, width, height)];
     [_scrollView setContentSize:CGSizeMake(width*4, height)];
@@ -583,17 +590,16 @@
     if (IDIOM == IPAD) {
         blurredSnapshotImage = [[UIImage imageNamed:@"newUserBackgroundiPad"] applyBlurWithRadius:33 blurType:BOXFILTER tintColor:[UIColor clearColor] saturationDeltaFactor:1.8 maskImage:nil];
     } else {
-        blurredSnapshotImage = [[UIImage imageNamed:@"mountains.jpg"] applyBlurWithRadius:33 blurType:BOXFILTER tintColor:[UIColor colorWithWhite:0 alpha:.1] saturationDeltaFactor:1.8 maskImage:nil];
+        blurredSnapshotImage = [[UIImage imageNamed:@"mountains.jpg"] applyBlurWithRadius:43 blurType:BOXFILTER tintColor:[UIColor colorWithWhite:0 alpha:.1] saturationDeltaFactor:1.8 maskImage:nil];
     }
-    [[delegate windowBackground] setImage:blurredSnapshotImage];
+    [delegate.windowBackground setImage:blurredSnapshotImage];
     [delegate.windowBackground setContentMode:UIViewContentModeScaleAspectFill];
-    [[delegate currentUser] setBackgroundImage:blurredSnapshotImage];
+    currentUser.backgroundImageView = delegate.windowBackground;
+    
+    [[NSManagedObjectContext MR_defaultContext] MR_saveToPersistentStoreWithCompletion:^(BOOL success, NSError *error) {
+        NSLog(@"%u saving new user",success);
+    }];
     return blurredSnapshotImage;
-}
-
-- (BOOL)shouldAutorotate
-{
-    return NO;
 }
 
 - (void)didReceiveMemoryWarning

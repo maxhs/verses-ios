@@ -1,17 +1,16 @@
 //
-//  XXGuideTransition.m
+//  XXCollaboratorsTransition.m
 //  Verses
 //
-//  Created by Max Haines-Stiles on 6/5/14.
+//  Created by Max Haines-Stiles on 6/28/14.
 //  Copyright (c) 2014 Verses. All rights reserved.
 //
 
-#import "XXGuideTransition.h"
-#import "XXStoriesViewController.h"
-@implementation XXGuideTransition
+#import "XXCollaboratorsTransition.h"
 
+@implementation XXCollaboratorsTransition
 - (NSTimeInterval)transitionDuration:(id <UIViewControllerContextTransitioning>)transitionContext {
-    return .65f;
+    return .75f;
 }
 
 - (void)animateTransition:(id <UIViewControllerContextTransitioning>)transitionContext {
@@ -36,8 +35,8 @@
         
         toViewController.view.frame = startFrame;
         
-        [UIView animateWithDuration:[self transitionDuration:transitionContext] delay:0 usingSpringWithDamping:.8 initialSpringVelocity:.0001 options:UIViewAnimationOptionCurveEaseInOut animations:^{
-            fromViewController.view.tintAdjustmentMode = UIViewTintAdjustmentModeDimmed;
+        [UIView animateWithDuration:[self transitionDuration:transitionContext] delay:0 usingSpringWithDamping:.9 initialSpringVelocity:.0001 options:UIViewAnimationOptionCurveEaseInOut animations:^{
+            //fromViewController.view.tintAdjustmentMode = UIViewTintAdjustmentModeDimmed;
             toViewController.view.frame = endFrame;
             fromViewController.view.frame = originEndFrame;
         } completion:^(BOOL finished) {
@@ -58,7 +57,7 @@
         originEndFrame.origin.y = 0;
         
         [UIView animateWithDuration:[self transitionDuration:transitionContext] delay:0 usingSpringWithDamping:.95 initialSpringVelocity:.0001 options:UIViewAnimationOptionCurveEaseOut animations:^{
-            toViewController.view.tintAdjustmentMode = UIViewTintAdjustmentModeAutomatic;
+            //toViewController.view.tintAdjustmentMode = UIViewTintAdjustmentModeAutomatic;
             fromViewController.view.frame = endFrame;
             toViewController.view.frame = originEndFrame;
         } completion:^(BOOL finished) {

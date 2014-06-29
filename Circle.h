@@ -27,7 +27,7 @@
 @property (nonatomic, retain) NSOrderedSet *comments;
 @property (nonatomic, retain) NSOrderedSet *notifications;
 @property (nonatomic, retain) NSOrderedSet *stories;
-@property (nonatomic, retain) NSSet *users;
+@property (nonatomic, retain) NSOrderedSet *users;
 @property (nonatomic, retain) User *owner;
 
 @end

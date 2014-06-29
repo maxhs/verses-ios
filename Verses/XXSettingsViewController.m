@@ -14,6 +14,7 @@
 #import <MessageUI/MessageUI.h>
 #import "XXLoginController.h"
 #import <SDWebImage/UIButton+WebCache.h>
+#import "XXAlert.h"
 
 @interface XXSettingsViewController () <UITextFieldDelegate,UITextViewDelegate, MFMailComposeViewControllerDelegate, UIImagePickerControllerDelegate, UINavigationControllerDelegate, UIActionSheetDelegate> {
     UIBarButtonItem *doneButton;
@@ -97,7 +98,7 @@
         //NSLog(@"success getting profile: %@",responseObject);
         [currentUser populateFromDict:[responseObject objectForKey:@"user"]];
         [[NSManagedObjectContext MR_defaultContext] MR_saveToPersistentStoreWithCompletion:^(BOOL success, NSError *error) {
-            NSLog(@"current user: %@",currentUser);
+            //NSLog(@"current user: %@",currentUser);
             [self.tableView reloadData];
             [ProgressHUD dismiss];
         }];
@@ -506,7 +507,7 @@
 }
 
 - (UIView*)tableView:(UITableView *)tableView viewForHeaderInSection:(NSInteger)section {
-    UIToolbar *backgroundToolbar = [[UIToolbar alloc] initWithFrame:CGRectMake(0, 0, screen.size.width, 32)];
+    UIToolbar *backgroundToolbar = [[UIToolbar alloc] initWithFrame:CGRectMake(0, 0, screen.size.width, 44)];
     backgroundToolbar.clipsToBounds = YES;
     backgroundToolbar.autoresizingMask = UIViewAutoresizingFlexibleWidth;
     UILabel *headerLabel = [[UILabel alloc] init];
@@ -520,9 +521,9 @@
     }
     
     if (IDIOM == IPAD){
-        [headerLabel setFont:[UIFont fontWithName:kSourceSansProSemibold size:16]];
+        [headerLabel setFont:[UIFont fontWithName:kSourceSansProRegular size:14]];
     } else {
-        [headerLabel setFont:[UIFont fontWithName:kSourceSansProSemibold size:15]];
+        [headerLabel setFont:[UIFont fontWithName:kSourceSansProRegular size:13]];
     }
     
     [headerLabel setTextAlignment:NSTextAlignmentCenter];
@@ -564,7 +565,7 @@
 }
 
 - (CGFloat)tableView:(UITableView *)tableView heightForHeaderInSection:(NSInteger)section {
-    return 34;
+    return 44;
 }
 
 - (CGFloat)tableView:(UITableView *)tableView heightForRowAtIndexPath:(NSIndexPath *)indexPath {
@@ -614,7 +615,10 @@
     }
     [(XXAppDelegate*)[UIApplication sharedApplication].delegate switchBackgroundTheme];
     //[self.tableView reloadData];
+    
+    [self.tableView beginUpdates];
     [self.tableView reloadSections:[NSIndexSet indexSetWithIndexesInRange:NSMakeRange(0, 5)] withRowAnimation:UITableViewRowAnimationFade];
+    [self.tableView endUpdates];
 }
 
 - (void)save {
@@ -677,14 +681,22 @@
     }
     
     [manager PATCH:[NSString stringWithFormat:@"%@/users/%@",kAPIBaseUrl,[[NSUserDefaults standardUserDefaults] objectForKey:kUserDefaultsId]] parameters:@{@"user":parameters} success:^(AFHTTPRequestOperation *operation, id responseObject) {
-        NSLog(@"success updating user: %@",responseObject);
+        //NSLog(@"success updating user: %@",responseObject);
         [currentUser populateFromDict:[responseObject objectForKey:@"user"]];
         [self synchronizeUserDefaults];
         [self.tableView reloadData];
-        [[[UIAlertView alloc] initWithTitle:@"Word" message:@"We successfully updated your profile." delegate:nil cancelButtonTitle:@"Okay" otherButtonTitles:nil] show];
+        [XXAlert show:@"Profile updated" withTime:2.7f];
     } failure:^(AFHTTPRequestOperation *operation, NSError *error) {
-        NSLog(@"Failure updating user: %@",error.description);
-        [[[UIAlertView alloc] initWithTitle:@"Shoot" message:@"Something went wrong while updating your profile. Please try again soon." delegate:nil cancelButtonTitle:@"Okay" otherButtonTitles:nil] show];
+        //NSLog(@"Failure updating user: %@",error.description);
+        if (operation.response.statusCode == 401) {
+            if ([operation.responseString isEqualToString:@"Pen name taken"]) {
+                
+                [XXAlert show:@"Sorry, but that pen name has already been taken." withTime:2.7f];
+                //[self addShakeAnimationForView:self.registerPenNameTextField withDuration:.77];
+            }
+        } else {
+            [[[UIAlertView alloc] initWithTitle:@"Shoot" message:@"Something went wrong while updating your profile. Please try again soon." delegate:nil cancelButtonTitle:@"Okay" otherButtonTitles:nil] show];
+        }
     }];
 }
 
@@ -762,7 +774,7 @@
 }
 
 - (void)uploadImage:(UIImage*)image {
-    NSData *imageData = UIImageJPEGRepresentation(image, 0.5);
+    NSData *imageData = UIImageJPEGRepresentation(image, 1);
     [manager POST:[NSString stringWithFormat:@"%@/users/%@/add_photo",kAPIBaseUrl,currentUser.identifier] parameters:nil constructingBodyWithBlock:^(id<AFMultipartFormData> formData) {
         [formData appendPartWithFileData:imageData name:@"photo" fileName:@"photo.jpg" mimeType:@"image/jpg"];
     } success:^(AFHTTPRequestOperation *operation, id responseObject) {

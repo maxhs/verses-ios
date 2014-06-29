@@ -47,8 +47,7 @@
 	NSInteger _superscriptStyle;
 	
 	NSInteger _headerLevel;
-	NSInteger _blockquote;
-    
+	
 	NSArray *_shadows;
 	
 	NSMutableDictionary *_fontCache;
@@ -206,11 +205,6 @@
  The header level of the receiver, or 0 if it is not a header
  */
 @property (nonatomic, assign) NSInteger headerLevel;
-
-/**
-Custom blockquote
- */
-@property (nonatomic, assign) NSInteger blockquote;
 
 /**
  The display style of the receiver.

@@ -20,6 +20,9 @@
     if ([dictionary objectForKey:@"word_count"] && [dictionary objectForKey:@"word_count"] != [NSNull null]) {
         self.wordCount = [dictionary objectForKey:@"word_count"];
     }
+    if ([dictionary objectForKey:@"allow_feedback"] && [dictionary objectForKey:@"allow_feedback"] != [NSNull null]) {
+        self.allowFeedback = [dictionary objectForKey:@"allow_feedback"];
+    }
     if ([dictionary objectForKey:@"user"] && [dictionary objectForKey:@"user"] != [NSNull null]) {
         User *user = [User MR_findFirstByAttribute:@"identifier" withValue:[[dictionary objectForKey:@"user"] objectForKey:@"id"]];
         if (!user){
@@ -35,6 +38,9 @@
         }
         [story populateFromDict:[dictionary objectForKey:@"story"]];
         self.story = story;
+    }
+    if ([dictionary objectForKey:@"draft"] && [dictionary objectForKey:@"draft"] != [NSNull null]) {
+        self.draft = [dictionary objectForKey:@"draft"];
     }
     if ([dictionary objectForKey:@"created_date"] && [dictionary objectForKey:@"created_date"] != [NSNull null]) {
         NSTimeInterval _interval = [[dictionary objectForKey:@"created_date"] doubleValue];

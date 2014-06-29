@@ -21,7 +21,7 @@
         <relationship name="notifications" optional="YES" toMany="YES" deletionRule="Nullify" ordered="YES" destinationEntity="Notification" inverseName="circle" inverseEntity="Notification" syncable="YES"/>
         <relationship name="owner" optional="YES" maxCount="1" deletionRule="Nullify" destinationEntity="User" inverseName="ownedCircles" inverseEntity="User" syncable="YES"/>
         <relationship name="stories" optional="YES" toMany="YES" deletionRule="Nullify" ordered="YES" destinationEntity="Story" inverseName="circles" inverseEntity="Story" syncable="YES"/>
-        <relationship name="users" optional="YES" toMany="YES" deletionRule="Nullify" destinationEntity="User" inverseName="circles" inverseEntity="User" syncable="YES"/>
+        <relationship name="users" optional="YES" toMany="YES" deletionRule="Nullify" ordered="YES" destinationEntity="User" inverseName="circles" inverseEntity="User" syncable="YES"/>
     </entity>
     <entity name="Comment" representedClassName="Comment" syncable="YES">
         <attribute name="body" optional="YES" attributeType="String" syncable="YES"/>
@@ -38,6 +38,7 @@
         <attribute name="allowFeedback" optional="YES" attributeType="Boolean" syncable="YES"/>
         <attribute name="body" optional="YES" attributeType="String" syncable="YES"/>
         <attribute name="createdDate" optional="YES" attributeType="Date" syncable="YES"/>
+        <attribute name="draft" optional="YES" attributeType="Boolean" syncable="YES"/>
         <attribute name="identifier" optional="YES" attributeType="Integer 64" defaultValueString="0" syncable="YES"/>
         <attribute name="publishedDate" optional="YES" attributeType="Date" syncable="YES"/>
         <attribute name="updatedDate" optional="YES" attributeType="Date" syncable="YES"/>
@@ -66,6 +67,7 @@
         <attribute name="createdDate" optional="YES" attributeType="Date" syncable="YES"/>
         <attribute name="identifier" optional="YES" attributeType="Integer 32" defaultValueString="0" syncable="YES"/>
         <attribute name="message" optional="YES" attributeType="String" syncable="YES"/>
+        <attribute name="read" optional="YES" attributeType="Boolean" syncable="YES"/>
         <attribute name="type" optional="YES" attributeType="String" syncable="YES"/>
         <relationship name="circle" optional="YES" maxCount="1" deletionRule="Nullify" destinationEntity="Circle" inverseName="notifications" inverseEntity="Circle" syncable="YES"/>
         <relationship name="contribution" optional="YES" maxCount="1" deletionRule="Nullify" destinationEntity="Contribution" inverseName="notifications" inverseEntity="Contribution" syncable="YES"/>
@@ -126,9 +128,8 @@
     </entity>
     <entity name="User" representedClassName="User" syncable="YES">
         <attribute name="authToken" optional="YES" attributeType="String" syncable="YES"/>
-        <attribute name="backgroundImage" optional="YES" attributeType="Transformable" syncable="YES"/>
+        <attribute name="backgroundImageView" optional="YES" attributeType="Transformable" syncable="YES"/>
         <attribute name="bio" optional="YES" attributeType="String" syncable="YES"/>
-        <attribute name="contactCount" optional="YES" attributeType="Integer 16" defaultValueString="0" syncable="YES"/>
         <attribute name="dayJob" optional="YES" attributeType="String" syncable="YES"/>
         <attribute name="email" optional="YES" attributeType="String" syncable="YES"/>
         <attribute name="firstName" optional="YES" attributeType="String" syncable="YES"/>
@@ -138,6 +139,7 @@
         <attribute name="nightJob" optional="YES" attributeType="String" syncable="YES"/>
         <attribute name="ownerId" optional="YES" attributeType="Integer 32" defaultValueString="0" syncable="YES"/>
         <attribute name="penName" optional="YES" attributeType="String" syncable="YES"/>
+        <attribute name="phone" optional="YES" attributeType="String" syncable="YES"/>
         <attribute name="picLarge" optional="YES" attributeType="String" syncable="YES"/>
         <attribute name="picMedium" optional="YES" attributeType="String" syncable="YES"/>
         <attribute name="picSmall" optional="YES" attributeType="String" syncable="YES"/>
@@ -172,12 +174,12 @@
     </entity>
     <elements>
         <element name="Bookmark" positionX="54" positionY="180" width="128" height="118"/>
-        <element name="Circle" positionX="72" positionY="198" width="128" height="253"/>
+        <element name="Circle" positionX="72" positionY="198" width="128" height="255"/>
         <element name="Comment" positionX="36" positionY="171" width="128" height="178"/>
-        <element name="Contribution" positionX="18" positionY="153" width="128" height="238"/>
+        <element name="Contribution" positionX="18" positionY="153" width="128" height="255"/>
         <element name="Feedback" positionX="27" positionY="162" width="128" height="133"/>
         <element name="Footnote" positionX="36" positionY="90" width="128" height="88"/>
-        <element name="Notification" positionX="63" positionY="189" width="128" height="178"/>
+        <element name="Notification" positionX="63" positionY="189" width="128" height="195"/>
         <element name="Photo" positionX="27" positionY="162" width="128" height="210"/>
         <element name="Story" positionX="18" positionY="81" width="128" height="495"/>
         <element name="Tag" positionX="36" positionY="171" width="128" height="103"/>

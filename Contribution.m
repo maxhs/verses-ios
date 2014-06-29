@@ -20,6 +20,7 @@
 @dynamic updatedDate;
 @dynamic publishedDate;
 @dynamic allowFeedback;
+@dynamic draft;
 @dynamic story;
 @dynamic photos;
 @dynamic user;

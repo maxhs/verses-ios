@@ -16,6 +16,7 @@
 @property (weak, nonatomic) IBOutlet UIScrollView *scrollView;
 @property (weak, nonatomic) IBOutlet UITextField *titleTextField;
 @property (strong, nonatomic) Story *story;
+@property (strong, nonatomic) Contribution *contribution;
 @property (weak, nonatomic) IBOutlet UIView *optionsContainerView;
 @property (weak, nonatomic) IBOutlet UISwitch *inviteOnlySwitch;
 @property (weak, nonatomic) IBOutlet UILabel *inviteOnlyLabel;

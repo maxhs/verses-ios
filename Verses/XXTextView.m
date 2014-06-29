@@ -36,7 +36,7 @@
 }
 
 - (void)setupButtons {
-    _keyboardView = [[UIInputView alloc] initWithFrame:CGRectMake(0, 0, self.frame.size.width, 44) inputViewStyle:UIInputViewStyleKeyboard];
+    _keyboardView = [[UIInputView alloc] initWithFrame:CGRectMake(0, 0, screenWidth(), 44) inputViewStyle:UIInputViewStyleKeyboard];
     
     if (self.keyboardEnabled){
         _boldButton = [UIButton buttonWithType:UIButtonTypeCustom];
@@ -84,7 +84,6 @@
         
         _cameraButton = [UIButton buttonWithType:UIButtonTypeCustom];
         [_cameraButton setTitle:@"" forState:UIControlStateNormal];
-        [_cameraButton setImage:[UIImage imageNamed:@"camera"] forState:UIControlStateNormal];
         _cameraButton.layer.borderColor = [UIColor colorWithWhite:1 alpha:.2].CGColor;
         _cameraButton.layer.borderWidth = .5f;
         _cameraButton.layer.cornerRadius = 3.f;
@@ -102,11 +101,13 @@
             [_boldButton setTitleColor:[UIColor whiteColor] forState:UIControlStateNormal];
             [_italicsButton setTitleColor:[UIColor whiteColor] forState:UIControlStateNormal];
             [_headerButton setTitleColor:[UIColor whiteColor] forState:UIControlStateNormal];
+            [_cameraButton setImage:[UIImage imageNamed:@"whiteCamera"] forState:UIControlStateNormal];
             //[_footnoteButton setTitleColor:[UIColor whiteColor] forState:UIControlStateNormal];
         } else {
             [_boldButton setTitleColor:[UIColor blackColor] forState:UIControlStateNormal];
             [_italicsButton setTitleColor:[UIColor blackColor] forState:UIControlStateNormal];
             [_headerButton setTitleColor:[UIColor blackColor] forState:UIControlStateNormal];
+            [_cameraButton setImage:[UIImage imageNamed:@"camera"] forState:UIControlStateNormal];
             //[_footnoteButton setTitleColor:[UIColor blackColor] forState:UIControlStateNormal];
         }
         
@@ -121,21 +122,36 @@
         self.inputAccessoryView = _keyboardView;
     } else {
         _feedbackButton = [UIButton buttonWithType:UIButtonTypeCustom];
-        [_feedbackButton setFrame:CGRectMake(0, 0, self.frame.size.width, 44)];
-        [_feedbackButton.titleLabel setFont:[UIFont fontWithName:kSourceSansProSemibold size:19]];
+        [_feedbackButton setFrame:CGRectMake(0, 0, screenWidth()/2, 44)];
+        [_feedbackButton.titleLabel setFont:[UIFont fontWithName:kSourceSansProSemibold size:18]];
         [_feedbackButton addTarget:self action:@selector(newFeedback) forControlEvents:UIControlEventTouchUpInside];
+        [_feedbackButton setTitle:@"Feedback" forState:UIControlStateNormal];
+        [_feedbackButton.titleLabel setTextAlignment:NSTextAlignmentCenter];
+        //[_feedbackButton setBackgroundColor:kElectricBlue];
         
-        //if ([[NSUserDefaults standardUserDefaults] boolForKey:kDarkBackground]){
+        _flagButton = [UIButton buttonWithType:UIButtonTypeCustom];
+        [_flagButton setFrame:CGRectMake(screenWidth()/2, 0, screenWidth()/2, 44)];
+        [_flagButton.titleLabel setFont:[UIFont fontWithName:kSourceSansProSemibold size:18]];
+        [_flagButton setTitle:@"Flag" forState:UIControlStateNormal];
+        [_flagButton.titleLabel setTextAlignment:NSTextAlignmentCenter];
+        [_flagButton addTarget:self action:@selector(flagContent) forControlEvents:UIControlEventTouchUpInside];
+        //[_flagButton setBackgroundColor:kElectricBlue];
+        
+        if ([[NSUserDefaults standardUserDefaults] boolForKey:kDarkBackground]){
+            [_flagButton setTitleColor:[UIColor whiteColor] forState:UIControlStateNormal];
             [_feedbackButton setTitleColor:[UIColor whiteColor] forState:UIControlStateNormal];
-            [_feedbackButton setImage:[UIImage imageNamed:@"whiteFeedbackFlag"] forState:UIControlStateNormal];
-        /*} else {
-            [_feedbackButton setTitleColor:[UIColor whiteColor] forState:UIControlStateNormal];
-            [_feedbackButton setImage:[UIImage imageNamed:@"blackFeedbackFlag"] forState:UIControlStateNormal];
-        }*/
-        [_feedbackButton setTitle:@"   Feedback" forState:UIControlStateNormal];
-        [_feedbackButton setBackgroundColor:kElectricBlue];
+            //[_footnoteButton setTitleColor:[UIColor whiteColor] forState:UIControlStateNormal];
+        } else {
+            [_flagButton setTitleColor:[UIColor blackColor] forState:UIControlStateNormal];
+            [_feedbackButton setTitleColor:[UIColor blackColor] forState:UIControlStateNormal];
+            //[_footnoteButton setTitleColor:[UIColor blackColor] forState:UIControlStateNormal];
+        }
+        
+        [_keyboardView addSubview:_flagButton];
+        [_keyboardView addSubview:_feedbackButton];
+        
         self.editable = NO;
-        self.inputAccessoryView = _feedbackButton;
+        self.inputAccessoryView = _keyboardView;
     }
 }
 
@@ -153,10 +169,14 @@
 
 - (void)newFeedback {
     [self resignFirstResponder];
-    NSLog(@"should be adding new feedback, %@",_contribution);
     if (_selectedText.length && _contribution){
         [[NSNotificationCenter defaultCenter] postNotificationName:@"AddFeedback" object:nil userInfo:@{@"text":_selectedText,@"contribution":_contribution,@"location":[NSNumber numberWithUnsignedInteger:_stringLocation]}];
     }
+}
+
+- (void)flagContent {
+    [self resignFirstResponder];
+    [[NSNotificationCenter defaultCenter] postNotificationName:@"CreateFlag" object:nil];
 }
 
 - (void)textViewDidBeginEditing:(UITextView *)textView {

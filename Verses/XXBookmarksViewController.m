@@ -243,7 +243,9 @@
             if (currentUser.bookmarks.count == 0){
                 [self.tableView reloadData];
             } else {
+                [self.tableView beginUpdates];
                 [self.tableView deleteRowsAtIndexPaths:@[indexPathForDeletion] withRowAnimation:UITableViewRowAnimationFade];
+                [self.tableView endUpdates];
             }
             indexPathForDeletion = nil;
         } failure:^(AFHTTPRequestOperation *operation, NSError *error) {

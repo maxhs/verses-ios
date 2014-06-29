@@ -14,4 +14,6 @@
 - (void)populateFromDict:(NSDictionary*)dictionary;
 - (void)addComment:(Comment*)comment;
 - (void)removeComment:(Comment*)comment;
+- (void)addUser:(User*)user;
+- (void)removeUser:(User*)user;
 @end

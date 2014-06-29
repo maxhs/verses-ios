@@ -21,10 +21,11 @@
 #import "UIFontDescriptor+CrimsonText.h"
 #import "UIFontDescriptor+SourceSansPro.h"
 #import "XXAlert.h"
-#import "XXGuideTransition.h"
+#import "XXGuideInteractor.h"
 #import "XXGuideViewController.h"
 #import <AssetsLibrary/AssetsLibrary.h>
 #import <SDWebImage/UIButton+WebCache.h>
+#import "XXStoryPhoto.h"
 
 @interface XXWriteViewController () <UITextFieldDelegate, UITextViewDelegate, UIGestureRecognizerDelegate, UIAlertViewDelegate, UITextInputDelegate, UIViewControllerTransitioningDelegate, UIImagePickerControllerDelegate, UINavigationControllerDelegate, UIActionSheetDelegate> {
     CGFloat width;
@@ -61,8 +62,8 @@
     BOOL underlineSelected;
     BOOL italicsSelected;
     BOOL saveToLibrary;
-    UIButton *imageButton;
-    Photo *storyPhoto;
+    XXStoryPhoto *storyPhoto;
+    Photo *thePhoto;
     CGFloat imageHeight;
 }
 
@@ -70,6 +71,7 @@
 
 @implementation XXWriteViewController
 @synthesize story = _story;
+@synthesize contribution = _contribution;
 @synthesize welcomeViewController;
 
 - (void)viewDidLoad {
@@ -206,7 +208,9 @@
     }
     
     [_story setDraft:[NSNumber numberWithBool:dSwitch.isOn]];
-    if ([_story.draft isEqualToNumber:[NSNumber numberWithBool:YES]]){
+    if (_contribution && ![_contribution.identifier isEqualToNumber:[NSNumber numberWithInt:0]]){
+        self.navigationItem.leftBarButtonItem = saveButton;
+    } else if ([_story.draft isEqualToNumber:[NSNumber numberWithBool:YES]]){
         self.navigationItem.leftBarButtonItems = @[saveButton,optionsButton];
     } else {
         if ([_story.publishedDate compare:[[NSDate alloc] initWithTimeIntervalSince1970:0]] == NSOrderedSame || [_story.publishedDate isEqual:[NSNumber numberWithInt:0]]){
@@ -226,12 +230,20 @@
 }
 
 - (void)setupControls {
-    if (!_story || [_story.identifier isEqualToNumber:[NSNumber numberWithInt:0]]){
+    if (_contribution && ![_contribution.identifier isEqualToNumber:[NSNumber numberWithInt:0]]){
+        _story = _contribution.story;
+        [self setupContributionBooleans];
+    } else if (!_story || [_story.identifier isEqualToNumber:[NSNumber numberWithInt:0]]){
         _story = [Story MR_createInContext:[NSManagedObjectContext MR_defaultContext]];
         _story.draft = [NSNumber numberWithBool:YES];
         _story.inviteOnly = [NSNumber numberWithBool:YES];
         if (_mystery) _story.mystery = [NSNumber numberWithBool:YES];
-        [_titleTextField setPlaceholder:kTitlePlaceholder];
+        if ([[NSUserDefaults standardUserDefaults] boolForKey:kDarkBackground]){
+            [_titleTextField setText:kTitlePlaceholder];
+            [_titleTextField setTextColor:[UIColor colorWithWhite:1 alpha:.3]];
+        } else {
+            [_titleTextField setPlaceholder:kTitlePlaceholder];
+        }
         Contribution *firstContribution = [Contribution MR_createInContext:[NSManagedObjectContext MR_defaultContext]];
         [firstContribution setAllowFeedback:[NSNumber numberWithBool:NO]];
         [_story addContribution:firstContribution];
@@ -282,7 +294,7 @@
     self.draftSwitch.transform = CGAffineTransformMakeTranslation(width, 0);
     [self.draftSwitch addTarget:self action:@selector(shareButton) forControlEvents:UIControlEventValueChanged];
     
-    if (![_story.owner.identifier isEqualToNumber:[[NSUserDefaults standardUserDefaults] objectForKey:kUserDefaultsId]]){
+    if (![_story.owner.identifier isEqualToNumber:[[NSUserDefaults standardUserDefaults] objectForKey:kUserDefaultsId]] && !_contribution){
         CGRect doneRect = _doneOptionsButton.frame;
         doneRect.origin.x = (width/2)-(doneRect.size.width/2);
         [_doneOptionsButton setFrame:doneRect];
@@ -309,32 +321,56 @@
 }
 
 - (void)setupStoryBooleans {
-    if ([_story.draft isEqualToNumber:[NSNumber numberWithBool:YES]]){
-        [self.draftSwitch setOn:YES animated:NO];
-    } else {
-        [self.draftSwitch setOn:NO animated:NO];
+    if (!_contribution){
+        if ([_story.draft isEqualToNumber:[NSNumber numberWithBool:YES]]){
+            [self.draftSwitch setOn:YES animated:NO];
+        } else {
+            [self.draftSwitch setOn:NO animated:NO];
+        }
+        
+        if ([_story.joinable isEqualToNumber:[NSNumber numberWithBool:YES]]){
+            [self.joinableSwitch setOn:YES animated:NO];
+        } else {
+            [self.joinableSwitch setOn:NO animated:NO];
+        }
+        if ([_story.mystery isEqualToNumber:[NSNumber numberWithBool:YES]] || _mystery){
+            _story.mystery = [NSNumber numberWithBool:YES];
+            [self.slowRevealSwitch setOn:YES animated:NO];
+        } else {
+            [self.slowRevealSwitch setOn:NO animated:NO];
+        }
+        if ([_story.inviteOnly  isEqualToNumber:[NSNumber numberWithBool:YES]]){
+            [self.inviteOnlySwitch setOn:YES animated:NO];
+        } else {
+            [self.inviteOnlySwitch setOn:NO animated:NO];
+        }
+        if ([[(Contribution*)_story.contributions.lastObject allowFeedback] isEqualToNumber:[NSNumber numberWithBool:YES]]){
+            [self.feedbackSwitch setOn:YES animated:NO];
+        } else {
+            [self.feedbackSwitch setOn:NO animated:NO];
+        }
     }
+}
+
+- (void)setupContributionBooleans {
+    [_inviteOnlyLabel setHidden:YES];
+    [_inviteOnlySwitch setHidden:YES];
     
-    if ([_story.joinable isEqualToNumber:[NSNumber numberWithBool:YES]]){
-        [self.joinableSwitch setOn:YES animated:NO];
-    } else {
-        [self.joinableSwitch setOn:NO animated:NO];
-    }
-    if ([_story.mystery isEqualToNumber:[NSNumber numberWithBool:YES]] || _mystery){
-        _story.mystery = [NSNumber numberWithBool:YES];
-        [self.slowRevealSwitch setOn:YES animated:NO];
-    } else {
-        [self.slowRevealSwitch setOn:NO animated:NO];
-    }
-    if ([_story.inviteOnly  isEqualToNumber:[NSNumber numberWithBool:YES]]){
-        [self.inviteOnlySwitch setOn:YES animated:NO];
-    } else {
-        [self.inviteOnlySwitch setOn:NO animated:NO];
-    }
-    if ([(Contribution*)_story.contributions.lastObject allowFeedback]){
+    [_slowRevealSwitch setHidden:YES];
+    [_slowRevealLabel setHidden:YES];
+    
+    [_joinableLabel setHidden:YES];
+    [_joinableSwitch setHidden:YES];
+    
+    if ([_contribution.allowFeedback isEqualToNumber:[NSNumber numberWithBool:YES]]){
         [self.feedbackSwitch setOn:YES animated:NO];
     } else {
         [self.feedbackSwitch setOn:NO animated:NO];
+    }
+    if ([_contribution.draft isEqualToNumber:[NSNumber numberWithBool:YES]]){
+        [self.draftSwitch setOn:YES animated:NO];
+    } else {
+        [self.draftSwitch setOn:NO animated:NO];
     }
 }
 
@@ -450,12 +486,12 @@
     CGFloat y = scrollView.contentOffset.y;
     if (y < 0){
         CGFloat y = scrollView.contentOffset.y;
-        CGRect imageFrame = imageButton.frame;
+        CGRect imageFrame = storyPhoto.button.frame;
         imageFrame.origin.y = y;
         imageFrame.origin.x = y/2;
         imageFrame.size.width = width-y;
         imageFrame.size.height = imageHeight-y;
-        imageButton.frame = imageFrame;
+        storyPhoto.button.frame = imageFrame;
         
         /*titleFrame.origin.y = y + 11;
          _titleLabel.frame = titleFrame;
@@ -556,17 +592,15 @@
 
 - (void)imagePickerController:(UIImagePickerController *)picker didFinishPickingMediaWithInfo:(NSDictionary *)info {
     [self dismissViewControllerAnimated:YES completion:nil];
-    storyPhoto = [Photo MR_createInContext:[NSManagedObjectContext MR_defaultContext]];
+    thePhoto = [Photo MR_createInContext:[NSManagedObjectContext MR_defaultContext]];
     UIImage *image = [self fixOrientation:[info objectForKey:UIImagePickerControllerOriginalImage]];
-    [storyPhoto setImage:image];
-    imageButton = [UIButton buttonWithType:UIButtonTypeCustom];
-    [imageButton setAutoresizingMask:UIViewAutoresizingFlexibleWidth];
-    [imageButton setFrame:CGRectMake(0, 0, width, imageHeight)];
-    [imageButton.imageView setContentMode:UIViewContentModeScaleAspectFill];
-    [imageButton.imageView setClipsToBounds:YES];
-    [imageButton setImage:image forState:UIControlStateNormal];
-    [imageButton addTarget:self action:@selector(imageButtonTapped) forControlEvents:UIControlEventTouchUpInside];
-    [_scrollView addSubview:imageButton];
+    [thePhoto setImage:image];
+    storyPhoto = [[XXStoryPhoto alloc] initWithFrame:CGRectMake(0, 0, width, imageHeight)];
+    [storyPhoto initializeWithPhoto:thePhoto forStory:_story inVC:self withButton:YES];
+    [storyPhoto setAutoresizingMask:UIViewAutoresizingFlexibleWidth];
+
+    [storyPhoto.button addTarget:self action:@selector(imageButtonTapped) forControlEvents:UIControlEventTouchUpInside];
+    [_scrollView addSubview:storyPhoto];
     _titleTextField.transform = CGAffineTransformMakeTranslation(0, imageHeight-40);
     _bodyTextView.transform = CGAffineTransformMakeTranslation(0, imageHeight-40);
     [_bodyTextView.cameraButton setHidden:YES];
@@ -600,23 +634,23 @@
 
 - (void)removePhoto {
     [_bodyTextView.cameraButton setHidden:NO];
-    storyPhoto = _story.photos.firstObject;
-    [_story removePhoto:storyPhoto];
-    if (storyPhoto && ![storyPhoto.identifier isEqualToNumber:[NSNumber numberWithInt:0]]){
-        [manager DELETE:[NSString stringWithFormat:@"%@/photos/%@",kAPIBaseUrl,storyPhoto.identifier] parameters:@{@"user_id":[[NSUserDefaults standardUserDefaults] objectForKey:kUserDefaultsId]} success:^(AFHTTPRequestOperation *operation, id responseObject) {
+    thePhoto = _story.photos.firstObject;
+    [_story removePhoto:thePhoto];
+    if (thePhoto && ![thePhoto.identifier isEqualToNumber:[NSNumber numberWithInt:0]]){
+        [manager DELETE:[NSString stringWithFormat:@"%@/photos/%@",kAPIBaseUrl,thePhoto.identifier] parameters:@{@"user_id":[[NSUserDefaults standardUserDefaults] objectForKey:kUserDefaultsId]} success:^(AFHTTPRequestOperation *operation, id responseObject) {
             //NSLog(@"Success deleting photo: %@",responseObject);
-            [storyPhoto MR_deleteInContext:[NSManagedObjectContext MR_defaultContext]];
+            [thePhoto MR_deleteInContext:[NSManagedObjectContext MR_defaultContext]];
             [self saveContext];
         } failure:^(AFHTTPRequestOperation *operation, NSError *error) {
             NSLog(@"Failed to delete photo: %@",error.description);
-            [storyPhoto MR_deleteInContext:[NSManagedObjectContext MR_defaultContext]];
+            [thePhoto MR_deleteInContext:[NSManagedObjectContext MR_defaultContext]];
             [self saveContext];
         }];
     }
     [UIView animateWithDuration:.6 delay:0 usingSpringWithDamping:.77 initialSpringVelocity:.001 options:UIViewAnimationOptionCurveEaseInOut animations:^{
         _titleTextField.transform = CGAffineTransformIdentity;
         _bodyTextView.transform = CGAffineTransformIdentity;
-        [imageButton setAlpha:0.0];
+        [storyPhoto setAlpha:0.0];
     } completion:^(BOOL finished) {
         
     }];
@@ -660,10 +694,24 @@
     NSMutableDictionary *storyParameters = [NSMutableDictionary dictionary];
     NSMutableDictionary *contributionParameters = [NSMutableDictionary dictionary];
     
-    if (_bodyTextView.text.length && ![_bodyTextView.text isEqualToString:kStoryPlaceholder]){
-        [contributionParameters setObject:[_bodyTextView.attributedText htmlFragment] forKey:@"body"];
-    } else {
-        [contributionParameters setObject:@"" forKey:@"body"];
+    if (_story.contributions.count == 1 || (_contribution && ![_contribution.identifier isEqualToNumber:[NSNumber numberWithInt:0]])){
+        
+        if (_story.contributions.count == 1) {
+            if (self.inviteOnlySwitch.isOn){
+                [contributionParameters setObject:[NSNumber numberWithBool:YES] forKey:@"invite_only"];
+            } else {
+                [contributionParameters setObject:[NSNumber numberWithBool:NO] forKey:@"invite_only"];
+            }
+        }
+        
+        if (_bodyTextView.text.length && ![_bodyTextView.text isEqualToString:kStoryPlaceholder]){
+            NSMutableAttributedString *adjustTextColorString = _bodyTextView.attributedText.mutableCopy;
+            [adjustTextColorString addAttribute:NSForegroundColorAttributeName value:[UIColor blackColor] range:NSMakeRange(0, adjustTextColorString.length)];
+            NSString *bodyString = [adjustTextColorString htmlFragment];
+            [contributionParameters setObject:bodyString forKey:@"body"];
+        } else {
+            [contributionParameters setObject:@"" forKey:@"body"];
+        }
     }
     if (_titleTextField.text.length && ![_titleTextField.text isEqualToString:kTitlePlaceholder]) {
         [storyParameters setObject:_titleTextField.text forKey:@"title"];
@@ -690,11 +738,10 @@
     } else {
         [contributionParameters setObject:[NSNumber numberWithBool:NO] forKey:@"allow_feedback"];
     }
+    
     if (self.inviteOnlySwitch.isOn){
-        [contributionParameters setObject:[NSNumber numberWithBool:YES] forKey:@"invite_only"];
         [storyParameters setObject:[NSNumber numberWithBool:YES] forKey:@"invite_only"];
     } else {
-        [contributionParameters setObject:[NSNumber numberWithBool:NO] forKey:@"invite_only"];
         [storyParameters setObject:[NSNumber numberWithBool:NO] forKey:@"invite_only"];
     }
     if (self.slowRevealSwitch.isOn){
@@ -730,13 +777,37 @@
                 [XXAlert show:@"Published" withTime:1.5f];
                 [self showStory];
             }
-            
+            [[NSManagedObjectContext MR_defaultContext] MR_saveToPersistentStoreWithCompletion:^(BOOL success, NSError *error) {
+                NSLog(@"Create story status: %u",success);
+            }];
             [ProgressHUD dismiss];
         } failure:^(AFHTTPRequestOperation *operation, NSError *error) {
             NSLog(@"Failed to create and then save a story: %@",error.description);
             [ProgressHUD dismiss];
         }];
     
+    } else if (_contribution && ![_contribution.identifier isEqualToNumber:[NSNumber numberWithInt:0]]){
+        NSLog(@"saving a contribution");
+        [manager PUT:[NSString stringWithFormat:@"%@/contributions/%@",kAPIBaseUrl,_contribution.identifier] parameters:@{@"contribution":contributionParameters,@"user_id":[[NSUserDefaults standardUserDefaults] objectForKey:kUserDefaultsId]} success:^(AFHTTPRequestOperation *operation, id responseObject) {
+            NSLog(@"Success PUTing your contribution: %@",responseObject);
+            [_contribution populateFromDict:[responseObject objectForKey:@"contribution"]];
+            //[self postImage:_story.contributions.firstObject];
+            if (saving){
+                [XXAlert show:@"Contribution saved" withTime:1.5f];
+            } else {
+                [XXAlert show:@"Published" withTime:1.5f];
+                [self showStory];
+            }
+            [[NSManagedObjectContext MR_defaultContext] MR_saveToPersistentStoreWithCompletion:^(BOOL success, NSError *error) {
+                NSLog(@"Save contribution status: %u",success);
+            }];
+            [ProgressHUD dismiss];
+        } failure:^(AFHTTPRequestOperation *operation, NSError *error) {
+            [ProgressHUD dismiss];
+            [[[UIAlertView alloc] initWithTitle:@"Sorry" message:@"Something went wrong while trying to save your contribution. Please try again soon." delegate:nil cancelButtonTitle:@"Shucks" otherButtonTitles:nil] show];
+            NSLog(@"Failed to update a contribution: %@",error.description);
+        }];
+        
     } else {
         [manager PUT:[NSString stringWithFormat:@"%@/stories/%@",kAPIBaseUrl,_story.identifier] parameters:@{@"story":storyParameters,@"contribution":contributionParameters,@"user_id":[[NSUserDefaults standardUserDefaults] objectForKey:kUserDefaultsId]} success:^(AFHTTPRequestOperation *operation, id responseObject) {
             NSLog(@"Success PUTing your story: %@",responseObject);
@@ -748,6 +819,9 @@
                 [XXAlert show:@"Published" withTime:1.5f];
                 [self showStory];
             }
+            [[NSManagedObjectContext MR_defaultContext] MR_saveToPersistentStoreWithCompletion:^(BOOL success, NSError *error) {
+                NSLog(@"Save story status: %u",success);
+            }];
             [ProgressHUD dismiss];
         } failure:^(AFHTTPRequestOperation *operation, NSError *error) {
             [ProgressHUD dismiss];
@@ -758,15 +832,15 @@
 }
 
 - (void)postImage:(Contribution*)contribution {
-    if (storyPhoto.image && ![contribution.identifier isEqualToNumber:[NSNumber numberWithInt:0]]){
-        NSData *imageData = UIImageJPEGRepresentation(storyPhoto.image,1);
+    if (thePhoto.image && ![contribution.identifier isEqualToNumber:[NSNumber numberWithInt:0]]){
+        NSData *imageData = UIImageJPEGRepresentation(thePhoto.image,1);
         [manager POST:[NSString stringWithFormat:@"%@/photos",kAPIBaseUrl] parameters:@{@"photo[contribution_id]":contribution.identifier,@"photo[user_id]":[[NSUserDefaults standardUserDefaults] objectForKey:kUserDefaultsId]} constructingBodyWithBlock:^(id<AFMultipartFormData> formData) {
             [formData appendPartWithFileData:imageData name:@"photo[image]" fileName:@"photo.jpg" mimeType:@"image/jpg"];
         } success:^(AFHTTPRequestOperation *operation, id responseObject) {
             NSLog(@"Success posting image: %@",responseObject);
-            [storyPhoto populateFromDict:[responseObject objectForKey:@"photo"]];
-            //[contribution addPhoto:storyPhoto];
-            [_story addPhoto:storyPhoto];
+            [thePhoto populateFromDict:[responseObject objectForKey:@"photo"]];
+            //[contribution thePhoto];
+            [_story addPhoto:thePhoto];
         } failure:^(AFHTTPRequestOperation *operation, NSError *error) {
             NSLog(@"Failed to post image: %@",error.description);
         }];
@@ -869,38 +943,18 @@
     [_bodyTextView setupButtons];
     
     if (_story.photos.count > 0){
-        storyPhoto = _story.photos.firstObject;
-        imageButton = [UIButton buttonWithType:UIButtonTypeCustom];
-        [imageButton setAutoresizingMask:UIViewAutoresizingFlexibleWidth];
-        [imageButton setFrame:CGRectMake(0, 0, width, imageHeight)];
-        [imageButton.imageView setContentMode:UIViewContentModeScaleAspectFill];
-        [imageButton.imageView setClipsToBounds:YES];
-        if (storyPhoto.image){
-            [imageButton setImage:storyPhoto.image forState:UIControlStateNormal];
-        } else {
-            __weak typeof(UIButton) *weakButton = imageButton;
-            UIImage *placeholderImage;
-            NSURL *imageUrl;
-            if (IDIOM == IPAD){
-                placeholderImage = [UIImage imageNamed:@"photoPlaceholder_ipad"];
-                imageUrl = [NSURL URLWithString:storyPhoto.largeUrl];
-            } else {
-                placeholderImage = [UIImage imageNamed:@"photoPlaceholder"];
-                imageUrl = [NSURL URLWithString:storyPhoto.mediumUrl];
-            }
-            [weakButton setImageWithURL:imageUrl forState:UIControlStateNormal placeholderImage:placeholderImage completed:^(UIImage *image, NSError *error, SDImageCacheType cacheType) {
-            
-            }];
-        }
+        thePhoto = _story.photos.firstObject;
+        storyPhoto = [[XXStoryPhoto alloc] initWithFrame:CGRectMake(0, 0, width, imageHeight)];
+        [storyPhoto setAutoresizingMask:UIViewAutoresizingFlexibleWidth];
+        [storyPhoto initializeWithPhoto:thePhoto forStory:_story inVC:self withButton:YES];
         
-        [imageButton addTarget:self action:@selector(imageButtonTapped) forControlEvents:UIControlEventTouchUpInside];
-        [_scrollView addSubview:imageButton];
+        [storyPhoto.button addTarget:self action:@selector(imageButtonTapped) forControlEvents:UIControlEventTouchUpInside];
+        [_scrollView addSubview:storyPhoto];
         _titleTextField.transform = CGAffineTransformMakeTranslation(0, imageHeight-40);
         _bodyTextView.transform = CGAffineTransformMakeTranslation(0, imageHeight-40);
         
         [_bodyTextView.cameraButton setHidden:YES];
     }
-    
     
     if (![_bodyTextView.text isEqualToString:kStoryPlaceholder]){
         [_bodyTextView setTextColor:textColor];
@@ -924,8 +978,12 @@
     widthSpacer = 10;
     if (_story && _story.contributions.count && !_bodyTextView){
         NSString *storyBody = @"";
-        for (Contribution *contribution in _story.contributions) {
-            if (contribution.body.length) storyBody = [storyBody stringByAppendingString:contribution.body];
+        if (_contribution) {
+            storyBody = _contribution.body;
+        } else {
+            for (Contribution *contribution in _story.contributions) {
+                if (contribution.body.length) storyBody = [storyBody stringByAppendingString:contribution.body];
+            }
         }
         if (!storyBody.length) storyBody = kStoryPlaceholder;
         
@@ -976,6 +1034,11 @@
         if (bodyRect.size.height < screenHeight()){
             bodyRect.size.height = screenHeight()-44;
         }
+        
+        if (_story.photos.count > 0){
+            bodyRect.size.height += imageHeight;
+        }
+        
         [_bodyTextView setFrame:bodyRect];
         offset += bodyRect.size.height;
         
@@ -1071,10 +1134,9 @@
     keyboardRect = [[notification.userInfo objectForKey:UIKeyboardFrameEndUserInfoKey] CGRectValue];
     keyboardRect = [self.view convertRect:keyboardRect fromView:nil];
     
-    /*UIEdgeInsets inset = _bodyTextView.contentInset;
+    UIEdgeInsets inset = _scrollView.contentInset;
     inset.bottom = keyboardRect.size.height;
-    _bodyTextView.contentInset = inset;
-    _bodyTextView.scrollIndicatorInsets = inset;*/
+    _scrollView.contentInset = inset;
     //[self scrollToCaret:YES];
 }
 
@@ -1112,6 +1174,7 @@
     if (![textField.text isEqual:kTitlePlaceholder] && textField.text.length > 0){
         _story.title = textField.text;
     } else if ([[NSUserDefaults standardUserDefaults] boolForKey:kDarkBackground]) {
+        [textField setText:kTitlePlaceholder];
         [textField setTextColor:[UIColor whiteColor]];
     }
 }
@@ -1143,11 +1206,11 @@
 
 - (void)textViewDidChange:(UITextView *)textView {
     //54 is the extra height for the keyboard toolbar
-    CGRect bodyRect = textView.frame;
+    /*CGRect bodyRect = textView.frame;
     bodyRect.size.height = [textView sizeThatFits:CGSizeMake(textView.frame.size.width, CGFLOAT_MAX)].height;
     [textView setFrame:bodyRect];
     [self.scrollView setContentSize:CGSizeMake(screenWidth(),bodyRect.size.height + _titleTextField.frame.size.height+keyboardRect.size.height+54)];
-    /*if ([textView.text hasSuffix:@"\n"]) {
+    if ([textView.text hasSuffix:@"\n"]) {
         [CATransaction setCompletionBlock:^{
             [self scrollToCaret:NO];
         }];
@@ -1156,11 +1219,8 @@
     }*/
 }
 
-- (void)scrollToCaret:(BOOL)animated
-{
-    CGRect rect = [_bodyTextView caretRectForPosition:_bodyTextView.selectedTextRange.end];
-    rect.size.height += _bodyTextView.textContainerInset.bottom;
-    [_bodyTextView scrollRectToVisible:rect animated:animated];
+- (void)scrollToCaret:(BOOL)animated {
+    
 }
 
 - (void)boldText:(UIButton*)button {
@@ -1395,13 +1455,13 @@
                                                                   presentingController:(UIViewController *)presenting
                                                                       sourceController:(UIViewController *)source {
 
-    XXGuideTransition *animator = [XXGuideTransition new];
+    XXGuideInteractor *animator = [XXGuideInteractor new];
     animator.presenting = YES;
     return animator;
 }
 
 - (id<UIViewControllerAnimatedTransitioning>)animationControllerForDismissedController:(UIViewController *)dismissed {
-    XXGuideTransition *animator = [XXGuideTransition new];
+    XXGuideInteractor *animator = [XXGuideInteractor new];
     return animator;
 }
 

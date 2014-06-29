@@ -86,6 +86,25 @@
         [user populateFromDict:[dictionary objectForKey:@"user"]];
         self.owner = user;
     }
+    if ([dictionary objectForKey:@"users"] && [dictionary objectForKey:@"users"] != [NSNull null]) {
+        NSMutableOrderedSet *orderedUsers = [NSMutableOrderedSet orderedSet];
+        for (NSDictionary *userDict in [dictionary objectForKey:@"users"]){
+            if ([userDict objectForKey:@"id"] != [NSNull null]){
+                User *user = [User MR_findFirstByAttribute:@"identifier" withValue:[userDict objectForKey:@"id"]];
+                if (!user){
+                    user = [User MR_createInContext:[NSManagedObjectContext MR_defaultContext]];
+                }
+                [user populateFromDict:userDict];
+                [orderedUsers addObject:user];
+            }
+        }
+        for (User *user in self.users){
+            if (![orderedUsers containsObject:user]){
+                [self removeUser:user];
+            }
+        }
+        self.users = orderedUsers;
+    }
 }
 
 - (NSInteger)unreadComments:(NSArray*)unreadComments {
@@ -112,6 +131,18 @@
     NSMutableOrderedSet *set = [[NSMutableOrderedSet alloc] initWithOrderedSet:self.stories];
     [set removeObject:story];
     self.stories = set;
+}
+
+- (void)addUser:(User*)user{
+    NSMutableOrderedSet *set = [[NSMutableOrderedSet alloc] initWithOrderedSet:self.users];
+    [set addObject:user];
+    self.users = set;
+}
+
+- (void)removeUser:(User*)user{
+    NSMutableOrderedSet *set = [[NSMutableOrderedSet alloc] initWithOrderedSet:self.users];
+    [set removeObject:user];
+    self.users = set;
 }
 
 @end

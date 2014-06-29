@@ -44,13 +44,19 @@
     if ([[NSUserDefaults standardUserDefaults] objectForKey:kUserDefaultsId]) signedIn = YES;
     else signedIn = NO;
     [super viewDidLoad];
+    [[NSNotificationCenter defaultCenter] addObserver:self selector:@selector(reloadStoryInfo:) name:@"ReloadStoryInfo" object:nil];
+}
+
+- (void)reloadStoryInfo:(NSNotification*)notification {
+    _story = [notification.userInfo objectForKey:@"story"];
 }
 
 - (void)viewWillAppear:(BOOL)animated {
-    [[UIApplication sharedApplication] setStatusBarHidden:YES withAnimation:UIStatusBarAnimationFade];
+    //[[UIApplication sharedApplication] setStatusBarHidden:YES withAnimation:UIStatusBarAnimationFade];
     if (self.tableView.alpha != 1.0){
         [UIView animateWithDuration:.23 animations:^{
             [self.tableView setAlpha:1.0];
+            [_dynamicsDrawerViewController.view setAlpha:1.0];
             self.tableView.transform = CGAffineTransformIdentity;
         }];
     }
@@ -186,7 +192,7 @@
 }
 
 - (void)sendFeedback {
-    if (feedbackTextView.text.length && ![feedbackTextView.text isEqualToString:kFeedbackPlaceholder]){
+    if (signedIn && feedbackTextView.text.length && ![feedbackTextView.text isEqualToString:kFeedbackPlaceholder]){
         [self doneEditing];
         [ProgressHUD show:@"Sending Feedback..."];
         NSMutableDictionary *parameters = [NSMutableDictionary dictionary];
@@ -194,7 +200,7 @@
         [parameters setObject:_story.identifier forKey:@"story_id"];
         [parameters setObject:feedbackTextView.text forKey:@"feedback"];
         [manager POST:[NSString stringWithFormat:@"%@/feedbacks",kAPIBaseUrl] parameters:parameters success:^(AFHTTPRequestOperation *operation, id responseObject) {
-            NSLog(@"Success sending feedback: %@",responseObject);
+            //NSLog(@"Success sending feedback: %@",responseObject);
             Feedback *feedback = [Feedback MR_findFirstByAttribute:@"identifier" withValue:[[responseObject objectForKey:@"feedback"] objectForKey:@"id"]];
             if (!feedback){
                 feedback = [Feedback MR_createInContext:[NSManagedObjectContext MR_defaultContext]];
@@ -224,31 +230,6 @@
     }
 }
 
-- (void)createBookmark:(UIButton*)button {
-    if (_story && _story.identifier && signedIn){
-        [button setImage:[UIImage imageNamed:@"bookmarked"] forState:UIControlStateNormal];
-        [manager POST:[NSString stringWithFormat:@"%@/bookmarks",kAPIBaseUrl] parameters:@{@"user_id":[[NSUserDefaults standardUserDefaults] objectForKey:kUserDefaultsId],@"story_id":_story.identifier} success:^(AFHTTPRequestOperation *operation, id responseObject) {
-            NSLog(@"Success creating a bookmark: %@",responseObject);
-            [button removeTarget:nil action:NULL forControlEvents:UIControlEventAllEvents];
-            [button addTarget:self action:@selector(destroyBookmark:) forControlEvents:UIControlEventTouchUpInside];
-        } failure:^(AFHTTPRequestOperation *operation, NSError *error) {
-            NSLog(@"Error creating a bookmark: %@",error.description);
-        }];
-    }
-}
-
-- (void)destroyBookmark:(UIButton*)button {
-    if (_story && _story.identifier && signedIn){
-        [button setImage:[UIImage imageNamed:@"bookmark"] forState:UIControlStateNormal];
-        [manager DELETE:[NSString stringWithFormat:@"%@/bookmarks/%@",kAPIBaseUrl,_story.identifier] parameters:@{@"story_id":_story.identifier,@"user_id":[[NSUserDefaults standardUserDefaults] objectForKey:kUserDefaultsId]} success:^(AFHTTPRequestOperation *operation, id responseObject) {
-            NSLog(@"success deleting a bookmark: %@",responseObject);
-            [button removeTarget:nil action:NULL forControlEvents:UIControlEventAllEvents];
-            [button addTarget:self action:@selector(createBookmark:) forControlEvents:UIControlEventTouchUpInside];
-        } failure:^(AFHTTPRequestOperation *operation, NSError *error) {
-            NSLog(@"Failed to delete the bookmark: %@",error.description);
-        }];
-    }
-}
 - (void) doneEditing {
     [self.view endEditing:YES];
 }
@@ -299,6 +280,15 @@
     }];
 }
 
+- (BOOL)textView:(UITextView *)textView shouldChangeTextInRange:(NSRange)range replacementText:(NSString *)text {
+    if ([text isEqualToString:@"\n"]) {
+        [self sendFeedback];
+        return NO;
+    } else {
+        return YES;
+    }
+}
+
 - (void)tableView:(UITableView *)tableView willDisplayCell:(UITableViewCell *)cell forRowAtIndexPath:(NSIndexPath *)indexPath {
     cell.backgroundColor = [UIColor clearColor];
 }
@@ -314,9 +304,7 @@
         }];
     }
     
-    [self presentViewController:nav animated:YES completion:^{
-        
-    }];
+    [self presentViewController:nav animated:YES completion:nil];
 }
 
 -(CGFloat)tableView:(UITableView *)tableView heightForRowAtIndexPath:(NSIndexPath *)indexPath {
@@ -387,6 +375,7 @@
             [UIView animateWithDuration:.23 animations:^{
                 [self.tableView setAlpha:0.0];
                 self.tableView.transform = CGAffineTransformMakeScale(.8, .8);
+                [_dynamicsDrawerViewController.view setAlpha:0.0];
             }];
         }
     }
@@ -415,7 +404,11 @@
     [manager DELETE:[NSString stringWithFormat:@"%@/comments/%@",kAPIBaseUrl,comment.identifier] parameters:nil success:^(AFHTTPRequestOperation *operation, id responseObject) {
         //NSLog(@"Success deleting comment: %@",responseObject);
         [feedback removeComment:comment];
+        
+        [self.tableView beginUpdates];
         [self.tableView deleteRowsAtIndexPaths:@[indexPathForDeletion] withRowAnimation:UITableViewRowAnimationFade];
+        [self.tableView endUpdates];
+        
     } failure:^(AFHTTPRequestOperation *operation, NSError *error) {
         NSLog(@"Error deleting comment: %@",error.description);
         [[[UIAlertView alloc] initWithTitle:@"Sorry" message:@"Something went wrong while trying to delete your feedback. Please try agian soon" delegate:nil cancelButtonTitle:@"Okay" otherButtonTitles:nil] show];
@@ -423,7 +416,7 @@
 }
 
 - (BOOL)tableView:(UITableView *)tableView canEditRowAtIndexPath:(NSIndexPath *)indexPath {
-    if (indexPath.section == 3){
+    if (indexPath.section >= 3){
         Feedback *feedback = [_story.feedbacks objectAtIndex:indexPath.section-3];
         Comment *comment = [feedback.comments objectAtIndex:indexPath.row];
         if (signedIn && comment.user.identifier && [[[NSUserDefaults standardUserDefaults] objectForKey:kUserDefaultsId] isEqualToNumber:comment.user.identifier]){

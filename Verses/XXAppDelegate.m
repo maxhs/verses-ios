@@ -35,6 +35,7 @@
 
 @synthesize manager = _manager;
 @synthesize backgroundURL = _backgroundURL;
+@synthesize currentUser = _currentUser;
 
 - (BOOL)application:(UIApplication *)application didFinishLaunchingWithOptions:(NSDictionary *)launchOptions
 {
@@ -46,12 +47,15 @@
     /*for (NSString* family in [UIFont familyNames]){
         NSLog(@"%@", family);
         for (NSString* name in [UIFont fontNamesForFamilyName: family])
-        {
             NSLog(@"  %@", name);
-        }
     }*/
     
-    [[[SDWebImageManager sharedManager] imageCache] clearDisk];
+    if ([[NSUserDefaults standardUserDefaults] objectForKey:kUserDefaultsId]){
+        _currentUser = [User MR_findFirstByAttribute:@"identifier" withValue:[[NSUserDefaults standardUserDefaults] objectForKey:kUserDefaultsId]];
+    } else {
+        _currentUser = [User MR_findFirstByAttribute:@"identifier" withValue:[NSNumber numberWithInt:0]];
+    }
+    
     self.dynamicsDrawerViewController = (MSDynamicsDrawerViewController *)self.window.rootViewController;
     self.dynamicsDrawerViewController.bounceElasticity = 2;
     self.dynamicsDrawerViewController.gravityMagnitude = 3;
@@ -149,8 +153,8 @@
 - (UIImageView *)windowBackground
 {
     if (!_windowBackground) {
-        if (_currentUser.backgroundImage) {
-            _windowBackground = [[UIImageView alloc] initWithImage:_currentUser.backgroundImage];
+        if (_currentUser.backgroundImageView) {
+            _windowBackground = _currentUser.backgroundImageView;
         } else {
             if (UI_USER_INTERFACE_IDIOM() == UIUserInterfaceIdiomPad){
                 _windowBackground = [[UIImageView alloc] initWithImage:[UIImage imageNamed:@"background_ipad"]];
@@ -158,9 +162,10 @@
                 _windowBackground = [[UIImageView alloc] initWithImage:[UIImage imageNamed:@"background"]];
             }
         }
-        
         [_windowBackground setAlpha:1];
     }
+    
+    [_windowBackground setContentMode:UIViewContentModeScaleAspectFill];
     return _windowBackground;
 }
 
@@ -178,12 +183,17 @@
     [[UIButton appearanceWhenContainedIn:[UISearchBar class], nil] setTitleColor:[UIColor whiteColor] forState:UIControlStateNormal];
     [[UIButton appearance] setTitleColor:kElectricBlue forState:UIControlStateHighlighted];
     [[UIButton appearance] setTitleColor:kElectricBlue forState:UIControlStateSelected];
-    
+    UIImage *backImage = [[UIImage imageNamed:@"back"] resizableImageWithCapInsets:UIEdgeInsetsMake(0, 23, 0, 10)];
+    [[UIBarButtonItem appearance] setBackButtonBackgroundImage:backImage forState:UIControlStateNormal barMetrics:UIBarMetricsDefault];
     NSShadow *clearShadow = [[NSShadow alloc] init];
     clearShadow.shadowColor = [UIColor clearColor];
     
+    [[UINavigationBar appearanceWhenContainedIn:[XXProfileViewController class], nil] setBackgroundImage:[UIImage new] forBarMetrics:UIBarMetricsDefault];
+    /*[[UINavigationBar appearanceWhenContainedIn:[XXProfileViewController class], nil] setShadowImage:[UIImage new]];
+    [[UINavigationBar appearanceWhenContainedIn:[XXProfileViewController class], nil] setTranslucent:YES];*/
+    
     [[UIBarButtonItem appearance] setTitleTextAttributes:@{
-                                                           NSFontAttributeName : [UIFont fontWithName:kSourceSansProRegular size:16],
+                                                           NSFontAttributeName : [UIFont fontWithName:kSourceSansProRegular size:17],
                                                            NSShadowAttributeName : clearShadow,
                                                            NSForegroundColorAttributeName : kElectricBlue,
                                                            } forState:UIControlStateNormal];
@@ -194,7 +204,7 @@
     [DTCoreTextFontDescriptor setOverrideFontName:@"CrimsonText-Roman" forFontFamily:@"Crimson" bold:NO italic:NO];
     [DTCoreTextFontDescriptor setOverrideFontName:@"CrimsonText-Italic" forFontFamily:@"Crimson" bold:NO italic:YES];
     [DTCoreTextFontDescriptor setOverrideFontName:@"CrimsonText-Semibold" forFontFamily:@"Crimson" bold:YES italic:NO];
-
+    [DTCoreTextFontDescriptor setOverrideFontName:@"Courier" forFontFamily:@"Courier" bold:YES italic:NO];
     [self switchBackgroundTheme];
 }
 
@@ -202,10 +212,7 @@
     NSShadow *clearShadow = [[NSShadow alloc] init];
     clearShadow.shadowColor = [UIColor clearColor];
     if ([[NSUserDefaults standardUserDefaults] boolForKey:kDarkBackground]){
-        
         [[UIApplication sharedApplication] setStatusBarStyle:UIStatusBarStyleLightContent animated:YES];
-        UIImage *backImage = [[UIImage imageNamed:@"whiteBack"] resizableImageWithCapInsets:UIEdgeInsetsMake(0, 23, 0, 10)];
-        [[UIBarButtonItem appearance] setBackButtonBackgroundImage:backImage forState:UIControlStateNormal barMetrics:UIBarMetricsDefault];
         [[UINavigationBar appearance] setTitleTextAttributes:@{
                                                                NSForegroundColorAttributeName: [UIColor whiteColor],
                                                                NSFontAttributeName: [UIFont fontWithName:kSourceSansProSemibold size:21],
@@ -220,8 +227,6 @@
         
     } else {
         [[UIApplication sharedApplication] setStatusBarStyle:UIStatusBarStyleDefault animated:YES];
-        UIImage *backImage = [[UIImage imageNamed:@"back"] resizableImageWithCapInsets:UIEdgeInsetsMake(0, 23, 0, 10)];
-        [[UIBarButtonItem appearance] setBackButtonBackgroundImage:backImage forState:UIControlStateNormal barMetrics:UIBarMetricsDefault];
         [[UINavigationBar appearance] setTitleTextAttributes:@{
                                                                NSForegroundColorAttributeName: [UIColor blackColor],
                                                                NSFontAttributeName: [UIFont fontWithName:kSourceSansProSemibold size:21],
@@ -230,7 +235,7 @@
         [UIView animateWithDuration:.23 animations:^{
             [_windowBackground setAlpha:1];
             [[UIBarButtonItem appearance] setTintColor:[UIColor blackColor]];
-            [self.window setBackgroundColor:[UIColor whiteColor]];
+            [self.window setBackgroundColor:[UIColor blackColor]];
             [[UINavigationBar appearance] setBarStyle:UIBarStyleDefault];
         }];
         
@@ -259,13 +264,13 @@
 - (void)application:(UIApplication *)application didReceiveRemoteNotification:(NSDictionary *)pushMessage
 {
     //[Flurry logEvent:@"Did Receive Remote Notification"];
-    //[[Mixpanel sharedInstance] track:@"Just received a push message"];
+    [[Mixpanel sharedInstance] track:@"Just received a push message"];
     //NSLog(@"Received push: %@",pushMessage);
     [self redirect:pushMessage];
 }
 
 - (BOOL)application:(UIApplication *)application handleOpenURL:(NSURL *)url {
-    NSLog(@"handle open url: %@",url);
+    NSLog(@"handle open url: %@, %@, %@",url, url.scheme, url.query);
     if ([[url scheme] isEqualToString:kUrlScheme]) {
         if ([[url query] length]) {
             NSDictionary *urlDict = [self parseQueryString:[url query]];
@@ -274,9 +279,15 @@
                 [vc setCircleId:[urlDict objectForKey:@"circle_id"]];
                 UINavigationController *nav = [[UINavigationController alloc] initWithRootViewController:vc];
                 [self.dynamicsDrawerViewController setPaneViewController:nav];
-            } else if ([urlDict objectForKey:@"story_id"]) {
+            } else if ([urlDict objectForKey:@"story_id"] && [urlDict objectForKey:@"story_id"] != [NSNull null]) {
                 XXStoryViewController *vc = [self.window.rootViewController.storyboard instantiateViewControllerWithIdentifier:@"Story"];
                 [vc setStoryId:[urlDict objectForKey:@"story_id"]];
+                UINavigationController *nav = [[UINavigationController alloc] initWithRootViewController:vc];
+                [self.dynamicsDrawerViewController setPaneViewController:nav];
+            } else if ([urlDict objectForKey:@"target_user_id"] && [urlDict objectForKey:@"target_user_id"] != [NSNull null]) {
+                XXProfileViewController *vc = [self.window.rootViewController.storyboard instantiateViewControllerWithIdentifier:@"Profile"];
+                [vc setUserId:[urlDict objectForKey:@"target_user_id"]];
+                NSLog(@"go to profile");
                 UINavigationController *nav = [[UINavigationController alloc] initWithRootViewController:vc];
                 [self.dynamicsDrawerViewController setPaneViewController:nav];
             }
@@ -290,7 +301,7 @@
   sourceApplication:(NSString *)sourceApplication
          annotation:(id)annotation
 {
-    NSLog(@"url: %@",url);
+    NSLog(@"open url: %@",url);
     if ([[url scheme] isEqualToString:kUrlScheme]) {
         if ([[url query] length]) {
             NSDictionary *urlDict = [self parseQueryString:[url query]];
@@ -304,6 +315,12 @@
                 [vc setStoryId:[urlDict objectForKey:@"story_id"]];
                 UINavigationController *nav = [[UINavigationController alloc] initWithRootViewController:vc];
                 [self.dynamicsDrawerViewController setPaneViewController:nav];
+            } else if ([urlDict objectForKey:@"target_user_id"] && [urlDict objectForKey:@"target_user_id"] != [NSNull null]) {
+                XXProfileViewController *vc = [self.window.rootViewController.storyboard instantiateViewControllerWithIdentifier:@"Profile"];
+                [vc setUserId:[urlDict objectForKey:@"target_user_id"]];
+                UINavigationController *nav = [[UINavigationController alloc] initWithRootViewController:vc];
+                [self.window.rootViewController presentViewController:nav animated:YES completion:nil];
+                //[self.dynamicsDrawerViewController setPaneViewController:nav];
             }
         }
     }
@@ -397,10 +414,10 @@
 
 - (void)cleanAndResetupDB {
     NSError *error = nil;
-    NSURL *storeURL = [NSPersistentStore MR_urlForStoreName:@"BuildHawk"];
+    NSURL *storeURL = [NSPersistentStore MR_urlForStoreName:@"Verses"];
     [MagicalRecord cleanUp];
     if([[NSFileManager defaultManager] removeItemAtURL:storeURL error:&error]){
-        [MagicalRecord setupCoreDataStackWithAutoMigratingSqliteStoreNamed:@"BuildHawk"];
+        [MagicalRecord setupCoreDataStackWithAutoMigratingSqliteStoreNamed:@"Verses"];
     } else{
         NSLog(@"Error deleting persistent store description: %@ %@", error.description,storeURL);
     }

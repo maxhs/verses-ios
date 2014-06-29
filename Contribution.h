@@ -20,6 +20,7 @@
 @property (nonatomic, retain) NSDate * updatedDate;
 @property (nonatomic, retain) NSDate * publishedDate;
 @property (nonatomic, retain) NSNumber * allowFeedback;
+@property (nonatomic, retain) NSNumber * draft;
 @property (nonatomic, retain) Story *story;
 @property (nonatomic, retain) NSOrderedSet *photos;
 @property (nonatomic, retain) User *user;

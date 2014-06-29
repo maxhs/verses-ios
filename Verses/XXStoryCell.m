@@ -48,9 +48,9 @@
     } else {
         width = screenHeight();
         if (IDIOM == IPAD){
-            height = screenWidth()/3;
-        } else {
             height = screenWidth()/2;
+        } else {
+            height = screenWidth();
         }
     }
     [_scrollView setContentSize:CGSizeMake(width*2, height)];
@@ -79,7 +79,7 @@
                 [_titleLabel setTextColor:[UIColor blackColor]];
                 [_authorLabel setTextColor:[UIColor blackColor]];
                 [_countLabel setTextColor:[UIColor blackColor]];
-                [UIView animateWithDuration:.5 animations:^{
+                [UIView animateWithDuration:.4 animations:^{
                     [_titleLabel setAlpha:1.0];
                     [_authorLabel setAlpha:1.0];
                     [_countLabel setAlpha:1.0];
@@ -91,7 +91,7 @@
                 UIImage *blurredImage = [image applyBlurWithRadius:21 blurType:BOXFILTER tintColor:[UIColor colorWithWhite:0 alpha:.13] saturationDeltaFactor:1.8 maskImage:nil];
                 dispatch_async(dispatch_get_main_queue(), ^{
                     [_backgroundImageView setImage:blurredImage];
-                    [UIView animateWithDuration:.5 animations:^{
+                    [UIView animateWithDuration:.4 animations:^{
                         [_backgroundImageView setAlpha:.75];
                         [_titleLabel setAlpha:1.0];
                         [_authorLabel setAlpha:1.0];
@@ -139,8 +139,12 @@
         bodyRect.size.height = containerHeight;
         [_bodySnippet setFrame:bodyRect];
     } else {
-        _bodySnippet.autoresizingMask = (UIViewAutoresizingFlexibleWidth | UIViewAutoresizingFlexibleBottomMargin);
+        CGRect bodyRect = _bodySnippet.frame;
+        bodyRect.size.width = width-spacer;
+        bodyRect.size.height = containerHeight;
+        [_bodySnippet setFrame:bodyRect];
     }
+    _bodySnippet.autoresizingMask = (UIViewAutoresizingFlexibleHeight);
     
     _bodySnippet.clipsToBounds = NO;
     _bodySnippet.textContainer.maximumNumberOfLines = 0;

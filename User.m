@@ -11,11 +11,11 @@
 @implementation User
 
 @dynamic authToken;
-@dynamic backgroundImage;
+@dynamic backgroundImageView;
 @dynamic bio;
-@dynamic contactCount;
 @dynamic dayJob;
 @dynamic email;
+@dynamic phone;
 @dynamic firstName;
 @dynamic identifier;
 @dynamic lastName;

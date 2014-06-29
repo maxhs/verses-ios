@@ -11,6 +11,8 @@
 #import "Photo+helper.h"
 #import "Contribution+helper.h"
 #import <DTCoreText/DTCoreText.h>
+#import "UIFontDescriptor+CrimsonText.h"
+#import "UIFontDescriptor+SourceSansPro.h"
 
 @implementation Story (helper)
 - (void)populateFromDict:(NSDictionary*)dictionary {
@@ -61,7 +63,6 @@
     }
     if ([dictionary objectForKey:@"bookmarked"] && [dictionary objectForKey:@"bookmarked"] != [NSNull null]) {
         //for determining whether the current user has bookmarked this story
-        NSLog(@"BOOKMARKED? %@",[dictionary objectForKey:@"bookmarked"]);
         self.bookmarked = [dictionary objectForKey:@"bookmarked"];
     }
     if ([dictionary objectForKey:@"owner"] && [dictionary objectForKey:@"owner"] != [NSNull null]) {
@@ -164,12 +165,10 @@
         self.contributions = orderedContributions;
         
         int rangeAmount;
-        if (self.mystery){
+        if ([self.mystery isEqualToNumber:[NSNumber numberWithBool:YES]]){
             rangeAmount = 250;
-        } else if (IDIOM == IPAD) {
-            rangeAmount = 1000;
         } else {
-            rangeAmount = 700;
+            rangeAmount = 2000;
         }
         NSRange range;
         if ([[self.contributions.firstObject body] length] > rangeAmount){
@@ -178,12 +177,35 @@
             range = NSMakeRange(0, [[self.contributions.firstObject body] length]);
         }
         
+        DTCSSStylesheet *styleSheet = [[DTCSSStylesheet alloc] initWithStyleBlock:@".screen {font-family:'Courier';}"];
+        
         NSDictionary *options = @{DTUseiOS6Attributes: [NSNumber numberWithBool:YES],
                                   DTDefaultFontSize: @21,
+                                  DTDefaultStyleSheet: styleSheet,
                                   DTDefaultFontFamily: @"Crimson Text",
                                   NSTextEncodingNameDocumentOption: @"UTF-8"};
         DTHTMLAttributedStringBuilder *stringBuilder = [[DTHTMLAttributedStringBuilder alloc] initWithHTML:[[[self.contributions.firstObject body] substringWithRange:range] dataUsingEncoding:NSUTF8StringEncoding] options:options documentAttributes:nil];
-        self.attributedSnippet = [stringBuilder generatedAttributedString];
+        NSMutableAttributedString *mutableString = [stringBuilder generatedAttributedString].mutableCopy;
+        
+        [mutableString enumerateAttributesInRange:NSMakeRange(0, mutableString.length) options:NSAttributedStringEnumerationLongestEffectiveRangeNotRequired usingBlock:^(NSDictionary *attrs, NSRange range, BOOL *stop) {
+
+            if ([[attrs objectForKey:@"DTHeaderLevel"]  isEqual: @1]){
+                [mutableString addAttribute:NSFontAttributeName value:[UIFont fontWithDescriptor:[[UIFontDescriptor preferredSourceSansProFontDescriptorWithTextStyle:UIFontTextStyleHeadline] fontDescriptorWithSymbolicTraits:UIFontDescriptorTraitBold] size:0] range:range];
+                NSMutableParagraphStyle *centerStyle = [[NSMutableParagraphStyle alloc] init];
+                [mutableString addAttribute:NSParagraphStyleAttributeName value:centerStyle range:range];
+                
+            } else if ([[attrs objectForKey:@"DTHeaderLevel"]  isEqual: @2] || [[attrs objectForKey:@"DTHeaderLevel"]  isEqual: @3]){
+                [mutableString addAttribute:NSFontAttributeName value:[UIFont fontWithDescriptor:[[UIFontDescriptor preferredSourceSansProFontDescriptorWithTextStyle:UIFontTextStyleSubheadline] fontDescriptorWithSymbolicTraits:UIFontDescriptorTraitBold] size:0] range:range];
+                
+                
+            } else if ([[attrs objectForKey:@"DTBlockquote"]  isEqual: @1]){
+                [mutableString addAttribute:NSFontAttributeName value:[UIFont fontWithDescriptor:[UIFontDescriptor preferredCrimsonTextFontDescriptorWithTextStyle:CrimsonTextBlockquoteStyle] size:0] range:range];
+                NSMutableParagraphStyle *centerStyle = [[NSMutableParagraphStyle alloc] init];
+                [mutableString addAttribute:NSParagraphStyleAttributeName value:centerStyle range:range];
+            }
+        }];
+        [mutableString endEditing];
+        self.attributedSnippet = mutableString;
     }
 }
 

@@ -12,6 +12,7 @@
 #import <SDWebImage/UIButton+WebCache.h>
 #import "XXStoryViewController.h"
 #import "XXLoginController.h"
+#import "XXStoriesViewController.h"
 
 @interface XXProfileViewController () {
     AFHTTPRequestOperationManager *manager;
@@ -21,6 +22,7 @@
     NSDateFormatter *_dateFormatter;
     UIImageView *userBlurredBackground;
     UIView *profileCellContentView;
+    XXAppDelegate *delegate;
 }
 
 @end
@@ -33,7 +35,8 @@
 - (void)viewDidLoad
 {
     [super viewDidLoad];
-    manager = [(XXAppDelegate*)[UIApplication sharedApplication].delegate manager];
+    delegate = (XXAppDelegate*)[UIApplication sharedApplication].delegate;
+    manager = [delegate manager];
     if (_user){
         [self loadUserDetails:_user.identifier];
     } else if (_userId) {
@@ -45,8 +48,7 @@
     [_dateFormatter setLocale:[NSLocale currentLocale]];
     [_dateFormatter setDateFormat:@"MMM, d  |  h:mm a"];
     //navBarShadowView = [Utilities findNavShadow:self.navigationController.navigationBar];
-    [self.navigationController.navigationBar setBackgroundImage:[UIImage new]
-                             forBarMetrics:UIBarMetricsDefault];
+    [self.navigationController.navigationBar setBackgroundImage:[UIImage new] forBarMetrics:UIBarMetricsDefault];
     self.navigationController.navigationBar.shadowImage = [UIImage new];
     self.navigationController.navigationBar.translucent = YES;
     [[NSNotificationCenter defaultCenter] addObserver:self selector:@selector(showLogin) name:@"ShowLogin" object:nil];
@@ -55,6 +57,8 @@
 - (void)viewWillAppear:(BOOL)animated {
     [super viewWillAppear:animated];
     [[UIApplication sharedApplication] setStatusBarHidden:NO withAnimation:UIStatusBarAnimationFade];
+    [self setNeedsStatusBarAppearanceUpdate];
+    
     if ([[NSUserDefaults standardUserDefaults] boolForKey:kDarkBackground]){
         [self.view setBackgroundColor:[UIColor clearColor]];
         textColor = [UIColor whiteColor];
@@ -83,9 +87,9 @@
 }
 
 - (void)back {
-    MSDynamicsDrawerViewController *drawerView = [(XXAppDelegate*)[UIApplication sharedApplication].delegate dynamicsDrawerViewController];
+    MSDynamicsDrawerViewController *drawerView = [delegate dynamicsDrawerViewController];
     if ([[(UINavigationController*)drawerView.paneViewController viewControllers] firstObject] == self){
-        [[(XXAppDelegate*)[UIApplication sharedApplication].delegate dynamicsDrawerViewController] setPaneState:MSDynamicsDrawerPaneStateOpen inDirection:MSDynamicsDrawerDirectionLeft animated:YES allowUserInterruption:NO completion:nil];
+        [[delegate dynamicsDrawerViewController] setPaneState:MSDynamicsDrawerPaneStateOpen inDirection:MSDynamicsDrawerDirectionLeft animated:YES allowUserInterruption:NO completion:nil];
     } else {
         [self dismissViewControllerAnimated:YES completion:^{
             
@@ -99,11 +103,25 @@
         [parameters setObject:[[NSUserDefaults standardUserDefaults] objectForKey:kUserDefaultsId] forKey:@"user_id"];
     }
     [manager GET:[NSString stringWithFormat:@"%@/users/%@",kAPIBaseUrl,identifier] parameters:parameters success:^(AFHTTPRequestOperation *operation, id responseObject) {
-        [_user populateFromDict:[responseObject objectForKey:@"user"]];
-        //NSLog(@"success getting user details: %@",responseObject);
+        if (_user){
+            [_user populateFromDict:[responseObject objectForKey:@"user"]];
+        } else {
+            _user = [User MR_findFirstByAttribute:@"identifier" withValue:[[responseObject objectForKey:@"user"] objectForKey:@"id"]];
+            if (!_user){
+                _user = [User MR_createInContext:[NSManagedObjectContext MR_defaultContext]];
+            }
+            [_user populateFromDict:[responseObject objectForKey:@"user"]];
+        }
+        
         [[NSManagedObjectContext MR_defaultContext] MR_saveToPersistentStoreWithCompletion:^(BOOL success, NSError *error) {
-            [self.tableView reloadSections:[NSIndexSet indexSetWithIndex:0] withRowAnimation:UITableViewRowAnimationNone];
-            [self.tableView reloadSections:[NSIndexSet indexSetWithIndex:1] withRowAnimation:UITableViewRowAnimationFade];
+            if (self.tableView.numberOfSections){
+                [self.tableView beginUpdates];
+                [self.tableView reloadSections:[NSIndexSet indexSetWithIndex:0] withRowAnimation:UITableViewRowAnimationNone];
+                [self.tableView reloadSections:[NSIndexSet indexSetWithIndex:1] withRowAnimation:UITableViewRowAnimationFade];
+                [self.tableView endUpdates];
+            } else {
+                [self.tableView reloadData];
+            }
         }];
     
     } failure:^(AFHTTPRequestOperation *operation, NSError *error) {
@@ -131,7 +149,11 @@
     if (section == 0){
         return 1;
     } else {
-        return _user.stories.count;
+        if (_user.stories.count){
+            return _user.stories.count;
+        } else {
+            return 1;
+        }
     }
 }
 
@@ -150,15 +172,40 @@
         userBlurredBackground = cell.blurredBackground;
         profileCellContentView = cell.contentView;
         
+        if ([[NSUserDefaults standardUserDefaults] boolForKey:kDarkBackground]){
+            [cell.nameLabel setTextColor:[UIColor whiteColor]];
+            [cell.dayJobLabel setTextColor:[UIColor whiteColor]];
+            [cell.locationLabel setTextColor:[UIColor whiteColor]];
+            [cell.bioLabel setTextColor:[UIColor whiteColor]];
+        } else {
+            [cell.dayJobLabel setTextColor:[UIColor blackColor]];
+            [cell.locationLabel setTextColor:[UIColor blackColor]];
+            [cell.nameLabel setTextColor:[UIColor blackColor]];
+            [cell.bioLabel setTextColor:[UIColor blackColor]];
+        }
+        
         return cell;
     } else {
         XXProfileStoryCell *cell = (XXProfileStoryCell *)[tableView dequeueReusableCellWithIdentifier:@"ProfileStoryCell"];
         if (cell == nil) {
             cell = [[[NSBundle mainBundle] loadNibNamed:@"XXProfileStoryCell" owner:nil options:nil] lastObject];
         }
-        Story *story = [_user.stories objectAtIndex:indexPath.row];
-        [cell configureStory:story withTextColor:textColor];
-        [cell.subtitleLabel setText:[_dateFormatter stringFromDate:story.updatedDate]];
+        if (_user.stories.count){
+            Story *story = [_user.stories objectAtIndex:indexPath.row];
+            [cell configureStory:story withTextColor:textColor];
+            [cell.subtitleLabel setText:[_dateFormatter stringFromDate:story.updatedDate]];
+            cell.selectionStyle = UITableViewCellSelectionStyleDefault;
+        } else {
+            [cell.textLabel setText:@"No published stories"];
+            if ([[NSUserDefaults standardUserDefaults] boolForKey:kDarkBackground]){
+                [cell.textLabel setTextColor:[UIColor whiteColor]];
+            } else {
+                [cell.textLabel setTextColor:[UIColor lightGrayColor]];
+            }
+            [cell.textLabel setFont:[UIFont fontWithName:kSourceSansProItalic size:15]];
+            [cell.textLabel setTextAlignment:NSTextAlignmentCenter];
+            cell.selectionStyle = UITableViewCellSelectionStyleNone;
+        }
         return cell;
     }
 }
@@ -170,7 +217,12 @@
     }
     cell.backgroundColor = [UIColor clearColor];
     UIView *selectedView = [[UIView alloc] initWithFrame:cell.frame];
-    [selectedView setBackgroundColor:[UIColor colorWithWhite:.9 alpha:.1]];
+    if ([[NSUserDefaults standardUserDefaults] boolForKey:kDarkBackground]){
+        [selectedView setBackgroundColor:kTableViewCellSelectionColorDark];
+    } else {
+        [selectedView setBackgroundColor:kTableViewCellSelectionColor];
+    }
+    
     cell.selectedBackgroundView = selectedView;
 }
 
@@ -203,17 +255,38 @@
 - (void)tableView:(UITableView *)tableView didSelectRowAtIndexPath:(NSIndexPath *)indexPath {
     if (indexPath.section == 1){
         [tableView deselectRowAtIndexPath:indexPath animated:YES];
-        if (IDIOM == IPAD){
+        if (_user.stories.count){
             Story *story = [_user.stories objectAtIndex:indexPath.row];
             [[NSNotificationCenter defaultCenter] postNotificationName:@"ResetStory" object:nil userInfo:@{@"story":story}];
-            [ProgressHUD show:@"Fetching story..."];
-            _storyInfoVc.story = story;
-            [_storyInfoVc.popover dismissPopoverAnimated:YES];
-            [[(XXAppDelegate*)[UIApplication sharedApplication].delegate dynamicsDrawerViewController] setPaneState:MSDynamicsDrawerPaneStateClosed animated:YES allowUserInterruption:YES completion:^{
+            [[UIApplication sharedApplication] setStatusBarHidden:NO withAnimation:UIStatusBarAnimationFade];
+            
+            if (IDIOM == IPAD){
+                [ProgressHUD show:@"Fetching story..."];
+                _storyInfoVc.story = story;
+                [_storyInfoVc.popover dismissPopoverAnimated:YES];
+                [[delegate dynamicsDrawerViewController] setPaneState:MSDynamicsDrawerPaneStateClosed animated:YES allowUserInterruption:YES completion:^{
+                    
+                }];
+            } else {
+                XXStoriesViewController *vc = [[self storyboard] instantiateViewControllerWithIdentifier:@"Stories"];
+                [vc setEther:YES];
+                XXStoryViewController *storyVC = [[self storyboard] instantiateViewControllerWithIdentifier:@"Story"];
+                [storyVC setStoryId:story.identifier];
+                [[NSNotificationCenter defaultCenter] postNotificationName:@"ReloadStoryInfo" object:nil userInfo:@{@"story":story}];
+                UINavigationController *nav = [[UINavigationController alloc] init];
+                nav.viewControllers = @[vc,storyVC];
+                [[delegate dynamicsDrawerViewController] setPaneViewController:nav];
                 
-            }];
-        } else {
-            [self performSegueWithIdentifier:@"Read" sender:indexPath];
+                if ([self.presentingViewController isKindOfClass:[MSDynamicsDrawerViewController class]]){
+                    [[delegate dynamicsDrawerViewController] setPaneState:MSDynamicsDrawerPaneStateClosed animated:NO allowUserInterruption:NO completion:^{
+                        [self dismissViewControllerAnimated:YES completion:nil];
+                    }];
+                } else if ([self.presentingViewController isKindOfClass:[UINavigationController class]] && [(UINavigationController*)self.presentingViewController viewControllers]) {
+                    [self.presentingViewController.presentingViewController dismissViewControllerAnimated:YES completion:^{
+                        
+                    }];
+                }
+            }
         }
     }
     
@@ -235,59 +308,6 @@
             }];
         }
     }
-}
-/*
-// Override to support conditional editing of the table view.
-- (BOOL)tableView:(UITableView *)tableView canEditRowAtIndexPath:(NSIndexPath *)indexPath
-{
-    // Return NO if you do not want the specified item to be editable.
-    return YES;
-}
-*/
-
-/*
-// Override to support editing the table view.
-- (void)tableView:(UITableView *)tableView commitEditingStyle:(UITableViewCellEditingStyle)editingStyle forRowAtIndexPath:(NSIndexPath *)indexPath
-{
-    if (editingStyle == UITableViewCellEditingStyleDelete) {
-        // Delete the row from the data source
-        [tableView deleteRowsAtIndexPaths:@[indexPath] withRowAnimation:UITableViewRowAnimationFade];
-    } else if (editingStyle == UITableViewCellEditingStyleInsert) {
-        // Create a new instance of the appropriate class, insert it into the array, and add a new row to the table view
-    }   
-}
-*/
-
-/*
-// Override to support rearranging the table view.
-- (void)tableView:(UITableView *)tableView moveRowAtIndexPath:(NSIndexPath *)fromIndexPath toIndexPath:(NSIndexPath *)toIndexPath
-{
-}
-*/
-
-/*
-// Override to support conditional rearranging of the table view.
-- (BOOL)tableView:(UITableView *)tableView canMoveRowAtIndexPath:(NSIndexPath *)indexPath
-{
-    // Return NO if you do not want the item to be re-orderable.
-    return YES;
-}
-*/
-
-/*
-#pragma mark - Navigation
-
-// In a storyboard-based application, you will often want to do a little preparation before navigation
-- (void)prepareForSegue:(UIStoryboardSegue *)segue sender:(id)sender
-{
-    // Get the new view controller using [segue destinationViewController].
-    // Pass the selected object to the new view controller.
-}
-*/
-
-- (void)viewWillDisappear:(BOOL)animated {
-    [super viewWillDisappear:animated];
-    //[[UIApplication sharedApplication] setStatusBarHidden:YES withAnimation:UIStatusBarAnimationFade];
 }
 
 @end

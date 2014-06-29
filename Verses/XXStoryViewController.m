@@ -7,7 +7,6 @@
 //
 
 #import "XXStoryViewController.h"
-//#import "XXStoriesViewController.h"
 #import "XXStoryInfoViewController.h"
 #import "XXStoryCell.h"
 #import "XXStoryBodyCell.h"
@@ -28,6 +27,7 @@
 #import "XXFlagContentViewController.h"
 #import "XXNoRotateNavController.h"
 #import "XXLoginController.h"
+#import <Mixpanel/Mixpanel.h>
 
 @interface XXStoryViewController () <UIViewControllerTransitioningDelegate, UIAlertViewDelegate> {
     AFHTTPRequestOperationManager *manager;
@@ -90,10 +90,7 @@
 
 - (void)viewDidLoad
 {
-    if ([self respondsToSelector:@selector(edgesForExtendedLayout)]){
-        //self.edgesForExtendedLayout = UIRectEdgeNone;
-        self.automaticallyAdjustsScrollViewInsets = NO;
-    }
+    self.automaticallyAdjustsScrollViewInsets = NO;
     orientation = self.interfaceOrientation;
     if (UIInterfaceOrientationIsPortrait(orientation)){
         width = screenWidth();
@@ -121,15 +118,17 @@
     delegate = (XXAppDelegate*)[UIApplication sharedApplication].delegate;
     [delegate.dynamicsDrawerViewController setPaneDragRevealEnabled:YES forDirection:MSDynamicsDrawerDirectionRight];
     manager = delegate.manager;
-    if (delegate.currentUser){
-        currentUser = delegate.currentUser;
+    
+    if ([[NSUserDefaults standardUserDefaults] objectForKey:kUserDefaultsId]){
+        signedIn = YES;
+        if (delegate.currentUser){
+            currentUser = delegate.currentUser;
+        } else {
+            currentUser = [User MR_findFirstByAttribute:@"identifier" withValue:[[NSUserDefaults standardUserDefaults] objectForKey:kUserDefaultsId]];
+        }
     } else {
-        currentUser = [User MR_findFirstByAttribute:@"identifier" withValue:[[NSUserDefaults standardUserDefaults] objectForKey:kUserDefaultsId]];
+        signedIn = NO;
     }
-    
-    if ([[NSUserDefaults standardUserDefaults] objectForKey:kUserDefaultsId]) signedIn = YES;
-    else signedIn = NO;
-    
     tapGesture = [[UITapGestureRecognizer alloc] initWithTarget:self action:@selector(toggleNavBar:)];
     [self.view addGestureRecognizer:tapGesture];
     canLoadMore = YES;
@@ -166,6 +165,9 @@
     [[NSNotificationCenter defaultCenter] addObserver:self
                                              selector:@selector(addFeedback:)
                                                  name:@"AddFeedback" object:nil];
+    [[NSNotificationCenter defaultCenter] addObserver:self
+                                             selector:@selector(flagContent)
+                                                 name:@"CreateFlag" object:nil];
     [[NSNotificationCenter defaultCenter] addObserver:self selector:@selector(resetStory:) name:@"ResetStory" object:nil];
     [[NSNotificationCenter defaultCenter] addObserver:self selector:@selector(storyFlagged) name:@"StoryFlagged" object:nil];
     [super viewDidLoad];
@@ -174,7 +176,7 @@
 - (void)viewWillAppear:(BOOL)animated {
     [super viewWillAppear:animated];
     navBarShadowView.hidden = YES;
-    
+    [[UIApplication sharedApplication] setStatusBarHidden:NO withAnimation:UIStatusBarAnimationFade];
     if ([[NSUserDefaults standardUserDefaults] boolForKey:kDarkBackground]){
         [self.view setBackgroundColor:[UIColor clearColor]];
         textColor = [UIColor whiteColor];
@@ -216,7 +218,7 @@
     [manager GET:[NSString stringWithFormat:@"%@/stories/%@",kAPIBaseUrl,identifier] parameters:parameters success:^(AFHTTPRequestOperation *operation, id responseObject) {
         //NSLog(@"load story response: %@",responseObject);
         _story = [Story MR_findFirstByAttribute:@"identifier" withValue:identifier];
-        if (_story) {
+        if (!_story) {
             _story = [Story MR_createInContext:[NSManagedObjectContext MR_defaultContext]];
         }
         [_story populateFromDict:[responseObject objectForKey:@"story"]];
@@ -260,7 +262,7 @@
 }
 
 - (void)createBookmark {
-    if (![_story.identifier isEqualToNumber:[NSNumber numberWithInt:0]]){
+    if (signedIn && ![_story.identifier isEqualToNumber:[NSNumber numberWithInt:0]]){
         Bookmark *bookmark = [Bookmark MR_findFirstByAttribute:@"story.identifier" withValue:_story.identifier];
         if (!bookmark) {
             bookmark = [Bookmark MR_createInContext:[NSManagedObjectContext MR_defaultContext]];
@@ -364,7 +366,7 @@
 }
 
 - (void)setupNavButtons {
-    if (signedIn && [_story.owner.identifier isEqualToNumber:[[NSUserDefaults standardUserDefaults] objectForKey:kUserDefaultsId]]){
+    if (signedIn && [_story.owner.identifier isEqualToNumber:[[NSUserDefaults standardUserDefaults] objectForKey:kUserDefaultsId]] && _story.contributions.count <= 1){
         editButton = [[UIBarButtonItem alloc] initWithImage:[UIImage imageNamed:@"whitePencil"] style:UIBarButtonItemStylePlain target:self action:@selector(edit)];
     } else if (signedIn && [_story.bookmarked isEqualToNumber:[NSNumber numberWithBool:YES]]){
         editButton = [[UIBarButtonItem alloc] initWithImage:[UIImage imageNamed:@"bookmarked"] style:UIBarButtonItemStylePlain target:self action:@selector(destroyBookmark)];
@@ -490,9 +492,9 @@
     contributionOffset = 0;
     titleFrame = CGRectZero;
     authorsFrame = CGRectZero;
-    _imageButton = nil;
+    _storyPhoto = nil;
     for (id obj in _scrollView.subviews) {
-        if ([obj isKindOfClass:[XXTextView class]] || [(UIView*)obj tag] == kSeparatorTag || [obj isKindOfClass:[UIButton class]]) {
+        if ([obj isKindOfClass:[XXTextView class]] || [(UIView*)obj tag] == kSeparatorTag || [obj isKindOfClass:[UIButton class]] || [obj isKindOfClass:[XXStoryPhoto class]]) {
             [obj removeFromSuperview];
         }
     }
@@ -565,8 +567,7 @@
     paragraphStyle.lineSpacing = 3.f;
     paragraphStyle.paragraphSpacing = 27.f;
     
-    
-    NSDictionary* attributes = @{NSFontAttributeName:[UIFont fontWithDescriptor:[UIFontDescriptor preferredCrimsonTextFontDescriptorWithTextStyle:UIFontTextStyleBody] size:0],
+    NSDictionary* attributes = @{/*NSFontAttributeName:[UIFont fontWithDescriptor:[UIFontDescriptor preferredCrimsonTextFontDescriptorWithTextStyle:UIFontTextStyleBody] size:0],*/
                                  NSParagraphStyleAttributeName : paragraphStyle,
                                  NSDocumentTypeDocumentAttribute:NSHTMLTextDocumentType,
                                  };
@@ -574,9 +575,19 @@
     //This is the non-dt core text version
     /*NSError *error;
      NSDictionary *documentAttributes;
-     NSMutableAttributedString *attributedContributionBody = [[NSMutableAttributedString alloc] initWithData:[contribution.body dataUsingEncoding:NSUnicodeStringEncoding] options:attributes documentAttributes:&documentAttributes error:&error];*/
+     NSMutableAttributedString *attributedContributionBody = [[NSMutableAttributedString alloc] initWithData:[contribution.body dataUsingEncoding:NSUnicodeStringEncoding] options:attributes documentAttributes:&documentAttributes error:&error];
+    NSMutableAttributedString* attributedContributionBody = [[NSMutableAttributedString alloc] initWithHTMLData:[contribution.body dataUsingEncoding:NSUTF8StringEncoding] options:@{NSTextEncodingNameDocumentOption: @"UTF-8"} documentAttributes:nil];*/
     
-    NSMutableAttributedString* attributedContributionBody = [[NSMutableAttributedString alloc] initWithHTMLData:[contribution.body dataUsingEncoding:NSUTF8StringEncoding] options:@{NSTextEncodingNameDocumentOption: @"UTF-8"} documentAttributes:nil];
+    DTCSSStylesheet *styleSheet = [[DTCSSStylesheet alloc] initWithStyleBlock:@".screen {font-family:'Courier';}.screen.actor{text-transform:uppercase;text-align:center;width:100%;display:block;}"];
+    
+    NSDictionary *options = @{DTUseiOS6Attributes: [NSNumber numberWithBool:YES],
+                              DTDefaultFontSize: @21,
+                              DTDefaultFontFamily: @"Crimson Text",
+                              DTDefaultStyleSheet: styleSheet,
+                              NSTextEncodingNameDocumentOption: @"UTF-8"};
+    DTHTMLAttributedStringBuilder *stringBuilder = [[DTHTMLAttributedStringBuilder alloc] initWithHTML:[contribution.body dataUsingEncoding:NSUTF8StringEncoding] options:options documentAttributes:nil];
+    NSMutableAttributedString *attributedContributionBody = [stringBuilder generatedAttributedString].mutableCopy;
+    
     [attributedContributionBody beginEditing];
     [attributedContributionBody addAttributes:attributes range:NSMakeRange(0, attributedContributionBody.length)];
     [attributedContributionBody enumerateAttributesInRange:NSMakeRange(0, attributedContributionBody.length) options:NSAttributedStringEnumerationLongestEffectiveRangeNotRequired usingBlock:^(NSDictionary *attrs, NSRange range, BOOL *stop) {
@@ -650,6 +661,21 @@
         [nameLabel setTag:kSeparatorTag];
         [_scrollView addSubview:nameLabel];
         
+        if (signedIn){
+            if ([contribution.user.identifier isEqualToNumber:[[NSUserDefaults standardUserDefaults] objectForKey:kUserDefaultsId]]){
+                UIButton *editContributionButton = [UIButton buttonWithType:UIButtonTypeCustom];
+                [editContributionButton setFrame:CGRectMake(screenWidth()-60, contributionOffset, 50, 50)];
+                if ([[NSUserDefaults standardUserDefaults] boolForKey:kDarkBackground]){
+                    [editContributionButton setImage:[UIImage imageNamed:@"whitePencil"] forState:UIControlStateNormal];
+                } else {
+                    [editContributionButton setImage:[UIImage imageNamed:@"pencil"] forState:UIControlStateNormal];
+                }
+                [editContributionButton setTag:[_story.contributions indexOfObject:contribution]];
+                [editContributionButton addTarget:self action:@selector(editContribution:) forControlEvents:UIControlEventTouchUpInside];
+                [_scrollView addSubview:editContributionButton];
+            }
+        }
+        
         contributionOffset += 53;
         
         XXTextView *textView = [[XXTextView alloc] initWithFrame:CGRectMake(spacer/2,contributionOffset,width-spacer,height)];
@@ -674,6 +700,7 @@
         
         contributionOffset += mysteryFrame.size.height;
         
+        [textView.flagButton addTarget:self action:@selector(flagContent) forControlEvents:UIControlEventTouchUpInside];
         /*UIView *separator = [[UIView alloc] initWithFrame:CGRectMake(spacer, contributionOffset, width-spacer*2, 1)];
         [separator setTag:kSeparatorTag];
         [separator setBackgroundColor:kSeparatorColor];
@@ -712,6 +739,7 @@
                 [userImgButton.layer setBackgroundColor:[UIColor clearColor].CGColor];
                 [userImgButton setBackgroundColor:[UIColor clearColor]];
             }
+            [userImgButton setFrame:CGRectMake(spacer/2, contributionOffset, 50, 50)];
             [userImgButton setTag:[_story.contributions indexOfObject:contribution]];
             [userImgButton addTarget:self action:@selector(goToProfile:) forControlEvents:UIControlEventTouchUpInside];
             [_scrollView addSubview:userImgButton];
@@ -722,6 +750,19 @@
             [nameLabel setNumberOfLines:0];
             [nameLabel setTag:kSeparatorTag];
             [_scrollView addSubview:nameLabel];
+            
+            if (signedIn && [contribution.user.identifier isEqualToNumber:[[NSUserDefaults standardUserDefaults] objectForKey:kUserDefaultsId]]){
+                UIButton *editContributionButton = [UIButton buttonWithType:UIButtonTypeCustom];
+                [editContributionButton setFrame:CGRectMake(screenWidth()-60, contributionOffset, 50, 50)];
+                if ([[NSUserDefaults standardUserDefaults] boolForKey:kDarkBackground]){
+                    [editContributionButton setImage:[UIImage imageNamed:@"whitePencil"] forState:UIControlStateNormal];
+                } else {
+                    [editContributionButton setImage:[UIImage imageNamed:@"pencil"] forState:UIControlStateNormal];
+                }
+                [editContributionButton setTag:[_story.contributions indexOfObject:contribution]];
+                [editContributionButton addTarget:self action:@selector(editContribution:) forControlEvents:UIControlEventTouchUpInside];
+                [_scrollView addSubview:editContributionButton];
+            }
             contributionOffset += 53;
         }
         
@@ -751,6 +792,23 @@
     }
 }
 
+- (void)editContribution:(UIButton*)button {
+    Contribution *contribution = [_story.contributions objectAtIndex:button.tag];
+    XXWriteViewController *vc = [[self storyboard] instantiateViewControllerWithIdentifier:@"Write"];
+    [vc setContribution:contribution];
+    [vc setEditMode:YES];
+    UINavigationController *nav = [[UINavigationController alloc] initWithRootViewController:vc];
+    
+    if ([[NSUserDefaults standardUserDefaults] boolForKey:kDarkBackground]){
+        [UIView animateWithDuration:.23 animations:^{
+            [_scrollView setAlpha:0.0];
+            _scrollView.transform = CGAffineTransformMakeScale(.8, .8);
+        }];
+    }
+    
+    [self presentViewController:nav animated:YES completion:nil];
+}
+
 - (void)drawStoryBody {
     [self setupNavButtons];
     CGFloat textSize;
@@ -778,20 +836,21 @@
     [self drawAuthors];
     
     if (_story.photos.count){
-        [_imageButton setHidden:NO];
-        if (_imageButton == nil) {
-            _imageButton = [[XXPhotoButton alloc] initWithFrame:CGRectMake(0, 0, width, imageHeight)];
-            [_scrollView addSubview:_imageButton];
+        [_storyPhoto setHidden:NO];
+        if (_storyPhoto == nil) {
+            _storyPhoto = [[XXStoryPhoto alloc] initWithFrame:CGRectMake(0, 0, width, imageHeight)];
+            [_scrollView addSubview:_storyPhoto];
         } else {
-            [_imageButton setFrame:CGRectMake(0, 0, width, imageHeight)];
+            [_storyPhoto setFrame:CGRectMake(0, 0, width, imageHeight)];
         }
-        [_imageButton.imageView setContentMode:UIViewContentModeScaleAspectFill];
-        [_imageButton initializeWithPhoto:(Photo*)_story.photos.firstObject forStory:_story inVC:self];
-        [_imageButton setUserInteractionEnabled:NO];
+        [_storyPhoto.imageView setContentMode:UIViewContentModeScaleAspectFill];
+        [_storyPhoto initializeWithPhoto:(Photo*)_story.photos.firstObject forStory:_story inVC:self withButton:NO];
+        [_storyPhoto setUserInteractionEnabled:NO];
         [_titleLabel setTextColor:textColor];
         [_authorsLabel setTextColor:textColor];
+
     } else {
-        [_imageButton setHidden:YES];
+        [_storyPhoto setHidden:YES];
         [_titleLabel setTextColor:textColor];
         _titleLabel.layer.shadowColor = [UIColor clearColor].CGColor;
         _titleLabel.layer.shadowOpacity = 0.f;
@@ -818,7 +877,10 @@
     } else {
         for (Contribution *contribution in _story.contributions){
             if (contribution.body.length){
-                [self generateAttributedString:contribution];
+                if ([contribution.draft isEqualToNumber:[NSNumber numberWithBool:NO]]  || [contribution.user.identifier isEqualToNumber:[[NSUserDefaults standardUserDefaults] objectForKey:kUserDefaultsId]]){
+                    //this is the method that generates the contribution string. it then calls the method to draw the contribution.
+                    [self generateAttributedString:contribution];
+                }
             }
         }
     }
@@ -838,7 +900,7 @@
         [_scrollView addSubview:addSlowRevealButton];
         contributionOffset += addSlowRevealButton.frame.size.height;
         
-        flagButton = [UIButton buttonWithType:UIButtonTypeCustom];
+        /*flagButton = [UIButton buttonWithType:UIButtonTypeCustom];
         [flagButton setAutoresizingMask:UIViewAutoresizingFlexibleWidth];
         [flagButton setFrame:CGRectMake(width/2-41, contributionOffset+20, 82, 48)];
         [flagButton setTitle:@"Flag" forState:UIControlStateNormal];
@@ -851,25 +913,30 @@
         flagButton.layer.borderWidth = .5f;
         flagButton.layer.cornerRadius = 14.f;
         flagButton.clipsToBounds = YES;
-        [_scrollView addSubview:flagButton];
+        [_scrollView addSubview:flagButton];*/
         contributionOffset += 88;
         
     } else {
         
         shouldShareButton = [UIButton buttonWithType:UIButtonTypeCustom];
         [shouldShareButton setAutoresizingMask:UIViewAutoresizingFlexibleWidth];
-        [shouldShareButton setFrame:CGRectMake(width/4-41, contributionOffset + 42, 82, 48)];
+        [shouldShareButton setFrame:CGRectMake(width/2-41, contributionOffset + 42, 82, 48)];
         [shouldShareButton setTitle:@"Share" forState:UIControlStateNormal];
         [shouldShareButton.titleLabel setFont:[UIFont fontWithName:kSourceSansProRegular size:16]];
         [shouldShareButton addTarget:self action:@selector(showActivityView) forControlEvents:UIControlEventTouchUpInside];
         [shouldShareButton setTitleColor:textColor forState:UIControlStateNormal];
         [shouldShareButton.layer setBorderColor:textColor.CGColor];
         [shouldShareButton setBackgroundColor:[UIColor clearColor]];
-        shouldShareButton.layer.borderWidth = .5f;
+        if ([[NSUserDefaults standardUserDefaults] boolForKey:kDarkBackground]){
+            shouldShareButton.layer.borderWidth = 1.f;
+        } else {
+            shouldShareButton.layer.borderWidth = .5f;
+        }
+        
         shouldShareButton.layer.cornerRadius = 14.f;
         [_scrollView addSubview:shouldShareButton];
         
-        flagButton = [UIButton buttonWithType:UIButtonTypeCustom];
+        /*flagButton = [UIButton buttonWithType:UIButtonTypeCustom];
         [flagButton setAutoresizingMask:UIViewAutoresizingFlexibleWidth];
         [flagButton setFrame:CGRectMake(width*.75-41, contributionOffset + 42, 82, 48)];
         [flagButton setTitle:@"Flag" forState:UIControlStateNormal];
@@ -882,7 +949,7 @@
         [flagButton setBackgroundColor:[UIColor clearColor]];
         flagButton.layer.borderWidth = .5f;
         flagButton.layer.cornerRadius = 14.f;
-        [_scrollView addSubview:flagButton];
+        [_scrollView addSubview:flagButton];*/
         contributionOffset += 132;
     }
     
@@ -903,7 +970,7 @@
 - (void)showActivityView {
     UIActivityViewController *activityView = [[UIActivityViewController alloc] initWithActivityItems:@[_story.storyUrl] applicationActivities:nil];
     [self presentViewController:activityView animated:YES completion:^{
-        
+        [[Mixpanel sharedInstance] track:@"Story share button tapped."];
     }];
 }
 
@@ -912,22 +979,23 @@
     
     if (y < 0){
         CGFloat y = scrollView.contentOffset.y;
-        CGRect imageFrame = _imageButton.frame;
+        CGRect imageFrame = _storyPhoto.imageView.frame;
         imageFrame.origin.y = y;
         imageFrame.origin.x = y/2;
         imageFrame.size.width = width-y;
         imageFrame.size.height = imageHeight-y;
-        _imageButton.frame = imageFrame;
+        _storyPhoto.imageView.frame = imageFrame;
         
-        /*titleFrame.origin.y = y + 11;
-        _titleLabel.frame = titleFrame;
-        authorsFrame.origin.y = y + titleFrame.size.height;
-        _authorsLabel.frame = authorsFrame;*/
+        CGRect progressFrame = _storyPhoto.progressView.frame;
+        CGFloat orig = (_storyPhoto.frame.size.height / 2.0) - _storyPhoto.progressView.frame.size.height/2;
+        progressFrame.origin.y = y+orig;
+        [_storyPhoto.progressView setFrame:progressFrame];
+        
     } else {
         [self hideControls];
     }
     
-    if (!_story.mystery){
+    if ([_story.mystery isEqualToNumber:[NSNumber numberWithBool:0]]){
         static NSInteger previousPage = 0;
         CGFloat pageHeight = scrollView.frame.size.height;
         float fractionalPage = y / pageHeight;
@@ -969,9 +1037,16 @@
             contentSize.height = contributionOffset;
             if (shouldShareButton){
                 CGRect shouldShareRect = shouldShareButton.frame;
-                shouldShareRect.origin.y += heightToAdd;
+                shouldShareRect.origin.y += heightToAdd + 88;
                 [shouldShareButton setFrame:shouldShareRect];
             }
+            if (flagButton){
+                CGRect flagRect = flagButton.frame;
+                flagRect.origin.y += heightToAdd + 88;
+                [flagButton setFrame:flagRect];
+            }
+            contentSize.height += 88;
+            
             //NSLog(@"added height: %f",[textView sizeThatFits:CGSizeMake(width-spacer, CGFLOAT_MAX)].height);
             [_scrollView setContentSize:contentSize];
         } else if (!textView.text.length) {

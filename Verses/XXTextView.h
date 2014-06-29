@@ -19,6 +19,7 @@
 @property id <TextViewDelegate> customDelegate;
 @property (strong, nonatomic) UIInputView *keyboardView;
 @property (strong, nonatomic) UIButton *feedbackButton;
+@property (strong, nonatomic) UIButton *flagButton;
 @property (strong, nonatomic) UIButton *footnoteButton;
 @property (strong, nonatomic) UIButton *headerButton;
 @property (strong, nonatomic) UIButton *boldButton;

@@ -13,8 +13,9 @@
 #import "XXSearchCell.h"
 #import "XXStoryViewController.h"
 #import "XXWriteViewController.h"
-#import "XXGuideTransition.h"
+#import "XXGuideInteractor.h"
 #import "XXGuideViewController.h"
+#import "XXNothingCell.h"
 
 @interface XXPortfolioViewController () <UIViewControllerTransitioningDelegate, UIGestureRecognizerDelegate> {
     NSMutableArray *_filteredResults;
@@ -101,7 +102,9 @@
                 [currentUser removeDraft:story];
                 [drafts removeObject:story];
                 [currentUser removeStory:story];
+                [self.tableView beginUpdates];
                 [self.tableView reloadSections:[NSIndexSet indexSetWithIndex:0] withRowAnimation:UITableViewRowAnimationFade];
+                [self.tableView endUpdates];
                 break;
             }
         }
@@ -111,7 +114,9 @@
                 [currentUser removeOwnedStory:story];
                 [stories removeObject:story];
                 [currentUser removeStory:story];
+                [self.tableView beginUpdates];
                 [self.tableView reloadSections:[NSIndexSet indexSetWithIndex:0] withRowAnimation:UITableViewRowAnimationFade];
+                [self.tableView endUpdates];
                 break;
             }
         }
@@ -147,8 +152,9 @@
                 break;
             }
         }
+        [self.searchBar setBackgroundColor:[UIColor colorWithWhite:0 alpha:.87]];
     } else {
-        
+        [self.searchBar setBackgroundColor:[UIColor whiteColor]];
         [self.searchResultsTableView setBackgroundColor:[UIColor colorWithWhite:1 alpha:.97]];
         for (id subview in [self.searchBar.subviews.firstObject subviews]){
             if ([subview isKindOfClass:[UITextField class]]){
@@ -163,6 +169,9 @@
         [_moreButton setImage:[UIImage imageNamed:@"more"] forState:UIControlStateNormal];
         [_moreButton setTitleColor:textColor forState:UIControlStateNormal];
     }
+    
+    self.searchBar.layer.cornerRadius = 7.f;
+    self.searchBar.clipsToBounds = YES;
     
     //transition
     if (self.tableView.alpha != 1.0){
@@ -215,13 +224,13 @@
                                                                   presentingController:(UIViewController *)presenting
                                                                       sourceController:(UIViewController *)source {
 
-    XXGuideTransition *animator = [XXGuideTransition new];
+    XXGuideInteractor *animator = [XXGuideInteractor new];
     animator.presenting = YES;
     return animator;
 }
 
 - (id<UIViewControllerAnimatedTransitioning>)animationControllerForDismissedController:(UIViewController *)dismissed {
-    XXGuideTransition *animator = [XXGuideTransition new];
+    XXGuideInteractor *animator = [XXGuideInteractor new];
     return animator;
 }
 
@@ -271,9 +280,10 @@
             [ProgressHUD dismiss];
             loading = NO;
             [self.tableView beginUpdates];
-            [self.tableView reloadSections:[NSIndexSet indexSetWithIndex:0] withRowAnimation:UITableViewRowAnimationFade];
+            [self.tableView insertRowsAtIndexPaths:indexesToInsert withRowAnimation:UITableViewRowAnimationFade];
+            //[self.tableView reloadSections:[NSIndexSet indexSetWithIndex:0] withRowAnimation:UITableViewRowAnimationFade];
             [self.tableView endUpdates];
-            //[self.tableView insertRowsAtIndexPaths:indexesToInsert withRowAnimation:UITableViewRowAnimationFade];
+            
         } failure:^(AFHTTPRequestOperation *operation, NSError *error) {
             
         }];
@@ -312,8 +322,11 @@
             }
             [ProgressHUD dismiss];
             loading = NO;
-            [self.tableView reloadSections:[NSIndexSet indexSetWithIndex:0] withRowAnimation:UITableViewRowAnimationFade];
-            //[self.tableView insertRowsAtIndexPaths:indexesToInsert withRowAnimation:UITableViewRowAnimationFade];
+            [self.tableView beginUpdates];
+            //[self.tableView reloadSections:[NSIndexSet indexSetWithIndex:0] withRowAnimation:UITableViewRowAnimationFade];
+            [self.tableView insertRowsAtIndexPaths:indexesToInsert withRowAnimation:UITableViewRowAnimationFade];
+            [self.tableView endUpdates];
+            
         } failure:^(AFHTTPRequestOperation *operation, NSError *error) {
             
         }];
@@ -429,28 +442,37 @@
             [cell.wordCountLabel setText:[NSString stringWithFormat:@"%@ words  |  Last updated: %@",story.wordCount,[_formatter stringFromDate:story.updatedDate]]];
             return cell;
         } else {
-            static NSString *CellIdentifier = @"NothingCell";
-            UITableViewCell *cell = [tableView dequeueReusableCellWithIdentifier:CellIdentifier forIndexPath:indexPath];
-            UIButton *nothingButton = [UIButton buttonWithType:UIButtonTypeCustom];
-            [nothingButton setTitle:@"You don't have any stories yet.\nTap here to start writing." forState:UIControlStateNormal];
-            [nothingButton addTarget:self action:@selector(startWriting) forControlEvents:UIControlEventTouchUpInside];
-            [nothingButton.titleLabel setNumberOfLines:0];
-            [nothingButton.titleLabel setFont:[UIFont fontWithName:kSourceSansProLight size:20]];
-            [nothingButton.titleLabel setTextAlignment:NSTextAlignmentCenter];
-            [nothingButton setTitleColor:[UIColor blackColor] forState:UIControlStateNormal];
-            [nothingButton setBackgroundColor:[UIColor clearColor]];
-            [cell addSubview:nothingButton];
-            [nothingButton setFrame:CGRectMake(20, 0, screenWidth()-40, screenHeight()-64)];
-            cell.backgroundView = [[UIView alloc] initWithFrame:cell.frame];
-            [cell.backgroundView setBackgroundColor:[UIColor clearColor]];
-            //[self.tableView setScrollEnabled:NO];
+            XXNothingCell *cell = (XXNothingCell *)[tableView dequeueReusableCellWithIdentifier:@"NothingCell"];
+            if (cell == nil) {
+                cell = [[[NSBundle mainBundle] loadNibNamed:@"XXNothingCell" owner:nil options:nil] lastObject];
+            }
+            [cell.promptButton setTitle:@"You don't have any stories yet.\nTap here to start writing." forState:UIControlStateNormal];
+            [cell.promptButton addTarget:self action:@selector(startWriting) forControlEvents:UIControlEventTouchUpInside];
+            [cell.promptButton.titleLabel setNumberOfLines:0];
+            [cell.promptButton.titleLabel setFont:[UIFont fontWithName:kSourceSansProLight size:20]];
+            [cell.promptButton.titleLabel setTextAlignment:NSTextAlignmentCenter];
+            [cell.promptButton setTitleColor:textColor forState:UIControlStateNormal];
+            [cell.promptButton setBackgroundColor:[UIColor clearColor]];
             return cell;
         }
     }
 }
 
+- (CGFloat)tableView:(UITableView *)tableView heightForRowAtIndexPath:(NSIndexPath *)indexPath {
+    if (_draftMode && drafts.count == 0){
+        return screenHeight()-84;
+    } else if (stories.count == 0){
+        return screenHeight()-84;
+    } else {
+        return 80;
+    }
+}
+
 - (void)startWriting {
     XXWriteViewController *write = [[self storyboard] instantiateViewControllerWithIdentifier:@"Write"];
+    
+    //not really edit mode, obviously, but this just ensures the write vc dismisses properly
+    [write setEditMode:YES];
     UINavigationController *nav = [[UINavigationController alloc] initWithRootViewController:write];
     [self presentViewController:nav animated:YES completion:^{
         

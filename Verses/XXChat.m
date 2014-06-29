@@ -26,7 +26,7 @@
     
     self = [super initWithFrame:frame];
     if (self) {
-        self.backgroundColor = [UIColor whiteColor];
+        
         UIInterfaceOrientation myOrientation = [UIApplication sharedApplication].statusBarOrientation;
         if (UIInterfaceOrientationIsPortrait(myOrientation)) {
             self.frame = CGRectMake(0, screenHeight() - 40, screenWidth(), 40);
@@ -55,7 +55,7 @@
             _textView.backgroundColor = [UIColor colorWithWhite:1 alpha:0.f];
             _textView.textColor = [UIColor whiteColor];
             _textView.layer.borderWidth = 1;
-            _textView.layer.borderColor = [UIColor colorWithWhite:1 alpha:.87].CGColor;
+            _textView.layer.borderColor = [UIColor colorWithWhite:1 alpha:.23].CGColor;
         } else {
             _textView.backgroundColor = [UIColor colorWithWhite:1 alpha:0.9f];
             _textView.textColor = [UIColor darkTextColor];
@@ -73,24 +73,27 @@
         _sendButton.frame = CGRectMake(self.bounds.size.width - 60, 0, 50, 40);
         _sendButton.autoresizingMask = UIViewAutoresizingFlexibleLeftMargin | UIViewAutoresizingFlexibleTopMargin;
         [_sendButton setTitle:@"Send" forState:UIControlStateNormal];
-        _sendButton.titleLabel.font = [UIFont fontWithName:kSourceSansProSemibold size:16.0];
+        _sendButton.titleLabel.font = [UIFont fontWithName:kSourceSansProSemibold size:15.0];
         [_sendButton addTarget:self action:@selector(sendBtnPressed:) forControlEvents:UIControlEventTouchUpInside];
         _sendButton.userInteractionEnabled = YES;
         [self addSubview:_sendButton];
         
-        // Background
+        // toolbar styling
         _bgToolbar = [[UIToolbar alloc] initWithFrame:self.bounds];
         if ([[NSUserDefaults standardUserDefaults] boolForKey:kDarkBackground]){
+            self.backgroundColor = [UIColor clearColor];
             _bgToolbar.barStyle = UIBarStyleBlackTranslucent;
+            [_bgToolbar setBackgroundColor:[UIColor colorWithWhite:0 alpha:.75]];
         } else {
+            self.backgroundColor = [UIColor whiteColor];
             _bgToolbar.barStyle = UIBarStyleDefault;
         }
+        
         _bgToolbar.translucent = YES;
         _bgToolbar.clipsToBounds = YES;
         _bgToolbar.autoresizingMask = UIViewAutoresizingFlexibleWidth | UIViewAutoresizingFlexibleHeight;
         [self insertSubview:_bgToolbar belowSubview:_textView];
         
-        // Get Keyboard Notes
         [[NSNotificationCenter defaultCenter] addObserver:self
                                                  selector:@selector(keyboardWillShow:)
                                                      name:UIKeyboardWillShowNotification

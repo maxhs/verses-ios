@@ -286,11 +286,6 @@ NSDictionary *_classesForNames = nil;
 	{
 		[tmpDict setObject:[NSNumber numberWithInteger:_headerLevel] forKey:DTHeaderLevelAttribute];
 	}
-    
-    if (_blockquote)
-	{
-		[tmpDict setObject:[NSNumber numberWithInteger:1] forKey:DTBlockquoteAttribute];
-	}
 	
 	if (_paragraphStyle.textLists)
 	{
@@ -421,6 +416,7 @@ NSDictionary *_classesForNames = nil;
 		}
 		
 		NSDictionary *attributes = [self attributesForAttributedStringRepresentation];
+		
 		NSMutableAttributedString *tmpString;
 		
 		if (_textAttachment)
@@ -437,7 +433,6 @@ NSDictionary *_classesForNames = nil;
 			
 			for (DTHTMLElement *oneChild in self.childNodes)
 			{
-                
 				// if previous node was inline and this child is block then we need a newline
 				if (previousChild && previousChild.displayStyle == DTHTMLElementDisplayStyleInline)
 				{
@@ -469,7 +464,7 @@ NSDictionary *_classesForNames = nil;
 							while ([[nodeString string] hasPrefixCharacterFromSet:charactersToIgnore])
 							{
 								NSString *field = [nodeString attribute:DTFieldAttribute atIndex:0 effectiveRange:NULL];
-							
+								
 								if ([field isEqualToString:DTListPrefixField])
 								{
 									break;
@@ -481,7 +476,6 @@ NSDictionary *_classesForNames = nil;
 					}
 					
 					[tmpString appendAttributedString:nodeString];
-                    
 				}
 				
 				previousChild = oneChild;
@@ -515,7 +509,6 @@ NSDictionary *_classesForNames = nil;
 					else
 					{
 						// string is empty, need a new attributed string so that we have the attributes
-                        
 						attributes = [self attributesForAttributedStringRepresentation];
 						NSAttributedString *attributedString = [[NSAttributedString alloc] initWithString:@"\n" attributes:attributes];
 						[tmpString appendAttributedString:attributedString];
@@ -594,10 +587,7 @@ NSDictionary *_classesForNames = nil;
 		{
 			[self _addCustomHTMLAttributesToAttributedString:tmpString];
 		}
-        if ([attributes objectForKey:@"DTBlockquote"]){
-            [tmpString addAttribute:@"DTBlockquote" value:@1 range:NSMakeRange(0, tmpString.length)];
-            //NSLog(@"new tmp string: %@",tmpString);
-        }
+		
 		return tmpString;
 	}
 }
@@ -1380,10 +1370,6 @@ NSDictionary *_classesForNames = nil;
 	_fontDescriptor = [element.fontDescriptor copy];
 	_paragraphStyle = [element.paragraphStyle copy];
 
-    if ([element.name isEqualToString:@"blockquote"]){
-        element.blockquote = 1;
-        _blockquote = element.blockquote;
-    }
 	_headerLevel = element.headerLevel;
 
 	_fontVariant = element.fontVariant;
@@ -1591,7 +1577,6 @@ NSDictionary *_classesForNames = nil;
 @synthesize strikeOut = _strikeOut;
 @synthesize superscriptStyle = _superscriptStyle;
 @synthesize headerLevel = _headerLevel;
-@synthesize blockquote = _blockquote;
 @synthesize shadows = _shadows;
 @synthesize floatStyle = _floatStyle;
 @synthesize isColorInherited = _isColorInherited;

@@ -11,13 +11,13 @@
 #import "Contribution+helper.h"
 #import "User+helper.h"
 #import <MSDynamicsDrawerViewController/MSDynamicsDrawerViewController.h>
-#import "XXPhotoButton.h"
+#import "XXStoryPhoto.h"
 
 @interface XXStoryViewController : UIViewController <UIScrollViewDelegate, UITextViewDelegate>
 @property (weak, nonatomic) IBOutlet UIScrollView *scrollView;
 @property (strong, nonatomic) UILabel *titleLabel;
 @property (strong, nonatomic) UILabel *authorsLabel;
-@property (strong, nonatomic) XXPhotoButton *imageButton;
+@property (strong, nonatomic) XXStoryPhoto *storyPhoto;
 @property (strong, nonatomic) Story *story;
 @property (strong, nonatomic) NSNumber *storyId;
 @property (weak, nonatomic) MSDynamicsDrawerViewController *dynamicsViewController;

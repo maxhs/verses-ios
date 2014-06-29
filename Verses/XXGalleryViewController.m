@@ -9,7 +9,7 @@
 #import "XXGalleryViewController.h"
 #import "Photo+helper.h"
 #import "XXPhotoCollectionCell.h"
-#import "XXGuideTransition.h"
+#import "XXGuideInteractor.h"
 #import "XXGuideViewController.h"
 
 @interface XXGalleryViewController () <UIViewControllerTransitioningDelegate> {
@@ -220,7 +220,6 @@
 
 - (void)goToStory:(UIButton*) button{
     Photo *photo = photos[button.tag];
-    NSLog(@"should be goign to story; %@",photo.story.title);
     XXStoryViewController *vc = [[self storyboard] instantiateViewControllerWithIdentifier:@"Story"];
     [vc setStory:photo.story];
     [self.navigationController pushViewController:vc animated:YES];
@@ -257,13 +256,13 @@
                                                                   presentingController:(UIViewController *)presenting
                                                                       sourceController:(UIViewController *)source {
     
-    XXGuideTransition *animator = [XXGuideTransition new];
+    XXGuideInteractor *animator = [XXGuideInteractor new];
     animator.presenting = YES;
     return animator;
 }
 
 - (id<UIViewControllerAnimatedTransitioning>)animationControllerForDismissedController:(UIViewController *)dismissed {
-    XXGuideTransition *animator = [XXGuideTransition new];
+    XXGuideInteractor *animator = [XXGuideInteractor new];
     return animator;
 }
 

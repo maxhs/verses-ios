@@ -91,8 +91,13 @@
     if (urlString.length){
         [_imageButton setImageWithURL:[NSURL URLWithString:urlString] forState:UIControlStateNormal completed:^(UIImage *image, NSError *error, SDImageCacheType cacheType) {
             //dispatch_async(dispatch_get_global_queue(DISPATCH_QUEUE_PRIORITY_HIGH, 0), ^{
-            
+            if ([[NSUserDefaults standardUserDefaults] boolForKey:kDarkBackground]){
+                [_blurredBackground setImage:[image applyDarkEffect]];
+            } else {
                 [_blurredBackground setImage:[image applyBlurWithRadius:14 blurType:BOXFILTER tintColor:[UIColor colorWithWhite:1 alpha:.77] saturationDeltaFactor:1.8 maskImage:nil]];
+            }
+            
+            
                 dispatch_async(dispatch_get_main_queue(), ^{
                     [UIView animateWithDuration:.75 animations:^{
                         [_blurredBackground setAlpha:1.0];
@@ -111,7 +116,12 @@
         }];
     } else {
         [_imageButton setTitle:@"NO PHOTO" forState:UIControlStateNormal];
-        [_imageButton setTitleColor:[UIColor lightGrayColor] forState:UIControlStateNormal];
+        if ([[NSUserDefaults standardUserDefaults] boolForKey:kDarkBackground]){
+            [_imageButton setTitleColor:[UIColor whiteColor] forState:UIControlStateNormal];
+        } else {
+            [_imageButton setTitleColor:[UIColor lightGrayColor] forState:UIControlStateNormal];
+        }
+        
         [_imageButton.titleLabel setFont:[UIFont fontWithName:kSourceSansProLight size:14]];
         [UIView animateWithDuration:.23 animations:^{
             [_imageButton setAlpha:1.0];

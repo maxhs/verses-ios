@@ -12,8 +12,11 @@
 #import "User+helper.h"
 #import "XXCollaborateViewController.h"
 #import "XXCircleDetailViewController.h"
+#import "XXNothingCell.h"
+#import "XXManageCircleViewController.h"
+#import "XXCollaboratorsTransition.h"
 
-@interface XXCirclesViewController () {
+@interface XXCirclesViewController () <UIViewControllerTransitioningDelegate>{
     AFHTTPRequestOperationManager *manager;
     XXAppDelegate *delegate;
     UIColor *textColor;
@@ -21,7 +24,6 @@
     UIBarButtonItem *contactsButton;
     UIImageView *navBarShadowView;
     NSDateFormatter *_formatter;
-    CGRect screen;
     BOOL loading;
     User *currentUser;
     NSArray *_circles;
@@ -42,7 +44,6 @@
     [_formatter setLocale:[NSLocale currentLocale]];
     [_formatter setDateStyle:NSDateFormatterMediumStyle];
     [_formatter setTimeStyle:NSDateFormatterShortStyle];
-    screen = [UIScreen mainScreen].bounds;
     manager = [delegate manager];
     if (delegate.currentUser){
         currentUser = [delegate currentUser];
@@ -74,6 +75,7 @@
     self.navigationItem.leftBarButtonItem = backButton;
     navBarShadowView.hidden = YES;
     
+    //reset views after custom modal transition
     if (self.tableView.alpha != 1.0){
         [UIView animateWithDuration:.23 animations:^{
             [self.tableView setAlpha:1.0];
@@ -105,17 +107,26 @@
     XXCollaborateViewController *vc = [[self storyboard] instantiateViewControllerWithIdentifier:@"Collaborate"];
     [vc setTitle:@"Collaborators"];
     [vc setManageContacts:YES];
-    if ([[NSUserDefaults standardUserDefaults] boolForKey:kDarkBackground]){
-        [UIView animateWithDuration:.23 animations:^{
-            self.navigationController.view.transform = CGAffineTransformMakeScale(.77, .77);
-            [self.navigationController.view setAlpha:0.0];
-        } completion:^(BOOL finished) {
-            
-        }];
-    }
-    [self presentViewController:[[UINavigationController alloc] initWithRootViewController:vc] animated:YES completion:^{
+    UINavigationController *nav = [[UINavigationController alloc] initWithRootViewController:vc];
+    nav.modalPresentationStyle = UIModalPresentationCustom;
+    nav.transitioningDelegate = self;
+    [self presentViewController:nav animated:YES completion:^{
         
     }];
+}
+
+- (id<UIViewControllerAnimatedTransitioning>)animationControllerForPresentedController:(UIViewController *)presented
+                                                                  presentingController:(UIViewController *)presenting
+                                                                      sourceController:(UIViewController *)source {
+    XXCollaboratorsTransition *animator = [XXCollaboratorsTransition new];
+    animator.presenting = YES;
+    return animator;
+}
+
+- (id<UIViewControllerAnimatedTransitioning>)animationControllerForDismissedController:(UIViewController *)dismissed {
+    
+    XXCollaboratorsTransition *animator = [XXCollaboratorsTransition new];
+    return animator;
 }
 
 - (void)loadCircles {
@@ -140,13 +151,16 @@
         currentUser.circles = circleSet;
         _circles = circleSet.array;
         loading = NO;
-        if (self.tableView.numberOfSections){
-            [self.tableView beginUpdates];
-            [self.tableView reloadSections:[NSIndexSet indexSetWithIndex:0] withRowAnimation:UITableViewRowAnimationFade];
-            [self.tableView endUpdates];
-        } else {
-            [self.tableView reloadData];
-        }
+        [[NSManagedObjectContext MR_defaultContext] MR_saveToPersistentStoreWithCompletion:^(BOOL success, NSError *error) {
+            if (self.isViewLoaded && self.view.window && self.tableView.numberOfSections){
+                [self.tableView beginUpdates];
+                [self.tableView reloadSections:[NSIndexSet indexSetWithIndex:0] withRowAnimation:UITableViewRowAnimationFade];
+                [self.tableView endUpdates];
+            } else {
+                [self.tableView reloadData];
+            }
+        }];
+        
     } failure:^(AFHTTPRequestOperation *operation, NSError *error) {
         NSLog(@"Failure getting circles: %@",error.description);
         loading = NO;
@@ -165,45 +179,78 @@
 - (NSInteger)numberOfSectionsInTableView:(UITableView *)tableView
 {
     if (loading) return 0;
-    else return 1;
+    else return 2;
 }
 
 - (NSInteger)tableView:(UITableView *)tableView numberOfRowsInSection:(NSInteger)section
 {
     if (_circles.count == 0 && !loading) return 1;
-    else return _circles.count;
+    else if (section == 0) return _circles.count;
+    else if (section == 1) return 1;
+    else return 0;
 }
 
 - (UITableViewCell *)tableView:(UITableView *)tableView cellForRowAtIndexPath:(NSIndexPath *)indexPath
 {
     if (_circles.count == 0){
-        static NSString *CellIdentifier = @"NothingCell";
-        UITableViewCell *cell = [tableView dequeueReusableCellWithIdentifier:CellIdentifier forIndexPath:indexPath];
-        UIButton *nothingButton = [UIButton buttonWithType:UIButtonTypeCustom];
-        [nothingButton setTitle:@"You don't have any writing circles." forState:UIControlStateNormal];
-        [nothingButton.titleLabel setNumberOfLines:0];
-        [nothingButton.titleLabel setFont:[UIFont fontWithName:kSourceSansProLight size:20]];
-        [nothingButton.titleLabel setTextAlignment:NSTextAlignmentCenter];
-        nothingButton.contentHorizontalAlignment = UIControlContentHorizontalAlignmentCenter;
-        [nothingButton setTitleColor:[UIColor blackColor] forState:UIControlStateNormal];
-        [nothingButton setBackgroundColor:[UIColor clearColor]];
-        [cell addSubview:nothingButton];
-        [nothingButton setFrame:CGRectMake(20, 0, screen.size.width-40, screen.size.height-84)];
+        XXNothingCell *cell = (XXNothingCell *)[tableView dequeueReusableCellWithIdentifier:@"NothingCell"];
+        if (cell == nil) {
+            cell = [[[NSBundle mainBundle] loadNibNamed:@"XXNothingCell" owner:nil options:nil] lastObject];
+        }
+        [cell.promptButton setTitle:@"Tap to add your first writing circle." forState:UIControlStateNormal];
+        [cell.promptButton addTarget:self action:@selector(newCircle) forControlEvents:UIControlEventTouchUpInside];
+        [cell.promptButton setBackgroundColor:[UIColor colorWithWhite:.7 alpha:1]];
+        [cell.promptButton.titleLabel setNumberOfLines:0];
+        [cell.promptButton.titleLabel setFont:[UIFont fontWithName:kSourceSansProLight size:20]];
+        [cell.promptButton.titleLabel setTextAlignment:NSTextAlignmentCenter];
+        cell.promptButton.contentHorizontalAlignment = UIControlContentHorizontalAlignmentCenter;
+        [cell.promptButton setTitleColor:textColor forState:UIControlStateNormal];
+        [cell.promptButton setBackgroundColor:[UIColor clearColor]];
         
         return cell;
-    } else {
+    } else if (indexPath.section == 0) {
         XXCircleCell *cell = [tableView dequeueReusableCellWithIdentifier:@"CircleCell"];
         if (cell == nil) {
             cell = [[[NSBundle mainBundle] loadNibNamed:@"XXCircleCell" owner:nil options:nil] lastObject];
         }
         Circle *circle = [_circles objectAtIndex:indexPath.row];
         [cell configureCell:circle withTextColor:textColor];
+        [cell.textLabel setText:@""];
+        return cell;
+    } else {
+        XXCircleCell *cell = [tableView dequeueReusableCellWithIdentifier:@"CircleCell"];
+        if (cell == nil) {
+            cell = [[[NSBundle mainBundle] loadNibNamed:@"XXCircleCell" owner:nil options:nil] lastObject];
+        }
+        [cell.circleName setText:@""];
+        [cell.infoLabel setText:@""];
+        [cell.textLabel setText:@"Add new circle"];
+        [cell.textLabel setTextAlignment:NSTextAlignmentCenter];
+        [cell.textLabel setFont:[UIFont fontWithName:kCrimsonItalic size:17]];
+        [cell.textLabel setTextColor:textColor];
         return cell;
     }
 }
 
+- (void)newCircle {
+    XXManageCircleViewController *vc = [[self storyboard] instantiateViewControllerWithIdentifier:@"ManageCircle"];
+    [vc setTitle:@"New Writing Circle"];
+    UINavigationController *nav = [[UINavigationController alloc] initWithRootViewController:vc];
+    if ([[NSUserDefaults standardUserDefaults] boolForKey:kDarkBackground]){
+        [UIView animateWithDuration:.23 animations:^{
+            self.navigationController.view.transform = CGAffineTransformMakeScale(.77, .77);
+            [self.navigationController.view setAlpha:0.0];
+        } completion:^(BOOL finished) {
+            
+        }];
+    }
+    [self presentViewController:nav animated:YES completion:^{
+        
+    }];
+}
+
 -(CGFloat)tableView:(UITableView *)tableView heightForRowAtIndexPath:(NSIndexPath *)indexPath {
-    if (_circles.count == 0 && !loading) return screen.size.height - 84;
+    if (_circles.count == 0 && !loading) return screenHeight() - 84;
     else return 70;
 }
 
@@ -214,18 +261,33 @@
         [ProgressHUD dismiss];
     }
     UIView *selectionView = [[UIView alloc] initWithFrame:cell.frame];
-    [selectionView setBackgroundColor:[UIColor colorWithWhite:.9 alpha:.23]];
+    if ([[NSUserDefaults standardUserDefaults] boolForKey:kDarkBackground]){
+        [selectionView setBackgroundColor:kTableViewCellSelectionColorDark];
+    } else {
+        [selectionView setBackgroundColor:[UIColor colorWithWhite:.9 alpha:.23]];
+    }
+    
     cell.selectedBackgroundView = selectionView;
     cell.backgroundColor = [UIColor clearColor];
 }
 
 - (void)tableView:(UITableView *)tableView didSelectRowAtIndexPath:(NSIndexPath *)indexPath {
-    Circle *circle = [_circles objectAtIndex:indexPath.row];
-    circle.unreadCommentCount = 0;
-    circle.fresh = NO;
-    [self.tableView reloadSections:[NSIndexSet indexSetWithIndex:0] withRowAnimation:UITableViewRowAnimationFade];
-    [self performSegueWithIdentifier:@"CircleDetail" sender:circle];
-    [tableView deselectRowAtIndexPath:indexPath animated:YES];
+    if (_circles.count){
+        if (indexPath.section == 0){
+            Circle *circle = [_circles objectAtIndex:indexPath.row];
+            circle.unreadCommentCount = 0;
+            circle.fresh = NO;
+            
+            /*[self.tableView beginUpdates];
+            [self.tableView reloadSections:[NSIndexSet indexSetWithIndex:0] withRowAnimation:UITableViewRowAnimationFade];
+            [self.tableView endUpdates];*/
+            
+            [self performSegueWithIdentifier:@"CircleDetail" sender:circle];
+        } else {
+            [self newCircle];
+        }
+        [tableView deselectRowAtIndexPath:indexPath animated:YES];
+    }
 }
 
 #pragma mark - Navigation
@@ -239,7 +301,7 @@
         if ([[NSUserDefaults standardUserDefaults] boolForKey:kDarkBackground]){
             [UIView animateWithDuration:.23 animations:^{
                 [self.tableView setAlpha:0.0];
-                self.tableView.transform = CGAffineTransformMakeScale(.8, .8);
+                self.tableView.transform = CGAffineTransformMakeScale(.77, .77);
             }];
         }
     }

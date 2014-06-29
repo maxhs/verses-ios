@@ -14,6 +14,7 @@
 #import "XXProfileStoryCell.h"
 #import "XXStoryViewController.h"
 #import "XXCircleNotificationCell.h"
+#import "XXManageCircleViewController.h"
 
 @interface XXCircleDetailViewController () <XXSegmentedControlDelegate, XXChatDelegate> {
     XXSegmentedControl *_circleControl;
@@ -94,6 +95,22 @@
     
     self.detailsTableView.rowHeight = 60;
     self.storiesTableView.rowHeight = 80;
+
+}
+
+- (void)editCircle{
+    XXManageCircleViewController *vc = [[self storyboard] instantiateViewControllerWithIdentifier:@"ManageCircle"];
+    [vc setCircle:_circle];
+    UINavigationController *nav = [[UINavigationController alloc] initWithRootViewController:vc];
+    
+    [UIView animateWithDuration:.23 animations:^{
+        [self.view setAlpha:0.0];
+        self.view.transform = CGAffineTransformMakeScale(.77, .77);
+    }];
+    
+    [self presentViewController:nav animated:YES completion:^{
+        
+    }];
 }
 
 - (void)loadDetails:(NSNumber*)identifier {
@@ -101,7 +118,6 @@
         //NSLog(@"success getting circle details: %@", responseObject);
         [_circle populateFromDict:[responseObject objectForKey:@"circle"]];
         [[NSManagedObjectContext MR_defaultContext] MR_saveToPersistentStoreWithCompletion:^(BOOL success, NSError *error) {
-            NSLog(@"circle comments? %d",_circle.comments.count);
             _comments = _circle.comments.array.mutableCopy;
             _stories = _circle.stories.array.mutableCopy;
             [self.collectionView reloadData];
@@ -170,13 +186,31 @@
         [_chatInput.bgToolbar setBarStyle:UIBarStyleDefault];
         _chatInput.textView.keyboardAppearance = UIKeyboardAppearanceDefault;
     }
-    [self.detailsTableView reloadData];
-    [self.storiesTableView reloadData];
+    
     if (self.view.alpha != 1.0){
         [UIView animateWithDuration:.23 animations:^{
             [self.view setAlpha:1.0];
+            self.view.transform = CGAffineTransformIdentity;
         }];
     }
+    
+    if ([_circle.owner.identifier isEqualToNumber:[[NSUserDefaults standardUserDefaults] objectForKey:kUserDefaultsId]]){
+        UIView *headerView = [[UIView alloc] initWithFrame:CGRectMake(0, 0, screenWidth(), 39)];
+        [headerView setBackgroundColor:[UIColor clearColor]];
+        UIButton *headerButton = [UIButton buttonWithType:UIButtonTypeCustom];
+        [headerButton setFrame:CGRectMake(screenWidth()/2-44, 0, 88, 34)];
+        headerButton.layer.borderColor = [UIColor colorWithWhite:.5 alpha:.5].CGColor;
+        headerButton.layer.borderWidth = .5f;
+        [headerButton setBackgroundColor:[UIColor clearColor]];
+        [headerButton setTitle:@"Tap to edit" forState:UIControlStateNormal];
+        [headerButton.titleLabel setFont:[UIFont fontWithName:kSourceSansProRegular size:13]];
+        [headerButton addTarget:self action:@selector(editCircle) forControlEvents:UIControlEventTouchUpInside];
+        [headerButton setTitleColor:textColor forState:UIControlStateNormal];
+        [headerView addSubview:headerButton];
+        self.detailsTableView.tableHeaderView = headerView;
+    }
+    [self.detailsTableView reloadData];
+    [self.storiesTableView reloadData];
 }
 
 - (void)setupChat {
@@ -376,19 +410,21 @@
             cell = [[[NSBundle mainBundle] loadNibNamed:@"XXProfileStoryCell" owner:nil options:nil] lastObject];
         }
         if (_stories.count == 0){
-            [cell.titleLabel setText:@"No stories"];
-            [cell.titleLabel setFont:[UIFont fontWithName:kSourceSansProLight size:20]];
+            [cell.textLabel setText:@"No stories"];
+            [cell.textLabel setFont:[UIFont fontWithName:kSourceSansProLight size:20]];
+            [cell.textLabel setTextAlignment:NSTextAlignmentCenter];
             if ([[NSUserDefaults standardUserDefaults] objectForKey:kDarkBackground]){
-                [cell.titleLabel setTextColor:textColor];
+                [cell.textLabel setTextColor:textColor];
             } else {
-                [cell.titleLabel setTextColor:[UIColor lightGrayColor]];
+                [cell.textLabel setTextColor:[UIColor lightGrayColor]];
             }
-            [cell.titleLabel setTextAlignment:NSTextAlignmentCenter];
+            
         } else {
             Story *story = [_stories objectAtIndex:indexPath.row];
             [cell configureStory:story withTextColor:textColor];
             [cell.titleLabel setTextAlignment:NSTextAlignmentLeft];
             [cell.subtitleLabel setText:[_detailsFormatter stringFromDate:story.updatedDate]];
+            [cell.textLabel setText:@""];
         }
         return cell;
     }

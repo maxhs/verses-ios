@@ -17,6 +17,7 @@
 
 @dynamic createdDate;
 @dynamic identifier;
+@dynamic read;
 @dynamic message;
 @dynamic type;
 @dynamic circle;

@@ -23,10 +23,10 @@ PODS:
     - DTFoundation/Core (~> 1.6.1)
     - DTFoundation/DTHTMLParser (~> 1.6.1)
     - DTFoundation/UIKit (~> 1.6.1)
-  - DTFoundation/Core (1.6.2)
-  - DTFoundation/DTHTMLParser (1.6.2):
+  - DTFoundation/Core (1.6.3)
+  - DTFoundation/DTHTMLParser (1.6.3):
     - DTFoundation/Core
-  - DTFoundation/UIKit (1.6.2):
+  - DTFoundation/UIKit (1.6.3):
     - DTFoundation/Core
   - MagicalRecord (2.2):
     - MagicalRecord/Core
@@ -39,19 +39,19 @@ PODS:
 
 DEPENDENCIES:
   - AFNetworking
-  - DTCoreText
+  - DTCoreText (= 1.6.10)
   - MagicalRecord
   - Mixpanel
   - MSDynamicsDrawerViewController
   - SDWebImage
 
 SPEC CHECKSUMS:
-  AFNetworking: 3fa983b1beaba69566a3374612511e2a6e3fe845
-  DTCoreText: 39e316024954ef7e86c7fbfb5f0eee991f7211f1
-  DTFoundation: 7c69990fa3cb7655cafa95ab59c3fcea014460f0
-  MagicalRecord: 95d49d74ef752cd52f6ad87bcb474817fc3978cf
-  Mixpanel: 16e6f1d5f8aeb9282ee864e169557de0bd9549df
-  MSDynamicsDrawerViewController: f2d14503f6f92f8dec250fdc503d7fed2587a638
-  SDWebImage: 7eb273e54ca8a2e506ad9bd5e80c35b2a4d7c95e
+  AFNetworking: 6d4a33f2a7edf1d394455c543b446fdfae6b4082
+  DTCoreText: c75a1e41b18f80573fbf6c500e18975ea0497a47
+  DTFoundation: d8a7f570a0f89c5a81661e6537289c578f4f97a8
+  MagicalRecord: 2b471584fc9e3137f3d0a56967917baa4979e224
+  Mixpanel: f80261f894ae0a71231da2a7eed67ce9ba1d5a26
+  MSDynamicsDrawerViewController: e96d200802f94a18d39d80420345330e235ecbbb
+  SDWebImage: c6989652c1cdf27cbdf3f56957e2030f825af5bc
 
-COCOAPODS: 0.30.0
+COCOAPODS: 0.33.1

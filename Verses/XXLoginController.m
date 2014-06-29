@@ -425,6 +425,16 @@ static NSString * const kShakeAnimationKey = @"XXShakeItNow";
                 currentUser = [User MR_createInContext:localContext];
             }
             [currentUser populateFromDict:[responseObject objectForKey:@"user"]];
+            
+            //the only purpose of this user was to store the background image. get rid of it now
+            User *blankUser = [User MR_findFirstByAttribute:@"identifier" withValue:[NSNumber numberWithInt:0]];
+            if (blankUser){
+                if (blankUser.backgroundImageView){
+                    currentUser.backgroundImageView = blankUser.backgroundImageView;
+                }
+                [blankUser MR_deleteInContext:[NSManagedObjectContext MR_defaultContext]];
+            }
+            
             [delegate.dynamicsDrawerViewController setPaneState:MSDynamicsDrawerPaneStateClosed animated:YES allowUserInterruption:YES completion:nil];
         
             [localContext MR_saveToPersistentStoreWithCompletion:^(BOOL success, NSError *error) {
@@ -461,7 +471,7 @@ static NSString * const kShakeAnimationKey = @"XXShakeItNow";
                     //[self alert:@"Sorry, but we couldn't find an account for that email address."];
                 } else if ([operation.responseString isEqualToString:@"Pen name taken"]) {
                     
-                    [self alert:@"Sorry, but that pen name is already taken."];
+                    [self alert:@"Sorry, but that pen name has already been taken."];
                     [self addShakeAnimationForView:self.registerPenNameTextField withDuration:.77];
                 
                 } else {

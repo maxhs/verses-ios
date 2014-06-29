@@ -8,16 +8,20 @@
 
 #import "XXCollaborateViewController.h"
 #import "XXContactCell.h"
+#import "XXNothingCell.h"
 #import "Circle+helper.h"
 #import "XXAlert.h"
+#import "XXAddCollaboratorsViewController.h"
+#import "XXProfileViewController.h"
+#import "XXCollaboratorsTransition.h"
+#import "XXManageCircleViewController.h"
 
-@interface XXCollaborateViewController () {
+@interface XXCollaborateViewController () <UIViewControllerTransitioningDelegate> {
     AFHTTPRequestOperationManager *manager;
     NSMutableArray *_contacts;
     NSMutableArray *_circles;
     BOOL loadingCircles;
     BOOL loadingContacts;
-    CGRect screen;
     NSIndexPath *indexPathToRemove;
     UIBarButtonItem *cancelButton;
     UIAlertView *addContactAlert;
@@ -36,9 +40,9 @@
 - (void)viewDidLoad
 {
     [super viewDidLoad];
-    screen = [UIScreen mainScreen].bounds;
     manager = [(XXAppDelegate*)[UIApplication sharedApplication].delegate manager];
-    currentUser = [(XXAppDelegate*)[UIApplication sharedApplication].delegate currentUser];
+    currentUser = [User MR_findFirstByAttribute:@"identifier" withValue:[[NSUserDefaults standardUserDefaults] objectForKey:kUserDefaultsId]];
+    
     _contacts = currentUser.contacts.array.mutableCopy;
     _circles = currentUser.circles.array.mutableCopy;
     
@@ -63,6 +67,7 @@
     
     [self.tableView setSeparatorColor:[UIColor colorWithWhite:0 alpha:.05]];
     navBarShadowView = [Utilities findNavShadow:self.navigationController.navigationBar];
+    [[NSNotificationCenter defaultCenter] addObserver:self selector:@selector(addContactObserver:) name:@"AddContact" object:nil];
 }
 
 - (void)viewWillAppear:(BOOL)animated {
@@ -77,6 +82,15 @@
         textColor = [UIColor blackColor];
     }
     navBarShadowView.hidden = YES;
+    
+    //reset view after custom transition
+    if (self.navigationController.view.alpha != 1.0){
+        [UIView animateWithDuration:.23 animations:^{
+            self.navigationController.view.transform = CGAffineTransformIdentity;
+            [self.navigationController.view setAlpha:1.0];
+        } completion:^(BOOL finished) {
+        }];
+    }
 }
 
 - (void)loadContacts {
@@ -140,7 +154,10 @@
         currentUser.circles = circleSet;
         _circles = circleSet.array.mutableCopy;
         loadingCircles = NO;
+        
+        [self.tableView beginUpdates];
         [self.tableView reloadSections:[NSIndexSet indexSetWithIndex:0] withRowAnimation:UITableViewRowAnimationFade];
+        [self.tableView endUpdates];
     } failure:^(AFHTTPRequestOperation *operation, NSError *error) {
         NSLog(@"Failure getting circles: %@",error.description);
         loadingCircles = NO;
@@ -212,18 +229,18 @@
             }];
             return cell;
         } else {
-            static NSString *CellIdentifier = @"NothingCell";
-            UITableViewCell *cell = [tableView dequeueReusableCellWithIdentifier:CellIdentifier forIndexPath:indexPath];
-            UIButton *nothingButton = [UIButton buttonWithType:UIButtonTypeCustom];
-            [nothingButton setTitle:@"You don't have any writing circles." forState:UIControlStateNormal];
-            [nothingButton.titleLabel setNumberOfLines:0];
-            [nothingButton.titleLabel setFont:[UIFont fontWithName:kSourceSansProLight size:20]];
-            [nothingButton.titleLabel setTextAlignment:NSTextAlignmentCenter];
-            nothingButton.contentHorizontalAlignment = UIControlContentHorizontalAlignmentCenter;
-            [nothingButton setTitleColor:[UIColor blackColor] forState:UIControlStateNormal];
-            [nothingButton setBackgroundColor:[UIColor clearColor]];
-            [cell addSubview:nothingButton];
-            [nothingButton setFrame:CGRectMake(20, 0, screen.size.width-40, screen.size.height-84)];
+            XXNothingCell *cell = (XXNothingCell *)[tableView dequeueReusableCellWithIdentifier:@"NothingCell"];
+            if (cell == nil) {
+                cell = [[[NSBundle mainBundle] loadNibNamed:@"XXNothingCell" owner:nil options:nil] lastObject];
+            }
+            [cell.promptButton setTitle:@"Tap here to create your first writing circle." forState:UIControlStateNormal];
+            [cell.promptButton addTarget:self action:@selector(newCircle) forControlEvents:UIControlEventTouchUpInside];
+            [cell.promptButton.titleLabel setNumberOfLines:0];
+            [cell.promptButton.titleLabel setFont:[UIFont fontWithName:kSourceSansProLight size:20]];
+            [cell.promptButton.titleLabel setTextAlignment:NSTextAlignmentCenter];
+            cell.promptButton.contentHorizontalAlignment = UIControlContentHorizontalAlignmentCenter;
+            [cell.promptButton setTitleColor:textColor forState:UIControlStateNormal];
+            [cell.promptButton setBackgroundColor:[UIColor clearColor]];
 
             return cell;
         }
@@ -239,7 +256,7 @@
             [cell.nameLabel setTextColor:textColor];
             cell.accessoryType = UITableViewCellAccessoryNone;
             if (self.manageContacts){
-                cell.selectionStyle = UITableViewCellSelectionStyleNone;
+                
             } else {
                 [_collaborators enumerateObjectsUsingBlock:^(id obj, NSUInteger idx, BOOL *stop) {
                     if ([(NSNumber*)obj isEqualToNumber:contact.identifier]){
@@ -250,18 +267,18 @@
             }
             return cell;
         } else {
-            static NSString *CellIdentifier = @"NothingCell";
-            UITableViewCell *cell = [tableView dequeueReusableCellWithIdentifier:CellIdentifier forIndexPath:indexPath];
-            UIButton *nothingButton = [UIButton buttonWithType:UIButtonTypeCustom];
-            [nothingButton setTitle:@"No contacts yet :(" forState:UIControlStateNormal];
-            [nothingButton.titleLabel setNumberOfLines:0];
-            [nothingButton.titleLabel setFont:[UIFont fontWithName:kSourceSansProLight size:20]];
-            [nothingButton.titleLabel setTextAlignment:NSTextAlignmentCenter];
-            nothingButton.contentHorizontalAlignment = UIControlContentHorizontalAlignmentCenter;
-            [nothingButton setTitleColor:[UIColor blackColor] forState:UIControlStateNormal];
-            [nothingButton setBackgroundColor:[UIColor clearColor]];
-            [cell addSubview:nothingButton];
-            [nothingButton setFrame:CGRectMake(20, 0, screen.size.width-40, screen.size.height-84)];
+            XXNothingCell *cell = (XXNothingCell *)[tableView dequeueReusableCellWithIdentifier:@"NothingCell"];
+            if (cell == nil) {
+                cell = [[[NSBundle mainBundle] loadNibNamed:@"XXNothingCell" owner:nil options:nil] lastObject];
+            }
+            [cell.promptButton setTitle:@"Tap to add your first collaborator" forState:UIControlStateNormal];
+            [cell.promptButton addTarget:self action:@selector(addContact) forControlEvents:UIControlEventTouchUpInside];
+            [cell.promptButton.titleLabel setNumberOfLines:0];
+            [cell.promptButton.titleLabel setFont:[UIFont fontWithName:kSourceSansProLight size:20]];
+            [cell.promptButton.titleLabel setTextAlignment:NSTextAlignmentCenter];
+            cell.promptButton.contentHorizontalAlignment = UIControlContentHorizontalAlignmentCenter;
+            [cell.promptButton setTitleColor:textColor forState:UIControlStateNormal];
+            [cell.promptButton setBackgroundColor:[UIColor clearColor]];
 
             return cell;
         }
@@ -270,18 +287,22 @@
 
 - (CGFloat)tableView:(UITableView *)tableView heightForRowAtIndexPath:(NSIndexPath *)indexPath {
     if (_contacts.count == 0){
-        return screen.size.height-84;
+        return screenHeight()-84;
     } else {
         return 80;
     }
 }
 
 - (CGFloat)tableView:(UITableView *)tableView heightForHeaderInSection:(NSInteger)section {
-    return 34;
+    if (_manageContacts){
+        return 0;
+    } else {
+        return 34;
+    }
 }
 
 - (UIView*)tableView:(UITableView *)tableView viewForHeaderInSection:(NSInteger)section {
-    UIToolbar *backgroundToolbar = [[UIToolbar alloc] initWithFrame:CGRectMake(0, 0, screen.size.width, 34)];
+    UIToolbar *backgroundToolbar = [[UIToolbar alloc] initWithFrame:CGRectMake(0, 0, screenWidth(), 34)];
     backgroundToolbar.clipsToBounds = YES;
     backgroundToolbar.autoresizingMask = UIViewAutoresizingFlexibleWidth;
     UILabel *headerLabel = [[UILabel alloc] init];
@@ -314,17 +335,44 @@
                 [headerLabel setText:@""];
                 break;
         }
-    } else {
-        [headerLabel setText:@"CONTACTS"];
+        [backgroundToolbar addSubview:headerLabel];
+        [headerLabel setFrame:backgroundToolbar.frame];
+        headerLabel.autoresizingMask = UIViewAutoresizingFlexibleWidth;
     }
-    [backgroundToolbar addSubview:headerLabel];
-    [headerLabel setFrame:backgroundToolbar.frame];
-    headerLabel.autoresizingMask = UIViewAutoresizingFlexibleWidth;
+
     return backgroundToolbar;
 }
 
+-(void)tableView:(UITableView *)tableView willDisplayCell:(UITableViewCell *)cell forRowAtIndexPath:(NSIndexPath *)indexPath
+{
+    if([indexPath row] == ((NSIndexPath*)[[tableView indexPathsForVisibleRows] lastObject]).row && tableView == self.tableView){
+        //end of loading
+        [ProgressHUD dismiss];
+        [self.tableView setSeparatorStyle:UITableViewCellSeparatorStyleSingleLine];
+    }
+    cell.backgroundColor = [UIColor clearColor];
+    UIView *selectionView = [[UIView alloc] initWithFrame:cell.frame];
+    if ([[NSUserDefaults standardUserDefaults] boolForKey:kDarkBackground]){
+        [selectionView setBackgroundColor:kTableViewCellSelectionColorDark];
+    } else {
+        [selectionView setBackgroundColor:[UIColor colorWithWhite:.9 alpha:.23]];
+    }
+    cell.selectedBackgroundView = selectionView;
+}
+
 - (void)tableView:(UITableView *)tableView didSelectRowAtIndexPath:(NSIndexPath *)indexPath {
-    if (!self.manageContacts){
+    if (_manageContacts){
+        User *contact = [_contacts objectAtIndex:indexPath.row];
+        XXProfileViewController *vc = [[self storyboard] instantiateViewControllerWithIdentifier:@"Profile"];
+        [vc setUserId:contact.identifier];
+        UINavigationController *nav = [[UINavigationController alloc] initWithRootViewController:vc];
+        nav.transitioningDelegate = self;
+        nav.modalPresentationStyle = UIModalPresentationCustom;
+        
+        [self presentViewController:nav animated:YES completion:^{
+            
+        }];
+    } else {
         if (indexPath.section == 0){
             Circle *circle= [_circles objectAtIndex:indexPath.row];
             if ([_circleCollaborators containsObject:circle.identifier]){
@@ -345,57 +393,87 @@
     [tableView deselectRowAtIndexPath:indexPath animated:YES];
 }
 
--(void)tableView:(UITableView *)tableView willDisplayCell:(UITableViewCell *)cell forRowAtIndexPath:(NSIndexPath *)indexPath
-{
-    if([indexPath row] == ((NSIndexPath*)[[tableView indexPathsForVisibleRows] lastObject]).row && tableView == self.tableView){
-        //end of loading
-        [ProgressHUD dismiss];
-        [self.tableView setSeparatorStyle:UITableViewCellSeparatorStyleSingleLine];
+
+- (id<UIViewControllerAnimatedTransitioning>)animationControllerForPresentedController:(UIViewController *)presented
+                                                                  presentingController:(UIViewController *)presenting
+                                                                      sourceController:(UIViewController *)source {
+    XXCollaboratorsTransition *animator = [XXCollaboratorsTransition new];
+    animator.presenting = YES;
+    return animator;
+}
+
+- (id<UIViewControllerAnimatedTransitioning>)animationControllerForDismissedController:(UIViewController *)dismissed {
+    
+    XXCollaboratorsTransition *animator = [XXCollaboratorsTransition new];
+    return animator;
+}
+
+- (void)newCircle {
+    XXManageCircleViewController *vc = [[self storyboard] instantiateViewControllerWithIdentifier:@"ManageCircle"];
+    UINavigationController *nav = [[UINavigationController alloc] initWithRootViewController:vc];
+    
+    if ([[NSUserDefaults standardUserDefaults] boolForKey:kDarkBackground]){
+        [UIView animateWithDuration:.23 animations:^{
+            self.navigationController.view.transform = CGAffineTransformMakeScale(.77, .77);
+            [self.navigationController.view setAlpha:0.0];
+        } completion:^(BOOL finished) {
+            
+        }];
     }
-    cell.backgroundColor = [UIColor clearColor];
+    
+    [self presentViewController:nav animated:YES completion:^{
+        
+    }];
 }
 
 - (void)addContact{
-    addContactAlert = [[UIAlertView alloc] initWithTitle:nil message:@"Your contact's email:" delegate:self cancelButtonTitle:@"Cancel" otherButtonTitles:@"Submit", nil];
-    addContactAlert.alertViewStyle = UIAlertViewStylePlainTextInput;
-    [addContactAlert show];
+    XXAddCollaboratorsViewController *vc = [[self storyboard] instantiateViewControllerWithIdentifier:@"AddCollaborators"];
+    UINavigationController *nav = [[UINavigationController alloc] initWithRootViewController:vc];
+    
+    if ([[NSUserDefaults standardUserDefaults] boolForKey:kDarkBackground]){
+        [UIView animateWithDuration:.23 animations:^{
+            self.navigationController.view.transform = CGAffineTransformMakeScale(.77, .77);
+            [self.navigationController.view setAlpha:0.0];
+        } completion:^(BOOL finished) {
+            
+        }];
+    }
+    
+    [self presentViewController:nav animated:YES completion:^{
+        
+    }];
 }
 
 - (void)alertView:(UIAlertView *)alertView clickedButtonAtIndex:(NSInteger)buttonIndex {
-    if (alertView == addContactAlert && [[alertView buttonTitleAtIndex:buttonIndex] isEqualToString:@"Submit"]){
-        [self createContact:[addContactAlert textFieldAtIndex:0].text];
-    } else if ([[alertView buttonTitleAtIndex:buttonIndex] isEqualToString:@"Remove"]){
+    if ([[alertView buttonTitleAtIndex:buttonIndex] isEqualToString:@"Remove"]){
         [self removeContact];
-    }
-}
-
-- (void)createContact:(NSString*)email {
-    if (email.length){
-        [manager POST:[NSString stringWithFormat:@"%@/users/%@/add_contact",kAPIBaseUrl,[[NSUserDefaults standardUserDefaults] objectForKey:kUserDefaultsId]] parameters:@{@"email":email} success:^(AFHTTPRequestOperation *operation, id responseObject) {
-            //NSLog(@"Successfully created contact: %@",responseObject);
-            if ([responseObject objectForKey:@"user"]){
-                User *newContact = [User MR_findFirstByAttribute:@"identifier" withValue:[[responseObject objectForKey:@"user"] objectForKey:@"id"]];
-                if (!newContact){
-                    newContact = [User MR_createInContext:[NSManagedObjectContext MR_defaultContext]];
-                }
-                [newContact populateFromDict:[responseObject objectForKey:@"user"]];
-                [_contacts insertObject:newContact atIndex:0];
-                if (newContact && _contacts.count > 1)[self.tableView insertRowsAtIndexPaths:@[[NSIndexPath indexPathForRow:0 inSection:0]] withRowAnimation:UITableViewRowAnimationTop];
-                else [self.tableView reloadSections:[NSIndexSet indexSetWithIndex:0] withRowAnimation:UITableViewRowAnimationFade];
-            } else if ([[responseObject objectForKey:@"failure"] isEqualToNumber:[NSNumber numberWithBool:YES]]) {
-                [XXAlert show:[NSString stringWithFormat:@"%@ doesn't user Verses yet. We've sent them an invite.",email] withTime:2.7f];
-            } else {
-                [[[UIAlertView alloc] initWithTitle:@"Sorry" message:@"Something went wrong while trying to send this invitation. Please try again soon." delegate:nil cancelButtonTitle:@"Okay" otherButtonTitles:nil] show];
-            }
-        } failure:^(AFHTTPRequestOperation *operation, NSError *error) {
-            NSLog(@"Failed to create contact: %@",error.description);
-        }];
     }
 }
 
 - (void)confirmRemove:(NSIndexPath*)indexPath {
     [[[UIAlertView alloc] initWithTitle:@"Confirmation" message:@"Are you sure you want to remove this contact?" delegate:self cancelButtonTitle:@"Cancel" otherButtonTitles:@"Remove", nil] show];
     indexPathToRemove = indexPath;
+}
+
+- (void)addContactObserver:(NSNotification*)notification {
+    User *newContact = [notification.userInfo objectForKey:@"contact"];
+    if (newContact){
+        [currentUser addContact:newContact];
+        [[NSManagedObjectContext MR_defaultContext] MR_saveToPersistentStoreWithCompletion:^(BOOL success, NSError *error) {
+            NSLog(@"Saving a new contact for user");
+        }];
+        [_contacts insertObject:newContact atIndex:0];
+        if (newContact && _contacts.count > 1){
+            [self.tableView beginUpdates];
+            [self.tableView insertRowsAtIndexPaths:@[[NSIndexPath indexPathForRow:0 inSection:0]] withRowAnimation:UITableViewRowAnimationTop];
+            [self.tableView endUpdates];
+        }
+        else {
+            [self.tableView beginUpdates];
+            [self.tableView reloadSections:[NSIndexSet indexSetWithIndex:0] withRowAnimation:UITableViewRowAnimationFade];
+            [self.tableView endUpdates];
+        }
+    }
 }
 
 - (void)removeContact {
@@ -406,7 +484,9 @@
         [removeContact MR_deleteInContext:[NSManagedObjectContext MR_defaultContext]];
         [_contacts removeObject:removeContact];
         if (_contacts.count){
+            [self.tableView beginUpdates];
             [self.tableView deleteRowsAtIndexPaths:@[indexPathToRemove] withRowAnimation:UITableViewRowAnimationFade];
+            [self.tableView endUpdates];
         } else {
             [self.tableView reloadData];
         }

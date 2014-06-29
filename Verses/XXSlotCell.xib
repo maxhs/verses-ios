@@ -6,11 +6,11 @@
     <objects>
         <placeholder placeholderIdentifier="IBFilesOwner" id="-1" userLabel="File's Owner"/>
         <placeholder placeholderIdentifier="IBFirstResponder" id="-2" customClass="UIResponder"/>
-        <tableViewCell contentMode="scaleToFill" selectionStyle="none" indentationWidth="10" reuseIdentifier="GroupCell" rowHeight="120" id="HIo-XF-F1n" customClass="XXGuideCell">
-            <rect key="frame" x="0.0" y="0.0" width="320" height="120"/>
+        <tableViewCell contentMode="scaleToFill" selectionStyle="none" indentationWidth="10" reuseIdentifier="SlotCell" rowHeight="114" id="HIo-XF-F1n" customClass="XXSlotCell">
+            <rect key="frame" x="0.0" y="0.0" width="320" height="114"/>
             <autoresizingMask key="autoresizingMask" widthSizable="YES" heightSizable="YES"/>
             <tableViewCellContentView key="contentView" opaque="NO" clipsSubviews="YES" multipleTouchEnabled="YES" contentMode="center" tableViewCell="HIo-XF-F1n" id="UOM-HF-njc">
-                <rect key="frame" x="0.0" y="0.0" width="320" height="119"/>
+                <rect key="frame" x="0.0" y="0.0" width="320" height="113"/>
                 <autoresizingMask key="autoresizingMask"/>
                 <subviews>
                     <view hidden="YES" alpha="0.05000000074505806" contentMode="scaleToFill" id="Rig-jD-tul">
@@ -19,38 +19,58 @@
                         <color key="backgroundColor" white="1" alpha="1" colorSpace="custom" customColorSpace="calibratedWhite"/>
                     </view>
                     <view alpha="0.050000000000000003" contentMode="scaleToFill" id="JsN-H6-tE7">
-                        <rect key="frame" x="60" y="120" width="200" height="1"/>
+                        <rect key="frame" x="60" y="114" width="200" height="1"/>
                         <autoresizingMask key="autoresizingMask" flexibleMinX="YES" widthSizable="YES" flexibleMaxX="YES" flexibleMinY="YES"/>
                         <color key="backgroundColor" white="1" alpha="1" colorSpace="custom" customColorSpace="calibratedWhite"/>
                     </view>
                     <view contentMode="scaleToFill" id="Sgq-4p-83L" customClass="XXClipView">
-                        <rect key="frame" x="0.0" y="0.0" width="320" height="120"/>
+                        <rect key="frame" x="0.0" y="0.0" width="320" height="114"/>
                         <autoresizingMask key="autoresizingMask" widthSizable="YES" heightSizable="YES"/>
                         <subviews>
-                            <scrollView multipleTouchEnabled="YES" contentMode="scaleToFill" pagingEnabled="YES" showsHorizontalScrollIndicator="NO" showsVerticalScrollIndicator="NO" id="5mQ-pC-A7w">
-                                <rect key="frame" x="80" y="0.0" width="160" height="120"/>
+                            <scrollView multipleTouchEnabled="YES" contentMode="scaleToFill" pagingEnabled="YES" showsHorizontalScrollIndicator="NO" showsVerticalScrollIndicator="NO" canCancelContentTouches="NO" id="5mQ-pC-A7w">
+                                <rect key="frame" x="80" y="0.0" width="160" height="114"/>
                                 <autoresizingMask key="autoresizingMask" widthSizable="YES" heightSizable="YES"/>
                                 <subviews>
                                     <button opaque="NO" contentMode="scaleToFill" contentHorizontalAlignment="center" contentVerticalAlignment="center" lineBreakMode="middleTruncation" id="2Nr-3u-H9M">
-                                        <rect key="frame" x="0.0" y="0.0" width="160" height="120"/>
+                                        <rect key="frame" x="0.0" y="32" width="160" height="50"/>
                                         <autoresizingMask key="autoresizingMask" flexibleMinX="YES" widthSizable="YES" flexibleMaxX="YES" heightSizable="YES"/>
                                         <state key="normal">
                                             <color key="titleShadowColor" white="0.0" alpha="0.0" colorSpace="calibratedWhite"/>
                                         </state>
                                     </button>
                                     <button opaque="NO" contentMode="scaleToFill" contentHorizontalAlignment="center" contentVerticalAlignment="center" lineBreakMode="middleTruncation" id="KGv-8N-6Ew">
-                                        <rect key="frame" x="160" y="0.0" width="160" height="120"/>
+                                        <rect key="frame" x="160" y="32" width="160" height="50"/>
                                         <autoresizingMask key="autoresizingMask" flexibleMinX="YES" widthSizable="YES" flexibleMaxX="YES" heightSizable="YES"/>
                                         <state key="normal">
                                             <color key="titleShadowColor" white="0.0" alpha="0.0" colorSpace="calibratedWhite"/>
                                         </state>
                                     </button>
                                     <button opaque="NO" contentMode="scaleToFill" contentHorizontalAlignment="center" contentVerticalAlignment="center" lineBreakMode="middleTruncation" id="U62-XX-ea3">
-                                        <rect key="frame" x="320" y="0.0" width="160" height="120"/>
+                                        <rect key="frame" x="320" y="32" width="160" height="50"/>
                                         <autoresizingMask key="autoresizingMask" flexibleMinX="YES" widthSizable="YES" flexibleMaxX="YES" heightSizable="YES"/>
                                         <state key="normal">
                                             <color key="titleShadowColor" white="0.0" alpha="0.0" colorSpace="calibratedWhite"/>
                                         </state>
+                                    </button>
+                                    <button opaque="NO" alpha="0.0" contentMode="scaleToFill" contentHorizontalAlignment="center" contentVerticalAlignment="center" lineBreakMode="middleTruncation" id="kCT-th-CdM" userLabel="Right button">
+                                        <rect key="frame" x="123" y="0.0" width="100" height="114"/>
+                                        <autoresizingMask key="autoresizingMask" flexibleMaxX="YES" flexibleMaxY="YES"/>
+                                        <state key="normal" image="smallRightWhiteArrow.png">
+                                            <color key="titleShadowColor" white="0.5" alpha="1" colorSpace="calibratedWhite"/>
+                                        </state>
+                                        <connections>
+                                            <action selector="scrollRight" destination="HIo-XF-F1n" eventType="touchUpInside" id="sMD-uS-lcu"/>
+                                        </connections>
+                                    </button>
+                                    <button opaque="NO" alpha="0.0" contentMode="scaleToFill" contentHorizontalAlignment="center" contentVerticalAlignment="center" lineBreakMode="middleTruncation" id="AtE-Ct-N2n" userLabel="Left button">
+                                        <rect key="frame" x="-65" y="0.0" width="100" height="114"/>
+                                        <autoresizingMask key="autoresizingMask" flexibleMaxX="YES" flexibleMaxY="YES"/>
+                                        <state key="normal" image="smallLeftWhiteArrow.png">
+                                            <color key="titleShadowColor" white="0.5" alpha="1" colorSpace="calibratedWhite"/>
+                                        </state>
+                                        <connections>
+                                            <action selector="scrollLeft" destination="HIo-XF-F1n" eventType="touchUpInside" id="ANU-Ri-sY6"/>
+                                        </connections>
                                     </button>
                                 </subviews>
                                 <connections>
@@ -67,6 +87,8 @@
             </tableViewCellContentView>
             <connections>
                 <outlet property="firstButton" destination="2Nr-3u-H9M" id="G2n-Zy-B0g"/>
+                <outlet property="leftButton" destination="AtE-Ct-N2n" id="B20-gr-OAi"/>
+                <outlet property="rightButton" destination="kCT-th-CdM" id="f4s-t6-1AH"/>
                 <outlet property="scrollView" destination="5mQ-pC-A7w" id="laF-WD-0Xd"/>
                 <outlet property="secondButton" destination="KGv-8N-6Ew" id="jRV-97-mrG"/>
                 <outlet property="thirdButton" destination="U62-XX-ea3" id="Fah-ih-MWN"/>
@@ -74,4 +96,8 @@
             </connections>
         </tableViewCell>
     </objects>
+    <resources>
+        <image name="smallLeftWhiteArrow.png" width="22" height="41"/>
+        <image name="smallRightWhiteArrow.png" width="22" height="41"/>
+    </resources>
 </document>

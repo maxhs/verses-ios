@@ -37,6 +37,7 @@ static inline CGFloat height(UIView *view) { return view.frame.size.height; }
 
 #define kExistingUser @"existingUser"
 #define kExistingUserWrite @"existingUserWrite"
+#define kHasSeenGuideView @"hasSeenGuideView"
 
 #define kUserDefaultsId @"userId"
 #define kUserDefaultsPassword @"password"
@@ -54,12 +55,18 @@ static inline CGFloat height(UIView *view) { return view.frame.size.height; }
 #define kElectricBlue [UIColor colorWithRed:(0.0/255.0) green:(128.0/255.0) blue:(255.0/255.0) alpha:1]
 #define kHotOrange [UIColor colorWithRed:(255.0/255.0) green:(92.0/255.0) blue:(22.0/255.0) alpha:1]
 #define kStyleButtonBorderColor [UIColor colorWithWhite:1 alpha:.2].CGColor
+#define kTableViewCellSelectionColor [UIColor colorWithWhite:.9 alpha:.23]
+#define kTableViewCellSelectionColorDark [UIColor colorWithWhite:.5 alpha:.23]
+#define kPlaceholderTextColor [UIColor colorWithWhite:.45 alpha:.5]
 
 //String constants
 #define kStoryPlaceholder @"Start your story..."
 #define kSlowRevealPlaceholder @"Add to this slow reveal story..."
 #define kTitlePlaceholder @"Title your story..."
 #define kFeedbackPlaceholder @"Leave feedback..."
+#define kCircleBlurbPlaceholder @"Describe your writing circle..."
+#define kCircleNamePlaceholder @"Name your writing circle..."
+#define kAddCollaboratorPlaceholder @"Your contact's email address..."
 
 //Notification constants
 #define kCircleComment @"circle_comment"

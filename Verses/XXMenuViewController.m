@@ -27,8 +27,9 @@
 #import "XXCircleDetailViewController.h"
 #import "XXProfileViewController.h"
 
-@interface XXMenuViewController () <UIAlertViewDelegate,UISearchDisplayDelegate,UISearchBarDelegate, UIPopoverControllerDelegate> {
+@interface XXMenuViewController () <UIAlertViewDelegate,UISearchBarDelegate, UIPopoverControllerDelegate> {
     AFHTTPRequestOperationManager *manager;
+    XXAppDelegate *delegate;
     BOOL loggedIn;
     BOOL loading;
     BOOL canLoadMore;
@@ -52,10 +53,11 @@
 
 - (void)viewDidLoad
 {
-    manager = [(XXAppDelegate*)[UIApplication sharedApplication].delegate manager];
-    dynamicsViewController = [(XXAppDelegate*)[UIApplication sharedApplication].delegate dynamicsDrawerViewController];
+    delegate = (XXAppDelegate*)[UIApplication sharedApplication].delegate;
+    manager = [delegate manager];
+    dynamicsViewController = [delegate dynamicsDrawerViewController];
     [self.view setBackgroundColor:[UIColor clearColor]];
-    _filteredResults = [NSMutableArray array];
+ 
     self.tableView.backgroundColor = [UIColor clearColor];
     self.tableView.separatorColor = [UIColor colorWithWhite:1.0 alpha:0.05];
 
@@ -75,6 +77,12 @@
                                              selector:@selector(reloadMenu)
                                                  name:@"ReloadMenu"
                                                object:nil];
+    [[NSNotificationCenter defaultCenter] addObserver:self
+                                             selector:@selector(willShowKeyboard:)
+                                                 name:UIKeyboardWillShowNotification object:nil];
+    [[NSNotificationCenter defaultCenter] addObserver:self
+                                             selector:@selector(willHideKeyboard:)
+                                                 name:UIKeyboardWillHideNotification object:nil];
 }
 
 - (void)reloadMenu {
@@ -144,7 +152,16 @@
         }
     }
     
-    if (self.tableView.alpha < 1.0){
+    if (self.view.alpha < 1.f){
+        if ([[NSUserDefaults standardUserDefaults] boolForKey:kDarkBackground]){
+            [UIView animateWithDuration:.27 animations:^{
+                [self.view setAlpha:1.0];
+                [dynamicsViewController.view setAlpha:1.0];
+                self.view.transform = CGAffineTransformIdentity;
+            }];
+        }
+    }
+    else if (self.tableView.alpha < 1.0){
         [UIView animateWithDuration:.25 animations:^{
             [self.tableView setAlpha:1.0];
         }];
@@ -152,6 +169,12 @@
     canLoadMore = YES;
     [super viewWillAppear:animated];
     [[UIApplication sharedApplication] setApplicationIconBadgeNumber:0];
+}
+
+- (void)viewDidAppear:(BOOL)animated {
+    NSPredicate *predicate = [NSPredicate predicateWithFormat:@"draft == %@ and inviteOnly == %@",[NSNumber numberWithBool:NO],[NSNumber numberWithBool:NO]];
+    _searchResults = [Story MR_findAllWithPredicate:predicate].mutableCopy;
+    _filteredResults = [NSMutableArray arrayWithArray:_searchResults];
 }
 
 /*- (void)willAnimateRotationToInterfaceOrientation:(UIInterfaceOrientation)toInterfaceOrientation duration:(NSTimeInterval)duration {
@@ -193,7 +216,15 @@
                 [notification populateFromDict:dict];
                 [notificationSet addObject:notification];
             }
+            
+            for (Notification *notification in currentUser.notifications){
+                if (![notificationSet containsObject:notification]){
+                    NSLog(@"Deleting a notification that no longer exists.");
+                    [notification MR_deleteInContext:[NSManagedObjectContext MR_defaultContext]];
+                }
+            }
             currentUser.notifications = notificationSet;
+            
             [[NSManagedObjectContext MR_defaultContext] MR_saveToPersistentStoreWithCompletion:^(BOOL success, NSError *error) {
                 [self.tableView reloadData];
                 [self loadCirclesAlert];
@@ -237,7 +268,13 @@
                 }
                 [ProgressHUD dismiss];
                 loading = NO;
-                [self.tableView reloadSections:[NSIndexSet indexSetWithIndex:1] withRowAnimation:UITableViewRowAnimationFade];
+                
+                if (!searching){
+                    [self.tableView beginUpdates];
+                    [self.tableView reloadSections:[NSIndexSet indexSetWithIndex:1] withRowAnimation:UITableViewRowAnimationFade];
+                    [self.tableView endUpdates];
+                }
+                
             } failure:^(AFHTTPRequestOperation *operation, NSError *error) {
                 
             }];
@@ -279,7 +316,7 @@
        
     } else if (loggedIn) {
         if (section == 0){
-            return 4;
+            return 3;
         } else {
             return currentUser.notifications.count;
         }
@@ -309,7 +346,8 @@
                 cell = [[[NSBundle mainBundle] loadNibNamed:@"XXSearchCell" owner:nil options:nil] lastObject];
             }
             [cell.storyTitle setText:@"No results."];
-            [cell.authorLabel setText:@"Tap to search again..."];
+            [cell.storyTitle setFont:[UIFont fontWithName:kSourceSansProRegular size:19]];
+            [cell.authorLabel setText:@""];
             [cell.authorLabel setFont:[UIFont fontWithName:kSourceSansProItalic size:15]];
             return cell;
         }
@@ -357,14 +395,14 @@
                     return cell;
                 }
                     break;
-                case 2:
+                /*case 2:
                 {
                     [cell.menuImage setImage:[UIImage imageNamed:@"menuBookmarks"]];
                     [cell.menuLabel setText:@"Bookmarks"];
                     return cell;
                 }
-                    break;
-                case 3:
+                    break;*/
+                case 2:
                 {
                     [cell.menuImage setImage:[UIImage imageNamed:@"menuSettings"]];
                     [cell.menuLabel setText:@"Settings"];
@@ -413,7 +451,12 @@
 - (void)tableView:(UITableView *)tableView willDisplayCell:(UITableViewCell *)cell forRowAtIndexPath:(NSIndexPath *)indexPath {
     cell.backgroundColor = [UIColor clearColor];
     UIView *selectedView = [[UIView alloc] initWithFrame:cell.frame];
-    [selectedView setBackgroundColor:[UIColor colorWithWhite:1 alpha:.5]];
+    if ([[NSUserDefaults standardUserDefaults] boolForKey:kDarkBackground]){
+        [selectedView setBackgroundColor:kTableViewCellSelectionColorDark];
+    } else {
+        [selectedView setBackgroundColor:kTableViewCellSelectionColor];
+    }
+    
     cell.selectedBackgroundView = selectedView;
 }
 
@@ -530,7 +573,7 @@
 - (void)search {
     if (!searching){
         searching = YES;
-        [manager GET:[NSString stringWithFormat:@"%@/stories/search",kAPIBaseUrl] parameters:@{@"search":self.searchDisplayController.searchBar.text} success:^(AFHTTPRequestOperation *operation, id responseObject) {
+        [manager GET:[NSString stringWithFormat:@"%@/stories/search",kAPIBaseUrl] parameters:@{@"search":self.searchBar.text} success:^(AFHTTPRequestOperation *operation, id responseObject) {
             NSLog(@"Successful story search: %@",responseObject);
             searching = NO;
         } failure:^(AFHTTPRequestOperation *operation, NSError *error) {
@@ -575,10 +618,10 @@
                 case 1:
                     [self goToCircles];
                     break;
-                case 2:
+                /*case 2:
                     [self goToBookmarks];
-                    break;
-                case 3:
+                    break;*/
+                case 2:
                     [self goToSettings];
                     break;
                 default:
@@ -593,7 +636,7 @@
                 UINavigationController *nav = [[UINavigationController alloc] initWithRootViewController:vc];
                 [dynamicsViewController setPaneViewController:nav animated:YES completion:nil];
             } else if (notification.circle.identifier){
-                [ProgressHUD show:@"Writing circle..."];
+                [ProgressHUD show:@"Fetching that writing circle..."];
                 XXCircleDetailViewController *vc = [[self storyboard] instantiateViewControllerWithIdentifier:@"CircleDetail"];
                 [vc setCircle:notification.circle];
                 [vc setNeedsNavigation:YES];
@@ -611,11 +654,16 @@
                     [self.popover presentPopoverFromRect:displayFrom inView:self.view permittedArrowDirections:UIPopoverArrowDirectionLeft animated:YES];
                 } else {
                     XXProfileViewController* vc = [[self storyboard] instantiateViewControllerWithIdentifier:@"Profile"];
-                    [vc setUser:notification.targetUser];
+                    [vc setUserId:notification.targetUser.identifier];
                     UINavigationController *nav = [[UINavigationController alloc] initWithRootViewController:vc];
-                    [self presentViewController:nav animated:YES completion:^{
-                        
-                    }];
+                    if ([[NSUserDefaults standardUserDefaults] boolForKey:kDarkBackground]){
+                        [UIView animateWithDuration:.27 animations:^{
+                            [self.view setAlpha:0.0];
+                            [dynamicsViewController.view setAlpha:0.0];
+                            self.view.transform = CGAffineTransformMakeScale(.8, .8);
+                        }];
+                    }
+                    [self presentViewController:nav animated:YES completion:nil];
                 }
             }
         }
@@ -624,7 +672,7 @@
 }
 
 - (CGFloat)tableView:(UITableView *)tableView heightForRowAtIndexPath:(NSIndexPath *)indexPath {
-    if (tableView == self.searchDisplayController.searchResultsTableView) {
+    if (searching) {
         return 60;
     } else if (loggedIn){
         if (indexPath.section == 0) {
@@ -658,25 +706,36 @@
     return headerLabel;
 }*/
 
+-(void)willShowKeyboard:(NSNotification*)notification {
+    NSDictionary* keyboardInfo = [notification userInfo];
+    NSValue* keyboardFrameBegin = [keyboardInfo valueForKey:UIKeyboardFrameBeginUserInfoKey];
+    CGFloat keyboardHeight = [keyboardFrameBegin CGRectValue].size.height;
+    self.tableView.contentInset = UIEdgeInsetsMake(0, 0, keyboardHeight, 0);
+}
+
+- (void)willHideKeyboard:(NSNotification*)notificaiton {
+    self.tableView.contentInset = UIEdgeInsetsMake(0, 0, 0, 0);
+}
+
 - (void)searchBarTextDidBeginEditing:(UISearchBar *)searchBar {
     searching = YES;
     [self.searchBar setShowsCancelButton:YES animated:YES];
-    if (!_searchResults.count && !self.searchBar.text.length){
+    [self.tableView reloadData];
+    
+    if (!self.searchBar.text.length){
         [manager GET:[NSString stringWithFormat:@"%@/stories/titles",kAPIBaseUrl] parameters:nil success:^(AFHTTPRequestOperation *operation, id responseObject) {
             //NSLog(@"success fetching titles: %@",responseObject);
-            _searchResults = [self updateLocalStories:[responseObject objectForKey:@"titles"]];
+            [self updateLocalStories:[responseObject objectForKey:@"titles"]];
             [_filteredResults removeAllObjects];
             [_filteredResults addObjectsFromArray:_searchResults];
-            [self.tableView reloadSections:[NSIndexSet indexSetWithIndex:0] withRowAnimation:UITableViewRowAnimationAutomatic];
+            
         } failure:^(AFHTTPRequestOperation *operation, NSError *error) {
             //NSLog(@"Failure getting search stories titles: %@",error.description);
         }];
-        [self.tableView reloadData];
     }
 }
 
-- (NSMutableArray*)updateLocalStories:(NSArray*)array{
-    NSMutableArray *storyArray = [NSMutableArray array];
+- (void)updateLocalStories:(NSArray*)array{
     for (NSDictionary *dict in array){
         if ([dict objectForKey:@"id"] && [dict objectForKey:@"id"] != [NSNull null]){
             Story *story = [Story MR_findFirstByAttribute:@"identifier" withValue:[dict objectForKey:@"id"]];
@@ -684,11 +743,12 @@
                 story = [Story MR_createInContext:[NSManagedObjectContext MR_defaultContext]];
             }
             [story populateFromDict:dict];
-            [storyArray addObject:story];
         }
     }
-    //[self saveContext];
-    return storyArray;
+    [[NSManagedObjectContext MR_defaultContext] MR_saveToPersistentStoreWithCompletion:^(BOOL success, NSError *error) {
+        NSPredicate *predicate = [NSPredicate predicateWithFormat:@"draft == %@ and inviteOnly == %@",[NSNumber numberWithBool:NO],[NSNumber numberWithBool:NO]];
+        _searchResults = [Story MR_findAllWithPredicate:predicate].mutableCopy;
+    }];
 }
 
 - (void)searchBarCancelButtonClicked:(UISearchBar *)searchBar {
@@ -702,7 +762,12 @@
 
 - (BOOL)searchBar:(UISearchBar *)searchBar shouldChangeTextInRange:(NSRange)range replacementText:(NSString *)text {
     NSString* newText = [searchBar.text stringByReplacingCharactersInRange:range withString:text];
-    [self filterContentForSearchText:newText scope:nil];
+    if (newText.length){
+        [self filterContentForSearchText:newText scope:nil];
+    } else {
+        [self.tableView reloadData];
+    }
+    
     return YES;
 }
 
@@ -734,7 +799,11 @@
     Notification *notification = [currentUser.notifications objectAtIndex:indexPathForDeletion.row];
     [manager DELETE:[NSString stringWithFormat:@"%@/notifications/%@",kAPIBaseUrl,notification.identifier] parameters:nil success:^(AFHTTPRequestOperation *operation, id responseObject) {
         [currentUser removeNotification:notification];
+        
+        [self.tableView beginUpdates];
         [self.tableView deleteRowsAtIndexPaths:@[indexPathForDeletion] withRowAnimation:UITableViewRowAnimationFade];
+        [self.tableView endUpdates];
+        
         [ProgressHUD dismiss];
     } failure:^(AFHTTPRequestOperation *operation, NSError *error) {
         [ProgressHUD dismiss];

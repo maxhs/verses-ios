@@ -35,8 +35,8 @@ NSString *const CrimsonTextBlockquoteStyle = @"CrimsonTextBlockquoteStyle";
                           
                           UIFontTextStyleBody: @{UIContentSizeCategoryExtraExtraExtraLarge: @(27),
                                                  UIContentSizeCategoryExtraExtraLarge: @(25),
-                                                 UIContentSizeCategoryExtraLarge: @(23),
-                                                 UIContentSizeCategoryLarge: @(21),
+                                                 UIContentSizeCategoryExtraLarge: @(24),
+                                                 UIContentSizeCategoryLarge: @(22),
                                                  UIContentSizeCategoryMedium: @(19),
                                                  UIContentSizeCategorySmall: @(17),
                                                  UIContentSizeCategoryExtraSmall: @(13),},

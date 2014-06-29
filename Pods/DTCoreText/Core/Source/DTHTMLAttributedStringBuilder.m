@@ -446,13 +446,7 @@
 	[_tagStartHandlers setObject:[listBlock copy] forKey:@"ul"];
 	[_tagStartHandlers setObject:[listBlock copy] forKey:@"ol"];
 	
-	void (^blockquote)(void) = ^
-	{
-		_currentTag.blockquote = 1;
-	};
-	[_tagStartHandlers setObject:[blockquote copy] forKey:@"blockquote"];
-    
-    void (^h1Block)(void) = ^
+	void (^h1Block)(void) = ^
 	{
 		_currentTag.headerLevel = 1;
 	};

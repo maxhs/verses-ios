@@ -79,7 +79,7 @@
     
     NSString *storyBody;
     NSRange range;
-    if (story.mystery){
+    if ([story.mystery isEqualToNumber:[NSNumber numberWithBool:YES]]){
         storyBody = [story.contributions.firstObject body];
     } else {
         storyBody = [story.contributions.lastObject body];
@@ -93,7 +93,7 @@
     }
     
     if ([storyBody length] > snippetLength){
-        if (story.mystery){
+        if ([story.mystery isEqualToNumber:[NSNumber numberWithBool:YES]]){
             range = NSMakeRange([storyBody length]-snippetLength, snippetLength);
         } else {
             range = NSMakeRange(0, snippetLength);
@@ -133,11 +133,14 @@
     _bodySnippet.clipsToBounds = NO;
     _bodySnippet.textContainer.maximumNumberOfLines = 0;
     _bodySnippet.textContainer.lineBreakMode = NSLineBreakByTruncatingTail;
+    [_bodySnippet setTextColor:color];
     
     [_readButton.titleLabel setFont:[UIFont fontWithName:kSourceSansProSemibold size:16]];
-    [self buttonTreatment:_readButton];
     [_editButton.titleLabel setFont:[UIFont fontWithName:kSourceSansProSemibold size:16]];
-    [self buttonTreatment:_editButton];
+
+    [self buttonTreatment:_readButton withColor:color];
+    [self buttonTreatment:_editButton withColor:color];
+    
     
     readY = (int)arc4random_uniform(320)-160;
     editY = (int)arc4random_uniform(320)-160;
@@ -168,31 +171,35 @@
     }];
 }
 
-- (void)buttonTreatment:(UIButton*)button {
-    button.layer.borderColor = kElectricBlue.CGColor;
+- (void)buttonTreatment:(UIButton*)button withColor:(UIColor*)color {
+    
     [button setBackgroundColor:[UIColor clearColor]];
-    button.layer.borderWidth = .5f;
+    if (color == [UIColor whiteColor]){
+        button.layer.borderWidth = 1.f;
+    } else {
+        button.layer.borderWidth = .5f;
+    }
+    
     button.layer.cornerRadius = 14.f;
     button.clipsToBounds = YES;
-    [button setTitleColor:kElectricBlue forState:UIControlStateNormal];
+    button.layer.borderColor = color.CGColor;
+    [button setTitleColor:color forState:UIControlStateNormal];
     button.layer.rasterizationScale = [UIScreen mainScreen].scale;
     button.layer.shouldRasterize = YES;
 }
 
 -(UIImage *)blurredSnapshot
 {
-    UIGraphicsBeginImageContextWithOptions(CGSizeMake(width, 140), NO, self.window.screen.scale);
-    [self drawViewHierarchyInRect:CGRectMake(0, 0, width, 140) afterScreenUpdates:NO];
+    UIGraphicsBeginImageContextWithOptions(CGSizeMake(width, height), NO, self.window.screen.scale);
+    [self drawViewHierarchyInRect:CGRectMake(0, 0, width, height) afterScreenUpdates:NO];
     UIImage *snapshotImage = UIGraphicsGetImageFromCurrentImageContext();
     UIImage *blurredSnapshotImage;
     if ([[NSUserDefaults standardUserDefaults] boolForKey:kDarkBackground]){
-        blurredSnapshotImage = [snapshotImage applyBlurWithRadius:20 blurType:BOXFILTER tintColor:[UIColor colorWithWhite:.0 alpha:.7] saturationDeltaFactor:1.8 maskImage:nil];
+        blurredSnapshotImage = [snapshotImage applyBlurWithRadius:10 blurType:BOXFILTER tintColor:[UIColor colorWithWhite:.0 alpha:.87] saturationDeltaFactor:.8 maskImage:nil];
     } else {
         blurredSnapshotImage = [snapshotImage applyBlurWithRadius:7 blurType:BOXFILTER tintColor:[UIColor colorWithWhite:1 alpha:.25] saturationDeltaFactor:1.8 maskImage:nil];
     }
-    
     UIGraphicsEndImageContext();
-    
     return blurredSnapshotImage;
 }
 

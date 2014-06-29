@@ -20,11 +20,11 @@
 @interface User : NSManagedObject
 
 @property (nonatomic, retain) NSString * authToken;
-@property (nonatomic, retain) id backgroundImage;
+@property (nonatomic, retain) id backgroundImageView;
 @property (nonatomic, retain) NSString * bio;
-@property (nonatomic, retain) NSNumber * contactCount;
 @property (nonatomic, retain) NSString * dayJob;
 @property (nonatomic, retain) NSString * email;
+@property (nonatomic, retain) NSString * phone;
 @property (nonatomic, retain) NSString * firstName;
 @property (nonatomic, retain) NSNumber * identifier;
 @property (nonatomic, retain) NSString * lastName;

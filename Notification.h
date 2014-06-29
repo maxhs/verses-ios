@@ -15,6 +15,7 @@
 
 @property (nonatomic, retain) NSDate * createdDate;
 @property (nonatomic, retain) NSNumber * identifier;
+@property (nonatomic, retain) NSNumber * read;
 @property (nonatomic, retain) NSString * message;
 @property (nonatomic, retain) NSString * type;
 @property (nonatomic, retain) Circle *circle;
