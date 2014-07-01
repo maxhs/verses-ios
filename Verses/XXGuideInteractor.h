@@ -17,5 +17,5 @@
 @property (nonatomic, assign, getter = isInteractive) BOOL interactive;
 @property (nonatomic, strong) id<UIViewControllerContextTransitioning> transitionContext;
 -(id)initWithParentViewController:(UIViewController *)viewController;
-
+- (void)showGuide;
 @end

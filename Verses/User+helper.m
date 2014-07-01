@@ -73,6 +73,46 @@
     }
 }
 
+- (void)update:(NSDictionary*)dictionary {
+    if ([dictionary objectForKey:@"pen_name"] && [dictionary objectForKey:@"pen_name"] != [NSNull null]) {
+        self.penName = [dictionary objectForKey:@"pen_name"];
+    }
+    if ([dictionary objectForKey:@"first_name"] && [dictionary objectForKey:@"first_name"] != [NSNull null]) {
+        self.firstName = [dictionary objectForKey:@"first_name"];
+    }
+    if ([dictionary objectForKey:@"last_name"] && [dictionary objectForKey:@"last_name"] != [NSNull null]) {
+        self.lastName = [dictionary objectForKey:@"last_name"];
+    }
+    if ([dictionary objectForKey:@"bio"] && [dictionary objectForKey:@"bio"] != [NSNull null]) {
+        self.bio = [dictionary objectForKey:@"bio"];
+    }
+    if ([dictionary objectForKey:@"day_job"] && [dictionary objectForKey:@"day_job"] != [NSNull null]) {
+        self.dayJob = [dictionary objectForKey:@"day_job"];
+    }
+    if ([dictionary objectForKey:@"night_job"] && [dictionary objectForKey:@"night_job"] != [NSNull null]) {
+        self.nightJob = [dictionary objectForKey:@"night_job"];
+    }
+    if ([dictionary objectForKey:@"email"] && [dictionary objectForKey:@"email"] != [NSNull null]) {
+        self.email = [dictionary objectForKey:@"email"];
+    }
+    if ([dictionary objectForKey:@"location"] && [dictionary objectForKey:@"location"] != [NSNull null]) {
+        self.location = [dictionary objectForKey:@"location"];
+    }
+    if ([dictionary objectForKey:@"pic_small_url"] && [dictionary objectForKey:@"pic_small_url"] != [NSNull null]) {
+        self.picSmall = [dictionary objectForKey:@"pic_small_url"];
+    }
+    if ([dictionary objectForKey:@"pic_medium_url"] && [dictionary objectForKey:@"pic_medium_url"] != [NSNull null]) {
+        self.picMedium = [dictionary objectForKey:@"pic_medium_url"];
+    }
+    if ([dictionary objectForKey:@"pic_large_url"] && [dictionary objectForKey:@"pic_large_url"] != [NSNull null]) {
+        self.picLarge = [dictionary objectForKey:@"pic_large_url"];
+    }
+
+    if ([dictionary objectForKey:@"subscribed"] && [dictionary objectForKey:@"subscribed"] != [NSNull null]) {
+        self.subscribed = [dictionary objectForKey:@"subscribed"];
+    }
+}
+
 - (void)addNotification:(Notification*)notification{
     NSMutableOrderedSet *set = [[NSMutableOrderedSet alloc] initWithOrderedSet:self.notifications];
     [set addObject:notification];
@@ -102,10 +142,13 @@
     [set addObject:story];
     self.drafts = set;
 }
+
 - (void)removeDraft:(Story*)story{
-    NSMutableOrderedSet *set = [[NSMutableOrderedSet alloc] initWithOrderedSet:self.drafts];
-    [set removeObject:story];
-    self.drafts = set;
+    if (story){
+        NSMutableOrderedSet *set = [[NSMutableOrderedSet alloc] initWithOrderedSet:self.drafts];
+        [set removeObject:story];
+        self.drafts = set;
+    }
 }
 
 - (void)addOwnedStory:(Story*)story{

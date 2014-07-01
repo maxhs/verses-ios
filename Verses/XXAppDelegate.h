@@ -22,7 +22,7 @@
 @property (strong, nonatomic) NSURL *backgroundURL;
 @property (strong, nonatomic) User *currentUser;
 @property BOOL loadingBackground;
-@property BOOL offline;
+@property BOOL connected;
 - (void)switchBackgroundTheme;
 - (void)cleanAndResetupDB;
 @end

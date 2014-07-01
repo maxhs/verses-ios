@@ -202,10 +202,13 @@
         [manager POST:[NSString stringWithFormat:@"%@/feedbacks",kAPIBaseUrl] parameters:parameters success:^(AFHTTPRequestOperation *operation, id responseObject) {
             //NSLog(@"Success sending feedback: %@",responseObject);
             Feedback *feedback = [Feedback MR_findFirstByAttribute:@"identifier" withValue:[[responseObject objectForKey:@"feedback"] objectForKey:@"id"]];
-            if (!feedback){
+            if (feedback){
+                [feedback update:[responseObject objectForKey:@"feedback"]];
+            } else {
                 feedback = [Feedback MR_createInContext:[NSManagedObjectContext MR_defaultContext]];
+                [feedback populateFromDict:[responseObject objectForKey:@"feedback"]];
             }
-            [feedback populateFromDict:[responseObject objectForKey:@"feedback"]];
+            
             
             BOOL new = YES;
             for (Feedback *f in _story.feedbacks) {
@@ -342,7 +345,7 @@
     if ([[NSUserDefaults standardUserDefaults] boolForKey:kDarkBackground]){
         [UIView animateWithDuration:.23 animations:^{
             [self.tableView setAlpha:0.0];
-            self.tableView.transform = CGAffineTransformMakeScale(.8, .8);
+            self.tableView.transform = CGAffineTransformMakeScale(.77, .77);
         }];
     }
 }
@@ -374,7 +377,7 @@
         if ([[NSUserDefaults standardUserDefaults] boolForKey:kDarkBackground]){
             [UIView animateWithDuration:.23 animations:^{
                 [self.tableView setAlpha:0.0];
-                self.tableView.transform = CGAffineTransformMakeScale(.8, .8);
+                self.tableView.transform = CGAffineTransformMakeScale(.77, .77);
                 [_dynamicsDrawerViewController.view setAlpha:0.0];
             }];
         }

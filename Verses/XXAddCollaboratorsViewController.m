@@ -42,6 +42,8 @@
     _invitations = [NSMutableArray array];
     
     self.tableView.rowHeight = 80.f;
+    self.tableView.separatorStyle = UITableViewCellSeparatorStyleNone;
+    
     self.title = @"Add Collaborators";
     backButton = [[UIBarButtonItem alloc] initWithImage:[UIImage imageNamed:@"blackX"] style:UIBarButtonItemStylePlain target:self action:@selector(back)];
     self.navigationItem.leftBarButtonItem = backButton;
@@ -111,7 +113,10 @@
                     CFStringRef emailRef = ABMultiValueCopyValueAtIndex(emails, ix);
                     if (emailRef != nil) email = (__bridge_transfer NSString*) (emailRef);
                 }
+                CFRelease(emails);
             }
+            
+            
             
             ABMultiValueRef phones = ABRecordCopyValue(person, kABPersonPhoneProperty);
             NSString *phone1;
@@ -121,7 +126,9 @@
                     CFStringRef phoneRef = ABMultiValueCopyValueAtIndex(phones, px);
                     phone1 = (__bridge_transfer NSString*) (phoneRef);
                 }
+                CFRelease(phones);
             }
+            
             
             NSMutableDictionary *userDict = [NSMutableDictionary dictionary];
             
@@ -152,6 +159,7 @@
             }
         }
     }
+    
     
     NSArray *newArray = [_addressBookContacts sortedArrayUsingComparator:^NSComparisonResult(id a, id b) {
         NSString *first = [(NSDictionary*)a objectForKey:@"firstName"];
@@ -257,10 +265,7 @@
             cell = [[[NSBundle mainBundle] loadNibNamed:@"XXAddCollaboratorEmailCell" owner:nil options:nil] lastObject];
         }
         cell.selectionStyle = UITableViewCellSelectionStyleNone;
-        cell.textField.layer.borderColor = [UIColor colorWithWhite:0 alpha:.1].CGColor;
-        cell.textField.layer.borderWidth = .5f;
-        cell.textField.layer.cornerRadius = 7.f;
-        cell.textField.clipsToBounds = YES;
+        
         [cell.textField setFont:[UIFont fontWithName:kSourceSansProRegular size:16]];
         cell.textField.placeholder = kAddCollaboratorPlaceholder;
         emailTextField = cell.textField;
@@ -271,6 +276,10 @@
         
         if ([[NSUserDefaults standardUserDefaults] boolForKey:kDarkBackground]){
             [cell.textField setKeyboardAppearance:UIKeyboardAppearanceDark];
+            if (!cell.textField.text.length){
+                [cell.textField setTextColor:[UIColor whiteColor]];
+                [cell.textField setText:kAddCollaboratorPlaceholder];
+            }
         } else {
             [cell.textField setKeyboardAppearance:UIKeyboardAppearanceDefault];
         }
@@ -348,6 +357,19 @@
 
 - (void)textFieldDidBeginEditing:(UITextField *)textField {
     self.navigationItem.rightBarButtonItem = doneButton;
+    if ([textField.text isEqualToString:kAddCollaboratorPlaceholder]){
+        [textField setText:@""];
+        if ([[NSUserDefaults standardUserDefaults] boolForKey:kDarkBackground]){
+            [textField setTextColor:[UIColor whiteColor]];
+        }
+    }
+}
+
+- (void)textFieldDidEndEditing:(UITextField *)textField {
+    if ([textField.text isEqualToString:kAddCollaboratorPlaceholder]){
+        [textField setTextColor:[UIColor whiteColor]];
+        [textField setText:kAddCollaboratorPlaceholder];
+    }
 }
 
 -(void)doneEditing {

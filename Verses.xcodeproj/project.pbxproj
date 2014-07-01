@@ -128,7 +128,6 @@
 		F2528F351960A76F00B6F5BA /* menuPhotos@2x.png in Resources */ = {isa = PBXBuildFile; fileRef = F2528F331960A76F00B6F5BA /* menuPhotos@2x.png */; };
 		F2528F381960A82D00B6F5BA /* menuShared.png in Resources */ = {isa = PBXBuildFile; fileRef = F2528F361960A82D00B6F5BA /* menuShared.png */; };
 		F2528F391960A82D00B6F5BA /* menuShared@2x.png in Resources */ = {isa = PBXBuildFile; fileRef = F2528F371960A82D00B6F5BA /* menuShared@2x.png */; };
-		F2528F471960B12600B6F5BA /* icon-experiment.png in Resources */ = {isa = PBXBuildFile; fileRef = F2528F461960B12600B6F5BA /* icon-experiment.png */; };
 		F2528F581960D92100B6F5BA /* icon-50.png in Resources */ = {isa = PBXBuildFile; fileRef = F2528F4A1960D92100B6F5BA /* icon-50.png */; };
 		F2528F591960D92100B6F5BA /* icon-57.png in Resources */ = {isa = PBXBuildFile; fileRef = F2528F4B1960D92100B6F5BA /* icon-57.png */; };
 		F2528F5A1960D92100B6F5BA /* icon-40.png in Resources */ = {isa = PBXBuildFile; fileRef = F2528F4C1960D92100B6F5BA /* icon-40.png */; };
@@ -161,6 +160,12 @@
 		F260737318FF1F5E00351463 /* contact.png in Resources */ = {isa = PBXBuildFile; fileRef = F260737118FF1F5E00351463 /* contact.png */; };
 		F260737418FF1F5E00351463 /* contact@2x.png in Resources */ = {isa = PBXBuildFile; fileRef = F260737218FF1F5E00351463 /* contact@2x.png */; };
 		F260FD8618D3C88A00D7C645 /* XXCirclesViewController.m in Sources */ = {isa = PBXBuildFile; fileRef = F260FD8518D3C88A00D7C645 /* XXCirclesViewController.m */; };
+		F261471B1962EAD800E82DC5 /* smallDownWhiteArrow.png in Resources */ = {isa = PBXBuildFile; fileRef = F26147191962EAD800E82DC5 /* smallDownWhiteArrow.png */; };
+		F261471C1962EAD800E82DC5 /* smallDownWhiteArrow@2x.png in Resources */ = {isa = PBXBuildFile; fileRef = F261471A1962EAD800E82DC5 /* smallDownWhiteArrow@2x.png */; };
+		F261471F1962F17C00E82DC5 /* XXFlowLayout.m in Sources */ = {isa = PBXBuildFile; fileRef = F261471E1962F17C00E82DC5 /* XXFlowLayout.m */; };
+		F2614722196321F300E82DC5 /* XXGuideAnimator.m in Sources */ = {isa = PBXBuildFile; fileRef = F2614721196321F300E82DC5 /* XXGuideAnimator.m */; };
+		F261472519636D6600E82DC5 /* XXSettingsBackgroundCell.m in Sources */ = {isa = PBXBuildFile; fileRef = F261472419636D6600E82DC5 /* XXSettingsBackgroundCell.m */; };
+		F261472719636D7200E82DC5 /* XXSettingsBackgroundCell.xib in Resources */ = {isa = PBXBuildFile; fileRef = F261472619636D7200E82DC5 /* XXSettingsBackgroundCell.xib */; };
 		F2653712194A2B8500E21EB4 /* Tag.m in Sources */ = {isa = PBXBuildFile; fileRef = F2653711194A2B8500E21EB4 /* Tag.m */; };
 		F2653715194A2B9100E21EB4 /* Tag+helper.m in Sources */ = {isa = PBXBuildFile; fileRef = F2653714194A2B9100E21EB4 /* Tag+helper.m */; };
 		F26F95341905D01B0022F968 /* smallX.png in Resources */ = {isa = PBXBuildFile; fileRef = F26F95321905D01B0022F968 /* smallX.png */; };
@@ -199,20 +204,6 @@
 		F279DA2618D6337900E0DB8B /* XXDraftCell.xib in Resources */ = {isa = PBXBuildFile; fileRef = F279DA2518D6337900E0DB8B /* XXDraftCell.xib */; };
 		F279DA2918D6343E00E0DB8B /* XXCircleCell.m in Sources */ = {isa = PBXBuildFile; fileRef = F279DA2818D6343E00E0DB8B /* XXCircleCell.m */; };
 		F279DA2B18D6344A00E0DB8B /* XXCircleCell.xib in Resources */ = {isa = PBXBuildFile; fileRef = F279DA2A18D6344A00E0DB8B /* XXCircleCell.xib */; };
-		F279DA4918D663D900E0DB8B /* Gotham-Bold.ttf in Resources */ = {isa = PBXBuildFile; fileRef = F279DA3118D663D900E0DB8B /* Gotham-Bold.ttf */; };
-		F279DA4A18D663D900E0DB8B /* Gotham-BoldItalic.ttf in Resources */ = {isa = PBXBuildFile; fileRef = F279DA3218D663D900E0DB8B /* Gotham-BoldItalic.ttf */; };
-		F279DA4B18D663D900E0DB8B /* Gotham-Book.ttf in Resources */ = {isa = PBXBuildFile; fileRef = F279DA3318D663D900E0DB8B /* Gotham-Book.ttf */; };
-		F279DA4C18D663D900E0DB8B /* Gotham-BookItalic.ttf in Resources */ = {isa = PBXBuildFile; fileRef = F279DA3418D663D900E0DB8B /* Gotham-BookItalic.ttf */; };
-		F279DA4D18D663D900E0DB8B /* Gotham-Light.ttf in Resources */ = {isa = PBXBuildFile; fileRef = F279DA3518D663D900E0DB8B /* Gotham-Light.ttf */; };
-		F279DA4E18D663D900E0DB8B /* Gotham-LightItalic.ttf in Resources */ = {isa = PBXBuildFile; fileRef = F279DA3618D663D900E0DB8B /* Gotham-LightItalic.ttf */; };
-		F279DA4F18D663D900E0DB8B /* Gotham-Medium.ttf in Resources */ = {isa = PBXBuildFile; fileRef = F279DA3718D663D900E0DB8B /* Gotham-Medium.ttf */; };
-		F279DA5018D663D900E0DB8B /* Gotham-MediumItalic.ttf in Resources */ = {isa = PBXBuildFile; fileRef = F279DA3818D663D900E0DB8B /* Gotham-MediumItalic.ttf */; };
-		F279DA5118D663D900E0DB8B /* Gotham-Thin.ttf in Resources */ = {isa = PBXBuildFile; fileRef = F279DA3918D663D900E0DB8B /* Gotham-Thin.ttf */; };
-		F279DA5218D663D900E0DB8B /* Gotham-ThinItalic.ttf in Resources */ = {isa = PBXBuildFile; fileRef = F279DA3A18D663D900E0DB8B /* Gotham-ThinItalic.ttf */; };
-		F279DA5918D663D900E0DB8B /* GothamRnd-Book.otf in Resources */ = {isa = PBXBuildFile; fileRef = F279DA4118D663D900E0DB8B /* GothamRnd-Book.otf */; };
-		F279DA5A18D663D900E0DB8B /* GothamRnd-BookItal.otf in Resources */ = {isa = PBXBuildFile; fileRef = F279DA4218D663D900E0DB8B /* GothamRnd-BookItal.otf */; };
-		F279DA5B18D663D900E0DB8B /* GothamRnd-Light.otf in Resources */ = {isa = PBXBuildFile; fileRef = F279DA4318D663D900E0DB8B /* GothamRnd-Light.otf */; };
-		F279DA5C18D663D900E0DB8B /* GothamRnd-LightItal.otf in Resources */ = {isa = PBXBuildFile; fileRef = F279DA4418D663D900E0DB8B /* GothamRnd-LightItal.otf */; };
 		F279DA6118D67A0D00E0DB8B /* XXFeedbackViewController.m in Sources */ = {isa = PBXBuildFile; fileRef = F279DA6018D67A0D00E0DB8B /* XXFeedbackViewController.m */; };
 		F279DA6D18D6C0A700E0DB8B /* XXFeedbackCell.m in Sources */ = {isa = PBXBuildFile; fileRef = F279DA6C18D6C0A700E0DB8B /* XXFeedbackCell.m */; };
 		F279DA6F18D6C0B700E0DB8B /* XXFeedbackCell.xib in Resources */ = {isa = PBXBuildFile; fileRef = F279DA6E18D6C0B700E0DB8B /* XXFeedbackCell.xib */; };
@@ -489,7 +480,6 @@
 		F2528F331960A76F00B6F5BA /* menuPhotos@2x.png */ = {isa = PBXFileReference; lastKnownFileType = image.png; path = "menuPhotos@2x.png"; sourceTree = "<group>"; };
 		F2528F361960A82D00B6F5BA /* menuShared.png */ = {isa = PBXFileReference; lastKnownFileType = image.png; path = menuShared.png; sourceTree = "<group>"; };
 		F2528F371960A82D00B6F5BA /* menuShared@2x.png */ = {isa = PBXFileReference; lastKnownFileType = image.png; path = "menuShared@2x.png"; sourceTree = "<group>"; };
-		F2528F461960B12600B6F5BA /* icon-experiment.png */ = {isa = PBXFileReference; lastKnownFileType = image.png; path = "icon-experiment.png"; sourceTree = "<group>"; };
 		F2528F4A1960D92100B6F5BA /* icon-50.png */ = {isa = PBXFileReference; lastKnownFileType = image.png; path = "icon-50.png"; sourceTree = "<group>"; };
 		F2528F4B1960D92100B6F5BA /* icon-57.png */ = {isa = PBXFileReference; lastKnownFileType = image.png; path = "icon-57.png"; sourceTree = "<group>"; };
 		F2528F4C1960D92100B6F5BA /* icon-40.png */ = {isa = PBXFileReference; lastKnownFileType = image.png; path = "icon-40.png"; sourceTree = "<group>"; };
@@ -524,6 +514,15 @@
 		F260737218FF1F5E00351463 /* contact@2x.png */ = {isa = PBXFileReference; lastKnownFileType = image.png; path = "contact@2x.png"; sourceTree = "<group>"; };
 		F260FD8418D3C88A00D7C645 /* XXCirclesViewController.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = XXCirclesViewController.h; sourceTree = "<group>"; };
 		F260FD8518D3C88A00D7C645 /* XXCirclesViewController.m */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.objc; path = XXCirclesViewController.m; sourceTree = "<group>"; };
+		F26147191962EAD800E82DC5 /* smallDownWhiteArrow.png */ = {isa = PBXFileReference; lastKnownFileType = image.png; path = smallDownWhiteArrow.png; sourceTree = "<group>"; };
+		F261471A1962EAD800E82DC5 /* smallDownWhiteArrow@2x.png */ = {isa = PBXFileReference; lastKnownFileType = image.png; path = "smallDownWhiteArrow@2x.png"; sourceTree = "<group>"; };
+		F261471D1962F17C00E82DC5 /* XXFlowLayout.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = XXFlowLayout.h; sourceTree = "<group>"; };
+		F261471E1962F17C00E82DC5 /* XXFlowLayout.m */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.objc; path = XXFlowLayout.m; sourceTree = "<group>"; };
+		F2614720196321F300E82DC5 /* XXGuideAnimator.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = XXGuideAnimator.h; sourceTree = "<group>"; };
+		F2614721196321F300E82DC5 /* XXGuideAnimator.m */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.objc; path = XXGuideAnimator.m; sourceTree = "<group>"; };
+		F261472319636D6600E82DC5 /* XXSettingsBackgroundCell.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = XXSettingsBackgroundCell.h; sourceTree = "<group>"; };
+		F261472419636D6600E82DC5 /* XXSettingsBackgroundCell.m */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.objc; path = XXSettingsBackgroundCell.m; sourceTree = "<group>"; };
+		F261472619636D7200E82DC5 /* XXSettingsBackgroundCell.xib */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = file.xib; path = XXSettingsBackgroundCell.xib; sourceTree = "<group>"; };
 		F2653710194A2B8500E21EB4 /* Tag.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; name = Tag.h; path = ../Tag.h; sourceTree = "<group>"; };
 		F2653711194A2B8500E21EB4 /* Tag.m */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.objc; name = Tag.m; path = ../Tag.m; sourceTree = "<group>"; };
 		F2653713194A2B9100E21EB4 /* Tag+helper.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = "Tag+helper.h"; sourceTree = "<group>"; };
@@ -576,20 +575,6 @@
 		F279DA2718D6343E00E0DB8B /* XXCircleCell.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = XXCircleCell.h; sourceTree = "<group>"; };
 		F279DA2818D6343E00E0DB8B /* XXCircleCell.m */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.objc; path = XXCircleCell.m; sourceTree = "<group>"; };
 		F279DA2A18D6344A00E0DB8B /* XXCircleCell.xib */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = file.xib; path = XXCircleCell.xib; sourceTree = "<group>"; };
-		F279DA3118D663D900E0DB8B /* Gotham-Bold.ttf */ = {isa = PBXFileReference; lastKnownFileType = file; path = "Gotham-Bold.ttf"; sourceTree = "<group>"; };
-		F279DA3218D663D900E0DB8B /* Gotham-BoldItalic.ttf */ = {isa = PBXFileReference; lastKnownFileType = file; path = "Gotham-BoldItalic.ttf"; sourceTree = "<group>"; };
-		F279DA3318D663D900E0DB8B /* Gotham-Book.ttf */ = {isa = PBXFileReference; lastKnownFileType = file; path = "Gotham-Book.ttf"; sourceTree = "<group>"; };
-		F279DA3418D663D900E0DB8B /* Gotham-BookItalic.ttf */ = {isa = PBXFileReference; lastKnownFileType = file; path = "Gotham-BookItalic.ttf"; sourceTree = "<group>"; };
-		F279DA3518D663D900E0DB8B /* Gotham-Light.ttf */ = {isa = PBXFileReference; lastKnownFileType = file; path = "Gotham-Light.ttf"; sourceTree = "<group>"; };
-		F279DA3618D663D900E0DB8B /* Gotham-LightItalic.ttf */ = {isa = PBXFileReference; lastKnownFileType = file; path = "Gotham-LightItalic.ttf"; sourceTree = "<group>"; };
-		F279DA3718D663D900E0DB8B /* Gotham-Medium.ttf */ = {isa = PBXFileReference; lastKnownFileType = file; path = "Gotham-Medium.ttf"; sourceTree = "<group>"; };
-		F279DA3818D663D900E0DB8B /* Gotham-MediumItalic.ttf */ = {isa = PBXFileReference; lastKnownFileType = file; path = "Gotham-MediumItalic.ttf"; sourceTree = "<group>"; };
-		F279DA3918D663D900E0DB8B /* Gotham-Thin.ttf */ = {isa = PBXFileReference; lastKnownFileType = file; path = "Gotham-Thin.ttf"; sourceTree = "<group>"; };
-		F279DA3A18D663D900E0DB8B /* Gotham-ThinItalic.ttf */ = {isa = PBXFileReference; lastKnownFileType = file; path = "Gotham-ThinItalic.ttf"; sourceTree = "<group>"; };
-		F279DA4118D663D900E0DB8B /* GothamRnd-Book.otf */ = {isa = PBXFileReference; lastKnownFileType = file; path = "GothamRnd-Book.otf"; sourceTree = "<group>"; };
-		F279DA4218D663D900E0DB8B /* GothamRnd-BookItal.otf */ = {isa = PBXFileReference; lastKnownFileType = file; path = "GothamRnd-BookItal.otf"; sourceTree = "<group>"; };
-		F279DA4318D663D900E0DB8B /* GothamRnd-Light.otf */ = {isa = PBXFileReference; lastKnownFileType = file; path = "GothamRnd-Light.otf"; sourceTree = "<group>"; };
-		F279DA4418D663D900E0DB8B /* GothamRnd-LightItal.otf */ = {isa = PBXFileReference; lastKnownFileType = file; path = "GothamRnd-LightItal.otf"; sourceTree = "<group>"; };
 		F279DA5F18D67A0D00E0DB8B /* XXFeedbackViewController.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = XXFeedbackViewController.h; sourceTree = "<group>"; };
 		F279DA6018D67A0D00E0DB8B /* XXFeedbackViewController.m */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.objc; path = XXFeedbackViewController.m; sourceTree = "<group>"; };
 		F279DA6B18D6C0A700E0DB8B /* XXFeedbackCell.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = XXFeedbackCell.h; sourceTree = "<group>"; };
@@ -960,6 +945,8 @@
 		F279DA1B18D632AA00E0DB8B /* Custom Subclasses */ = {
 			isa = PBXGroup;
 			children = (
+				F261471D1962F17C00E82DC5 /* XXFlowLayout.h */,
+				F261471E1962F17C00E82DC5 /* XXFlowLayout.m */,
 				F29F269319017AD700B283D8 /* XXChatCell.h */,
 				F29F269419017AD700B283D8 /* XXChatCell.m */,
 				F2528F1B196076E300B6F5BA /* XXGuideCollectionCell.h */,
@@ -974,6 +961,8 @@
 				F2EA26EC191460C000EEF2CC /* XXFeedbackTransition.m */,
 				F2E41EAD194120B4006C7583 /* XXGuideInteractor.h */,
 				F2E41EAE194120B4006C7583 /* XXGuideInteractor.m */,
+				F2614720196321F300E82DC5 /* XXGuideAnimator.h */,
+				F2614721196321F300E82DC5 /* XXGuideAnimator.m */,
 				F2528F10195F809700B6F5BA /* XXCollaboratorsTransition.h */,
 				F2528F11195F809700B6F5BA /* XXCollaboratorsTransition.m */,
 				F29F26901901799B00B283D8 /* XXSegmentedControl.h */,
@@ -998,20 +987,6 @@
 			isa = PBXGroup;
 			children = (
 				F2E41EB4194147A3006C7583 /* desyrel.ttf */,
-				F279DA3118D663D900E0DB8B /* Gotham-Bold.ttf */,
-				F279DA3218D663D900E0DB8B /* Gotham-BoldItalic.ttf */,
-				F279DA3318D663D900E0DB8B /* Gotham-Book.ttf */,
-				F279DA3418D663D900E0DB8B /* Gotham-BookItalic.ttf */,
-				F279DA3518D663D900E0DB8B /* Gotham-Light.ttf */,
-				F279DA3618D663D900E0DB8B /* Gotham-LightItalic.ttf */,
-				F279DA3718D663D900E0DB8B /* Gotham-Medium.ttf */,
-				F279DA3818D663D900E0DB8B /* Gotham-MediumItalic.ttf */,
-				F279DA3918D663D900E0DB8B /* Gotham-Thin.ttf */,
-				F279DA3A18D663D900E0DB8B /* Gotham-ThinItalic.ttf */,
-				F279DA4118D663D900E0DB8B /* GothamRnd-Book.otf */,
-				F279DA4218D663D900E0DB8B /* GothamRnd-BookItal.otf */,
-				F279DA4318D663D900E0DB8B /* GothamRnd-Light.otf */,
-				F279DA4418D663D900E0DB8B /* GothamRnd-LightItal.otf */,
 				F231109918DF89FF0054062B /* SourceSansPro-Light.ttf */,
 				F2B8174E18F750F9002168FD /* SourceSansPro-Italic.ttf */,
 				F2B8174C18F750D0002168FD /* SourceSansPro-Semibold.ttf */,
@@ -1027,7 +1002,8 @@
 		F28976DC1807BE4500B9E8A5 /* Images */ = {
 			isa = PBXGroup;
 			children = (
-				F2528F461960B12600B6F5BA /* icon-experiment.png */,
+				F26147191962EAD800E82DC5 /* smallDownWhiteArrow.png */,
+				F261471A1962EAD800E82DC5 /* smallDownWhiteArrow@2x.png */,
 				F2528F361960A82D00B6F5BA /* menuShared.png */,
 				F2528F371960A82D00B6F5BA /* menuShared@2x.png */,
 				F2528F321960A76F00B6F5BA /* menuPhotos.png */,
@@ -1272,6 +1248,9 @@
 				F28C782418E2B0440088B4C9 /* XXSettingsCell.h */,
 				F28C782518E2B0440088B4C9 /* XXSettingsCell.m */,
 				F28C782718E2B0520088B4C9 /* XXSettingsCell.xib */,
+				F261472319636D6600E82DC5 /* XXSettingsBackgroundCell.h */,
+				F261472419636D6600E82DC5 /* XXSettingsBackgroundCell.m */,
+				F261472619636D7200E82DC5 /* XXSettingsBackgroundCell.xib */,
 				F28C782918E3866A0088B4C9 /* XXBookmarkCell.h */,
 				F28C782A18E3866A0088B4C9 /* XXBookmarkCell.m */,
 				F28C783118E3869A0088B4C9 /* XXBookmarkCell.xib */,
@@ -1412,7 +1391,6 @@
 			buildActionMask = 2147483647;
 			files = (
 				F25EDAB0195DCDCA009C4386 /* menuCircles.png in Resources */,
-				F279DA4918D663D900E0DB8B /* Gotham-Bold.ttf in Resources */,
 				F2528F621960D92100B6F5BA /* icon-114.png in Resources */,
 				F2E41F0319427E67006C7583 /* moreWhite@2x.png in Resources */,
 				F2F2F19418BD69FA00840F31 /* XXStoryInfoCell.xib in Resources */,
@@ -1422,7 +1400,6 @@
 				F2B8175C18F9A38A002168FD /* whiteSun@2x.png in Resources */,
 				F2528EB7195E2CCA00B6F5BA /* pencil@2x.png in Resources */,
 				F21F6EFB1932CB46003BC323 /* newUserPortfolio@2x.png in Resources */,
-				F279DA4D18D663D900E0DB8B /* Gotham-Light.ttf in Resources */,
 				F28C782818E2B0520088B4C9 /* XXSettingsCell.xib in Resources */,
 				F2528F581960D92100B6F5BA /* icon-50.png in Resources */,
 				F249D7171922E08A00EFF59E /* menu@2x.png in Resources */,
@@ -1433,7 +1410,6 @@
 				F2528F381960A82D00B6F5BA /* menuShared.png in Resources */,
 				F2E41EC4194150F1006C7583 /* whiteBookmark.png in Resources */,
 				F231109C18DF89FF0054062B /* SourceSansPro-Regular.ttf in Resources */,
-				F279DA5118D663D900E0DB8B /* Gotham-Thin.ttf in Resources */,
 				F29F269A190180C400B283D8 /* blackSeparator.png in Resources */,
 				F270402F194BBFD20037C9A7 /* iPadDefault-Landscape.png in Resources */,
 				F279DA6F18D6C0B700E0DB8B /* XXFeedbackCell.xib in Resources */,
@@ -1467,7 +1443,6 @@
 				F25EDA1F1957504F009C4386 /* Default@2x.png in Resources */,
 				F2D83FB61915D13300592F3D /* whiteSearchIcon@2x.png in Resources */,
 				F249D6FF1922CF3E00EFF59E /* menuWrite@2x.png in Resources */,
-				F279DA4C18D663D900E0DB8B /* Gotham-BookItalic.ttf in Resources */,
 				F2B8174F18F750F9002168FD /* SourceSansPro-Italic.ttf in Resources */,
 				F2704028194BBBF50037C9A7 /* background_ipad@2x.png in Resources */,
 				F270402B194BBE630037C9A7 /* iPadDefault.png in Resources */,
@@ -1493,6 +1468,7 @@
 				F25EDA1B19574F81009C4386 /* Default-568h@2x.png in Resources */,
 				F2E41EC5194150F1006C7583 /* whiteBookmark@2x.png in Resources */,
 				F2528F1A1960764800B6F5BA /* background@2x.png in Resources */,
+				F261472719636D7200E82DC5 /* XXSettingsBackgroundCell.xib in Resources */,
 				F25EDA92195B33F1009C4386 /* smallRightWhiteArrow.png in Resources */,
 				F279DA2618D6337900E0DB8B /* XXDraftCell.xib in Resources */,
 				F23D50B818E786620050D219 /* upArrow@2x.png in Resources */,
@@ -1514,11 +1490,11 @@
 				F249D71F1922E0F900EFF59E /* bookmark@2x.png in Resources */,
 				F2D83FE81915EE2500592F3D /* menuSettings.png in Resources */,
 				F2704083194D13410037C9A7 /* photoPlaceholder_ipad.png in Resources */,
+				F261471B1962EAD800E82DC5 /* smallDownWhiteArrow.png in Resources */,
 				F2528F191960764800B6F5BA /* background.png in Resources */,
 				F28BF5491909C75000392471 /* whiteTrashButton@2x.png in Resources */,
 				F21F6EF81932CB46003BC323 /* newUserRead.png in Resources */,
 				F249D6DA1922C7CC00EFF59E /* sun.png in Resources */,
-				F279DA5B18D663D900E0DB8B /* GothamRnd-Light.otf in Resources */,
 				F2704030194BBFD20037C9A7 /* iPadDefault-Landscape@2x.png in Resources */,
 				F23110CD18E102C90054062B /* blackX.png in Resources */,
 				F26F95341905D01B0022F968 /* smallX.png in Resources */,
@@ -1529,7 +1505,6 @@
 				F2021B5C1802908C008B1BAE /* Images.xcassets in Resources */,
 				F29F26A41901AB8000B283D8 /* XXCircleDetailsCell.xib in Resources */,
 				F2528EB2195E1EEC00B6F5BA /* whiteCamera.png in Resources */,
-				F279DA4A18D663D900E0DB8B /* Gotham-BoldItalic.ttf in Resources */,
 				F249D71E1922E0F900EFF59E /* bookmark.png in Resources */,
 				F2704027194BBBF50037C9A7 /* background_ipad.png in Resources */,
 				F2528F09195F35C200B6F5BA /* XXNewCircleCell.xib in Resources */,
@@ -1547,7 +1522,6 @@
 				F25EDAA9195D5A6B009C4386 /* XXNothingCell.xib in Resources */,
 				F2528F5A1960D92100B6F5BA /* icon-40.png in Resources */,
 				F2528F591960D92100B6F5BA /* icon-57.png in Resources */,
-				F279DA5018D663D900E0DB8B /* Gotham-MediumItalic.ttf in Resources */,
 				F2528F651960D92100B6F5BA /* icon-152.png in Resources */,
 				F21F6EF21932CAD7003BC323 /* newUserCircles.png in Resources */,
 				F21F6F1B1933B2A5003BC323 /* leftWhiteArrow@2x.png in Resources */,
@@ -1558,26 +1532,20 @@
 				F2E41ED219415BE6006C7583 /* whiteFlag@2x.png in Resources */,
 				F2D83FF21915F0AB00592F3D /* menuBrowse@2x.png in Resources */,
 				F249D6B6192044D700EFF59E /* sendButtonBlack@2x.png in Resources */,
-				F279DA4E18D663D900E0DB8B /* Gotham-LightItalic.ttf in Resources */,
 				F28976E81808FFE100B9E8A5 /* XXStoryCell.xib in Resources */,
 				F2D83FB51915D13300592F3D /* whiteSearchIcon.png in Resources */,
 				F25EDAB1195DCDCA009C4386 /* menuCircles@2x.png in Resources */,
 				F2528EB3195E1EEC00B6F5BA /* whiteCamera@2x.png in Resources */,
 				F29224101827577800BEB9EF /* CrimsonText-Semibold.ttf in Resources */,
-				F279DA4F18D663D900E0DB8B /* Gotham-Medium.ttf in Resources */,
 				F2528F5E1960D92100B6F5BA /* icon-72.png in Resources */,
 				F28BF5441909C6F100392471 /* trashButton.png in Resources */,
-				F279DA4B18D663D900E0DB8B /* Gotham-Book.ttf in Resources */,
 				F2528F5B1960D92100B6F5BA /* icon-29.png in Resources */,
-				F279DA5A18D663D900E0DB8B /* GothamRnd-BookItal.otf in Resources */,
 				F2528F0B195F35DE00B6F5BA /* XXAddCollaboratorEmailCell.xib in Resources */,
-				F279DA5C18D663D900E0DB8B /* GothamRnd-LightItal.otf in Resources */,
 				F2D83FF61915F17000592F3D /* menuPortfolio@2x.png in Resources */,
 				F2528F351960A76F00B6F5BA /* menuPhotos@2x.png in Resources */,
 				F21F6EF31932CAD7003BC323 /* newUserCircles@2x.png in Resources */,
 				F2E41EFE19425DBE006C7583 /* more@2x.png in Resources */,
 				F292240E1827577800BEB9EF /* CrimsonText-Italic.ttf in Resources */,
-				F2528F471960B12600B6F5BA /* icon-experiment.png in Resources */,
 				F2528F341960A76F00B6F5BA /* menuPhotos.png in Resources */,
 				F2528F631960D92100B6F5BA /* icon-144.png in Resources */,
 				F2E41EFD19425DBE006C7583 /* more.png in Resources */,
@@ -1601,13 +1569,11 @@
 				F23D50C018E7872C0050D219 /* rightArrow@2x.png in Resources */,
 				F249D6CE1922C47500EFF59E /* moon.png in Resources */,
 				F2139D471938EEBC00EE5C96 /* flag@2x.png in Resources */,
-				F279DA5918D663D900E0DB8B /* GothamRnd-Book.otf in Resources */,
 				F26F953A1906E8310022F968 /* XXCircleNotificationCell.xib in Resources */,
 				F2D83FE91915EE2500592F3D /* menuSettings@2x.png in Resources */,
 				F2D83FEE1915EEBB00592F3D /* menuBookmarks@2x.png in Resources */,
 				F249D6FE1922CF3E00EFF59E /* menuWrite.png in Resources */,
 				F249D7161922E08A00EFF59E /* menu.png in Resources */,
-				F279DA5218D663D900E0DB8B /* Gotham-ThinItalic.ttf in Resources */,
 				F21F6F561935450F003BC323 /* newUserBackgroundiPad@2x.png in Resources */,
 				F23110CA18E1028E0054062B /* whiteX@2x.png in Resources */,
 				F2528F391960A82D00B6F5BA /* menuShared@2x.png in Resources */,
@@ -1615,6 +1581,7 @@
 				F279DA2418D6335C00E0DB8B /* XXPortfolioCell.xib in Resources */,
 				F21F6F171933AEC6003BC323 /* rightWhiteArrow@2x.png in Resources */,
 				F292240F1827577800BEB9EF /* CrimsonText-Roman.ttf in Resources */,
+				F261471C1962EAD800E82DC5 /* smallDownWhiteArrow@2x.png in Resources */,
 			);
 			runOnlyForDeploymentPostprocessing = 0;
 		};
@@ -1695,6 +1662,7 @@
 				F231109F18DFA2A60054062B /* XXLeaveFeedbackCell.m in Sources */,
 				F2021B4B1802908C008B1BAE /* XXAppDelegate.m in Sources */,
 				F2C7211F1927C7A900434C04 /* XXAlert.m in Sources */,
+				F261472519636D6600E82DC5 /* XXSettingsBackgroundCell.m in Sources */,
 				F28976E61808FFBA00B9E8A5 /* XXStoryCell.m in Sources */,
 				F279DA2918D6343E00E0DB8B /* XXCircleCell.m in Sources */,
 				F29F26A21901AB7500B283D8 /* XXCircleDetailsCell.m in Sources */,
@@ -1709,6 +1677,7 @@
 				F2B8178D18FC3165002168FD /* XXProfileViewController.m in Sources */,
 				F29F269F19018B8100B283D8 /* XXChat.m in Sources */,
 				F2528F1D196076E300B6F5BA /* XXGuideCollectionCell.m in Sources */,
+				F2614722196321F300E82DC5 /* XXGuideAnimator.m in Sources */,
 				F2E41F111943A9F9006C7583 /* Story.m in Sources */,
 				F285E97718E7600D008FFEC1 /* XXStoryPhoto.m in Sources */,
 				F2653712194A2B8500E21EB4 /* Tag.m in Sources */,
@@ -1758,6 +1727,7 @@
 				F28BF53F190988E700392471 /* XXWritingTitleCell.m in Sources */,
 				F231109318DF6B280054062B /* UIImage+ImageEffects.m in Sources */,
 				F273B85618D61E88003C4818 /* XXTextView.m in Sources */,
+				F261471F1962F17C00E82DC5 /* XXFlowLayout.m in Sources */,
 				F2730EC5194F7DC100AA9FF7 /* User.m in Sources */,
 				F29224BD18286B0200BEB9EF /* XXWritingCell.m in Sources */,
 				F2653715194A2B9100E21EB4 /* Tag+helper.m in Sources */,

@@ -20,7 +20,6 @@
 @property (strong, nonatomic) XXStoryPhoto *storyPhoto;
 @property (strong, nonatomic) Story *story;
 @property (strong, nonatomic) NSNumber *storyId;
-@property (weak, nonatomic) MSDynamicsDrawerViewController *dynamicsViewController;
 @property (strong, nonatomic) UIImageView *backgroundImageView;
 - (void)resetWithStory:(Story*)newStory;
 @end

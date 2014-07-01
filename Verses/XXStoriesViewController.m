@@ -25,6 +25,7 @@
 #import "XXGuideViewController.h"
 #import "Story+helper.h"
 #import "XXNothingCell.h"
+#import "XXGuideAnimator.h"
 
 @interface XXStoriesViewController () <UIScrollViewDelegate, UIViewControllerTransitioningDelegate>{
     AFHTTPRequestOperationManager *manager;
@@ -46,9 +47,7 @@
     NSMutableArray *_featuredStories;
     UIButton *menuButton;
     UIImage *_backgroundImage;
-    XXGuideInteractor *interactor;
 }
-
 @end
 
 @implementation XXStoriesViewController
@@ -77,7 +76,7 @@
         height = screenWidth();
         width = screenHeight();
     }
-    
+
     menuButton = [UIButton buttonWithType:UIButtonTypeCustom];
     [menuButton setImage:[UIImage imageNamed:@"more"] forState:UIControlStateNormal];
     [menuButton addTarget:self action:@selector(showGuide) forControlEvents:UIControlEventTouchUpInside];
@@ -88,19 +87,7 @@
     _sharedStories = [NSMutableArray array];
     _trendingStories = [NSMutableArray array];
     _featuredStories = [NSMutableArray array];
-    
-    /*if (!interactor){
-        interactor = [[XXGuideInteractor alloc] initWithParentViewController:self];
-    }
-    
-    UIScreenEdgePanGestureRecognizer *panGesture = [[UIScreenEdgePanGestureRecognizer alloc] initWithTarget:interactor action:@selector(userDidPan:)];
-    panGesture.edges = UIRectEdgeTop;
-    [self.tableView addGestureRecognizer:panGesture];
-    
-    UIScreenEdgePanGestureRecognizer *gestureRecognizer = [[UIScreenEdgePanGestureRecognizer alloc] initWithTarget:interactor action:@selector(userDidPan:)];
-    gestureRecognizer.edges = UIRectEdgeTop;
-    [self.view addGestureRecognizer:gestureRecognizer];*/
-    
+        
     if (_featured){
         _featuredStories = [Story MR_findByAttribute:@"featured" withValue:[NSNumber numberWithBool:YES] andOrderBy:@"publishedDate" ascending:NO].mutableCopy;
         if (_featuredStories.count == 0) {
@@ -133,8 +120,14 @@
     }
    
     [self.tableView reloadData];
-    
     [[NSNotificationCenter defaultCenter] addObserver:self selector:@selector(storyFlagged:) name:@"StoryFlagged" object:nil];
+}
+
+- (void)showGuide {
+    XXGuideViewController *guide = [[(XXAppDelegate*)[UIApplication sharedApplication].delegate window].rootViewController.storyboard instantiateViewControllerWithIdentifier:@"Guide"];
+    guide.transitioningDelegate = self;
+    guide.modalPresentationStyle = UIModalPresentationCustom;
+    [self presentViewController:guide animated:YES completion:nil];
 }
 
 - (NSMutableArray*)updateLocalStories:(NSArray*)array{
@@ -142,7 +135,7 @@
     for (NSDictionary *dict in array){
         if ([dict objectForKey:@"id"] && [dict objectForKey:@"id"] != [NSNull null]){
             Story *story = [Story MR_findFirstByAttribute:@"identifier" withValue:[dict objectForKey:@"id"]];
-            if (!story){
+            if (story){
                 story = [Story MR_createInContext:[NSManagedObjectContext MR_defaultContext]];
             }
             [story populateFromDict:dict];
@@ -151,27 +144,28 @@
     }
     
     //has to be synchronous so the tableview datasource can update properly.
-    [[NSManagedObjectContext MR_defaultContext] MR_saveToPersistentStoreAndWait];
+    [[NSManagedObjectContext MR_defaultContext] MR_saveToPersistentStoreWithCompletion:^(BOOL success, NSError *error) {
+        if (_featured){
+            if (_featuredStories.count) [_featuredStories removeAllObjects];
+            _featuredStories = [Story MR_findByAttribute:@"featured" withValue:[NSNumber numberWithBool:YES] andOrderBy:@"publishedDate" ascending:NO].mutableCopy;
+        } else if (_shared) {
+            if (_sharedStories.count) [_sharedStories removeAllObjects];
+            NSPredicate *userPredicate = [NSPredicate predicateWithFormat:@"ANY users.identifier CONTAINS[cd] %@",[[NSUserDefaults standardUserDefaults] objectForKey:kUserDefaultsId]];
+            NSPredicate *ownerPredicate = [NSPredicate predicateWithFormat:@"ownerId != %@",[[NSUserDefaults standardUserDefaults] objectForKey:kUserDefaultsId]];
+            NSPredicate *compoundPredicate = [NSCompoundPredicate andPredicateWithSubpredicates:@[userPredicate,ownerPredicate]];
+            _sharedStories = [Story MR_findAllSortedBy:@"updatedDate" ascending:NO withPredicate:compoundPredicate].mutableCopy;
+            NSLog(@"total shared stories count: %d",_sharedStories.count);
+        } else if (_trending){
+            if (_trendingStories.count) [_trendingStories removeAllObjects];
+            NSPredicate *predicate = [NSPredicate predicateWithFormat:@"trendingCount != %@ and publishedDate != %@",[NSNumber numberWithInt:0], [NSDate dateWithTimeIntervalSince1970:0]];
+            _trendingStories = [Story MR_findAllSortedBy:@"trendingCount" ascending:NO withPredicate:predicate].mutableCopy;
+        } else if (_ether || _stories.count == 0) {
+            if (_stories.count) [_stories removeAllObjects];
+            NSPredicate *predicate = [NSPredicate predicateWithFormat:@"inviteOnly == %@ and draft == %@ and publishedDate != %@",[NSNumber numberWithBool:NO],[NSNumber numberWithBool:NO], [NSDate dateWithTimeIntervalSince1970:0]];
+            _stories = [Story MR_findAllSortedBy:@"publishedDate" ascending:NO withPredicate:predicate].mutableCopy;
+        }
+    }];
     
-    if (_featured){
-        if (_featuredStories.count) [_featuredStories removeAllObjects];
-        _featuredStories = [Story MR_findByAttribute:@"featured" withValue:[NSNumber numberWithBool:YES] andOrderBy:@"publishedDate" ascending:NO].mutableCopy;
-    } else if (_shared) {
-        if (_sharedStories.count) [_sharedStories removeAllObjects];
-        NSPredicate *userPredicate = [NSPredicate predicateWithFormat:@"ANY users.identifier CONTAINS[cd] %@",[[NSUserDefaults standardUserDefaults] objectForKey:kUserDefaultsId]];
-        NSPredicate *ownerPredicate = [NSPredicate predicateWithFormat:@"ownerId != %@",[[NSUserDefaults standardUserDefaults] objectForKey:kUserDefaultsId]];
-        NSPredicate *compoundPredicate = [NSCompoundPredicate andPredicateWithSubpredicates:@[userPredicate,ownerPredicate]];
-        _sharedStories = [Story MR_findAllSortedBy:@"updatedDate" ascending:NO withPredicate:compoundPredicate].mutableCopy;
-        NSLog(@"total shared stories count: %d",_sharedStories.count);
-    } else if (_trending){
-        if (_trendingStories.count) [_trendingStories removeAllObjects];
-        NSPredicate *predicate = [NSPredicate predicateWithFormat:@"trendingCount != %@ and publishedDate != %@",[NSNumber numberWithInt:0], [NSDate dateWithTimeIntervalSince1970:0]];
-        _trendingStories = [Story MR_findAllSortedBy:@"trendingCount" ascending:NO withPredicate:predicate].mutableCopy;
-    } else if (_ether || _stories.count == 0) {
-        if (_stories.count) [_stories removeAllObjects];
-        NSPredicate *predicate = [NSPredicate predicateWithFormat:@"inviteOnly == %@ and draft == %@ and publishedDate != %@",[NSNumber numberWithBool:NO],[NSNumber numberWithBool:NO], [NSDate dateWithTimeIntervalSince1970:0]];
-        _stories = [Story MR_findAllSortedBy:@"publishedDate" ascending:NO withPredicate:predicate].mutableCopy;
-    }
     //done loading! what a relief
     loading = NO;
     return storyArray;
@@ -180,7 +174,7 @@
 - (void)viewWillAppear:(BOOL)animated {
     [super viewWillAppear:animated];
     orientation = self.interfaceOrientation;
-    [[UIApplication sharedApplication] setStatusBarHidden:YES withAnimation:UIStatusBarAnimationSlide];
+    [[UIApplication sharedApplication] setStatusBarHidden:YES withAnimation:UIStatusBarAnimationFade];
     [self.navigationController setNavigationBarHidden:YES animated:NO];
     [delegate.dynamicsDrawerViewController setPaneDragRevealEnabled:NO forDirection:MSDynamicsDrawerDirectionRight];
 
@@ -226,24 +220,17 @@
     });
 }
 
-- (void)showGuide {
-    XXGuideViewController *vc = [[self storyboard] instantiateViewControllerWithIdentifier:@"Guide"];
-    vc.transitioningDelegate = self;
-    vc.modalPresentationStyle = UIModalPresentationCustom;
-    [self presentViewController:vc animated:YES completion:nil];
-}
-
 - (id<UIViewControllerAnimatedTransitioning>)animationControllerForPresentedController:(UIViewController *)presented
                                                                   presentingController:(UIViewController *)presenting
                                                                       sourceController:(UIViewController *)source {
-    XXGuideInteractor *animator = [[XXGuideInteractor alloc] initWithParentViewController:presented];
+    XXGuideAnimator *animator = [XXGuideAnimator new];
     animator.presenting = YES;
     return animator;
 }
 
 - (id<UIViewControllerAnimatedTransitioning>)animationControllerForDismissedController:(UIViewController *)dismissed {
 
-    XXGuideInteractor *animator = [XXGuideInteractor new];
+    XXGuideAnimator *animator = [XXGuideAnimator new];
     return animator;
 
 }

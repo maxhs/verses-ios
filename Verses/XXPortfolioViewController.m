@@ -30,6 +30,8 @@
     UIRefreshControl *refreshControl;
     NSMutableArray *drafts;
     NSMutableArray *stories;
+    CGFloat height;
+    CGFloat width;
 }
 
 @end
@@ -41,13 +43,14 @@
     manager = [(XXAppDelegate*)[UIApplication sharedApplication].delegate manager];
     currentUser = [(XXAppDelegate*)[UIApplication sharedApplication].delegate currentUser];
     [self.view setAutoresizingMask:UIViewAutoresizingFlexibleWidth];
-    _searchResultsTableView.rowHeight = 60;
-    
-    if (IDIOM == IPAD) {
-        self.tableView.rowHeight = screenHeight()/3;
+    if (UIInterfaceOrientationIsPortrait(self.interfaceOrientation)){
+        width = screenWidth();
+        height = screenHeight();
     } else {
-        self.tableView.rowHeight =  screenHeight()/2;
+        height = screenWidth();
+        width = screenHeight();
     }
+    
     refreshControl = [[UIRefreshControl alloc] init];
     [refreshControl addTarget:self action:@selector(handleRefresh) forControlEvents:UIControlEventValueChanged];
     [refreshControl setTintColor:[UIColor darkGrayColor]];
@@ -58,6 +61,8 @@
     [_formatter setDateFormat:@"MMM d - h:mm a"];
     canLoadMore = YES;
     canLoadMoreDrafts = YES;
+    loading = YES;
+    
     if (_draftMode){
         [self.searchBar setPlaceholder:@"Search my drafts"];
     } else {
@@ -99,9 +104,8 @@
     if (_draftMode){
         for (Story *story in drafts){
             if([story.identifier isEqualToNumber:[notification.userInfo objectForKey:@"story_id"]]) {
-                [currentUser removeDraft:story];
+      
                 [drafts removeObject:story];
-                [currentUser removeStory:story];
                 [self.tableView beginUpdates];
                 [self.tableView reloadSections:[NSIndexSet indexSetWithIndex:0] withRowAnimation:UITableViewRowAnimationFade];
                 [self.tableView endUpdates];
@@ -111,9 +115,7 @@
     } else {
         for (Story *story in stories){
             if([story.identifier isEqualToNumber:[notification.userInfo objectForKey:@"story_id"]]) {
-                [currentUser removeOwnedStory:story];
                 [stories removeObject:story];
-                [currentUser removeStory:story];
                 [self.tableView beginUpdates];
                 [self.tableView reloadSections:[NSIndexSet indexSetWithIndex:0] withRowAnimation:UITableViewRowAnimationFade];
                 [self.tableView endUpdates];
@@ -125,23 +127,23 @@
 
 - (void)handleRefresh {
     if (_draftMode){
-        [drafts removeAllObjects];
         [ProgressHUD show:@"Refreshing your drafts..."];
         [self loadDrafts];
     } else {
-        [stories removeAllObjects];
         [ProgressHUD show:@"Refreshing your portfolio..."];
         [self loadStories];
     }
 }
 
 - (void)viewWillAppear:(BOOL)animated {
+    [super viewWillAppear:animated];
     [[UIApplication sharedApplication] setStatusBarHidden:YES withAnimation:UIStatusBarAnimationSlide];
     [self.navigationController setNavigationBarHidden:YES animated:YES];
     [[(XXAppDelegate*)[UIApplication sharedApplication].delegate dynamicsDrawerViewController] setPaneDragRevealEnabled:NO forDirection:MSDynamicsDrawerDirectionRight];
     if ([[NSUserDefaults standardUserDefaults] boolForKey:kDarkBackground]){
         [self.view setBackgroundColor:[UIColor clearColor]];
         textColor = [UIColor whiteColor];
+        [refreshControl setTintColor:[UIColor whiteColor]];
         [self.searchResultsTableView setBackgroundColor:[UIColor colorWithWhite:0.025 alpha:.93]];
         [_moreButton setImage:[UIImage imageNamed:@"moreWhite"] forState:UIControlStateNormal];
         [_moreButton setTitleColor:textColor forState:UIControlStateNormal];
@@ -166,6 +168,7 @@
         
         [self.view setBackgroundColor:[UIColor whiteColor]];
         textColor = [UIColor blackColor];
+        [refreshControl setTintColor:[UIColor blackColor]];
         [_moreButton setImage:[UIImage imageNamed:@"more"] forState:UIControlStateNormal];
         [_moreButton setTitleColor:textColor forState:UIControlStateNormal];
     }
@@ -180,9 +183,9 @@
             [self.searchBar setAlpha:1.0];
             self.tableView.transform = CGAffineTransformIdentity;
         }];
-        [self.tableView reloadData];
+        //[self.tableView reloadData];
     }
-    [super viewWillAppear:animated];
+    
 }
 
 - (void)loadDrafts {
@@ -190,11 +193,11 @@
     [manager GET:[NSString stringWithFormat:@"%@/stories/drafts",kAPIBaseUrl] parameters:@{@"user_id":[[NSUserDefaults standardUserDefaults] objectForKey:kUserDefaultsId]/*,@"count":@"10"*/} success:^(AFHTTPRequestOperation *operation, id responseObject) {
         //NSLog(@"success getting my stories: %@",[responseObject objectForKey:@"stories"]);
         [self updateLocalStories:[responseObject objectForKey:@"stories"]];
-        loading = NO;
-        if (refreshControl.isRefreshing) [refreshControl endRefreshing];
+     
     } failure:^(AFHTTPRequestOperation *operation, NSError *error) {
-        loading = NO;
+       
         if (refreshControl.isRefreshing) [refreshControl endRefreshing];
+        [ProgressHUD dismiss];
         NSLog(@"Failure getting stories drafts: %@",error.description);
     }];
 }
@@ -204,10 +207,10 @@
     [manager GET:[NSString stringWithFormat:@"%@/stories/portfolio",kAPIBaseUrl] parameters:@{@"user_id":[[NSUserDefaults standardUserDefaults] objectForKey:kUserDefaultsId]/*,@"count":@"10"*/} success:^(AFHTTPRequestOperation *operation, id responseObject) {
         //NSLog(@"success getting portfolio: %@",[responseObject objectForKey:@"stories"]);
         [self updateLocalStories:[responseObject objectForKey:@"stories"]];
-        loading = NO;
-        if (refreshControl.isRefreshing) [refreshControl endRefreshing];
+  
     } failure:^(AFHTTPRequestOperation *operation, NSError *error) {
         if (refreshControl.isRefreshing) [refreshControl endRefreshing];
+        [ProgressHUD dismiss];
         loading = NO;
         NSLog(@"Failure getting stories from stories controller: %@",error.description);
     }];
@@ -338,17 +341,23 @@
 - (void)updateLocalStories:(NSArray*)array{
     NSMutableOrderedSet *storySet = [NSMutableOrderedSet orderedSet];
     for (NSDictionary *dict in array){
-        if ([dict objectForKey:@"id"] && [dict objectForKey:@"id"] != [NSNull null]){
-            Story *story = [Story MR_findFirstByAttribute:@"identifier" withValue:[dict objectForKey:@"id"]];
-            if (!story){
-                story = [Story MR_createInContext:[NSManagedObjectContext MR_defaultContext]];
-            }
-            [story populateFromDict:dict];
-            [storySet addObject:story];
+        Story *story = [Story MR_findFirstByAttribute:@"identifier" withValue:[dict objectForKey:@"id"]];
+        if (!story){
+            story = [Story MR_createInContext:[NSManagedObjectContext MR_defaultContext]];
+        }
+        [story populateFromDict:dict];
+        [storySet addObject:story];
+        if (_draftMode){
+            
+        } else {
+            
         }
     }
     
     [[NSManagedObjectContext MR_defaultContext] MR_saveToPersistentStoreWithCompletion:^(BOOL success, NSError *error) {
+        if (refreshControl.isRefreshing) [refreshControl endRefreshing];
+        [ProgressHUD dismiss];
+        
         if (_draftMode){
             NSPredicate *predicate = [NSPredicate predicateWithFormat:@"ownerId == %@ && draft == 1",[[NSUserDefaults standardUserDefaults] objectForKey:kUserDefaultsId]];
             drafts = [Story MR_findAllSortedBy:@"updatedDate" ascending:NO withPredicate:predicate].mutableCopy;
@@ -363,7 +372,6 @@
             [self.tableView endUpdates];
         }
     }];
-    
 }
 
 - (void)didReceiveMemoryWarning {
@@ -459,12 +467,18 @@
 }
 
 - (CGFloat)tableView:(UITableView *)tableView heightForRowAtIndexPath:(NSIndexPath *)indexPath {
-    if (_draftMode && drafts.count == 0){
-        return screenHeight()-84;
-    } else if (stories.count == 0){
-        return screenHeight()-84;
+    if (tableView == _searchResultsTableView){
+        return 60;
+    } else if (_draftMode && drafts.count == 0 && !loading){
+        return height-84;
+    } else if (stories.count == 0 && !loading){
+        return height-84;
     } else {
-        return 80;
+        if (IDIOM == IPAD) {
+            return height/3;
+        } else {
+            return height/2;
+        }
     }
 }
 

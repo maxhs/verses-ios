@@ -12,7 +12,7 @@
 #import "XXAlert.h"
 #import "XXContactCell.h"
 
-@interface XXManageCircleViewController () <UITextFieldDelegate, UITextViewDelegate> {
+@interface XXManageCircleViewController () <UITextFieldDelegate, UITextViewDelegate, UIAlertViewDelegate> {
     UIImageView *navBarShadowView;
     UIBarButtonItem *backButton;
     UIBarButtonItem *doneButton;
@@ -56,18 +56,58 @@
     if (_circle){
         saveButton = [[UIBarButtonItem alloc] initWithTitle:@"Save" style:UIBarButtonItemStylePlain target:self action:@selector(post)];
         self.navigationItem.rightBarButtonItem = saveButton;
+        
+        UIView *footerView = [[UIView alloc] initWithFrame:CGRectMake(0, 0, screenWidth(), 44)];
+        [footerView setBackgroundColor:[UIColor clearColor]];
+        UIButton *deleteButton = [UIButton buttonWithType:UIButtonTypeCustom];
+        [deleteButton setFrame:CGRectMake(screenWidth()/2-70, 0, 140, 44)];
+        [deleteButton setTitle:@"DELETE CIRCLE" forState:UIControlStateNormal];
+        [deleteButton.titleLabel setFont:[UIFont fontWithName:kSourceSansProRegular size:13]];
+        [deleteButton addTarget:self action:@selector(confirmDeletion) forControlEvents:UIControlEventTouchUpInside];
+        [deleteButton setTitleColor:[UIColor redColor] forState:UIControlStateNormal];
+        [deleteButton setBackgroundColor:[UIColor clearColor]];
+        deleteButton.layer.borderColor = [UIColor redColor].CGColor;
+        deleteButton.layer.borderWidth = .5f;
+        [footerView addSubview:deleteButton];
+        self.tableView.tableFooterView = footerView;
+        
     } else {
         _circle = [Circle MR_createInContext:[NSManagedObjectContext MR_defaultContext]];
         _circle.publicCircle = [NSNumber numberWithBool:NO];
         _circle.owner = _currentUser;
-        NSMutableOrderedSet *set = [NSMutableOrderedSet orderedSetWithOrderedSet:_circle.users];
+        NSMutableOrderedSet *set = [NSMutableOrderedSet orderedSet];
         [set addObject:_currentUser];
+        _circle.users = set;
         saveButton = [[UIBarButtonItem alloc] initWithTitle:@"Create" style:UIBarButtonItemStylePlain target:self action:@selector(post)];
         self.navigationItem.rightBarButtonItem = saveButton;
     }
     
     [self.tableView setBackgroundColor:[UIColor clearColor]];
     publicSwitch = [[UISwitch alloc] init];
+    
+}
+
+- (void)confirmDeletion {
+    [[[UIAlertView alloc] initWithTitle:@"Confirmation needed" message:@"Are you sure you want to delete this circle? This can't be undone." delegate:self cancelButtonTitle:@"No" otherButtonTitles:@"Yes", nil] show];
+}
+
+- (void)deleteCircle {
+    
+    [manager DELETE:[NSString stringWithFormat:@"%@/circles/%@",kAPIBaseUrl,_circle.identifier] parameters:@{@"user_id":[[NSUserDefaults standardUserDefaults] objectForKey:kUserDefaultsId]} success:^(AFHTTPRequestOperation *operation, id responseObject) {
+        NSLog(@"Success deleting circle: %@",responseObject);
+        [[NSNotificationCenter defaultCenter] postNotificationName:@"DeleteCircle" object:nil userInfo:@{@"circle":_circle}];
+        [self dismissViewControllerAnimated:YES completion:^{
+        }];
+    } failure:^(AFHTTPRequestOperation *operation, NSError *error) {
+        NSLog(@"Failed to delete circle: %@",error.description);
+        
+    }];
+}
+
+- (void)alertView:(UIAlertView *)alertView clickedButtonAtIndex:(NSInteger)buttonIndex {
+    if ([[alertView buttonTitleAtIndex:buttonIndex] isEqualToString:@"Yes"]){
+        [self deleteCircle];
+    }
 }
 
 - (void)viewWillAppear:(BOOL)animated {
@@ -155,10 +195,12 @@
         [ProgressHUD show:@"Creating your writing circle..."];
         
         [manager POST:[NSString stringWithFormat:@"%@/circles",kAPIBaseUrl] parameters:@{@"circle":parameters} success:^(AFHTTPRequestOperation *operation, id responseObject) {
-            NSLog(@"Success creating a new writing circle: %@",responseObject);
+            //NSLog(@"Success creating a new writing circle: %@",responseObject);
+            [XXAlert show:@"Circle created" withTime:2.1f];
             [_circle populateFromDict:[responseObject objectForKey:@"circle"]];
             [_currentUser addCircle:_circle];
-            [XXAlert show:@"Circle created" withTime:2.1f];
+            [[NSNotificationCenter defaultCenter] postNotificationName:@"CreateCircle" object:nil userInfo:@{@"circle":_circle}];
+            
             [ProgressHUD dismiss];
             [[NSManagedObjectContext MR_defaultContext] MR_saveToPersistentStoreWithCompletion:^(BOOL success, NSError *error) {
                 
@@ -176,9 +218,8 @@
         [ProgressHUD show:@"Updating your writing circle..."];
         [manager PATCH:[NSString stringWithFormat:@"%@/circles/%@",kAPIBaseUrl,_circle.identifier] parameters:@{@"circle":parameters} success:^(AFHTTPRequestOperation *operation, id responseObject) {
             //NSLog(@"Success updating writing circle: %@",responseObject);
-            [_circle populateFromDict:[responseObject objectForKey:@"circle"]];
-            
             [XXAlert show:@"Circle updated" withTime:2.1f];
+            [_circle populateFromDict:[responseObject objectForKey:@"circle"]];
             [[NSManagedObjectContext MR_defaultContext] MR_saveToPersistentStoreWithCompletion:^(BOOL success, NSError *error) {
                 [ProgressHUD dismiss];
                 [self dismissViewControllerAnimated:YES completion:^{
@@ -207,7 +248,6 @@
     if (section == 0){
         return 3;
     } else {
-        //return _circle.users.count;
         return _currentUser.contacts.count;
     }
 }
@@ -340,7 +380,6 @@
         
         cell.accessoryType = UITableViewCellAccessoryNone;
         [_circle.users enumerateObjectsUsingBlock:^(User *user, NSUInteger idx, BOOL *stop) {
-            NSLog(@"contact id %@ and user id: %@",contact.identifier, user.identifier);
             if ([user.identifier isEqualToNumber:contact.identifier]){
                 cell.accessoryType = UITableViewCellAccessoryCheckmark;
                 *stop = YES;
@@ -397,14 +436,12 @@
 
 - (void)textFieldDidEndEditing:(UITextField *)textField {
     if ([[NSUserDefaults standardUserDefaults] boolForKey:kDarkBackground]){
-        if (_circle.name.length){
-            [textField setText:_circle.name];
-        } else {
-            [textField setText:kCircleNamePlaceholder];
+        if (textField.text.length && ![textField.text isEqualToString:kCircleNamePlaceholder]){
+            _circle.name = textField.text;
         }
     } else {
-        if (_circle.name.length){
-            [textField setText:_circle.name];
+        if (textField.text.length && ![textField.text isEqualToString:kCircleNamePlaceholder]){
+            _circle.name = textField.text;
         }
     }
 }
@@ -418,7 +455,10 @@
 }
 
 - (void)textViewDidEndEditing:(UITextView *)textView {
-    if (!textView.text.length){
+    if (textView.text.length){
+        [textView setTextColor:textColor];
+        _circle.blurb = textView.text;
+    } else {
         [textView setText:kCircleBlurbPlaceholder];
         [textView setTextColor:kPlaceholderTextColor];
     }

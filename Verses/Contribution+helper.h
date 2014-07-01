@@ -11,6 +11,7 @@
 
 @interface Contribution (helper)
 - (void)populateFromDict:(NSDictionary*)dict;
+- (void)update:(NSDictionary*)dict;
 - (void)addPhoto:(Photo*)photo;
 - (void)removePhoto:(Photo*)photo;
 @end

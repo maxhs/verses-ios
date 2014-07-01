@@ -63,6 +63,54 @@
     }
 }
 
+- (void)update:(NSDictionary*)dictionary {
+    if ([dictionary objectForKey:@"id"] && [dictionary objectForKey:@"id"] != [NSNull null]) {
+        self.identifier = [dictionary objectForKey:@"id"];
+    }
+    
+    if ([dictionary objectForKey:@"comments"] && [dictionary objectForKey:@"comments"] != [NSNull null]) {
+        //NSLog(@"comments dict: %@",[dictionary objectForKey:@"comments"]);
+        NSMutableOrderedSet *orderedComments = [NSMutableOrderedSet orderedSet];
+        for (NSDictionary *commentDict in [dictionary objectForKey:@"comments"]){
+            if ([commentDict objectForKey:@"id"] != [NSNull null]){
+                Comment *comment = [Comment MR_findFirstByAttribute:@"identifier" withValue:[commentDict objectForKey:@"id"]];
+                if (!comment){
+                    comment = [Comment MR_createInContext:[NSManagedObjectContext MR_defaultContext]];
+                }
+                [comment populateFromDict:commentDict];
+                [orderedComments addObject:comment];
+            }
+        }
+        for (Comment *comment in self.comments){
+            if (![orderedComments containsObject:comment]){
+                [comment MR_deleteInContext:[NSManagedObjectContext MR_defaultContext]];
+            }
+        }
+        self.comments = orderedComments;
+    }
+    if ([dictionary objectForKey:@"user"] && [dictionary objectForKey:@"user"] != [NSNull null]) {
+        User *user = [User MR_findFirstByAttribute:@"identifier" withValue:[[dictionary objectForKey:@"user"] objectForKey:@"id"]];
+        if (user){
+            [user update:[dictionary objectForKey:@"user"]];
+        } else {
+            user = [User MR_createInContext:[NSManagedObjectContext MR_defaultContext]];
+            [user populateFromDict:[dictionary objectForKey:@"user"]];
+        }
+        
+        self.user = user;
+    }
+    if ([dictionary objectForKey:@"recipient"] && [dictionary objectForKey:@"recipient"] != [NSNull null]) {
+        User *recipient = [User MR_findFirstByAttribute:@"identifier" withValue:[[dictionary objectForKey:@"recipient"] objectForKey:@"id"]];
+        if (recipient){
+            [recipient update:[dictionary objectForKey:@"recipient"]];
+        } else {
+            recipient = [User MR_createInContext:[NSManagedObjectContext MR_defaultContext]];
+            [recipient populateFromDict:[dictionary objectForKey:@"recipient"]];
+        }
+        self.recipient = recipient;
+    }
+}
+
 - (void)addComment:(Comment*)comment{
     NSMutableOrderedSet *set = [[NSMutableOrderedSet alloc] initWithOrderedSet:self.comments];
     [set addObject:comment];

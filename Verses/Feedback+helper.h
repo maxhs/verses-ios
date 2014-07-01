@@ -11,6 +11,7 @@
 
 @interface Feedback (helper)
 - (void)populateFromDict:(NSDictionary*)dictionary;
+- (void)update:(NSDictionary*)dictionary;
 - (void)addComment:(Comment*)comment;
 - (void)removeComment:(Comment*)comment;
 @end

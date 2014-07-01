@@ -109,15 +109,14 @@
 - (void)hudCreate
 //-------------------------------------------------------------------------------------------------------------------------------------------------
 {
-    UIColor *backgroundColor;
     UIColor *spinnerColor;
     UIColor *statusColor;
     if ([[NSUserDefaults standardUserDefaults] boolForKey:kDarkBackground]){
-        backgroundColor = [UIColor blackColor];
+
         spinnerColor = [UIColor whiteColor];
         statusColor = [UIColor whiteColor];
     } else {
-        backgroundColor = [UIColor colorWithWhite:1 alpha:1];
+
         spinnerColor = [UIColor blackColor];
         statusColor = [UIColor blackColor];
     }
@@ -200,7 +199,7 @@
 - (void)hudOrient
 //-------------------------------------------------------------------------------------------------------------------------------------------------
 {
-	CGFloat rotate;
+	/*CGFloat rotate;
 	//---------------------------------------------------------------------------------------------------------------------------------------------
 	UIInterfaceOrientation orient = [[UIApplication sharedApplication] statusBarOrientation];
 	//---------------------------------------------------------------------------------------------------------------------------------------------
@@ -208,8 +207,9 @@
 	if (orient == UIInterfaceOrientationPortraitUpsideDown)	rotate = M_PI;
 	if (orient == UIInterfaceOrientationLandscapeLeft)		rotate = - M_PI_2;
 	if (orient == UIInterfaceOrientationLandscapeRight)		rotate = + M_PI_2;
+    else rotate = 0.0;
 	//---------------------------------------------------------------------------------------------------------------------------------------------
-	hud.transform = CGAffineTransformMakeRotation(rotate);
+	hud.transform = CGAffineTransformMakeRotation(rotate);*/
 }
 
 //-------------------------------------------------------------------------------------------------------------------------------------------------

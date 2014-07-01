@@ -237,7 +237,7 @@ static NSCache *imageCache = nil;
 #pragma mark - Alternative Representations
 
 // makes a data URL of the image
-- (NSString *)dataURLRepresentation
+- (NSData *)dataURLRepresentation
 {
 	DTImage *image = self.image;
 	
@@ -247,9 +247,9 @@ static NSCache *imageCache = nil;
 	}
 	
 	NSData *data = [image dataForPNGRepresentation];
-	NSString *encoded = [DTBase64Coding stringByEncodingData:data];
-	
-	return [@"data:image/png;base64," stringByAppendingString:encoded];
+    return data;
+	//NSString *encoded = [DTBase64Coding stringByEncodingData:data];
+	//return [@"data:image/png;base64," stringByAppendingString:encoded];
 }
 
 #pragma mark - DTTextAttachmentDrawing
@@ -395,7 +395,6 @@ static NSCache *imageCache = nil;
 			return image;
 		}
 	}
-	
 	return _image;
 }
 
@@ -412,6 +411,18 @@ static NSCache *imageCache = nil;
 - (void)setDisplaySize:(CGSize)displaySize
 {
 	_displaySize = displaySize;
+}
+
+- (void)encodeWithCoder:(NSCoder *)coder{
+    //[coder encodeObject:_image forKey:@"image"];
+}
+
+-(id)initWithCoder:(NSCoder *)decoder{
+    //self = [super init];
+    if (self){
+        //_image = [decoder decodeObjectForKey:@"image"];
+    }
+    return self;
 }
 
 @end

@@ -20,6 +20,13 @@
     return self;
 }
 
+- (void)showGuide {
+    XXGuideViewController *guide = [[(XXAppDelegate*)[UIApplication sharedApplication].delegate window].rootViewController.storyboard instantiateViewControllerWithIdentifier:@"Guide"];
+    guide.transitioningDelegate = self;
+    guide.modalPresentationStyle = UIModalPresentationCustom;
+    [self.parentViewController presentViewController:guide animated:YES completion:nil];
+}
+
 - (NSTimeInterval)transitionDuration:(id <UIViewControllerContextTransitioning>)transitionContext {
     return .65f;
 }
@@ -44,13 +51,20 @@
 }
 
 - (id <UIViewControllerInteractiveTransitioning>)interactionControllerForDismissal:(id <UIViewControllerAnimatedTransitioning>)animator {
-    NSLog(@"are we interactive for dismissal? %u",self.interactive);
+
     // Return nil if we are not interactive
     if (self.interactive) {
         return self;
     }
     
     return nil;
+}
+
+- (void)animationEnded:(BOOL)transitionCompleted {
+    // Reset to our default state
+    self.interactive = NO;
+    self.presenting = NO;
+    self.transitionContext = nil;
 }
 
 - (void)animateTransition:(id <UIViewControllerContextTransitioning>)transitionContext {
@@ -84,7 +98,6 @@
             fromViewController.view.frame = originEndFrame;
         } completion:^(BOOL finished) {
             [transitionContext completeTransition:YES];
-        
         }];
     }
     else {

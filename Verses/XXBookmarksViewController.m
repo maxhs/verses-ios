@@ -10,11 +10,13 @@
 #import "XXBookmarkCell.h"
 #import "Bookmark+helper.h"
 #import "XXStoryViewController.h"
+#import "XXGuideInteractor.h"
 
-@interface XXBookmarksViewController () <UIAlertViewDelegate> {
+@interface XXBookmarksViewController () <UIAlertViewDelegate, UIViewControllerTransitioningDelegate> {
     AFHTTPRequestOperationManager *manager;
     NSDateFormatter *_formatter;
     UIBarButtonItem *backButton;
+    UIBarButtonItem *guideButton;
     NSIndexPath *indexPathForDeletion;
     XXAppDelegate *delegate;
     BOOL loading;
@@ -42,6 +44,14 @@
     } else {
         currentUser = [User MR_findFirstByAttribute:@"identifier" withValue:[[NSUserDefaults standardUserDefaults] objectForKey:kUserDefaultsId]];
     }
+    guideButton = [[UIBarButtonItem alloc] initWithImage:[UIImage imageNamed:@"more"] style:UIBarButtonItemStylePlain target:self action:@selector(showGuide)];
+    UIBarButtonItem *negativeRightButton = [[UIBarButtonItem alloc]
+                                            initWithBarButtonSystemItem:UIBarButtonSystemItemFixedSpace
+                                            target:nil action:nil];
+    negativeRightButton.width = -14.f;
+    self.navigationItem.rightBarButtonItems = @[negativeRightButton,guideButton];
+
+    backButton = [[UIBarButtonItem alloc] initWithImage:[UIImage imageNamed:@"back"] style:UIBarButtonItemStylePlain target:self action:@selector(back)];
     
     manager = delegate.manager;
     [delegate.dynamicsDrawerViewController registerTouchForwardingClass:[XXBookmarkCell class]];
@@ -67,7 +77,7 @@
     if ([[NSUserDefaults standardUserDefaults] boolForKey:kDarkBackground]){
         [self.view setBackgroundColor:[UIColor clearColor]];
         textColor = [UIColor whiteColor];
-        backButton = [[UIBarButtonItem alloc] initWithImage:[UIImage imageNamed:@"whiteBack"] style:UIBarButtonItemStylePlain target:self action:@selector(back)];
+        [backButton setImage:[UIImage imageNamed:@"whiteBack"]];
         if (self.tableView.alpha != 1.0){
             [UIView animateWithDuration:.23 animations:^{
                 [self.tableView setAlpha:1.0];
@@ -77,7 +87,6 @@
     } else {
         [self.view setBackgroundColor:[UIColor whiteColor]];
         textColor = [UIColor blackColor];
-        backButton = [[UIBarButtonItem alloc] initWithImage:[UIImage imageNamed:@"back"] style:UIBarButtonItemStylePlain target:self action:@selector(back)];
     }
     self.navigationItem.leftBarButtonItem = backButton;
     navBarShadowView.hidden = YES;
@@ -85,6 +94,27 @@
     if (self.reloadTheme){
         loading = NO;
     }
+}
+
+- (void)showGuide {
+    XXGuideViewController *vc = [[self storyboard] instantiateViewControllerWithIdentifier:@"Guide"];
+    vc.transitioningDelegate = self;
+    vc.modalPresentationStyle = UIModalPresentationCustom;
+    [self presentViewController:vc animated:YES completion:nil];
+}
+
+- (id<UIViewControllerAnimatedTransitioning>)animationControllerForPresentedController:(UIViewController *)presented
+                                                                  presentingController:(UIViewController *)presenting
+                                                                      sourceController:(UIViewController *)source {
+    
+    XXGuideInteractor *animator = [XXGuideInteractor new];
+    animator.presenting = YES;
+    return animator;
+}
+
+- (id<UIViewControllerAnimatedTransitioning>)animationControllerForDismissedController:(UIViewController *)dismissed {
+    XXGuideInteractor *animator = [XXGuideInteractor new];
+    return animator;
 }
 
 - (void)loadBookmarks {

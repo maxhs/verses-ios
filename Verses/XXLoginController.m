@@ -418,11 +418,10 @@ static NSString * const kShakeAnimationKey = @"XXShakeItNow";
 
         [manager POST:[NSString stringWithFormat:@"%@/sessions", kAPIBaseUrl] parameters:@{@"user":parameters} success:^(AFHTTPRequestOperation *operation, id responseObject) {
             //NSLog(@"success logging in: %@",responseObject);
-            NSPredicate *predicate = [NSPredicate predicateWithFormat:@"identifier == %@",[[responseObject objectForKey:@"user"] objectForKey:@"id"]];
-            NSManagedObjectContext *localContext = [NSManagedObjectContext MR_contextForCurrentThread];
-            User *currentUser = [User MR_findFirstWithPredicate:predicate inContext:localContext];
+            NSPredicate *predicate = [NSPredicate predicateWithFormat:@"identifier == %@",[[responseObject objectForKey:@"user"] objectForKey:@"id"]];\
+            User *currentUser = [User MR_findFirstWithPredicate:predicate inContext:[NSManagedObjectContext MR_defaultContext]];
             if (!currentUser) {
-                currentUser = [User MR_createInContext:localContext];
+                currentUser = [User MR_createInContext:[NSManagedObjectContext MR_defaultContext]];
             }
             [currentUser populateFromDict:[responseObject objectForKey:@"user"]];
             
@@ -437,7 +436,7 @@ static NSString * const kShakeAnimationKey = @"XXShakeItNow";
             
             [delegate.dynamicsDrawerViewController setPaneState:MSDynamicsDrawerPaneStateClosed animated:YES allowUserInterruption:YES completion:nil];
         
-            [localContext MR_saveToPersistentStoreWithCompletion:^(BOOL success, NSError *error) {
+            [[NSManagedObjectContext MR_defaultContext] MR_saveToPersistentStoreWithCompletion:^(BOOL success, NSError *error) {
                 delegate.currentUser = currentUser;
                 [[NSUserDefaults standardUserDefaults] setObject:currentUser.identifier forKey:kUserDefaultsId];
                 [[NSUserDefaults standardUserDefaults] setObject:currentUser.email forKey:kUserDefaultsEmail];
@@ -447,7 +446,10 @@ static NSString * const kShakeAnimationKey = @"XXShakeItNow";
                 [[NSUserDefaults standardUserDefaults] setObject:currentUser.picSmall forKey:kUserDefaultsPicSmall];
                 [[NSUserDefaults standardUserDefaults] setObject:currentUser.picLarge forKey:kUserDefaultsPicLarge];
                 [[NSUserDefaults standardUserDefaults] synchronize];
-                [[NSNotificationCenter defaultCenter] postNotificationName:@"ReloadGuide" object:nil];
+                
+                //not sure if we need this one anymore since we got rid of the slot view in favor of the collectionview
+                //[[NSNotificationCenter defaultCenter] postNotificationName:@"ReloadGuide" object:nil];
+                
                 [[NSNotificationCenter defaultCenter] postNotificationName:@"ReloadMenu" object:nil];
                 [self dismissViewControllerAnimated:YES completion:^{
                     [ProgressHUD dismiss];

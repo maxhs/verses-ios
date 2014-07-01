@@ -60,4 +60,5 @@
         self.createdDate = [NSDate dateWithTimeIntervalSince1970:_interval];
     }
 }
+
 @end

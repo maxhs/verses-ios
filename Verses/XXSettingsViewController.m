@@ -15,8 +15,11 @@
 #import "XXLoginController.h"
 #import <SDWebImage/UIButton+WebCache.h>
 #import "XXAlert.h"
+#import "XXGuideViewController.h"
+#import "XXGuideInteractor.h"
+#import "XXSettingsBackgroundCell.h"
 
-@interface XXSettingsViewController () <UITextFieldDelegate,UITextViewDelegate, MFMailComposeViewControllerDelegate, UIImagePickerControllerDelegate, UINavigationControllerDelegate, UIActionSheetDelegate> {
+@interface XXSettingsViewController () <UITextFieldDelegate,UITextViewDelegate, MFMailComposeViewControllerDelegate, UIImagePickerControllerDelegate, UINavigationControllerDelegate, UIActionSheetDelegate, UIViewControllerTransitioningDelegate> {
     UIBarButtonItem *doneButton;
     UIBarButtonItem *saveButton;
     AFHTTPRequestOperationManager *manager;
@@ -36,11 +39,12 @@
     UITextField *locationTextField;
     CGRect screen;
     User *currentUser;
-    UIBarButtonItem *cancelButton;
+    UIBarButtonItem *guideButton;
     UIColor *textColor;
     UIImageView *navBarShadowView;
     UISwitch *backgroundThemeSwitch;
     UISwitch *storyPagingSwitch;
+    BOOL avatar;
 }
 
 @end
@@ -54,13 +58,19 @@
     manager = [(XXAppDelegate*)[UIApplication sharedApplication].delegate manager];
     saveButton = [[UIBarButtonItem alloc] initWithBarButtonSystemItem:UIBarButtonSystemItemSave target:self action:@selector(save)];
     doneButton = [[UIBarButtonItem alloc] initWithBarButtonSystemItem:UIBarButtonSystemItemDone target:self action:@selector(doneEditing)];
-    self.navigationItem.rightBarButtonItem = saveButton;
+    guideButton = [[UIBarButtonItem alloc]initWithImage:[UIImage imageNamed:@"more"] style:UIBarButtonItemStylePlain target:self action:@selector(showGuide)];
+    UIBarButtonItem *negativeRightButton = [[UIBarButtonItem alloc]
+                                            initWithBarButtonSystemItem:UIBarButtonSystemItemFixedSpace
+                                            target:nil action:nil];
+    negativeRightButton.width = -14.f;
+    self.navigationItem.rightBarButtonItems = @[negativeRightButton,guideButton];
+    self.navigationItem.leftBarButtonItem = saveButton;
     [self.logoutButton.titleLabel setFont:[UIFont fontWithName:kSourceSansProSemibold size:16]];
     self.tableView.tableFooterView = self.logoutButton;
     screen = [UIScreen mainScreen].bounds;
     [self loadProfile];
-    cancelButton = [[UIBarButtonItem alloc]initWithImage:[UIImage imageNamed:@"back"] style:UIBarButtonItemStylePlain target:self action:@selector(back)];
-    self.navigationItem.leftBarButtonItem = cancelButton;
+    
+    
     navBarShadowView = [Utilities findNavShadow:self.navigationController.navigationBar];
     
     if (![(XXAppDelegate*)[UIApplication sharedApplication].delegate currentUser]){
@@ -74,9 +84,14 @@
     [super didReceiveMemoryWarning];
 }
 
+- (void)viewDidAppear:(BOOL)animated {
+    [super viewDidAppear:animated];
+    [[UIApplication sharedApplication] setStatusBarHidden:NO withAnimation:UIStatusBarAnimationFade];
+}
+
 - (void)viewWillAppear:(BOOL)animated {
     [super viewWillAppear:animated];
-    [[UIApplication sharedApplication] setStatusBarHidden:NO withAnimation:UIStatusBarAnimationFade];
+    
     navBarShadowView.hidden = YES;
     if ([[NSUserDefaults standardUserDefaults] boolForKey:kDarkBackground]){
         [self.view setBackgroundColor:[UIColor clearColor]];
@@ -138,13 +153,12 @@
         indexPath = [NSIndexPath indexPathForRow:1 inSection:0];
     }
     if (indexPath != nil) [self.tableView scrollToRowAtIndexPath:indexPath atScrollPosition:UITableViewScrollPositionMiddle animated:YES];
-    self.navigationItem.leftBarButtonItem = nil;
+    
     self.navigationItem.rightBarButtonItem = doneButton;
 }
 
 - (void)textFieldDidEndEditing:(UITextField *)textField {
-    self.navigationItem.leftBarButtonItem = cancelButton;
-    self.navigationItem.rightBarButtonItem = saveButton;
+    self.navigationItem.rightBarButtonItem = guideButton;
 }
 
 - (void)doneEditing {
@@ -173,7 +187,7 @@
             return 3;
             break;
         case 2:
-            return 1;
+            return 2;
             break;
         case 3:
             return 7;
@@ -307,21 +321,23 @@
             
             return cell;
         } else {
-            static NSString *MyIdentifier = @"VersionCell";
-            UITableViewCell *cell = [tableView dequeueReusableCellWithIdentifier:MyIdentifier];
-            cell.accessoryType = UITableViewCellAccessoryDisclosureIndicator;
-            [cell.textLabel setText:@"Story paging"];
-            [cell.textLabel setFont:[UIFont fontWithName:kSourceSansProRegular size:16]];
-            storyPagingSwitch = [[UISwitch alloc] init];
-            [storyPagingSwitch addTarget:self action:@selector(pagingSwitch) forControlEvents:UIControlEventValueChanged];
-            if ([[NSUserDefaults standardUserDefaults] boolForKey:kStoryPaging]){
-                [storyPagingSwitch setOn:YES animated:NO];
-            } else {
-                [storyPagingSwitch setOn:NO animated:NO];
+            XXSettingsBackgroundCell *cell = (XXSettingsBackgroundCell *)[tableView dequeueReusableCellWithIdentifier:@"SettingsBackgroundCell"];
+            if (cell == nil) {
+                cell = [[[NSBundle mainBundle] loadNibNamed:@"XXSettingsBackgroundCell" owner:nil options:nil] lastObject];
             }
-            cell.accessoryView = storyPagingSwitch;
-            [cell.textLabel setTextColor:textColor];
-            cell.selectionStyle = UITableViewCellSelectionStyleNone;
+            NSLog(@"user background image: %@",currentUser.backgroundImageView);
+            if (currentUser.backgroundImageView){
+                cell.backgroundImageView = currentUser.backgroundImageView;
+                [cell.backgroundImageView setHidden:NO];
+                NSLog(@"cell background image view: %@",cell.backgroundImageView);
+                [cell.backgroundImageViewLabel setHidden:YES];
+            } else {
+                [cell.backgroundImageViewLabel setHidden:NO];
+                [cell.backgroundImageView setHidden:YES];
+                [cell.backgroundImageViewLabel setText:@"Set your background image"];
+                [cell.backgroundImageViewLabel setFont:[UIFont fontWithName:kSourceSansProRegular size:16]];
+                [cell.backgroundImageViewLabel setTextColor:textColor];
+            }
             
             return cell;
         }
@@ -571,6 +587,8 @@
 - (CGFloat)tableView:(UITableView *)tableView heightForRowAtIndexPath:(NSIndexPath *)indexPath {
     if (indexPath.section == 0 || indexPath.section == 1){
         return 50;
+    } else if (indexPath.section == 2 && indexPath.row == 1) {
+        return 100;
     } else {
         return 60;
     }
@@ -589,14 +607,8 @@
         
         }];
         [self.navigationController.navigationBar setBarStyle:UIBarStyleDefault];
-        
-        [self.navigationController.navigationBar setTitleTextAttributes:@{
-                                                                          NSForegroundColorAttributeName: [UIColor blackColor],
-                                                                          NSFontAttributeName: [UIFont fontWithName:kSourceSansProSemibold size:23],
-                                                                          NSShadowAttributeName: clearShadow,
-                                                                          }];
+        [self.navigationItem.rightBarButtonItem setTintColor:[UIColor blackColor]];
         textColor = [UIColor blackColor];
-        [self.navigationItem.leftBarButtonItem setTintColor:[UIColor blackColor]];
     } else {
         [[NSUserDefaults standardUserDefaults] setBool:YES forKey:kDarkBackground];
         [backgroundThemeSwitch setOn:YES animated:YES];
@@ -605,12 +617,7 @@
         } completion:^(BOOL finished) {
         }];
         [self.navigationController.navigationBar setBarStyle:UIBarStyleBlackTranslucent];
-        [self.navigationController.navigationBar setTitleTextAttributes:@{
-                                                                          NSForegroundColorAttributeName: [UIColor whiteColor],
-                                                                          NSFontAttributeName: [UIFont fontWithName:kSourceSansProSemibold size:23],
-                                                                          NSShadowAttributeName: clearShadow,
-                                                                          }];
-        [self.navigationItem.leftBarButtonItem setTintColor:[UIColor whiteColor]];
+        [self.navigationItem.rightBarButtonItem setTintColor:[UIColor whiteColor]];
         textColor = [UIColor whiteColor];
     }
     [(XXAppDelegate*)[UIApplication sharedApplication].delegate switchBackgroundTheme];
@@ -702,6 +709,7 @@
 
 - (void)tableView:(UITableView *)tableView didSelectRowAtIndexPath:(NSIndexPath *)indexPath {
     if (indexPath.section == 0 && indexPath.row == 2){
+        avatar = YES;
         if ([UIImagePickerController isSourceTypeAvailable:UIImagePickerControllerSourceTypeCamera]){
             if (currentUser.thumbImage || currentUser.picSmall){
                 [[[UIActionSheet alloc] initWithTitle:nil delegate:self cancelButtonTitle:@"Cancel" destructiveButtonTitle:@"Remove Photo" otherButtonTitles:@"Take Photo",@"Pick from Photo Library", nil] showInView:self.view];
@@ -715,7 +723,16 @@
         if (indexPath.row == 0){
             [self themeSwitch];
         } else if (indexPath.row == 1) {
-            //[self pagingSwitch];
+            avatar = NO;
+            if ([UIImagePickerController isSourceTypeAvailable:UIImagePickerControllerSourceTypeCamera]){
+                if (currentUser.thumbImage || currentUser.picSmall){
+                    [[[UIActionSheet alloc] initWithTitle:nil delegate:self cancelButtonTitle:@"Cancel" destructiveButtonTitle:@"Remove Photo" otherButtonTitles:@"Take Photo",@"Pick from Photo Library", nil] showInView:self.view];
+                } else {
+                    [[[UIActionSheet alloc] initWithTitle:nil delegate:self cancelButtonTitle:@"Cancel" destructiveButtonTitle:nil otherButtonTitles:@"Take Photo",@"Pick from Photo Library", nil] showInView:self.view];
+                }
+            } else {
+                [self choosePhoto];
+            }
         }
     } else if (indexPath.section == 4){
         if (indexPath.row == 0){
@@ -768,12 +785,26 @@
 
 - (void)imagePickerController:(UIImagePickerController *)picker didFinishPickingMediaWithInfo:(NSDictionary *)info {
     [picker dismissViewControllerAnimated:YES completion:nil];
-    [currentUser setThumbImage:[info objectForKey:UIImagePickerControllerOriginalImage]];
-    [self.tableView reloadRowsAtIndexPaths:@[[NSIndexPath indexPathForRow:2 inSection:0]] withRowAnimation:UITableViewRowAnimationFade];
-    [self uploadImage:currentUser.thumbImage];
+    if (avatar){
+        [currentUser setThumbImage:[info objectForKey:UIImagePickerControllerOriginalImage]];
+        [self.tableView reloadRowsAtIndexPaths:@[[NSIndexPath indexPathForRow:2 inSection:0]] withRowAnimation:UITableViewRowAnimationFade];
+        [self uploadUserImage:currentUser.thumbImage];
+    } else {
+        UIImageView *imageView = [[UIImageView alloc] initWithFrame:[UIScreen mainScreen].bounds];
+        imageView.clipsToBounds = YES;
+        [imageView setContentMode:UIViewContentModeScaleAspectFill];
+        [imageView setImage:[info objectForKey:UIImagePickerControllerOriginalImage]];
+        [MagicalRecord saveWithBlock:^(NSManagedObjectContext *localContext) {
+            User *theUser = [currentUser MR_inContext:localContext];
+            [theUser setBackgroundImageView:imageView];
+        } completion:^(BOOL success, NSError *error) {
+            NSLog(@"any success? %u",success);
+            [self.tableView reloadRowsAtIndexPaths:@[[NSIndexPath indexPathForRow:1 inSection:2]] withRowAnimation:UITableViewRowAnimationFade];
+        }];
+    }
 }
 
-- (void)uploadImage:(UIImage*)image {
+- (void)uploadUserImage:(UIImage*)image {
     NSData *imageData = UIImageJPEGRepresentation(image, 1);
     [manager POST:[NSString stringWithFormat:@"%@/users/%@/add_photo",kAPIBaseUrl,currentUser.identifier] parameters:nil constructingBodyWithBlock:^(id<AFMultipartFormData> formData) {
         [formData appendPartWithFileData:imageData name:@"photo" fileName:@"photo.jpg" mimeType:@"image/jpg"];
@@ -867,6 +898,27 @@
     return YES;
 }
 */
+
+- (void)showGuide {
+    XXGuideViewController *vc = [[self storyboard] instantiateViewControllerWithIdentifier:@"Guide"];
+    vc.transitioningDelegate = self;
+    vc.modalPresentationStyle = UIModalPresentationCustom;
+    [self presentViewController:vc animated:YES completion:nil];
+}
+
+- (id<UIViewControllerAnimatedTransitioning>)animationControllerForPresentedController:(UIViewController *)presented
+                                                                  presentingController:(UIViewController *)presenting
+                                                                      sourceController:(UIViewController *)source {
+    
+    XXGuideInteractor *animator = [XXGuideInteractor new];
+    animator.presenting = YES;
+    return animator;
+}
+
+- (id<UIViewControllerAnimatedTransitioning>)animationControllerForDismissedController:(UIViewController *)dismissed {
+    XXGuideInteractor *animator = [XXGuideInteractor new];
+    return animator;
+}
 
 - (void)viewWillDisappear:(BOOL)animated {
     [super viewWillDisappear:animated];

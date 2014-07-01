@@ -16,6 +16,7 @@ static inline CGFloat height(UIView *view) { return view.frame.size.height; }
 
 #define OUTLINE ((int) 22)
 #define kSeparatorTag 21
+#define kContributorViewTag 2376
 #define kBaseUrl @"https://www.writeverses.com"
 #define kAPIBaseUrl @"https://www.writeverses.com/api/v1"
 #define kTermsUrl @"https://www.writeverses.com/terms"
@@ -66,7 +67,7 @@ static inline CGFloat height(UIView *view) { return view.frame.size.height; }
 #define kFeedbackPlaceholder @"Leave feedback..."
 #define kCircleBlurbPlaceholder @"Describe your writing circle..."
 #define kCircleNamePlaceholder @"Name your writing circle..."
-#define kAddCollaboratorPlaceholder @"Your contact's email address..."
+#define kAddCollaboratorPlaceholder @"What's your contact's email address?"
 
 //Notification constants
 #define kCircleComment @"circle_comment"
@@ -76,12 +77,7 @@ static inline CGFloat height(UIView *view) { return view.frame.size.height; }
 #define kSubscription @"subscription"
 
 //Font constants
-#define kGotham @"GothamBook"
-#define kGothamRounded @"GothamRounded-Book"
-#define kGothamBold @"GothamBold"
-#define kGothamExtraLight @"GothamExtraLight"
-#define kGothamLight @"GothamLight"
-#define kGothamThin @"GothamThin"
+
 #define kSourceSansProLight @"SourceSansPro-Light"
 #define kSourceSansProRegular @"SourceSansPro-Regular"
 #define kSourceSansProSemibold @"SourceSansPro-Semibold"

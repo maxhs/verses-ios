@@ -50,6 +50,23 @@
             NSLog(@"  %@", name);
     }*/
     
+    [[AFNetworkReachabilityManager sharedManager] startMonitoring];
+    [[AFNetworkReachabilityManager sharedManager] setReachabilityStatusChangeBlock:^(AFNetworkReachabilityStatus status) {
+        switch (status) {
+            case AFNetworkReachabilityStatusReachableViaWWAN:
+            case AFNetworkReachabilityStatusReachableViaWiFi:
+                NSLog(@"Connected");
+                _connected = YES;
+                break;
+            case AFNetworkReachabilityStatusNotReachable:
+            default:
+                NSLog(@"Not online");
+                _connected = NO;
+                [self offlineNotification];
+                break;
+        }
+    }];
+    
     if ([[NSUserDefaults standardUserDefaults] objectForKey:kUserDefaultsId]){
         _currentUser = [User MR_findFirstByAttribute:@"identifier" withValue:[[NSUserDefaults standardUserDefaults] objectForKey:kUserDefaultsId]];
     } else {
@@ -57,18 +74,18 @@
     }
     
     self.dynamicsDrawerViewController = (MSDynamicsDrawerViewController *)self.window.rootViewController;
-    self.dynamicsDrawerViewController.bounceElasticity = 2;
-    self.dynamicsDrawerViewController.gravityMagnitude = 3;
+    self.dynamicsDrawerViewController.bounceElasticity = 1.3f;
+    self.dynamicsDrawerViewController.gravityMagnitude = 7.f;
     if (IDIOM == IPAD){
-        [self.dynamicsDrawerViewController setRevealWidth:672.f forDirection:MSDynamicsDrawerDirectionLeft];
-        [self.dynamicsDrawerViewController setRevealWidth:672.f forDirection:MSDynamicsDrawerDirectionRight];
+        [self.dynamicsDrawerViewController setRevealWidth:384.f forDirection:MSDynamicsDrawerDirectionLeft];
+        [self.dynamicsDrawerViewController setRevealWidth:384.f forDirection:MSDynamicsDrawerDirectionRight];
     } else {
         [self.dynamicsDrawerViewController setRevealWidth:280.f forDirection:MSDynamicsDrawerDirectionLeft];
         [self.dynamicsDrawerViewController setRevealWidth:280.f forDirection:MSDynamicsDrawerDirectionRight];
     }
     
     MSDynamicsDrawerScaleStyler *menuScale = [MSDynamicsDrawerScaleStyler styler];
-    [menuScale setClosedScale:.13];
+    [menuScale setClosedScale:.23];
     // left drawer
     [self.dynamicsDrawerViewController addStylersFromArray:@[menuScale, [MSDynamicsDrawerFadeStyler styler], [MSDynamicsDrawerParallaxStyler styler]] forDirection:MSDynamicsDrawerDirectionLeft];
     self.menuViewController = [self.window.rootViewController.storyboard instantiateViewControllerWithIdentifier:@"Menu"];
@@ -183,7 +200,9 @@
     [[UIButton appearanceWhenContainedIn:[UISearchBar class], nil] setTitleColor:[UIColor whiteColor] forState:UIControlStateNormal];
     [[UIButton appearance] setTitleColor:kElectricBlue forState:UIControlStateHighlighted];
     [[UIButton appearance] setTitleColor:kElectricBlue forState:UIControlStateSelected];
+    
     UIImage *backImage = [[UIImage imageNamed:@"back"] resizableImageWithCapInsets:UIEdgeInsetsMake(0, 23, 0, 10)];
+    [[UIBarButtonItem appearanceWhenContainedIn:[UIImagePickerController class], nil] setBackButtonBackgroundImage:[UIImage new] forState:UIControlStateNormal barMetrics:UIBarMetricsDefault];
     [[UIBarButtonItem appearance] setBackButtonBackgroundImage:backImage forState:UIControlStateNormal barMetrics:UIBarMetricsDefault];
     NSShadow *clearShadow = [[NSShadow alloc] init];
     clearShadow.shadowColor = [UIColor clearColor];
@@ -372,6 +391,9 @@
 
 - (void)applicationDidBecomeActive:(UIApplication *)application
 {
+    if (!_currentUser && [[NSUserDefaults standardUserDefaults] objectForKey:kUserDefaultsId]){
+        _currentUser = [User MR_findFirstByAttribute:@"identifier" withValue:[[NSUserDefaults standardUserDefaults] objectForKey:kUserDefaultsId]];
+    }
     // Restart any tasks that were paused (or not yet started) while the application was inactive. If the application was previously in the background, optionally refresh the user interface.
     
     //refresh user data by signing them in again
@@ -410,6 +432,11 @@
             }];
         }
     }*/
+}
+
+
+- (void)offlineNotification {
+    [[[UIAlertView alloc] initWithTitle:@"Offline" message:@"Your device appears to be offline." delegate:nil cancelButtonTitle:@"Okay" otherButtonTitles:nil] show];
 }
 
 - (void)cleanAndResetupDB {

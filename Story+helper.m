@@ -67,13 +67,15 @@
     }
     if ([dictionary objectForKey:@"owner"] && [dictionary objectForKey:@"owner"] != [NSNull null]) {
         User *owner = [User MR_findFirstByAttribute:@"identifier" withValue:[[dictionary objectForKey:@"owner"] objectForKey:@"id"]];
-        if (!owner){
+        if (owner){
+            [owner update:[dictionary objectForKey:@"owner"]];
+        } else {
             owner = [User MR_createInContext:[NSManagedObjectContext MR_defaultContext]];
+            [owner populateFromDict:[dictionary objectForKey:@"owner"]];
         }
-        [owner populateFromDict:[dictionary objectForKey:@"owner"]];
+        
         self.owner = owner;
         self.ownerId = owner.identifier;
-        [self.owner addOwnedStory:self];
     } else {
         if ([self.owner.ownedStories containsObject:self]){
             [self.owner removeOwnedStory:self];
@@ -90,14 +92,17 @@
         for (NSDictionary *dict in [dictionary objectForKey:@"users"]){
             if ([dict objectForKey:@"id"] && [dict objectForKey:@"id"] != [NSNull null]){
                 User *user = [User MR_findFirstByAttribute:@"identifier" withValue:[dict objectForKey:@"id"]];
-                if (!user){
+                if (user){
+                    [user update:dict];
+                } else {
                     user = [User MR_createInContext:[NSManagedObjectContext MR_defaultContext]];
+                    [user populateFromDict:dict];
                 }
-                [user populateFromDict:dict];
+                
                 [orderedUsers addObject:user];
             }
         }
-        for (User *user in self.photos){
+        for (User *user in self.users){
             if (![orderedUsers containsObject:user]){
                 [user MR_deleteInContext:[NSManagedObjectContext MR_defaultContext]];
             }
@@ -109,13 +114,15 @@
         for (NSDictionary *photoDict in [dictionary objectForKey:@"photos"]){
             if ([photoDict objectForKey:@"id"] && [photoDict objectForKey:@"id"] != [NSNull null]){
                 Photo *photo = [Photo MR_findFirstByAttribute:@"identifier" withValue:[photoDict objectForKey:@"id"]];
-                if (!photo){
+                if (photo){
+                    [photo update:photoDict];
+                } else {
                     photo = [Photo MR_createInContext:[NSManagedObjectContext MR_defaultContext]];
+                    [photo populateFromDict:photoDict];
                 }
-                [photo populateFromDict:photoDict];
+                
                 [orderedPhotos addObject:photo];
             }
-            
         }
         for (Photo *photo in self.photos){
             if (![orderedPhotos containsObject:photo]){
@@ -131,10 +138,13 @@
             for (NSDictionary *feedbackDict in dict){
                 if ([feedbackDict objectForKey:@"id"] != [NSNull null]){
                     Feedback *feedback = [Feedback MR_findFirstByAttribute:@"identifier" withValue:[feedbackDict objectForKey:@"id"]];
-                    if (!feedback){
+                    if (feedback){
+                        [feedback update:feedbackDict];
+                    } else {
                         feedback = [Feedback MR_createInContext:[NSManagedObjectContext MR_defaultContext]];
+                        [feedback populateFromDict:feedbackDict];
                     }
-                    [feedback populateFromDict:feedbackDict];
+                    
                     [orderedFeedbacks addObject:feedback];
                 }
             }
@@ -151,10 +161,13 @@
         NSMutableOrderedSet *orderedContributions = [NSMutableOrderedSet orderedSet];
         for (NSDictionary *dict in [dictionary objectForKey:@"contributions"]){
             Contribution *contribution = [Contribution MR_findFirstByAttribute:@"identifier" withValue:[dict objectForKey:@"id"]];
-            if (!contribution){
+            if (contribution){
+                [contribution update:dict];
+            } else {
                 contribution = [Contribution MR_createInContext:[NSManagedObjectContext MR_defaultContext]];
+                [contribution populateFromDict:dict];
             }
-            [contribution populateFromDict:dict];
+            
             [orderedContributions addObject:contribution];
         }
         for (Contribution *contribution in self.contributions){
@@ -168,7 +181,7 @@
         if ([self.mystery isEqualToNumber:[NSNumber numberWithBool:YES]]){
             rangeAmount = 250;
         } else {
-            rangeAmount = 2000;
+            rangeAmount = 1200;
         }
         NSRange range;
         if ([[self.contributions.firstObject body] length] > rangeAmount){
@@ -209,6 +222,42 @@
     }
 }
 
+- (void)createFromDict:(NSDictionary*)dictionary {
+    if ([dictionary objectForKey:@"id"] && [dictionary objectForKey:@"id"] != [NSNull null]) {
+        self.identifier = [dictionary objectForKey:@"id"];
+    }
+    if ([dictionary objectForKey:@"views"] && [dictionary objectForKey:@"views"] != [NSNull null]) {
+        self.views = [dictionary objectForKey:@"views"];
+    }
+    if ([dictionary objectForKey:@"word_count"] && [dictionary objectForKey:@"word_count"] != [NSNull null]) {
+        self.wordCount = [dictionary objectForKey:@"word_count"];
+    }
+    if ([dictionary objectForKey:@"trending_count"] && [dictionary objectForKey:@"trending_count"] != [NSNull null]) {
+        self.trendingCount = [dictionary objectForKey:@"trending_count"];
+    }
+    if ([dictionary objectForKey:@"minutes_to_read"] && [dictionary objectForKey:@"minutes_to_read"] != [NSNull null]) {
+        self.minutesToRead = [dictionary objectForKey:@"minutes_to_read"];
+    }
+    if ([dictionary objectForKey:@"created_date"] && [dictionary objectForKey:@"created_date"] != [NSNull null]) {
+        NSTimeInterval _interval = [[dictionary objectForKey:@"created_date"] doubleValue];
+        self.createdDate = [NSDate dateWithTimeIntervalSince1970:_interval];
+    }
+    if ([dictionary objectForKey:@"updated_date"] && [dictionary objectForKey:@"updated_date"] != [NSNull null]) {
+        NSTimeInterval _interval = [[dictionary objectForKey:@"updated_date"] doubleValue];
+        self.updatedDate = [NSDate dateWithTimeIntervalSince1970:_interval];
+    }
+    if ([dictionary objectForKey:@"published_date"] && [dictionary objectForKey:@"published_date"] != [NSNull null]) {
+        NSTimeInterval _interval = [[dictionary objectForKey:@"published_date"] doubleValue];
+        self.publishedDate = [NSDate dateWithTimeIntervalSince1970:_interval];
+    }
+    if ([dictionary objectForKey:@"authors"] && [dictionary objectForKey:@"authors"] != [NSNull null]) {
+        self.authorNames = [dictionary objectForKey:@"authors"];
+    }
+    if ([dictionary objectForKey:@"to_param"] && [dictionary objectForKey:@"to_param"] != [NSNull null]) {
+        self.storyUrl = [NSString stringWithFormat:@"%@/stories/%@",kBaseUrl,[dictionary objectForKey:@"to_param"]];
+    }
+}
+
 - (void)addContribution:(Contribution*)contribution{
     NSMutableOrderedSet *contributionSet = [NSMutableOrderedSet orderedSetWithOrderedSet:self.contributions];
     [contributionSet addObject:contribution];
@@ -243,6 +292,7 @@
     [set removeObject:feedback];
     self.feedbacks = set;
 }
+
 - (void)addPhoto:(Photo*)photo {
     NSMutableOrderedSet *photoSet = [NSMutableOrderedSet orderedSetWithOrderedSet:self.photos];
     [photoSet addObject:photo];
@@ -255,6 +305,29 @@
     self.photos = photoSet;
 }
 
+- (void)addUser:(User*)user {
+    NSMutableOrderedSet *set = [NSMutableOrderedSet orderedSetWithOrderedSet:self.users];
+    [set addObject:user];
+    self.users = set;
+}
+
+- (void)removeUser:(User*)user {
+    NSMutableOrderedSet *set = [NSMutableOrderedSet orderedSetWithOrderedSet:self.users];
+    [set removeObject:user];
+    self.users = set;
+}
+
+- (void)addCircle:(Circle*)circle {
+    NSMutableOrderedSet *set = [NSMutableOrderedSet orderedSetWithOrderedSet:self.circles];
+    [set addObject:circle];
+    self.circles = set;
+}
+
+- (void)removeCircle:(Circle*)circle {
+    NSMutableOrderedSet *set = [NSMutableOrderedSet orderedSetWithOrderedSet:self.circles];
+    [set removeObject:circle];
+    self.circles = set;
+}
 
 @end
 

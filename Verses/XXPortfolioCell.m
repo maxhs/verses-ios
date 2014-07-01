@@ -77,30 +77,6 @@
     [_titleLabel setTextColor:color];
     [_titleLabel setAdjustsFontSizeToFitWidth:YES];
     
-    NSString *storyBody;
-    NSRange range;
-    if ([story.mystery isEqualToNumber:[NSNumber numberWithBool:YES]]){
-        storyBody = [story.contributions.firstObject body];
-    } else {
-        storyBody = [story.contributions.lastObject body];
-    }
-    
-    int snippetLength;
-    if (IDIOM == IPAD){
-        snippetLength = 600;
-    } else {
-        snippetLength = 400;
-    }
-    
-    if ([storyBody length] > snippetLength){
-        if ([story.mystery isEqualToNumber:[NSNumber numberWithBool:YES]]){
-            range = NSMakeRange([storyBody length]-snippetLength, snippetLength);
-        } else {
-            range = NSMakeRange(0, snippetLength);
-        }
-    } else {
-        range = NSMakeRange(0, [storyBody length]);
-    }
     
     XXTextStorage *_textStorage = [XXTextStorage new];
     [_textStorage setAttributedString:story.attributedSnippet];

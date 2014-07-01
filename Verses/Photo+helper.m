@@ -40,4 +40,23 @@
         }
     }
 }
+
+- (void)update:(NSDictionary*)dictionary {
+    if ([dictionary objectForKey:@"image_medium_url"] && [dictionary objectForKey:@"image_medium_url"] != [NSNull null]) {
+        self.mediumUrl = [dictionary objectForKey:@"image_medium_url"];
+    }
+    if ([dictionary objectForKey:@"image_small_url"] && [dictionary objectForKey:@"image_small_url"] != [NSNull null]) {
+        self.smallUrl = [dictionary objectForKey:@"image_small_url"];
+    }
+    if ([dictionary objectForKey:@"image_large_url"] && [dictionary objectForKey:@"image_large_url"] != [NSNull null]) {
+        self.largeUrl = [dictionary objectForKey:@"image_large_url"];
+    }
+    if ([dictionary objectForKey:@"image_thumb_url"] && [dictionary objectForKey:@"image_thumb_url"] != [NSNull null]) {
+        self.thumbUrl = [dictionary objectForKey:@"image_thumb_url"];
+    }
+    if ([dictionary objectForKey:@"updated_date"] && [dictionary objectForKey:@"updated_date"] != [NSNull null]) {
+        NSTimeInterval _interval = [[dictionary objectForKey:@"updated_date"] doubleValue];
+        self.updatedDate = [NSDate dateWithTimeIntervalSince1970:_interval];
+    }
+}
 @end

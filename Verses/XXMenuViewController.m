@@ -59,7 +59,7 @@
     [self.view setBackgroundColor:[UIColor clearColor]];
  
     self.tableView.backgroundColor = [UIColor clearColor];
-    self.tableView.separatorColor = [UIColor colorWithWhite:1.0 alpha:0.05];
+    self.tableView.separatorColor = [UIColor colorWithWhite:1.0 alpha:0.025];
 
     searching = NO;
     [self.searchBar setPlaceholder:@"Search stories"];
@@ -70,7 +70,8 @@
     _timeFormatter = [[NSDateFormatter alloc] init];
     [_timeFormatter setLocale:[NSLocale currentLocale]];
     [_timeFormatter setDateFormat:@"h:mm a"];
-    currentUser = [User MR_findFirstByAttribute:@"identifier" withValue:[[NSUserDefaults standardUserDefaults] objectForKey:kUserDefaultsId]];
+    currentUser = delegate.currentUser;
+    
     [super viewDidLoad];
     searchPlaceholder = [[NSAttributedString alloc] initWithString:@"Search stories" attributes:@{ NSForegroundColorAttributeName : [UIColor whiteColor] }];
     [[NSNotificationCenter defaultCenter] addObserver:self
@@ -93,7 +94,9 @@
 - (void)viewWillAppear:(BOOL)animated {
     [[UIApplication sharedApplication] setApplicationIconBadgeNumber:0];
     [[UIApplication sharedApplication] setStatusBarHidden:YES withAnimation:UIStatusBarAnimationFade];
-    [[NSNotificationCenter defaultCenter] postNotificationName:@"MenuRevealed" object:nil];
+
+    [super viewWillAppear:animated];
+    
     if ([[NSUserDefaults standardUserDefaults] objectForKey:kUserDefaultsId]) {
         loggedIn = YES;
         self.tableView.scrollEnabled = YES;
@@ -142,17 +145,7 @@
         }
     }
     
-    if (UIInterfaceOrientationIsPortrait(self.interfaceOrientation)){
-        [self.tableView setFrame:CGRectMake(0, 0, screenWidth()-screenWidth()*1/8, screenHeight())];
-    } else {
-        if (IDIOM == IPAD){
-            [self.tableView setFrame:CGRectMake(0, 0, screenHeight()*.66, screenHeight())];
-        } else {
-            [self.tableView setFrame:CGRectMake(0, 0, screenHeight()/2, screenHeight())];
-        }
-    }
-    
-    if (self.view.alpha < 1.f){
+    if (self.view.alpha != 1.0){
         if ([[NSUserDefaults standardUserDefaults] boolForKey:kDarkBackground]){
             [UIView animateWithDuration:.27 animations:^{
                 [self.view setAlpha:1.0];
@@ -160,15 +153,12 @@
                 self.view.transform = CGAffineTransformIdentity;
             }];
         }
-    }
-    else if (self.tableView.alpha < 1.0){
+    } else if (self.tableView.alpha != 1.0){
         [UIView animateWithDuration:.25 animations:^{
             [self.tableView setAlpha:1.0];
         }];
     }
     canLoadMore = YES;
-    [super viewWillAppear:animated];
-    [[UIApplication sharedApplication] setApplicationIconBadgeNumber:0];
 }
 
 - (void)viewDidAppear:(BOOL)animated {
@@ -192,8 +182,7 @@
             _circleAlertCount = [[responseObject objectForKeyedSubscript:@"count"] integerValue];
             
             [self.tableView beginUpdates];
-            if (self.tableView.visibleCells)[self.tableView reloadSections:[NSIndexSet indexSetWithIndex:0] withRowAnimation:UITableViewRowAnimationFade];
-            else [self.tableView reloadData];
+            [self.tableView reloadSections:[NSIndexSet indexSetWithIndex:0] withRowAnimation:UITableViewRowAnimationFade];
             [self.tableView endUpdates];
             
         } failure:^(AFHTTPRequestOperation *operation, NSError *error) {
@@ -211,9 +200,11 @@
             for (NSDictionary *dict in [responseObject objectForKey:@"notifications"]){
                 Notification *notification = [Notification MR_findFirstByAttribute:@"identifier" withValue:[dict objectForKey:@"id"]];
                 if (!notification){
+                    //create a new notification.
                     notification = [Notification MR_createInContext:[NSManagedObjectContext MR_defaultContext]];
+                    [notification populateFromDict:dict];
                 }
-                [notification populateFromDict:dict];
+                
                 [notificationSet addObject:notification];
             }
             
@@ -223,12 +214,16 @@
                     [notification MR_deleteInContext:[NSManagedObjectContext MR_defaultContext]];
                 }
             }
-            currentUser.notifications = notificationSet;
-            
-            [[NSManagedObjectContext MR_defaultContext] MR_saveToPersistentStoreWithCompletion:^(BOOL success, NSError *error) {
-                [self.tableView reloadData];
-                [self loadCirclesAlert];
-            }];
+            NSLog(@"notification set count: %d",notificationSet.count);
+            if (currentUser){
+                currentUser.notifications = notificationSet;
+        
+                [[NSManagedObjectContext MR_defaultContext] MR_saveToPersistentStoreWithCompletion:^(BOOL success, NSError *error) {
+                    [self.tableView reloadData];
+                    NSLog(@"current user notification count: %d",currentUser.notifications.count);
+                    [self loadCirclesAlert];
+                }];
+                }
             
         } failure:^(AFHTTPRequestOperation *operation, NSError *error) {
             NSLog(@"Failure getting user notifications: %@",error.description);
@@ -316,7 +311,7 @@
        
     } else if (loggedIn) {
         if (section == 0){
-            return 3;
+            return 1;
         } else {
             return currentUser.notifications.count;
         }
@@ -684,27 +679,6 @@
         return screenHeight();
     }
 }
-
-/*- (UIView*)tableView:(UITableView *)tableView viewForHeaderInSection:(NSInteger)section {
-    UILabel *headerLabel = [[UILabel alloc] initWithFrame:CGRectMake(10, 0, tableView.frame.size.width-20, 22)];
-    [headerLabel setBackgroundColor:[UIColor clearColor]];
-    [headerLabel setTextColor:[UIColor whiteColor]];
-    [headerLabel setTextAlignment:NSTextAlignmentCenter];
-    
-    if (IDIOM == IPAD){
-        [headerLabel setFont:[UIFont fontWithName:kSourceSansProLight size:17]];
-    } else {
-        [headerLabel setFont:[UIFont fontWithName:kGotham size:14]];
-    }
-    
-    if (tableView == self.tableView && section == 1 && loggedIn){
-        headerLabel.autoresizingMask = UIViewAutoresizingFlexibleWidth;
-        [headerLabel setText:@"NOTIFICATIONS"];
-    } else {
-        [headerLabel setFrame:CGRectMake(0, 0, 0, 0)];
-    }
-    return headerLabel;
-}*/
 
 -(void)willShowKeyboard:(NSNotification*)notification {
     NSDictionary* keyboardInfo = [notification userInfo];

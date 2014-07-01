@@ -9,6 +9,18 @@
 #import "Circle+helper.h"
 
 @implementation Circle (helper)
+- (void)update:(NSDictionary*)dictionary {
+    if ([dictionary objectForKey:@"description"] && [dictionary objectForKey:@"description"] != [NSNull null]) {
+        self.blurb = [dictionary objectForKey:@"description"];
+    }
+    if ([dictionary objectForKey:@"name"] && [dictionary objectForKey:@"name"] != [NSNull null]) {
+        self.name = [dictionary objectForKey:@"name"];
+    }
+    if ([dictionary objectForKey:@"story_titles"] && [dictionary objectForKey:@"story_titles"] != [NSNull null]) {
+        self.titles = [dictionary objectForKey:@"story_titles"];
+    }
+}
+
 - (void)populateFromDict:(NSDictionary*)dictionary {
     if ([dictionary objectForKey:@"id"] && [dictionary objectForKey:@"id"] != [NSNull null]) {
         self.identifier = [dictionary objectForKey:@"id"];

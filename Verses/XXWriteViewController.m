@@ -36,6 +36,7 @@
     BOOL saving;
     BOOL keyboardIsVisible;
     CGRect keyboardRect;
+    CGRect originalDoneRect;
     UIBarButtonItem *doneButton;
     UIBarButtonItem *saveButton;
     UIBarButtonItem *publishButton;
@@ -43,8 +44,6 @@
     UITapGestureRecognizer *optionsTap;
     UIImage *blurredSnapshotImage;
     UIImageView *blurredImageView;
-    NSMutableArray *_collaborators;
-    NSMutableArray *_circleCollaborators;
     UIColor *textColor;
     UIInterfaceOrientation currentOrientation;
     UIImageView *navBarShadowView;
@@ -65,6 +64,7 @@
     XXStoryPhoto *storyPhoto;
     Photo *thePhoto;
     CGFloat imageHeight;
+    User *_currentUser;
 }
 
 @end
@@ -88,9 +88,17 @@
         }
     }
     self.navigationItem.rightBarButtonItem = backButton;
+    
+    if (UIInterfaceOrientationIsPortrait(self.interfaceOrientation)){
+        width = screenWidth();
+        height = screenHeight();
+    } else {
+        height = screenWidth();
+        width = screenHeight();
+    }
+    
     manager = [(XXAppDelegate*)[UIApplication sharedApplication].delegate manager];
-    width = screenWidth();
-    height = screenHeight();
+    _currentUser = [(XXAppDelegate*)[UIApplication sharedApplication].delegate currentUser];
     
     publishButton = [[UIBarButtonItem alloc] initWithTitle:@"   Share   " style:UIBarButtonItemStylePlain target:self action:@selector(confirmPublish)];
     doneButton = [[UIBarButtonItem alloc] initWithBarButtonSystemItem:UIBarButtonSystemItemDone target:self action:@selector(doneEditing)];
@@ -98,27 +106,11 @@
     saveButton = [[UIBarButtonItem alloc] initWithTitle:@"   Save   " style:UIBarButtonItemStylePlain target:self action:@selector(save)];
     
     //setup controls has lots of story logic in it
-    [self offsetOptions];
     [self setupView];
+    [self offsetOptions];
     [self setupControls];
     
     [super viewDidLoad];
-    
-    _collaborators = [NSMutableArray array];
-    if (_story.users.count){
-        for (User *user in _story.users){
-            [_collaborators addObject:user.identifier];
-        }
-    }
-    //add current user by default
-    [_collaborators addObject:[[NSUserDefaults standardUserDefaults] objectForKey:kUserDefaultsId]];
-    
-    _circleCollaborators = [NSMutableArray array];
-    if (_story.circles.count){
-        for (Circle *circle in _story.circles){
-            [_circleCollaborators addObject:circle.identifier];
-        }
-    }
     
     if (_mystery){
         [_slowRevealLabel setHidden:NO];
@@ -140,8 +132,6 @@
     [_scrollView setCanCancelContentTouches:NO];
     
     navBarShadowView = [Utilities findNavShadow:self.navigationController.navigationBar];
-    [[NSNotificationCenter defaultCenter] addObserver:self selector:@selector(addCollaborators:) name:@"Collaborators" object:nil];
-    [[NSNotificationCenter defaultCenter] addObserver:self selector:@selector(addCircleCollaborators:) name:@"CircleCollaborators" object:nil];
     [[NSNotificationCenter defaultCenter] addObserver:self
                                              selector:@selector(willShowKeyboard:)
                                                  name:UIKeyboardWillShowNotification
@@ -179,9 +169,12 @@
     [_joinableLabel setTextColor:textColor];
     [_slowRevealLabel setTextColor:textColor];
 
-    [_titleTextField setTextColor:textColor];
-    [_titleTextField setFont:[UIFont fontWithName:kSourceSansProSemibold size:33]];
-    [_titleTextField setAutocapitalizationType:UITextAutocapitalizationTypeWords];
+    if (!_titleTextField.text.length && [[NSUserDefaults standardUserDefaults] boolForKey:kDarkBackground]){
+        [_titleTextField setTextColor:[UIColor whiteColor]];
+        [_titleTextField setText:kTitlePlaceholder];
+    } else {
+        [_titleTextField setTextColor:textColor];
+    }
     
     if (_mystery || [_story.inviteOnly isEqualToNumber:[NSNumber numberWithBool:YES]]) {
         [publishButton setTitle:@"   Share   "];
@@ -209,7 +202,7 @@
     
     [_story setDraft:[NSNumber numberWithBool:dSwitch.isOn]];
     if (_contribution && ![_contribution.identifier isEqualToNumber:[NSNumber numberWithInt:0]]){
-        self.navigationItem.leftBarButtonItem = saveButton;
+        self.navigationItem.leftBarButtonItems = @[saveButton,optionsButton];
     } else if ([_story.draft isEqualToNumber:[NSNumber numberWithBool:YES]]){
         self.navigationItem.leftBarButtonItems = @[saveButton,optionsButton];
     } else {
@@ -237,6 +230,8 @@
         _story = [Story MR_createInContext:[NSManagedObjectContext MR_defaultContext]];
         _story.draft = [NSNumber numberWithBool:YES];
         _story.inviteOnly = [NSNumber numberWithBool:YES];
+        [_story addUser:_currentUser];
+        _story.owner = _currentUser;
         if (_mystery) _story.mystery = [NSNumber numberWithBool:YES];
         if ([[NSUserDefaults standardUserDefaults] boolForKey:kDarkBackground]){
             [_titleTextField setText:kTitlePlaceholder];
@@ -672,16 +667,10 @@
 
 - (void)clearStoryAndReset {
     _story = nil;
+    [self doneOptions];
     [self dismissViewControllerAnimated:YES completion:^{
         [ProgressHUD dismiss];
     }];
-}
-
-- (void)addCollaborators:(NSNotification*)notification{
-    _collaborators = [notification.userInfo objectForKey:@"collaborators"];
-}
-- (void)addCircleCollaborators:(NSNotification*)notification{
-    _circleCollaborators = [notification.userInfo objectForKey:@"circleCollaborators"];
 }
 
 - (void)save {
@@ -691,11 +680,11 @@
 
 - (void)send:(NSString*)action {
     [self doneOptions];
+    [self doneEditing];
     NSMutableDictionary *storyParameters = [NSMutableDictionary dictionary];
     NSMutableDictionary *contributionParameters = [NSMutableDictionary dictionary];
     
     if (_story.contributions.count == 1 || (_contribution && ![_contribution.identifier isEqualToNumber:[NSNumber numberWithInt:0]])){
-        
         if (_story.contributions.count == 1) {
             if (self.inviteOnlySwitch.isOn){
                 [contributionParameters setObject:[NSNumber numberWithBool:YES] forKey:@"invite_only"];
@@ -749,11 +738,19 @@
     } else {
         [storyParameters setObject:[NSNumber numberWithBool:NO] forKey:@"mystery"];
     }
-    if (_collaborators.count){
-        [storyParameters setObject:[_collaborators componentsJoinedByString:@","] forKey:@"user_ids"];
+    if (_story.users.count){
+        NSMutableArray *users = [NSMutableArray array];
+        for (User *user in _story.users){
+            [users addObject:user.identifier];
+        }
+        [storyParameters setObject:[users componentsJoinedByString:@","] forKey:@"user_ids"];
     }
-    if (_circleCollaborators.count){
-        [storyParameters setObject:[_circleCollaborators componentsJoinedByString:@","] forKey:@"circle_ids"];
+    if (_story.circles.count){
+        NSMutableArray *circles = [NSMutableArray array];
+        for (Circle *circle in _story.circles){
+            [circles addObject:circle.identifier];
+        }
+        [storyParameters setObject:[circles componentsJoinedByString:@","] forKey:@"circle_ids"];
     }
     
     if ([action isEqualToString:@"Publish"]){
@@ -768,8 +765,9 @@
         [contributionParameters setObject:[[NSUserDefaults standardUserDefaults] objectForKey:kUserDefaultsId] forKey:@"user_id"];
         
         [manager POST:[NSString stringWithFormat:@"%@/stories",kAPIBaseUrl] parameters:@{@"story":storyParameters,@"contribution":contributionParameters, @"user_id":[[NSUserDefaults standardUserDefaults] objectForKey:kUserDefaultsId]} success:^(AFHTTPRequestOperation *operation, id responseObject) {
-            NSLog(@"Success POSTing your story: %@",responseObject);
-            [_story populateFromDict:[responseObject objectForKey:@"story"]];
+            //NSLog(@"Success POSTing your story: %@",responseObject);
+            [_story createFromDict:[responseObject objectForKey:@"story"]];
+    
             [self postImage:_story.contributions.firstObject];
             if (saving){
                 [XXAlert show:@"Story saved" withTime:1.5f];
@@ -777,8 +775,15 @@
                 [XXAlert show:@"Published" withTime:1.5f];
                 [self showStory];
             }
+            
+            [_deleteButton setHidden:NO];
+            CGRect doneRect = _doneOptionsButton.frame;
+            doneRect.origin.x = (width*75)-(doneRect.size.width/2);
+            [_doneOptionsButton setFrame:doneRect];
+            
             [[NSManagedObjectContext MR_defaultContext] MR_saveToPersistentStoreWithCompletion:^(BOOL success, NSError *error) {
-                NSLog(@"Create story status: %u",success);
+                NSLog(@"Create story: %u",success);
+                
             }];
             [ProgressHUD dismiss];
         } failure:^(AFHTTPRequestOperation *operation, NSError *error) {
@@ -787,9 +792,8 @@
         }];
     
     } else if (_contribution && ![_contribution.identifier isEqualToNumber:[NSNumber numberWithInt:0]]){
-        NSLog(@"saving a contribution");
-        [manager PUT:[NSString stringWithFormat:@"%@/contributions/%@",kAPIBaseUrl,_contribution.identifier] parameters:@{@"contribution":contributionParameters,@"user_id":[[NSUserDefaults standardUserDefaults] objectForKey:kUserDefaultsId]} success:^(AFHTTPRequestOperation *operation, id responseObject) {
-            NSLog(@"Success PUTing your contribution: %@",responseObject);
+        [manager PATCH:[NSString stringWithFormat:@"%@/contributions/%@",kAPIBaseUrl,_contribution.identifier] parameters:@{@"contribution":contributionParameters,@"user_id":[[NSUserDefaults standardUserDefaults] objectForKey:kUserDefaultsId]} success:^(AFHTTPRequestOperation *operation, id responseObject) {
+            //NSLog(@"Success PUTing your contribution: %@",responseObject);
             [_contribution populateFromDict:[responseObject objectForKey:@"contribution"]];
             //[self postImage:_story.contributions.firstObject];
             if (saving){
@@ -809,8 +813,8 @@
         }];
         
     } else {
-        [manager PUT:[NSString stringWithFormat:@"%@/stories/%@",kAPIBaseUrl,_story.identifier] parameters:@{@"story":storyParameters,@"contribution":contributionParameters,@"user_id":[[NSUserDefaults standardUserDefaults] objectForKey:kUserDefaultsId]} success:^(AFHTTPRequestOperation *operation, id responseObject) {
-            NSLog(@"Success PUTing your story: %@",responseObject);
+        [manager PATCH:[NSString stringWithFormat:@"%@/stories/%@",kAPIBaseUrl,_story.identifier] parameters:@{@"story":storyParameters,@"contribution":contributionParameters,@"user_id":[[NSUserDefaults standardUserDefaults] objectForKey:kUserDefaultsId]} success:^(AFHTTPRequestOperation *operation, id responseObject) {
+            //NSLog(@"Success PUTing your story: %@",responseObject);
             [_story populateFromDict:[responseObject objectForKey:@"story"]];
             [self postImage:_story.contributions.firstObject];
             if (saving){
@@ -900,8 +904,7 @@
     XXCollaborateViewController *vc = [[self storyboard] instantiateViewControllerWithIdentifier:@"Collaborate"];
     [vc setManageContacts:NO];
     [vc setTitle:@"Collaborate"];
-    [vc setCollaborators:_collaborators];
-    [vc setCircleCollaborators:_circleCollaborators];
+    [vc setStory:_story];
     UINavigationController *nav = [[UINavigationController alloc] initWithRootViewController:vc];
     if ([[NSUserDefaults standardUserDefaults] boolForKey:kDarkBackground]){
         [UIView animateWithDuration:.23 animations:^{
@@ -1013,7 +1016,7 @@
         bodyRect.size.width = screenWidth() - widthSpacer;
         sections = [NSMutableArray array];
         int start = 0;
-        int distance = 7000;
+        int distance = 20000;
         BOOL moreText = YES;
         while (moreText){
             if (start + distance < attrString.length){
@@ -1048,6 +1051,7 @@
         _bodyTextView.delegate = self;
         _bodyTextView.clipsToBounds = NO;
         _bodyTextView.scrollEnabled = NO;
+        _bodyTextView.dataDetectorTypes = UIDataDetectorTypeAll;
         
         if ([_bodyTextView.text isEqualToString:kStoryPlaceholder]){
             if ([[NSUserDefaults standardUserDefaults] boolForKey:kDarkBackground]){
@@ -1161,7 +1165,6 @@
     if ([textField.text isEqual:kTitlePlaceholder]){
         textField.text = @"";
     }
-    self.navigationItem.leftBarButtonItem = nil;
     if ([[NSUserDefaults standardUserDefaults] boolForKey:kDarkBackground]){
         textField.keyboardAppearance = UIKeyboardAppearanceDark;
         [textField setTextColor:textColor];
@@ -1386,28 +1389,26 @@
 #pragma mark - Setup the Controls
 
 - (void)setupView {
-    [_doneOptionsButton.titleLabel setFont:[UIFont fontWithName:kSourceSansProLight size:18]];
+    originalDoneRect = _doneOptionsButton.frame;
+    [_doneOptionsButton.titleLabel setFont:[UIFont fontWithName:kSourceSansProRegular size:15]];
     _doneOptionsButton.layer.borderColor = [UIColor darkGrayColor].CGColor;
-    _doneOptionsButton.layer.borderWidth = .5f;
     _doneOptionsButton.layer.cornerRadius = 14.f;
     [_doneOptionsButton.layer setBackgroundColor:[UIColor clearColor].CGColor];
     [_doneOptionsButton setBackgroundColor:[UIColor clearColor]];
     _doneOptionsButton.layer.rasterizationScale = [UIScreen mainScreen].scale;
     _doneOptionsButton.layer.shouldRasterize = YES;
     
-    [_deleteButton.titleLabel setFont:[UIFont fontWithName:kSourceSansProLight size:18]];
+    [_deleteButton.titleLabel setFont:[UIFont fontWithName:kSourceSansProRegular size:15]];
     [_deleteButton setTitleColor:[UIColor redColor] forState:UIControlStateNormal];
     _deleteButton.layer.borderColor = [UIColor redColor].CGColor;
-    _deleteButton.layer.borderWidth = .5f;
     _deleteButton.layer.cornerRadius = 14.f;
     [_deleteButton.layer setBackgroundColor:[UIColor clearColor].CGColor];
     [_deleteButton setBackgroundColor:[UIColor clearColor]];
     _deleteButton.layer.rasterizationScale = [UIScreen mainScreen].scale;
     _deleteButton.layer.shouldRasterize = YES;
     
-    [_collaborateButton.titleLabel setFont:[UIFont fontWithName:kSourceSansProLight size:18]];
+    [_collaborateButton.titleLabel setFont:[UIFont fontWithName:kSourceSansProRegular size:15]];
     _collaborateButton.layer.borderColor = [UIColor darkGrayColor].CGColor;
-    _collaborateButton.layer.borderWidth = 0.5f;
     _collaborateButton.layer.cornerRadius = 14.f;
     [_collaborateButton.layer setBackgroundColor:[UIColor clearColor].CGColor];
     [_collaborateButton setBackgroundColor:[UIColor clearColor]];
@@ -1420,10 +1421,23 @@
     [_joinableLabel setFont:[UIFont fontWithName:kSourceSansProLight size:18]];
     [_slowRevealLabel setFont:[UIFont fontWithName:kSourceSansProLight size:18]];
     
+    if ([[NSUserDefaults standardUserDefaults] boolForKey:kDarkBackground]){
+        _doneOptionsButton.layer.borderWidth = 1.f;
+        _collaborateButton.layer.borderWidth = 1.f;
+        _deleteButton.layer.borderWidth = 1.f;
+    } else {
+        _doneOptionsButton.layer.borderWidth = .5f;
+        _collaborateButton.layer.borderWidth = .5f;
+        _deleteButton.layer.borderWidth = .5f;
+    }
+    
     optionsTap = [[UITapGestureRecognizer alloc] initWithTarget:self action:@selector(showOptions)];
     optionsTap.numberOfTapsRequired = 1;
     optionsTap.delegate = self;
     [self.optionsContainerView addGestureRecognizer:optionsTap];
+    
+    [_titleTextField setFont:[UIFont fontWithName:kSourceSansProSemibold size:33]];
+    [_titleTextField setAutocapitalizationType:UITextAutocapitalizationTypeWords];
 }
 
 - (void)pop{

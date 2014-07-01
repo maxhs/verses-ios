@@ -8,8 +8,10 @@
 
 #import "XXSegmentedControl.h"
 
-@interface XXSegmentedControl ()
-@property (nonatomic) BOOL initializing;
+@interface XXSegmentedControl () {
+    BOOL _settingUp;
+}
+
 @property (nonatomic, strong) UIView *selectionIndicator;
 @property (nonatomic, strong) UIView *hairline;
 @property (nonatomic, strong) NSMutableDictionary *colors;
@@ -23,9 +25,8 @@
 
 - (id)init
 {
-    _initializing = YES;
-    
     if (self = [super init]) {
+        _settingUp = YES;
         self.clipsToBounds = NO;
         _background = [[UIToolbar alloc] initWithFrame:self.frame];
         [_background setTranslucent:YES];
@@ -47,9 +48,8 @@
         [self addSubview:_selectionIndicator];
         
         _colors = [NSMutableDictionary new];
+        _settingUp = NO;
     }
-    
-    _initializing = NO;
     
     return self;
 }
@@ -295,7 +295,7 @@
 
 - (void)setTintColor:(UIColor *)color
 {
-    if (!color || !_items || _initializing) {
+    if (!color || !_items || _settingUp) {
         return;
     }
     
@@ -307,7 +307,7 @@
 
 - (void)setBackgroundColor:(UIColor *)color
 {
-    if (!color || _initializing) {
+    if (!color || _settingUp) {
         return;
     }
     
@@ -316,7 +316,7 @@
 
 - (void)setHairlineColor:(UIColor *)color
 {
-    if (!color || _initializing) {
+    if (!color || _settingUp) {
         return;
     }
     

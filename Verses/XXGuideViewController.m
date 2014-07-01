@@ -21,20 +21,23 @@
 #import "XXGuideCollectionCell.h"
 #import "XXBookmarksViewController.h"
 #import "XXCirclesViewController.h"
+#import "XXSettingsViewController.h"
+#import "XXFlowLayout.h"
 
 @interface XXGuideViewController () <UISearchBarDelegate> {
     UIButton *dismissButton;
     NSAttributedString *searchPlaceholder;
     BOOL searching;
+    BOOL signedIn;
     NSMutableArray *_filteredResults;
     NSMutableArray *_searchResults;
     AFHTTPRequestOperationManager *manager;
     UIView *headerView;
-    CGRect headerRect;
     XXStoriesViewController *stories;
     CGFloat width;
     CGFloat height;
     UIMotionEffectGroup *motion;
+    UIButton *downButton;
 }
 
 @end
@@ -44,10 +47,8 @@
 @synthesize panTarget = _panTarget;
 
 - (void)viewDidLoad {
+    [super viewDidLoad];
     self.automaticallyAdjustsScrollViewInsets = NO;
-    
-    dismissButton = [UIButton buttonWithType:UIButtonTypeCustom];
-    [self.view addSubview:dismissButton];
     if (UIInterfaceOrientationIsPortrait(self.interfaceOrientation)){
         width = screenWidth();
         height = screenHeight();
@@ -55,35 +56,47 @@
         height = screenWidth();
         width = screenHeight();
     }
+    if ([[NSUserDefaults standardUserDefaults] objectForKey:kUserDefaultsId]){
+        signedIn = YES;
+    } else {
+        signedIn = NO;
+    }
+    dismissButton = [UIButton buttonWithType:UIButtonTypeCustom];
+    [self.view addSubview:dismissButton];
     [dismissButton setFrame:CGRectMake(width-54, height-54, 54, 54)];
     [dismissButton setImage:[UIImage imageNamed:@"whiteX"] forState:UIControlStateNormal];
     [dismissButton addTarget:self action:@selector(dismiss) forControlEvents:UIControlEventTouchUpInside];
     
     [self.view setBackgroundColor:[UIColor blackColor]];
-    [self.tableView setBackgroundColor:[UIColor clearColor]];
-    [self.tableView setSeparatorStyle:UITableViewCellSeparatorStyleNone];
-    [super viewDidLoad];
+    [self.collectionView setBackgroundColor:[UIColor clearColor]];
     manager = [(XXAppDelegate*)[UIApplication sharedApplication].delegate manager];
     [self.view setAutoresizingMask:UIViewAutoresizingFlexibleWidth];
+    
     UIImageView *backgroundImageView = [[UIImageView alloc] initWithFrame:self.view.frame];
     [backgroundImageView setAutoresizingMask:UIViewAutoresizingFlexibleWidth];
     [backgroundImageView setContentMode:UIViewContentModeScaleAspectFill];
     [backgroundImageView setImage:[(XXAppDelegate*)[UIApplication sharedApplication].delegate windowBackground].image];
     backgroundImageView.clipsToBounds = YES;
-    _filteredResults = [NSMutableArray array];
-    _searchResults = [NSMutableArray array];
-    
-    self.tableView.rowHeight = screenHeight()/5;
-    self.searchResultsTableView.rowHeight = 60.f;
     if ([[NSUserDefaults standardUserDefaults] boolForKey:kDarkBackground]){
         [backgroundImageView setAlpha:.14];
     } else {
         [backgroundImageView setAlpha:1];
     }
+    [self.view addSubview:backgroundImageView];
+    [self.view sendSubviewToBack:backgroundImageView];
+    _filteredResults = [NSMutableArray array];
+    _searchResults = [NSMutableArray array];
     
-    /*UIScreenEdgePanGestureRecognizer *pan = [[UIScreenEdgePanGestureRecognizer alloc] initWithTarget:self.panTarget action:@selector(userDidPan:)];
-    pan.edges = UIRectEdgeBottom;
-    [self.collectionView addGestureRecognizer:pan];*/
+    if (![[NSUserDefaults standardUserDefaults] boolForKey:kHasSeenGuideView]){
+        downButton = [UIButton buttonWithType:UIButtonTypeCustom];
+        [downButton setImage:[UIImage imageNamed:@"smallDownWhiteArrow"] forState:UIControlStateNormal];
+        [downButton setAutoresizingMask:UIViewAutoresizingFlexibleWidth];
+        [downButton setFrame:CGRectMake(width/2-44, height-66, 88, 88)];
+        [downButton addTarget:self action:@selector(scrollDown) forControlEvents:UIControlEventTouchUpInside];
+        [self.view insertSubview:downButton aboveSubview:self.collectionView];
+        [self pulsate:downButton withDelay:.75];
+    }
+    
     UIInterpolatingMotionEffect *verticalMotionEffect = [[UIInterpolatingMotionEffect alloc] initWithKeyPath:@"center.y" type:UIInterpolatingMotionEffectTypeTiltAlongVerticalAxis];
     verticalMotionEffect.minimumRelativeValue = @(-14);
     verticalMotionEffect.maximumRelativeValue = @(14);
@@ -92,22 +105,28 @@
     horizontalMotionEffect.maximumRelativeValue = @(14);
     motion = [UIMotionEffectGroup new];
     motion.motionEffects = @[horizontalMotionEffect, verticalMotionEffect];
-    
-    [self.collectionView setBackgroundColor:[UIColor clearColor]];
-    
-    [self.view addSubview:backgroundImageView];
-    [self.view sendSubviewToBack:backgroundImageView];
+
+    self.searchResultsTableView.rowHeight = 60.f;
+    [self.searchResultsTableView setBackgroundColor:[UIColor colorWithWhite:0 alpha:.77]];
+    [self.searchResultsTableView setAlpha:0.0];
     [self.searchBar setImage:[UIImage imageNamed:@"whiteSearchIcon"] forSearchBarIcon:UISearchBarIconSearch state:UIControlStateNormal];
-    
     [self.searchBar setBackgroundColor:[UIColor clearColor]];
     searchPlaceholder = [[NSAttributedString alloc] initWithString:@"Search stories" attributes:@{ NSForegroundColorAttributeName : [UIColor whiteColor] }];
+    
+    headerView = [[UIView alloc] initWithFrame:CGRectMake(0, 0, width, height/5)];
+    [headerView setAutoresizingMask:UIViewAutoresizingFlexibleWidth];
+    [headerView addSubview:self.searchBar];
+    [self.searchBar setFrame:CGRectMake(0, 0, width, 44)];
+    [self.searchBar setAutoresizingMask:UIViewAutoresizingFlexibleWidth];
+    [self.collectionView addSubview:headerView];
+    
     for (id subview in [self.searchBar.subviews.firstObject subviews]){
         [subview setTintColor:[UIColor whiteColor]];
         if ([subview isKindOfClass:[UITextField class]]){
             UITextField *searchTextField = (UITextField*)subview;
             [searchTextField setKeyboardAppearance:UIKeyboardAppearanceDark];
             [searchTextField setBackgroundColor:[UIColor clearColor]];
-            searchTextField.layer.borderColor = [UIColor colorWithWhite:1 alpha:.9].CGColor;
+            searchTextField.layer.borderColor = [UIColor colorWithWhite:1 alpha:.7].CGColor;
             searchTextField.layer.borderWidth = 1.f;
             searchTextField.layer.cornerRadius = 14.f;
             searchTextField.clipsToBounds = YES;
@@ -116,23 +135,32 @@
             break;
         }
     }
-    headerRect = CGRectMake(0, 0, screenWidth(), screenHeight()/5);
-    headerView = [[UIView alloc] initWithFrame:headerRect];
-    [headerView addSubview:self.searchBar];
-    [self.searchBar setFrame:CGRectMake(0, 0, screenWidth(), 44)];
-    [self.collectionView addSubview:headerView];
-    self.tableView.tableFooterView = [[UIView alloc] initWithFrame:CGRectMake(0, screenHeight()/5, screenWidth(), screenHeight()/5)];
-    
-    [self.searchResultsTableView setBackgroundColor:[UIColor colorWithWhite:0 alpha:.77]];
-    [self.searchResultsTableView setAlpha:0.0];
     
     [[NSNotificationCenter defaultCenter] addObserver:self
                                              selector:@selector(willShowKeyboard:)
                                                  name:UIKeyboardWillShowNotification object:nil];
-    [[NSNotificationCenter defaultCenter] addObserver:self
-                                             selector:@selector(reloadUser)
-                                                 name:@"ReloadGuide"
-                                               object:nil];
+}
+
+- (void)viewWillAppear:(BOOL)animated {
+    [super viewWillAppear:animated];
+    [[UIApplication sharedApplication] setStatusBarHidden:NO withAnimation:UIStatusBarAnimationFade];
+}
+
+- (void)scrollDown {
+    [UIView animateWithDuration:.7 delay:0 usingSpringWithDamping:.8 initialSpringVelocity:.0001 options:UIViewAnimationOptionCurveEaseInOut animations:^{
+        [self.collectionView setContentOffset:CGPointMake(0, height/2)];
+    } completion:^(BOOL finished) {
+        [self removeDownButton];
+    }];
+}
+
+- (void)removeDownButton {
+    [UIView animateWithDuration:.3 animations:^{
+        [downButton setAlpha:0.0];
+    } completion:^(BOOL finished) {
+        [downButton removeFromSuperview];
+        [[NSUserDefaults standardUserDefaults] setBool:YES forKey:kHasSeenGuideView];
+    }];
 }
 
 -(UIImage *)blurredSnapshot:(BOOL)light {
@@ -159,11 +187,11 @@
         height = screenWidth();
         width = screenHeight();
     }
-    [self.collectionView reloadData];
+    [self.collectionView invalidateIntrinsicContentSize];
 }
 
-- (void)reloadUser{
-    [self.tableView reloadRowsAtIndexPaths:@[[NSIndexPath indexPathForRow:1 inSection:0],[NSIndexPath indexPathForRow:2 inSection:0]] withRowAnimation:UITableViewRowAnimationFade];
+- (void)didRotateFromInterfaceOrientation:(UIInterfaceOrientation)fromInterfaceOrientation {
+    
 }
 
 - (void)searchBarTextDidBeginEditing:(UISearchBar *)searchBar {
@@ -204,7 +232,6 @@
             [storyArray addObject:story];
         }
     }
-    [self.tableView reloadData];
     [self saveContext];
     return storyArray;
 }
@@ -242,11 +269,11 @@
     // Dispose of any resources that can be recreated.
 }
 
-- (void)scrollViewDidEndDragging:(UIScrollView *)scrollView willDecelerate:(BOOL)decelerate {
+/*- (void)scrollViewDidEndDragging:(UIScrollView *)scrollView willDecelerate:(BOOL)decelerate {
     if (scrollView == self.tableView && scrollView.contentOffset.y > 60.f && UIInterfaceOrientationIsPortrait(self.interfaceOrientation)){
         [self dismiss];
     }
-}
+}*/
 
 -(void)willShowKeyboard:(NSNotification*)notification {
     NSDictionary* keyboardInfo = [notification userInfo];
@@ -262,7 +289,6 @@
     } else {
         return CGSizeMake(width/2,width/2);
     }
-    
 }
 
 - (UIEdgeInsets)collectionView:(UICollectionView *)collectionView layout:(UICollectionViewLayout*)collectionViewLayout insetForSectionAtIndex:(NSInteger)section {
@@ -272,12 +298,7 @@
 #pragma mark - UICollectionView Datasource
 
 - (NSInteger)collectionView:(UICollectionView *)view numberOfItemsInSection:(NSInteger)section {
-    if (IDIOM == IPAD){
-        return 11;
-    } else {
-        return 10;
-    }
-    
+    return 12;
 }
 
 - (NSInteger)numberOfSectionsInCollectionView: (UICollectionView *)collectionView {
@@ -301,64 +322,57 @@
         case 0:
             [cell.imageView setImage:[UIImage imageNamed:@"menuHome"]];
             [cell.guideLabel setText:@"Browse"];
-            [self pulsate:cell withDelay:.5];
             break;
         case 2:
             [cell.imageView setImage:[UIImage imageNamed:@"menuFeatured"]];
             [cell.guideLabel setText:@"Featured"];
-            [self pulsate:cell withDelay:.7];
             break;
         case 4:
             [cell.imageView setImage:[UIImage imageNamed:@"menuTrending"]];
             [cell.guideLabel setText:@"Trending"];
-            [self pulsate:cell withDelay:.9];
             break;
         case 6:
-            [cell.imageView setImage:[UIImage imageNamed:@"menuShared"]];
-            [cell.guideLabel setText:@"Shared"];
-            [self pulsate:cell withDelay:1.1];
+            [cell.imageView setImage:[UIImage imageNamed:@"menuCircles"]];
+            [cell.guideLabel setText:@"Writing Circles"];
+            
             break;
         case 8:
+            [cell.imageView setImage:[UIImage imageNamed:@"menuShared"]];
+            [cell.guideLabel setText:@"Shared"];
+            break;
+        case 10:
             [cell.imageView setImage:[UIImage imageNamed:@"menuPhotos"]];
             [cell.guideLabel setText:@"Photo Gallery"];
-            [self pulsate:cell withDelay:1.3];
             break;
             
         case 1:
             [cell.imageView setImage:[UIImage imageNamed:@"menuWrite"]];
             [cell.guideLabel setText:@"Write"];
-            [self pulsate:cell withDelay:.6];
             break;
         case 3:
             [cell.imageView setImage:[UIImage imageNamed:@"menuSlowReveal"]];
             [cell.guideLabel setText:@"Slow Reveal"];
-            [self pulsate:cell withDelay:.8];
             break;
         case 5:
             [cell.imageView setImage:[UIImage imageNamed:@"menuDrafts"]];
             [cell.guideLabel setText:@"Drafts"];
-            [self pulsate:cell withDelay:1];
             break;
         case 7:
             [cell.imageView setImage:[UIImage imageNamed:@"menuPortfolio"]];
             [cell.guideLabel setText:@"Portfolio"];
-            [self pulsate:cell withDelay:1.2];
             break;
         case 9:
             [cell.imageView setImage:[UIImage imageNamed:@"menuBookmarks"]];
             [cell.guideLabel setText:@"Bookmarks"];
-            [self pulsate:cell withDelay:1.4];
+
             break;
             
-        if (IDIOM == IPAD){
-            case 10:
-                [cell.imageView setImage:[UIImage imageNamed:@"menuCircles"]];
-                [cell.guideLabel setText:@"Writing Circles"];
-                [self pulsate:cell withDelay:1.4];
-                break;
-        }
-            
-            
+        
+        case 11:
+            [cell.imageView setImage:[UIImage imageNamed:@"menuSettings"]];
+            [cell.guideLabel setText:@"Settings"];
+        
+            break;
         default:
             break;
     }
@@ -373,39 +387,85 @@
             [self goBrowse];
             break;
         case 1:
-            [self goWrite];
+            if (signedIn){
+                [self goWrite];
+            } else {
+                [self login];
+            }
+            
             break;
         case 2:
             [self goFeatured];
             break;
         case 3:
-            [self goSlowReveal];
+            if (signedIn){
+                [self goSlowReveal];
+            } else {
+                [self login];
+            }
+            
             break;
         case 4:
             [self goTrending];
             break;
         case 5:
-            [self goToDrafts];
-            break;
-        case 6:
-            [self goShared];
-            break;
-        case 7:
-            [self goToPortfolio];
+            if (signedIn){
+                [self goToDrafts];
+            } else {
+                [self login];
+            }
+            
             break;
             
+        case 6:
+            if (signedIn){
+                [self goToCircles];
+            } else {
+                [self login];
+            }
+            break;
         case 8:
+            if (signedIn){
+                [self goShared];
+            } else {
+                [self login];
+            }
+            break;
+        case 7:
+            if (signedIn){
+                [self goToPortfolio];
+            } else {
+                [self login];
+            }
+            break;
+            
+        case 10:
             [self goGallery];
             break;
         case 9:
-            [self goToBookmarks];
+            if (signedIn){
+                [self goToBookmarks];
+            } else {
+                [self login];
+            }
+            
             break;
-        case 10:
-            [self goToCircles];
+        case 11:
+            if (signedIn){
+                [self goToSettings];
+            } else {
+                [self login];
+            }
             break;
             
         default:
             break;
+    }
+}
+
+- (void)scrollViewDidScroll:(UIScrollView *)scrollView {
+    if (scrollView.contentOffset.y > 100){
+        [self removeDownButton];
     }
 }
 
@@ -437,7 +497,7 @@
 
 - (UITableViewCell *)tableView:(UITableView *)tableView cellForRowAtIndexPath:(NSIndexPath *)indexPath
 {
-    if (searching && tableView == self.searchResultsTableView){
+    //if (searching && tableView == self.searchResultsTableView){
         if (_filteredResults.count){
             XXSearchCell *cell = (XXSearchCell *)[tableView dequeueReusableCellWithIdentifier:@"SearchCell"];
             if (cell == nil) {
@@ -463,7 +523,7 @@
             [cell.authorLabel setFont:[UIFont fontWithName:kSourceSansProItalic size:15]];
             return cell;
         }
-    } else {
+    /*} else {
         XXSlotCell *cell = (XXSlotCell *)[tableView dequeueReusableCellWithIdentifier:@"GuideCell"];
         if (cell == nil) {
             if (IDIOM == IPAD){
@@ -539,23 +599,27 @@
                 break;
         }
         return cell;
-    }
+    }*/
 }
 
-- (void)pulsate:(XXGuideCollectionCell*)cell withDelay:(CGFloat)delay{
-    /*[UIView animateWithDuration:.5 delay:delay options:UIViewAnimationOptionCurveEaseIn animations:^{
-        //[cell setBackgroundColor:[UIColor colorWithWhite:1 alpha:.05]];
-        cell.guideLabel.transform = CGAffineTransformMakeScale(1.05, 1.05);
-        cell.imageView.transform = CGAffineTransformMakeScale(1.05, 1.05);
+- (void)pulsate:(id)obj withDelay:(CGFloat)delay{
+    [UIView animateWithDuration:.5 delay:delay options:UIViewAnimationOptionCurveEaseIn animations:^{
+        [obj setAlpha:1.0];
     } completion:^(BOOL finished) {
         [UIView animateWithDuration:1 delay:.23 options:UIViewAnimationOptionCurveEaseOut animations:^{
-            //[cell setBackgroundColor:[UIColor clearColor]];
-            cell.guideLabel.transform = CGAffineTransformIdentity;
-            cell.imageView.transform = CGAffineTransformIdentity;
+            [obj setAlpha:0.0];
         } completion:^(BOOL finished) {
-            [self pulsate:cell withDelay:2];
+            [UIView animateWithDuration:.5 delay:delay options:UIViewAnimationOptionCurveEaseIn animations:^{
+                [obj setAlpha:1.0];
+            } completion:^(BOOL finished) {
+                [UIView animateWithDuration:1 delay:.23 options:UIViewAnimationOptionCurveEaseOut animations:^{
+                    [obj setAlpha:0.0];
+                } completion:^(BOOL finished) {
+                    [[NSUserDefaults standardUserDefaults] setBool:YES forKey:kHasSeenGuideView];
+                }];
+            }];
         }];
-    }];*/
+    }];
 }
 
 - (void)tableView:(UITableView *)tableView willDisplayCell:(UITableViewCell *)cell forRowAtIndexPath:(NSIndexPath *)indexPath {
@@ -585,7 +649,7 @@
 - (void)goBrowse {
     [self setStoriesAsPane];
     stories.ether = YES;
-    [self dismissViewControllerAnimated:YES completion:^{
+    [self.presentingViewController dismissViewControllerAnimated:YES completion:^{
         
     }];
 }
@@ -627,6 +691,7 @@
     stories = [[self storyboard] instantiateViewControllerWithIdentifier:@"Stories"];
     UINavigationController *nav = [[UINavigationController alloc] initWithRootViewController:stories];
     [[(XXAppDelegate*)[UIApplication sharedApplication].delegate dynamicsDrawerViewController] setPaneViewController:nav];
+    [[UIApplication sharedApplication] setStatusBarHidden:YES withAnimation:UIStatusBarAnimationFade];
 }
 
 - (void)goWrite {
@@ -710,6 +775,29 @@
     }];
 }
 
+- (void)goToSettings {
+    [[UIApplication sharedApplication] setStatusBarHidden:YES withAnimation:UIStatusBarAnimationFade];
+    XXSettingsViewController *settings = [[self storyboard] instantiateViewControllerWithIdentifier:@"Settings"];
+    UINavigationController *nav = [[UINavigationController alloc] initWithRootViewController:settings];
+    [[(XXAppDelegate*)[UIApplication sharedApplication].delegate dynamicsDrawerViewController] setPaneViewController:nav];
+    [self dismissViewControllerAnimated:YES completion:^{
+        
+    }];
+}
+
+- (void)viewWillDisappear:(BOOL)animated {
+    [super viewWillDisappear:animated];
+    [[UIApplication sharedApplication] setStatusBarHidden:YES withAnimation:UIStatusBarAnimationFade];
+}
+
+- (void)viewDidDisappear:(BOOL)animated {
+    [super viewDidDisappear:animated];
+    self.transitioningDelegate = nil;
+    _filteredResults = nil;
+    _searchResults = nil;
+    [downButton removeFromSuperview];
+}
+
 -(void)saveContext {
     [[NSManagedObjectContext MR_defaultContext] MR_saveToPersistentStoreWithCompletion:^(BOOL success, NSError *error) {
         NSLog(@"%u success saving stories.",success);
@@ -717,8 +805,7 @@
 }
 
 - (void)dismiss {
-    [self.panTarget setPresenting:NO];
-    [self.presentingViewController dismissViewControllerAnimated:YES completion:nil];
+    [self dismissViewControllerAnimated:YES completion:nil];
 }
 
 @end

@@ -310,17 +310,15 @@
     [swipeFromLeft setContentMode:UIViewContentModeCenter];
     
     
-    CGFloat yoffset,xoffset;
+    CGFloat yoffset;
     if (IDIOM == IPAD) {
         yoffset = height/3;
-        xoffset = 1.625*width;
     } else {
         if ([UIScreen mainScreen].bounds.size.height == 568){
             yoffset = 220;
         } else {
             yoffset = 190;
         }
-        xoffset = 1.5*width+10;
     }
     swipeFromRight = [[UIImageView alloc] initWithFrame:CGRectMake(width/4, yoffset, width/2, height/4)];
     [swipeFromRight setImage:[UIImage imageNamed:@"leftWhiteArrow"]];

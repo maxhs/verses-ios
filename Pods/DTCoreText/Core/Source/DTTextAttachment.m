@@ -46,10 +46,10 @@ static NSMutableDictionary *_classForTagNameLookup = nil;
 	_classForTagNameLookup = [[NSMutableDictionary alloc] init];
 	
 	// register standard tags
-	[DTTextAttachment registerClass:[DTImageTextAttachment class] forTagName:@"img"];
-	[DTTextAttachment registerClass:[DTVideoTextAttachment class] forTagName:@"video"];
-	[DTTextAttachment registerClass:[DTIframeTextAttachment class] forTagName:@"iframe"];
-	[DTTextAttachment registerClass:[DTObjectTextAttachment class] forTagName:@"object"];
+	//[DTTextAttachment registerClass:[DTImageTextAttachment class] forTagName:@"img"];
+	//[DTTextAttachment registerClass:[DTVideoTextAttachment class] forTagName:@"video"];
+	//[DTTextAttachment registerClass:[DTIframeTextAttachment class] forTagName:@"iframe"];
+	//[DTTextAttachment registerClass:[DTObjectTextAttachment class] forTagName:@"object"];
 }
 
 + (DTTextAttachment *)textAttachmentWithElement:(DTHTMLElement *)element options:(NSDictionary *)options

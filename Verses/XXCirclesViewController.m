@@ -15,18 +15,20 @@
 #import "XXNothingCell.h"
 #import "XXManageCircleViewController.h"
 #import "XXCollaboratorsTransition.h"
+#import "XXGuideInteractor.h"
+#import "XXGuideViewController.h"
 
 @interface XXCirclesViewController () <UIViewControllerTransitioningDelegate>{
     AFHTTPRequestOperationManager *manager;
     XXAppDelegate *delegate;
     UIColor *textColor;
-    UIBarButtonItem *backButton;
+    UIBarButtonItem *guideButton;
     UIBarButtonItem *contactsButton;
     UIImageView *navBarShadowView;
     NSDateFormatter *_formatter;
     BOOL loading;
+    BOOL showGuide;
     User *currentUser;
-    NSArray *_circles;
 }
 
 @end
@@ -45,34 +47,48 @@
     [_formatter setDateStyle:NSDateFormatterMediumStyle];
     [_formatter setTimeStyle:NSDateFormatterShortStyle];
     manager = [delegate manager];
+    
     if (delegate.currentUser){
         currentUser = [delegate currentUser];
     } else {
         currentUser = [User MR_findFirstByAttribute:@"identifier" withValue:[[NSUserDefaults standardUserDefaults] objectForKey:kUserDefaultsId]];
     }
-    _circles = currentUser.circles.array;
-    loading = YES;
     [self.tableView reloadData];
+    loading = YES;
+    [self loadCircles];
+    
     navBarShadowView = [Utilities findNavShadow:self.navigationController.navigationBar];
     [self.tableView setBackgroundColor:[UIColor clearColor]];
+    [delegate.dynamicsDrawerViewController setPaneDragRevealEnabled:NO forDirection:MSDynamicsDrawerDirectionRight];
+    guideButton = [[UIBarButtonItem alloc] initWithImage:[UIImage imageNamed:@"more"] style:UIBarButtonItemStylePlain target:self action:@selector(showGuide)];
+    contactsButton = [[UIBarButtonItem alloc] initWithImage:[UIImage imageNamed:@"contact"] style:UIBarButtonItemStylePlain target:self action:@selector(viewContacts)];
+    
+    UIBarButtonItem *negativeRightButton = [[UIBarButtonItem alloc]
+                                            initWithBarButtonSystemItem:UIBarButtonSystemItemFixedSpace
+                                            target:nil action:nil];
+    negativeRightButton.width = -14.f;
+   
+    self.navigationItem.leftBarButtonItem = contactsButton;
+    self.navigationItem.rightBarButtonItems = @[negativeRightButton,guideButton];
+    
+    
+    [[NSNotificationCenter defaultCenter] addObserver:self selector:@selector(createCircle:) name:@"CreateCircle" object:nil];
+    [[NSNotificationCenter defaultCenter] addObserver:self selector:@selector(deleteCircle:) name:@"DeleteCircle" object:nil];
 }
 
 - (void)viewWillAppear:(BOOL)animated {
     [super viewWillAppear:animated];
     [[UIApplication sharedApplication] setStatusBarHidden:NO withAnimation:UIStatusBarAnimationFade];
-    [self loadCircles];
+    [self.navigationController setNavigationBarHidden:NO animated:NO];
     if ([[NSUserDefaults standardUserDefaults] boolForKey:kDarkBackground]){
         [self.view setBackgroundColor:[UIColor clearColor]];
         textColor = [UIColor whiteColor];
-        backButton = [[UIBarButtonItem alloc] initWithImage:[UIImage imageNamed:@"whiteBack"] style:UIBarButtonItemStylePlain target:self action:@selector(back)];
+        
     } else {
         [self.view setBackgroundColor:[UIColor whiteColor]];
         textColor = [UIColor blackColor];
-        backButton = [[UIBarButtonItem alloc] initWithImage:[UIImage imageNamed:@"back"] style:UIBarButtonItemStylePlain target:self action:@selector(back)];
     }
-    contactsButton = [[UIBarButtonItem alloc] initWithImage:[UIImage imageNamed:@"contact"] style:UIBarButtonItemStylePlain target:self action:@selector(viewContacts)];
-    self.navigationItem.rightBarButtonItem = contactsButton;
-    self.navigationItem.leftBarButtonItem = backButton;
+   
     navBarShadowView.hidden = YES;
     
     //reset views after custom modal transition
@@ -89,12 +105,7 @@
         } completion:^(BOOL finished) {
         }];
     }
-    [self.navigationController setNavigationBarHidden:NO animated:NO];
-}
-
-- (void)viewDidAppear:(BOOL)animated {
-    [delegate.dynamicsDrawerViewController setPaneDragRevealEnabled:NO forDirection:MSDynamicsDrawerDirectionRight];
-    [super viewDidAppear:animated];
+    
 }
 
 - (void)back {
@@ -110,23 +121,42 @@
     UINavigationController *nav = [[UINavigationController alloc] initWithRootViewController:vc];
     nav.modalPresentationStyle = UIModalPresentationCustom;
     nav.transitioningDelegate = self;
+    showGuide = NO;
     [self presentViewController:nav animated:YES completion:^{
         
     }];
 }
 
+- (void)showGuide {
+    XXGuideViewController *vc = [[self storyboard] instantiateViewControllerWithIdentifier:@"Guide"];
+    vc.transitioningDelegate = self;
+    vc.modalPresentationStyle = UIModalPresentationCustom;
+    showGuide = YES;
+    [self presentViewController:vc animated:YES completion:nil];
+}
+
 - (id<UIViewControllerAnimatedTransitioning>)animationControllerForPresentedController:(UIViewController *)presented
                                                                   presentingController:(UIViewController *)presenting
                                                                       sourceController:(UIViewController *)source {
-    XXCollaboratorsTransition *animator = [XXCollaboratorsTransition new];
-    animator.presenting = YES;
-    return animator;
+    if (showGuide){
+        XXGuideInteractor *animator = [XXGuideInteractor new];
+        animator.presenting = YES;
+        return animator;
+    } else {
+        XXCollaboratorsTransition *animator = [XXCollaboratorsTransition new];
+        animator.presenting = YES;
+        return animator;
+    }
 }
 
 - (id<UIViewControllerAnimatedTransitioning>)animationControllerForDismissedController:(UIViewController *)dismissed {
-    
-    XXCollaboratorsTransition *animator = [XXCollaboratorsTransition new];
-    return animator;
+    if (showGuide){
+        XXGuideInteractor *animator = [XXGuideInteractor new];
+        return animator;
+    } else {
+        XXCollaboratorsTransition *animator = [XXCollaboratorsTransition new];
+        return animator;
+    }
 }
 
 - (void)loadCircles {
@@ -136,10 +166,14 @@
         NSMutableOrderedSet *circleSet = [NSMutableOrderedSet orderedSet];
         for (NSDictionary *circleDict in [responseObject objectForKey:@"circles"]){
             Circle *circle = [Circle MR_findFirstByAttribute:@"identifier" withValue:[circleDict objectForKey:@"id"]];
-            if (!circle){
+            if (circle){
+                //circle already exists. only perform the pertinent updates
+                [circle update:circleDict];
+            } else {
+                //create a new circle
                 circle = [Circle MR_createInContext:[NSManagedObjectContext MR_defaultContext]];
+                [circle populateFromDict:circleDict];
             }
-            [circle populateFromDict:circleDict];
             [circleSet addObject:circle];
         }
         for (Circle *circle in currentUser.circles){
@@ -149,17 +183,15 @@
             }
         }
         currentUser.circles = circleSet;
-        _circles = circleSet.array;
         loading = NO;
-        [[NSManagedObjectContext MR_defaultContext] MR_saveToPersistentStoreWithCompletion:^(BOOL success, NSError *error) {
-            if (self.isViewLoaded && self.view.window && self.tableView.numberOfSections){
-                [self.tableView beginUpdates];
-                [self.tableView reloadSections:[NSIndexSet indexSetWithIndex:0] withRowAnimation:UITableViewRowAnimationFade];
-                [self.tableView endUpdates];
-            } else {
-                [self.tableView reloadData];
-            }
-        }];
+        if (self.tableView.numberOfSections){
+            [self.tableView beginUpdates];
+            [self.tableView reloadSections:[NSIndexSet indexSetWithIndex:0] withRowAnimation:UITableViewRowAnimationFade];
+            [self.tableView reloadSections:[NSIndexSet indexSetWithIndex:1] withRowAnimation:UITableViewRowAnimationFade];
+            [self.tableView endUpdates];
+        } else {
+            [self.tableView reloadData];
+        }
         
     } failure:^(AFHTTPRequestOperation *operation, NSError *error) {
         NSLog(@"Failure getting circles: %@",error.description);
@@ -178,26 +210,29 @@
 
 - (NSInteger)numberOfSectionsInTableView:(UITableView *)tableView
 {
+    if (currentUser.circles.count == 0 && !loading) self.tableView.rowHeight = screenHeight() - 84;
+    else self.tableView.rowHeight = 70;
+    
     if (loading) return 0;
     else return 2;
 }
 
 - (NSInteger)tableView:(UITableView *)tableView numberOfRowsInSection:(NSInteger)section
 {
-    if (_circles.count == 0 && !loading) return 1;
-    else if (section == 0) return _circles.count;
+    if (currentUser.circles.count == 0 && !loading) return 1;
+    else if (section == 0) return currentUser.circles.count;
     else if (section == 1) return 1;
     else return 0;
 }
 
 - (UITableViewCell *)tableView:(UITableView *)tableView cellForRowAtIndexPath:(NSIndexPath *)indexPath
 {
-    if (_circles.count == 0){
+    if (currentUser.circles.count == 0 && indexPath.section == 0){
         XXNothingCell *cell = (XXNothingCell *)[tableView dequeueReusableCellWithIdentifier:@"NothingCell"];
         if (cell == nil) {
             cell = [[[NSBundle mainBundle] loadNibNamed:@"XXNothingCell" owner:nil options:nil] lastObject];
         }
-        [cell.promptButton setTitle:@"Tap to add your first writing circle." forState:UIControlStateNormal];
+        [cell.promptButton setTitle:@"Tap to add a writing circle." forState:UIControlStateNormal];
         [cell.promptButton addTarget:self action:@selector(newCircle) forControlEvents:UIControlEventTouchUpInside];
         [cell.promptButton setBackgroundColor:[UIColor colorWithWhite:.7 alpha:1]];
         [cell.promptButton.titleLabel setNumberOfLines:0];
@@ -213,7 +248,7 @@
         if (cell == nil) {
             cell = [[[NSBundle mainBundle] loadNibNamed:@"XXCircleCell" owner:nil options:nil] lastObject];
         }
-        Circle *circle = [_circles objectAtIndex:indexPath.row];
+        Circle *circle = [currentUser.circles objectAtIndex:indexPath.row];
         [cell configureCell:circle withTextColor:textColor];
         [cell.textLabel setText:@""];
         return cell;
@@ -249,11 +284,6 @@
     }];
 }
 
--(CGFloat)tableView:(UITableView *)tableView heightForRowAtIndexPath:(NSIndexPath *)indexPath {
-    if (_circles.count == 0 && !loading) return screenHeight() - 84;
-    else return 70;
-}
-
 -(void)tableView:(UITableView *)tableView willDisplayCell:(UITableViewCell *)cell forRowAtIndexPath:(NSIndexPath *)indexPath
 {
     if([indexPath row] == ((NSIndexPath*)[[tableView indexPathsForVisibleRows] lastObject]).row && tableView == self.tableView){
@@ -264,7 +294,7 @@
     if ([[NSUserDefaults standardUserDefaults] boolForKey:kDarkBackground]){
         [selectionView setBackgroundColor:kTableViewCellSelectionColorDark];
     } else {
-        [selectionView setBackgroundColor:[UIColor colorWithWhite:.9 alpha:.23]];
+        [selectionView setBackgroundColor:kTableViewCellSelectionColor];
     }
     
     cell.selectedBackgroundView = selectionView;
@@ -272,15 +302,15 @@
 }
 
 - (void)tableView:(UITableView *)tableView didSelectRowAtIndexPath:(NSIndexPath *)indexPath {
-    if (_circles.count){
+    if (currentUser.circles.count){
         if (indexPath.section == 0){
-            Circle *circle = [_circles objectAtIndex:indexPath.row];
+            Circle *circle = [currentUser.circles objectAtIndex:indexPath.row];
             circle.unreadCommentCount = 0;
             circle.fresh = NO;
             
-            /*[self.tableView beginUpdates];
-            [self.tableView reloadSections:[NSIndexSet indexSetWithIndex:0] withRowAnimation:UITableViewRowAnimationFade];
-            [self.tableView endUpdates];*/
+            [self.tableView beginUpdates];
+            [self.tableView reloadRowsAtIndexPaths:@[indexPath] withRowAnimation:UITableViewRowAnimationFade];
+            [self.tableView endUpdates];
             
             [self performSegueWithIdentifier:@"CircleDetail" sender:circle];
         } else {
@@ -304,6 +334,35 @@
                 self.tableView.transform = CGAffineTransformMakeScale(.77, .77);
             }];
         }
+    }
+}
+
+- (void)createCircle:(NSNotification*)notification{
+    Circle *circle = [notification.userInfo objectForKey:@"circle"];
+    [currentUser addCircle:circle];
+    NSIndexPath *indexPath = [NSIndexPath indexPathForRow:[currentUser.circles indexOfObject:circle] inSection:0];
+    
+    if (currentUser.circles.count > 1){
+        [self.tableView beginUpdates];
+        [self.tableView insertRowsAtIndexPaths:@[indexPath] withRowAnimation:UITableViewRowAnimationFade];
+        [self.tableView endUpdates];
+    } else {
+        [self.tableView reloadData];
+    }
+}
+
+- (void)deleteCircle:(NSNotification*)notification{
+    Circle *circle = [notification.userInfo objectForKey:@"circle"];
+    NSIndexPath *indexPath = [NSIndexPath indexPathForRow:[currentUser.circles indexOfObject:circle] inSection:0];
+    [currentUser removeCircle:circle];
+    [circle MR_deleteInContext:[NSManagedObjectContext MR_defaultContext]];
+
+    if (currentUser.circles.count){
+        [self.tableView beginUpdates];
+        [self.tableView deleteRowsAtIndexPaths:@[indexPath] withRowAnimation:UITableViewRowAnimationFade];
+        [self.tableView endUpdates];
+    } else {
+        [self.tableView reloadData];
     }
 }
 

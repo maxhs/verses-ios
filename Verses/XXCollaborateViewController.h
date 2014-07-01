@@ -8,11 +8,11 @@
 
 #import <UIKit/UIKit.h>
 #import "User.h"
+#import "Story+helper.h"
 
 @interface XXCollaborateViewController : UIViewController <UITableViewDataSource, UITableViewDelegate, UIAlertViewDelegate>
 @property (weak, nonatomic) IBOutlet UITableView *tableView;
-@property (strong, nonatomic) NSMutableArray *collaborators;
-@property (strong, nonatomic) NSMutableArray *circleCollaborators;
+@property (strong, nonatomic) Story *story;
 @property BOOL manageContacts;
 -(void)addContact;
 

@@ -70,18 +70,8 @@
 	<key>UIAppFonts</key>
 	<array>
 		<string>CrimsonText-Italic.ttf</string>
-		<string>boston_traffic.ttf</string>
-		<string>Gotham-Book.ttf</string>
-		<string>Gotham-Light.ttf</string>
-		<string>Gotham-Thin.ttf</string>
-		<string>Gotham-Ultra.ttf</string>
-		<string>Gotham-XLight.ttf</string>
-		<string>GothamRnd-Book.otf</string>
-		<string>Existence-Light.otf</string>
 		<string>CrimsonText-Semibold.ttf</string>
 		<string>CrimsonText-Roman.ttf</string>
-		<string>Gotham-Bold.ttf</string>
-		<string>Gotham-Medium.ttf</string>
 		<string>SourceSansPro-Light.ttf</string>
 		<string>SourceSansPro-Regular.ttf</string>
 		<string>SourceSansPro-Semibold.ttf</string>

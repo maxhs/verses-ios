@@ -17,11 +17,10 @@
     if ([dictionary objectForKey:@"story"] && [dictionary objectForKey:@"story"] != [NSNull null]) {
         NSDictionary *dict = [dictionary objectForKey:@"story"];
         Story *story = [Story MR_findFirstByAttribute:@"identifier" withValue:[dict objectForKey:@"id"]];
-        if (!story){
-            story = [Story MR_createInContext:[NSManagedObjectContext MR_defaultContext]];
+        if (story){
+            self.story = story;
         }
-        [story populateFromDict:dict];
-        self.story = story;
+        
     } else if ([dictionary objectForKey:@"contribution_story"] && [dictionary objectForKey:@"contribution_story"] != [NSNull null]) {
         NSDictionary *dict = [dictionary objectForKey:@"contribution_story"];
         Story *story = [Story MR_findFirstByAttribute:@"identifier" withValue:[dict objectForKey:@"id"]];

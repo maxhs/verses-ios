@@ -162,9 +162,10 @@
         }
         if (_story) {
             [parameters setObject:_story.identifier forKey:@"story_id"];
+            [[NSNotificationCenter defaultCenter] postNotificationName:@"StoryFlagged" object:nil userInfo:@{@"story":_story}];
         }
         [XXAlert show:[NSString stringWithFormat:@"Thanks for flagging \"%@\"",_story.title] withTime:2.7f];
-        [[NSNotificationCenter defaultCenter] postNotificationName:@"StoryFlagged" object:nil userInfo:@{@"story":_story}];
+        
         [[(XXAppDelegate*)[UIApplication sharedApplication].delegate manager] POST:[NSString stringWithFormat:@"%@/users/flag_content",kAPIBaseUrl] parameters:@{@"flag":parameters} success:^(AFHTTPRequestOperation *operation, id responseObject) {
             //NSLog(@"success creating flag: %@",responseObject);
             if ([[responseObject objectForKey:@"success"] isEqualToNumber:[NSNumber numberWithBool:YES]]){

@@ -10,6 +10,8 @@
 
 @interface User (helper)
 - (void)populateFromDict:(NSDictionary*)dict;
+- (void)update:(NSDictionary*)dict;
+
 - (void)addNotification:(Notification*)notification;
 - (void)removeNotification:(Notification*)notification;
 - (void)addBookmark:(Bookmark*)bookmark;

@@ -54,13 +54,13 @@
     } else {
         storyCount = [NSString stringWithFormat:@"%i Stories",_circle.stories.count];
     }
-    _circleControl = [[XXSegmentedControl alloc] initWithItems:@[@"Back",@"Chat",@"Details",storyCount]];
+    _circleControl = [[XXSegmentedControl alloc] initWithItems:@[@"Back",storyCount,@"Details",@"Chat"]];
     _circleControl.delegate = self;
     _circleControl.selectedSegmentIndex = 1;
     _circleControl.showsCount = NO;
     _circleControl.showsNavigationArrow = YES;
     
-    [_circleControl addTarget:self action:@selector(selectedSegment:) forControlEvents:UIControlEventValueChanged];
+    [_circleControl addTarget:self action:@selector(selectSegment:) forControlEvents:UIControlEventValueChanged];
     [self.view addSubview:_circleControl];
     [_circleControl setFrame:CGRectMake(0, 20, 320, 48)];
     
@@ -86,16 +86,21 @@
         [self.view addSubview:self.collectionView];
         [self.view addSubview:_chatInput];
     }
+    [self.view bringSubviewToFront:self.storiesTableView];
     [self scrollToBottom];
     
-    //show chat by default
+    //show stories by default
     [self reset];
-    chat = YES;
-    [self hideTableView];
+    stories = YES;
+    [self showTableView];
     
     self.detailsTableView.rowHeight = 60;
     self.storiesTableView.rowHeight = 80;
+    [[NSNotificationCenter defaultCenter] addObserver:self selector:@selector(deleteCircle) name:@"DeleteCircle" object:nil];
+}
 
+- (void)deleteCircle {
+    [self.navigationController popViewControllerAnimated:YES];
 }
 
 - (void)editCircle{
@@ -128,7 +133,14 @@
                 storyCount = [NSString stringWithFormat:@"%i Stories",_stories.count];
             }
             
-            [_circleControl setTitle:storyCount withImage:nil forSegmentAtIndex:3];
+            [_circleControl setTitle:storyCount withImage:nil forSegmentAtIndex:1];
+            
+            if (stories && _stories.count){
+                [self.storiesTableView beginUpdates];
+                [self.storiesTableView reloadSections:[NSIndexSet indexSetWithIndex:0] withRowAnimation:UITableViewRowAnimationFade];
+                [self.storiesTableView endUpdates];
+            }
+            
         }];
         
         [self loadCircleNotifications];
@@ -247,7 +259,7 @@
                                                object:nil];
 }
 
-- (void)selectedSegment:(XXSegmentedControl*)control {
+- (void)selectSegment:(XXSegmentedControl*)control {
     switch (control.selectedSegmentIndex) {
         case 0:
             if (self.needsNavigation){
@@ -266,8 +278,9 @@
             break;
         case 1:
             [self reset];
-            chat = YES;
-            [self hideTableView];
+            stories = YES;
+            [self showTableView];
+            [self.storiesTableView reloadData];
             break;
         case 2:
             [self reset];
@@ -277,9 +290,9 @@
             break;
         case 3:
             [self reset];
-            stories = YES;
-            [self showTableView];
-            [self.storiesTableView reloadData];
+            chat = YES;
+            [self hideTableView];
+            
             break;
         default:
             break;
@@ -432,7 +445,12 @@
 
 - (void)tableView:(UITableView *)tableView willDisplayCell:(UITableViewCell *)cell forRowAtIndexPath:(NSIndexPath *)indexPath {
     UIView *selectionView = [[UIView alloc] initWithFrame:cell.frame];
-    [selectionView setBackgroundColor:[UIColor colorWithWhite:.9 alpha:.23]];
+    if ([[NSUserDefaults standardUserDefaults] boolForKey:kDarkBackground]){
+        [selectionView setBackgroundColor:kTableViewCellSelectionColorDark];
+    } else {
+        [selectionView setBackgroundColor:kTableViewCellSelectionColor];
+    }
+    
     cell.selectedBackgroundView = selectionView;
     cell.backgroundColor = [UIColor clearColor];
 }
