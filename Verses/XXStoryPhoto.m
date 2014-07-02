@@ -107,7 +107,9 @@
                 }
                 if ([[(NSURL*)[delegate backgroundURL] absoluteString] isEqualToString:[[NSURL URLWithString:photo.largeUrl] absoluteString]] || delegate.loadingBackground){
                     NSLog(@"Background image already set");
-                } else {
+                }/* else if (delegate.currentUser.backgroundImageView) {
+                    NSLog(@"User already has a background image");
+                }*/ else {
                     delegate.loadingBackground = YES;
                     [self appBackground:photo forImage:image];
                 }

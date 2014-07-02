@@ -166,18 +166,16 @@
     return _defaultBackground;
 }
 
-- (void)setupWindowBackground
-{
+- (void)setupWindowBackground {
     if (!_windowBackground) {
-        NSLog(@"establishing window background");
-        if ([(UIImageView*)_currentUser.backgroundImageView image]) {
+        if (_currentUser.backgroundImageView) {
             _windowBackground = [[UIImageView alloc] initWithFrame:[UIScreen mainScreen].bounds];
             [_windowBackground setImage:[(UIImageView*)_currentUser.backgroundImageView image]];
         } else {
             if (UI_USER_INTERFACE_IDIOM() == UIUserInterfaceIdiomPad){
                 _windowBackground = [[UIImageView alloc] initWithImage:[UIImage imageNamed:@"background_ipad"]];
             } else {
-                _windowBackground = [[UIImageView alloc] initWithImage:[UIImage imageNamed:@"blueFlipped"]];
+                _windowBackground = [[UIImageView alloc] initWithImage:[UIImage imageNamed:@"background"]];
             }
         }
         [_windowBackground setAlpha:1];
@@ -216,7 +214,7 @@
     [[UIBarButtonItem appearance] setTitleTextAttributes:@{
                                                            NSFontAttributeName : [UIFont fontWithName:kSourceSansProRegular size:17],
                                                            NSShadowAttributeName : clearShadow,
-                                                           NSForegroundColorAttributeName : kElectricBlue,
+                                                           NSForegroundColorAttributeName : [UIColor blackColor],
                                                            } forState:UIControlStateNormal];
     
     [[UIBarButtonItem appearance] setTitlePositionAdjustment:UIOffsetMake(0, 0) forBarMetrics:UIBarMetricsDefault];
@@ -240,6 +238,11 @@
                                                                NSFontAttributeName: [UIFont fontWithName:kSourceSansProSemibold size:21],
                                                                NSShadowAttributeName: clearShadow,
                                                                }];
+        [[UIBarButtonItem appearance] setTitleTextAttributes:@{
+                                                               NSFontAttributeName : [UIFont fontWithName:kSourceSansProRegular size:17],
+                                                               NSShadowAttributeName : clearShadow,
+                                                               NSForegroundColorAttributeName : [UIColor whiteColor],
+                                                               } forState:UIControlStateNormal];
         [UIView animateWithDuration:.23 animations:^{
             [_windowBackground setAlpha:.14];
             [[UIBarButtonItem appearance] setTintColor:[UIColor whiteColor]];
@@ -253,6 +256,11 @@
                                                                NSFontAttributeName: [UIFont fontWithName:kSourceSansProSemibold size:21],
                                                                NSShadowAttributeName: clearShadow,
                                                                }];
+        [[UIBarButtonItem appearance] setTitleTextAttributes:@{
+                                                               NSFontAttributeName : [UIFont fontWithName:kSourceSansProRegular size:17],
+                                                               NSShadowAttributeName : clearShadow,
+                                                               NSForegroundColorAttributeName : [UIColor blackColor],
+                                                               } forState:UIControlStateNormal];
         [UIView animateWithDuration:.23 animations:^{
             [_windowBackground setAlpha:1];
             [[UIBarButtonItem appearance] setTintColor:[UIColor blackColor]];

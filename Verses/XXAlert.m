@@ -36,6 +36,11 @@
 	[[self shared] make:status spin:YES hide:NO withTime:time];
 }
 
++ (void)show:(NSString *)status withTime:(CGFloat)time andOffset:(CGPoint)centerOffset
+{
+	[[self shared] make:status spin:YES hide:NO withTime:time];
+}
+
 + (void)showSuccess:(NSString *)status
 {
 	//[[self shared] make:status imgage:HUD_IMAGE_SUCCESS spin:NO hide:YES];
@@ -64,14 +69,8 @@
     [self create];
 	label.text = status;
 	label.hidden = (status == nil) ? YES : NO;
-	//background.image = img;
-	//background.hidden = (img == nil) ? YES : NO;
-    
 	[self orient];
-	//[self determineSize];
 	[self showAlert];
-    
-    //if (hide) [NSThread detachNewThreadSelector:@selector(timedHide) toTarget:self withObject:nil];
 }
 
 - (void)create

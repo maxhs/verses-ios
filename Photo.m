@@ -16,6 +16,7 @@
 
 @dynamic createdDate;
 @dynamic identifier;
+@dynamic visible;
 @dynamic image;
 @dynamic largeUrl;
 @dynamic mediumUrl;

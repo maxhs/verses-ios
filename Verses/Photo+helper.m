@@ -39,6 +39,9 @@
             self.contribution = contribution;
         }
     }
+    if ([dictionary objectForKey:@"visible"] && [dictionary objectForKey:@"visible"] != [NSNull null]) {
+        self.visible = [dictionary objectForKey:@"visible"];
+    }
 }
 
 - (void)update:(NSDictionary*)dictionary {
@@ -57,6 +60,9 @@
     if ([dictionary objectForKey:@"updated_date"] && [dictionary objectForKey:@"updated_date"] != [NSNull null]) {
         NSTimeInterval _interval = [[dictionary objectForKey:@"updated_date"] doubleValue];
         self.updatedDate = [NSDate dateWithTimeIntervalSince1970:_interval];
+    }
+    if ([dictionary objectForKey:@"visible"] && [dictionary objectForKey:@"visible"] != [NSNull null]) {
+        self.visible = [dictionary objectForKey:@"visible"];
     }
 }
 @end

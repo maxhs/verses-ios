@@ -9,7 +9,7 @@
 #import "XXGalleryViewController.h"
 #import "Photo+helper.h"
 #import "XXPhotoCollectionCell.h"
-#import "XXGuideInteractor.h"
+#import "XXGuideAnimator.h"
 #import "XXGuideViewController.h"
 
 @interface XXGalleryViewController () <UIViewControllerTransitioningDelegate> {
@@ -52,7 +52,10 @@
     }
     [self.navigationController setNavigationBarHidden:YES];
     manager = [(XXAppDelegate*)[UIApplication sharedApplication].delegate manager];
-    photos = [Photo MR_findAllSortedBy:@"createdDate" ascending:NO];
+    
+    NSPredicate *predicate = [NSPredicate predicateWithFormat:@"visible == 1"];
+    photos = [Photo MR_findAllSortedBy:@"createdDate" ascending:NO withPredicate:predicate];
+    
     menuButton = [UIButton buttonWithType:UIButtonTypeCustom];
     [menuButton setImage:[UIImage imageNamed:@"moreWhite"] forState:UIControlStateNormal];
     [menuButton addTarget:self action:@selector(back) forControlEvents:UIControlEventTouchUpInside];
@@ -93,10 +96,13 @@
         for (NSDictionary *dict in [responseObject objectForKey:@"photos"]){
             if ([dict objectForKey:@"id"] && [dict objectForKey:@"id"] != [NSNull null]){
                 Photo *photo = [Photo MR_findFirstByAttribute:@"identifier" withValue:[dict objectForKey:@"id"]];
-                if (!photo){
+                if (photo){
+                    [photo update:dict];
+                } else {
                     photo = [Photo MR_createInContext:[NSManagedObjectContext MR_defaultContext]];
+                    [photo populateFromDict:dict];
                 }
-                [photo populateFromDict:dict];
+                
                 if (!photo.contribution){
                     NSLog(@"Photo removed becuase it did not have a contribution relationship.");
                     [photo MR_deleteInContext:[NSManagedObjectContext MR_defaultContext]];
@@ -104,9 +110,11 @@
             }
         }
         [[NSManagedObjectContext MR_defaultContext] MR_saveToPersistentStoreWithCompletion:^(BOOL success, NSError *error) {
-            photos = [Photo MR_findAllSortedBy:@"createdDate" ascending:NO];
+            NSPredicate *predicate = [NSPredicate predicateWithFormat:@"visible == 1"];
+            photos = [Photo MR_findAllSortedBy:@"createdDate" ascending:NO withPredicate:predicate].mutableCopy;
             [self.collectionView reloadData];
         }];
+        
     } failure:^(AFHTTPRequestOperation *operation, NSError *error) {
         NSLog(@"Error fetching gallery: %@",error.description);
     }];
@@ -121,7 +129,7 @@
 #pragma mark - UICollectionView Datasource
 
 - (NSInteger)collectionView:(UICollectionView *)view numberOfItemsInSection:(NSInteger)section {
-    return [Photo MR_findAll].count;
+    return photos.count;
 }
 
 - (NSInteger)numberOfSectionsInCollectionView: (UICollectionView *)collectionView {
@@ -256,13 +264,13 @@
                                                                   presentingController:(UIViewController *)presenting
                                                                       sourceController:(UIViewController *)source {
     
-    XXGuideInteractor *animator = [XXGuideInteractor new];
+    XXGuideAnimator *animator = [XXGuideAnimator new];
     animator.presenting = YES;
     return animator;
 }
 
 - (id<UIViewControllerAnimatedTransitioning>)animationControllerForDismissedController:(UIViewController *)dismissed {
-    XXGuideInteractor *animator = [XXGuideInteractor new];
+    XXGuideAnimator *animator = [XXGuideAnimator new];
     return animator;
 }
 

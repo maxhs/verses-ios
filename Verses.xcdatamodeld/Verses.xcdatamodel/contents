@@ -84,6 +84,7 @@
         <attribute name="smallUrl" optional="YES" attributeType="String" syncable="YES"/>
         <attribute name="thumbUrl" optional="YES" attributeType="String" syncable="YES"/>
         <attribute name="updatedDate" optional="YES" attributeType="Date" syncable="YES"/>
+        <attribute name="visible" optional="YES" attributeType="Boolean" syncable="YES"/>
         <relationship name="contribution" optional="YES" maxCount="1" deletionRule="Nullify" destinationEntity="Contribution" inverseName="photos" inverseEntity="Contribution" syncable="YES"/>
         <relationship name="story" optional="YES" maxCount="1" deletionRule="Nullify" destinationEntity="Story" inverseName="photos" inverseEntity="Story" syncable="YES"/>
         <relationship name="user" optional="YES" maxCount="1" deletionRule="Nullify" destinationEntity="User" inverseName="photos" inverseEntity="User" syncable="YES"/>
@@ -180,7 +181,7 @@
         <element name="Feedback" positionX="27" positionY="162" width="128" height="133"/>
         <element name="Footnote" positionX="36" positionY="90" width="128" height="88"/>
         <element name="Notification" positionX="63" positionY="189" width="128" height="195"/>
-        <element name="Photo" positionX="27" positionY="162" width="128" height="210"/>
+        <element name="Photo" positionX="27" positionY="162" width="128" height="225"/>
         <element name="Story" positionX="18" positionY="81" width="128" height="495"/>
         <element name="Tag" positionX="36" positionY="171" width="128" height="103"/>
         <element name="User" positionX="0" positionY="0" width="128" height="703"/>

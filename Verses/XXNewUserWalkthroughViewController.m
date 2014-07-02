@@ -70,7 +70,7 @@
     [MagicalRecord saveWithBlock:^(NSManagedObjectContext *localContext) {
         currentUser = [User MR_createInContext:[NSManagedObjectContext MR_defaultContext]];
     } completion:^(BOOL success, NSError *error) {
-        NSLog(@"just created a new current user: %@",currentUser);
+        //NSLog(@"just created a new current user: %@",currentUser);
     }];
     
     delegate = (XXAppDelegate*)[UIApplication sharedApplication].delegate;

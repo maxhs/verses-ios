@@ -628,7 +628,7 @@
         [parameters setObject:@"circle" forKey:@"comment_type"];
         
         [manager POST:[NSString stringWithFormat:@"%@/comments",kAPIBaseUrl] parameters:@{@"comment":parameters} success:^(AFHTTPRequestOperation *operation, id responseObject) {
-            NSLog(@"success posting circle comment: %@",responseObject);
+            //NSLog(@"success posting circle comment: %@",responseObject);
             [comment populateFromDict:responseObject];
             _comments = _circle.comments.array.mutableCopy;
             [self.collectionView reloadItemsAtIndexPaths:@[[NSIndexPath indexPathForItem:_comments.count-1 inSection:0]]];

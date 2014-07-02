@@ -182,13 +182,16 @@
     if ([[NSUserDefaults standardUserDefaults] boolForKey:kDarkBackground]){
         [self.view setBackgroundColor:[UIColor clearColor]];
         textColor = [UIColor whiteColor];
+        [[UIApplication sharedApplication] setStatusBarStyle:UIStatusBarStyleLightContent animated:YES];
     } else {
+        [[UIApplication sharedApplication] setStatusBarStyle:UIStatusBarStyleDefault animated:YES];
         [self.view setBackgroundColor:[UIColor whiteColor]];
         textColor = [UIColor blackColor];
     }
 
     if (_storyId){
         [self loadStory:_storyId];
+        [ProgressHUD show:@"Loading story..."];
     } else if (_story.contributions.count){
         pages = 0;
         contributionOffset = 0;
@@ -220,10 +223,11 @@
     [manager GET:[NSString stringWithFormat:@"%@/stories/%@",kAPIBaseUrl,identifier] parameters:parameters success:^(AFHTTPRequestOperation *operation, id responseObject) {
         //NSLog(@"load story response: %@",responseObject);
         _story = [Story MR_findFirstByAttribute:@"identifier" withValue:identifier];
-        if (!_story) {
+        if (_story) {
             _story = [Story MR_createInContext:[NSManagedObjectContext MR_defaultContext]];
+            [_story populateFromDict:[responseObject objectForKey:@"story"]];
         }
-        [_story populateFromDict:[responseObject objectForKey:@"story"]];
+        
         [self drawStoryBody];
         [self loadFeedbacks];
         storyInfoVc.story = _story;
@@ -371,7 +375,7 @@
         }
     }
     _story.feedbacks = feedbacks;
-    [self saveContext];
+    storyInfoVc.story = _story;
 }
 
 - (void)setupNavButtons {
@@ -602,7 +606,7 @@
     NSMutableParagraphStyle *paragraphStyle = [[NSMutableParagraphStyle alloc] init];
     paragraphStyle.lineHeightMultiple = 1.f;
     paragraphStyle.lineSpacing = 3.f;
-    paragraphStyle.paragraphSpacing = 17.f;
+    paragraphStyle.paragraphSpacing = 7.f;
     
     NSDictionary* attributes = @{/*NSFontAttributeName:[UIFont fontWithDescriptor:[UIFontDescriptor preferredCrimsonTextFontDescriptorWithTextStyle:UIFontTextStyleBody] size:0],*/
                                  NSParagraphStyleAttributeName : paragraphStyle,
@@ -1430,6 +1434,7 @@
     [super viewWillDisappear:animated];
     [readingTimer invalidate];
     readingTimer = nil;
+    [self saveContext];
 }
 
 - (void)resetWithStory:(Story*)newStory {
@@ -1462,7 +1467,6 @@
 - (void)saveContext {
     [[NSManagedObjectContext MR_defaultContext] MR_saveToPersistentStoreWithCompletion:^(BOOL success, NSError *error) {
         NSLog(@"%u success with saving story.",success);
-        storyInfoVc.story = _story;
     }];
 }
 

@@ -15,6 +15,7 @@
 
 @property (nonatomic, retain) NSDate * createdDate;
 @property (nonatomic, retain) NSNumber * identifier;
+@property (nonatomic, retain) NSNumber * visible;
 @property (nonatomic, retain) id image;
 @property (nonatomic, retain) NSString * largeUrl;
 @property (nonatomic, retain) NSString * mediumUrl;

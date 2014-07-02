@@ -97,13 +97,14 @@
 
 - (void)viewWillAppear:(BOOL)animated {
     [super viewWillAppear:animated];
-    
     navBarShadowView.hidden = YES;
     if ([[NSUserDefaults standardUserDefaults] boolForKey:kDarkBackground]){
         [self.view setBackgroundColor:[UIColor clearColor]];
         [self.logoutButton setBackgroundColor:[UIColor clearColor]];
         textColor = [UIColor whiteColor];
+         [[UIApplication sharedApplication] setStatusBarStyle:UIStatusBarStyleLightContent animated:YES];
     } else {
+         [[UIApplication sharedApplication] setStatusBarStyle:UIStatusBarStyleDefault animated:YES];
         //[self.view setBackgroundColor:[UIColor whiteColor]];
         textColor = [UIColor blackColor];
         [self.logoutButton setBackgroundColor:[UIColor colorWithWhite:0 alpha:.035]];
@@ -348,14 +349,19 @@
                 [cell.userBackground setHidden:NO];
                 [cell.backgroundImageViewLabel setText:@"Your default background image"];
                 [cell.backgroundImageViewLabel setTextColor:[UIColor whiteColor]];
+                cell.backgroundImageViewLabel.layer.borderWidth = 0.f;
+                cell.backgroundImageViewLabel.clipsToBounds = NO;
             } else {
                 [cell.userBackground setHidden:YES];
                 [cell.backgroundImageViewLabel setText:@"Set your default background image"];
-                
+                cell.backgroundImageViewLabel.layer.borderColor = [UIColor colorWithWhite:.23 alpha:.27].CGColor;
+                cell.backgroundImageViewLabel.layer.borderWidth = .5f;
+                cell.backgroundImageViewLabel.layer.cornerRadius = 7.f;
+                cell.backgroundImageViewLabel.clipsToBounds = YES;
                 [cell.backgroundImageViewLabel setTextColor:textColor];
             }
-            cell.userBackground.layer.rasterizationScale = [UIScreen mainScreen].scale;
-            cell.userBackground.layer.shouldRasterize = YES;
+            //cell.userBackground.layer.rasterizationScale = [UIScreen mainScreen].scale;
+            //cell.userBackground.layer.shouldRasterize = YES;
             return cell;
         }
         
@@ -594,7 +600,11 @@
         //end of loading
         [ProgressHUD dismiss];
     }
-    cell.backgroundColor = [UIColor clearColor];
+    /*if (indexPath.section == 2 && indexPath.row == 1){
+        cell.backgroundColor = [UIColor colorWithWhite:.97 alpha:1];
+    } else {*/
+        cell.backgroundColor = [UIColor clearColor];
+    //}
 }
 
 - (CGFloat)tableView:(UITableView *)tableView heightForHeaderInSection:(NSInteger)section {
@@ -628,7 +638,8 @@
         
         }];
         [self.navigationController.navigationBar setBarStyle:UIBarStyleDefault];
-        [self.navigationItem.rightBarButtonItem setTintColor:[UIColor blackColor]];
+        [self.navigationItem.leftBarButtonItem setTintColor:[UIColor blackColor]];
+        [guideButton setImage:[UIImage imageNamed:@"moreWhite"]];
         textColor = [UIColor blackColor];
     } else {
         [[NSUserDefaults standardUserDefaults] setBool:YES forKey:kDarkBackground];
@@ -636,9 +647,11 @@
         [UIView animateWithDuration:UINavigationControllerHideShowBarDuration animations:^{
             [self.view setBackgroundColor:[UIColor clearColor]];
         } completion:^(BOOL finished) {
+            
         }];
+        [guideButton setImage:[UIImage imageNamed:@"more"]];
         [self.navigationController.navigationBar setBarStyle:UIBarStyleBlackTranslucent];
-        [self.navigationItem.rightBarButtonItem setTintColor:[UIColor whiteColor]];
+        [self.navigationItem.leftBarButtonItem setTintColor:[UIColor whiteColor]];
         textColor = [UIColor whiteColor];
     }
     [(XXAppDelegate*)[UIApplication sharedApplication].delegate switchBackgroundTheme];
@@ -832,7 +845,6 @@
         } else {
             blurredImage = [[info objectForKey:UIImagePickerControllerOriginalImage] applyBlurWithRadius:33 blurType:BOXFILTER tintColor:[UIColor colorWithWhite:.23 alpha:.37] saturationDeltaFactor:1.8 maskImage:nil];
         }
-        
         if (currentUser.backgroundImageView && [currentUser.backgroundImageView isKindOfClass:[UIImageView class]]){
             [(UIImageView*)currentUser.backgroundImageView setImage:blurredImage];
         } else {
@@ -841,8 +853,8 @@
             [currentUser.backgroundImageView setContentMode:UIViewContentModeScaleAspectFill];
             [(UIImageView*)currentUser.backgroundImageView setClipsToBounds:YES];
         }
-        [(XXAppDelegate*)[UIApplication sharedApplication].delegate setWindowBackground:currentUser.backgroundImageView];
-        //[self uploadBackgroundImage:blurredImage];
+        [[(XXAppDelegate*)[UIApplication sharedApplication].delegate windowBackground] setImage:blurredImage];
+        [self uploadBackgroundImage:blurredImage];
         [self.tableView reloadRowsAtIndexPaths:@[[NSIndexPath indexPathForRow:1 inSection:2]] withRowAnimation:UITableViewRowAnimationFade];
     }
 }

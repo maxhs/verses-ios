@@ -113,8 +113,6 @@
 		F2528F0B195F35DE00B6F5BA /* XXAddCollaboratorEmailCell.xib in Resources */ = {isa = PBXBuildFile; fileRef = F2528F0A195F35DE00B6F5BA /* XXAddCollaboratorEmailCell.xib */; };
 		F2528F0F195F360100B6F5BA /* XXAddressBookContactCell.xib in Resources */ = {isa = PBXBuildFile; fileRef = F2528F0E195F360100B6F5BA /* XXAddressBookContactCell.xib */; };
 		F2528F12195F809700B6F5BA /* XXCollaboratorsTransition.m in Sources */ = {isa = PBXBuildFile; fileRef = F2528F11195F809700B6F5BA /* XXCollaboratorsTransition.m */; };
-		F2528F191960764800B6F5BA /* background.png in Resources */ = {isa = PBXBuildFile; fileRef = F2528F171960764800B6F5BA /* background.png */; };
-		F2528F1A1960764800B6F5BA /* background@2x.png in Resources */ = {isa = PBXBuildFile; fileRef = F2528F181960764800B6F5BA /* background@2x.png */; };
 		F2528F1D196076E300B6F5BA /* XXGuideCollectionCell.m in Sources */ = {isa = PBXBuildFile; fileRef = F2528F1C196076E300B6F5BA /* XXGuideCollectionCell.m */; };
 		F2528F201960A5DF00B6F5BA /* menuFeatured.png in Resources */ = {isa = PBXBuildFile; fileRef = F2528F1E1960A5DF00B6F5BA /* menuFeatured.png */; };
 		F2528F211960A5DF00B6F5BA /* menuFeatured@2x.png in Resources */ = {isa = PBXBuildFile; fileRef = F2528F1F1960A5DF00B6F5BA /* menuFeatured@2x.png */; };
@@ -166,6 +164,8 @@
 		F2614722196321F300E82DC5 /* XXGuideAnimator.m in Sources */ = {isa = PBXBuildFile; fileRef = F2614721196321F300E82DC5 /* XXGuideAnimator.m */; };
 		F261472519636D6600E82DC5 /* XXSettingsBackgroundCell.m in Sources */ = {isa = PBXBuildFile; fileRef = F261472419636D6600E82DC5 /* XXSettingsBackgroundCell.m */; };
 		F261472719636D7200E82DC5 /* XXSettingsBackgroundCell.xib in Resources */ = {isa = PBXBuildFile; fileRef = F261472619636D7200E82DC5 /* XXSettingsBackgroundCell.xib */; };
+		F261472A1963D75300E82DC5 /* background.png in Resources */ = {isa = PBXBuildFile; fileRef = F26147281963D75300E82DC5 /* background.png */; };
+		F261472B1963D75300E82DC5 /* background@2x.png in Resources */ = {isa = PBXBuildFile; fileRef = F26147291963D75300E82DC5 /* background@2x.png */; };
 		F2653712194A2B8500E21EB4 /* Tag.m in Sources */ = {isa = PBXBuildFile; fileRef = F2653711194A2B8500E21EB4 /* Tag.m */; };
 		F2653715194A2B9100E21EB4 /* Tag+helper.m in Sources */ = {isa = PBXBuildFile; fileRef = F2653714194A2B9100E21EB4 /* Tag+helper.m */; };
 		F26F95341905D01B0022F968 /* smallX.png in Resources */ = {isa = PBXBuildFile; fileRef = F26F95321905D01B0022F968 /* smallX.png */; };
@@ -464,8 +464,6 @@
 		F2528F0E195F360100B6F5BA /* XXAddressBookContactCell.xib */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = file.xib; path = XXAddressBookContactCell.xib; sourceTree = "<group>"; };
 		F2528F10195F809700B6F5BA /* XXCollaboratorsTransition.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = XXCollaboratorsTransition.h; sourceTree = "<group>"; };
 		F2528F11195F809700B6F5BA /* XXCollaboratorsTransition.m */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.objc; path = XXCollaboratorsTransition.m; sourceTree = "<group>"; };
-		F2528F171960764800B6F5BA /* background.png */ = {isa = PBXFileReference; lastKnownFileType = image.png; path = background.png; sourceTree = "<group>"; };
-		F2528F181960764800B6F5BA /* background@2x.png */ = {isa = PBXFileReference; lastKnownFileType = image.png; path = "background@2x.png"; sourceTree = "<group>"; };
 		F2528F1B196076E300B6F5BA /* XXGuideCollectionCell.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = XXGuideCollectionCell.h; sourceTree = "<group>"; };
 		F2528F1C196076E300B6F5BA /* XXGuideCollectionCell.m */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.objc; path = XXGuideCollectionCell.m; sourceTree = "<group>"; };
 		F2528F1E1960A5DF00B6F5BA /* menuFeatured.png */ = {isa = PBXFileReference; lastKnownFileType = image.png; path = menuFeatured.png; sourceTree = "<group>"; };
@@ -523,6 +521,8 @@
 		F261472319636D6600E82DC5 /* XXSettingsBackgroundCell.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = XXSettingsBackgroundCell.h; sourceTree = "<group>"; };
 		F261472419636D6600E82DC5 /* XXSettingsBackgroundCell.m */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.objc; path = XXSettingsBackgroundCell.m; sourceTree = "<group>"; };
 		F261472619636D7200E82DC5 /* XXSettingsBackgroundCell.xib */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = file.xib; path = XXSettingsBackgroundCell.xib; sourceTree = "<group>"; };
+		F26147281963D75300E82DC5 /* background.png */ = {isa = PBXFileReference; lastKnownFileType = image.png; path = background.png; sourceTree = "<group>"; };
+		F26147291963D75300E82DC5 /* background@2x.png */ = {isa = PBXFileReference; lastKnownFileType = image.png; path = "background@2x.png"; sourceTree = "<group>"; };
 		F2653710194A2B8500E21EB4 /* Tag.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; name = Tag.h; path = ../Tag.h; sourceTree = "<group>"; };
 		F2653711194A2B8500E21EB4 /* Tag.m */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.objc; name = Tag.m; path = ../Tag.m; sourceTree = "<group>"; };
 		F2653713194A2B9100E21EB4 /* Tag+helper.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = "Tag+helper.h"; sourceTree = "<group>"; };
@@ -1002,6 +1002,8 @@
 		F28976DC1807BE4500B9E8A5 /* Images */ = {
 			isa = PBXGroup;
 			children = (
+				F26147281963D75300E82DC5 /* background.png */,
+				F26147291963D75300E82DC5 /* background@2x.png */,
 				F26147191962EAD800E82DC5 /* smallDownWhiteArrow.png */,
 				F261471A1962EAD800E82DC5 /* smallDownWhiteArrow@2x.png */,
 				F2528F361960A82D00B6F5BA /* menuShared.png */,
@@ -1016,8 +1018,6 @@
 				F2528F231960A69C00B6F5BA /* menuTrending@2x.png */,
 				F2528F1E1960A5DF00B6F5BA /* menuFeatured.png */,
 				F2528F1F1960A5DF00B6F5BA /* menuFeatured@2x.png */,
-				F2528F171960764800B6F5BA /* background.png */,
-				F2528F181960764800B6F5BA /* background@2x.png */,
 				F2528EB4195E2CCA00B6F5BA /* pencil.png */,
 				F2528EB5195E2CCA00B6F5BA /* pencil@2x.png */,
 				F2528EB0195E1EEC00B6F5BA /* whiteCamera.png */,
@@ -1460,6 +1460,7 @@
 				F2730EE5194F8A3400AA9FF7 /* menuHome.png in Resources */,
 				F29224CA1828A9C600BEB9EF /* XXNotificationCell.xib in Resources */,
 				F2704066194D03870037C9A7 /* iPadDefault@2x.png in Resources */,
+				F261472A1963D75300E82DC5 /* background.png in Resources */,
 				F2528F301960A73B00B6F5BA /* menuSlowReveal.png in Resources */,
 				F295B2B418457D25009121BA /* downArrowWhite@2x.png in Resources */,
 				F25EDA8F195B2906009C4386 /* whiteBack@2x.png in Resources */,
@@ -1467,7 +1468,6 @@
 				F2704088194D18640037C9A7 /* mountains.jpg in Resources */,
 				F25EDA1B19574F81009C4386 /* Default-568h@2x.png in Resources */,
 				F2E41EC5194150F1006C7583 /* whiteBookmark@2x.png in Resources */,
-				F2528F1A1960764800B6F5BA /* background@2x.png in Resources */,
 				F261472719636D7200E82DC5 /* XXSettingsBackgroundCell.xib in Resources */,
 				F25EDA92195B33F1009C4386 /* smallRightWhiteArrow.png in Resources */,
 				F279DA2618D6337900E0DB8B /* XXDraftCell.xib in Resources */,
@@ -1491,7 +1491,6 @@
 				F2D83FE81915EE2500592F3D /* menuSettings.png in Resources */,
 				F2704083194D13410037C9A7 /* photoPlaceholder_ipad.png in Resources */,
 				F261471B1962EAD800E82DC5 /* smallDownWhiteArrow.png in Resources */,
-				F2528F191960764800B6F5BA /* background.png in Resources */,
 				F28BF5491909C75000392471 /* whiteTrashButton@2x.png in Resources */,
 				F21F6EF81932CB46003BC323 /* newUserRead.png in Resources */,
 				F249D6DA1922C7CC00EFF59E /* sun.png in Resources */,
@@ -1533,6 +1532,7 @@
 				F2D83FF21915F0AB00592F3D /* menuBrowse@2x.png in Resources */,
 				F249D6B6192044D700EFF59E /* sendButtonBlack@2x.png in Resources */,
 				F28976E81808FFE100B9E8A5 /* XXStoryCell.xib in Resources */,
+				F261472B1963D75300E82DC5 /* background@2x.png in Resources */,
 				F2D83FB51915D13300592F3D /* whiteSearchIcon.png in Resources */,
 				F25EDAB1195DCDCA009C4386 /* menuCircles@2x.png in Resources */,
 				F2528EB3195E1EEC00B6F5BA /* whiteCamera@2x.png in Resources */,

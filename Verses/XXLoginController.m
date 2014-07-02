@@ -498,7 +498,7 @@ static NSString * const kShakeAnimationKey = @"XXShakeItNow";
     [UIView animateWithDuration:.13 animations:^{
         [self.logo setAlpha:0.0];
     }];
-    [self dismissViewControllerAnimated:YES completion:^{
+    [self.presentingViewController dismissViewControllerAnimated:YES completion:^{
         
     }];
 }
@@ -506,7 +506,6 @@ static NSString * const kShakeAnimationKey = @"XXShakeItNow";
 - (void)viewDidDisappear:(BOOL)animated {
     [super viewDidDisappear:animated];
     [ProgressHUD dismiss];
-    //[XXProgress dismiss];
 }
 
 - (void)didReceiveMemoryWarning

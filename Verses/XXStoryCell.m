@@ -79,7 +79,7 @@
                 [_titleLabel setTextColor:[UIColor blackColor]];
                 [_authorLabel setTextColor:[UIColor blackColor]];
                 [_countLabel setTextColor:[UIColor blackColor]];
-                [UIView animateWithDuration:.4 animations:^{
+                [UIView animateWithDuration:.3 animations:^{
                     [_titleLabel setAlpha:1.0];
                     [_authorLabel setAlpha:1.0];
                     [_countLabel setAlpha:1.0];
@@ -91,7 +91,7 @@
                 UIImage *blurredImage = [image applyBlurWithRadius:21 blurType:BOXFILTER tintColor:[UIColor colorWithWhite:0 alpha:.13] saturationDeltaFactor:1.8 maskImage:nil];
                 dispatch_async(dispatch_get_main_queue(), ^{
                     [_backgroundImageView setImage:blurredImage];
-                    [UIView animateWithDuration:.4 animations:^{
+                    [UIView animateWithDuration:.3 animations:^{
                         [_backgroundImageView setAlpha:.75];
                         [_titleLabel setAlpha:1.0];
                         [_authorLabel setAlpha:1.0];

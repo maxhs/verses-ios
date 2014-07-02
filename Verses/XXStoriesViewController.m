@@ -21,7 +21,6 @@
 #import "XXNoRotateNavController.h"
 #import "XXCollaborateViewController.h"
 #import "XXFlagContentViewController.h"
-#import "XXGuideInteractor.h"
 #import "XXGuideViewController.h"
 #import "Story+helper.h"
 #import "XXNothingCell.h"
@@ -117,15 +116,16 @@
         _stories = [Story MR_findAllSortedBy:@"publishedDate" ascending:NO withPredicate:predicate].mutableCopy;
         if (_stories.count == 0) {
             [self loadEtherStories];
-        } else [self.tableView reloadData];
+        } else {
+            [self.tableView reloadData];
+        }
     }
    
-    [self.tableView reloadData];
     [[NSNotificationCenter defaultCenter] addObserver:self selector:@selector(storyFlagged:) name:@"StoryFlagged" object:nil];
 }
 
 - (void)showGuide {
-    XXGuideViewController *guide = [[(XXAppDelegate*)[UIApplication sharedApplication].delegate window].rootViewController.storyboard instantiateViewControllerWithIdentifier:@"Guide"];
+    XXGuideViewController *guide = [[self storyboard] instantiateViewControllerWithIdentifier:@"Guide"];
     guide.transitioningDelegate = self;
     guide.modalPresentationStyle = UIModalPresentationCustom;
     [self presentViewController:guide animated:YES completion:nil];
@@ -136,7 +136,7 @@
     for (NSDictionary *dict in array){
         if ([dict objectForKey:@"id"] && [dict objectForKey:@"id"] != [NSNull null]){
             Story *story = [Story MR_findFirstByAttribute:@"identifier" withValue:[dict objectForKey:@"id"]];
-            if (story){
+            if (!story){
                 story = [Story MR_createInContext:[NSManagedObjectContext MR_defaultContext]];
             }
             [story populateFromDict:dict];
@@ -144,28 +144,28 @@
         }
     }
     
-    //has to be synchronous so the tableview datasource can update properly.
-    [[NSManagedObjectContext MR_defaultContext] MR_saveToPersistentStoreWithCompletion:^(BOOL success, NSError *error) {
-        if (_featured){
-            if (_featuredStories.count) [_featuredStories removeAllObjects];
-            _featuredStories = [Story MR_findByAttribute:@"featured" withValue:[NSNumber numberWithBool:YES] andOrderBy:@"publishedDate" ascending:NO].mutableCopy;
-        } else if (_shared) {
-            if (_sharedStories.count) [_sharedStories removeAllObjects];
-            NSPredicate *userPredicate = [NSPredicate predicateWithFormat:@"ANY users.identifier CONTAINS[cd] %@",[[NSUserDefaults standardUserDefaults] objectForKey:kUserDefaultsId]];
-            NSPredicate *ownerPredicate = [NSPredicate predicateWithFormat:@"ownerId != %@",[[NSUserDefaults standardUserDefaults] objectForKey:kUserDefaultsId]];
-            NSPredicate *compoundPredicate = [NSCompoundPredicate andPredicateWithSubpredicates:@[userPredicate,ownerPredicate]];
-            _sharedStories = [Story MR_findAllSortedBy:@"updatedDate" ascending:NO withPredicate:compoundPredicate].mutableCopy;
-            NSLog(@"total shared stories count: %d",_sharedStories.count);
-        } else if (_trending){
-            if (_trendingStories.count) [_trendingStories removeAllObjects];
-            NSPredicate *predicate = [NSPredicate predicateWithFormat:@"trendingCount != %@ and publishedDate != %@",[NSNumber numberWithInt:0], [NSDate dateWithTimeIntervalSince1970:0]];
-            _trendingStories = [Story MR_findAllSortedBy:@"trendingCount" ascending:NO withPredicate:predicate].mutableCopy;
-        } else if (_ether || _stories.count == 0) {
-            if (_stories.count) [_stories removeAllObjects];
-            NSPredicate *predicate = [NSPredicate predicateWithFormat:@"inviteOnly == %@ and draft == %@ and publishedDate != %@",[NSNumber numberWithBool:NO],[NSNumber numberWithBool:NO], [NSDate dateWithTimeIntervalSince1970:0]];
-            _stories = [Story MR_findAllSortedBy:@"publishedDate" ascending:NO withPredicate:predicate].mutableCopy;
-        }
-    }];
+    //this is synchronous so the tableview datasource can update properly.
+    [[NSManagedObjectContext MR_defaultContext] MR_saveToPersistentStoreAndWait];
+    
+    if (_featured){
+        if (_featuredStories.count) [_featuredStories removeAllObjects];
+        _featuredStories = [Story MR_findByAttribute:@"featured" withValue:[NSNumber numberWithBool:YES] andOrderBy:@"publishedDate" ascending:NO].mutableCopy;
+    } else if (_shared) {
+        if (_sharedStories.count) [_sharedStories removeAllObjects];
+        NSPredicate *userPredicate = [NSPredicate predicateWithFormat:@"ANY users.identifier CONTAINS[cd] %@",[[NSUserDefaults standardUserDefaults] objectForKey:kUserDefaultsId]];
+        NSPredicate *ownerPredicate = [NSPredicate predicateWithFormat:@"ownerId != %@",[[NSUserDefaults standardUserDefaults] objectForKey:kUserDefaultsId]];
+        NSPredicate *compoundPredicate = [NSCompoundPredicate andPredicateWithSubpredicates:@[userPredicate,ownerPredicate]];
+        _sharedStories = [Story MR_findAllSortedBy:@"updatedDate" ascending:NO withPredicate:compoundPredicate].mutableCopy;
+        NSLog(@"total shared stories count: %d",_sharedStories.count);
+    } else if (_trending){
+        if (_trendingStories.count) [_trendingStories removeAllObjects];
+        NSPredicate *predicate = [NSPredicate predicateWithFormat:@"trendingCount != %@ and publishedDate != %@",[NSNumber numberWithInt:0], [NSDate dateWithTimeIntervalSince1970:0]];
+        _trendingStories = [Story MR_findAllSortedBy:@"trendingCount" ascending:NO withPredicate:predicate].mutableCopy;
+    } else if (_ether || _stories.count == 0) {
+        if (_stories.count) [_stories removeAllObjects];
+        NSPredicate *predicate = [NSPredicate predicateWithFormat:@"inviteOnly == %@ and draft == %@ and publishedDate != %@",[NSNumber numberWithBool:NO],[NSNumber numberWithBool:NO], [NSDate dateWithTimeIntervalSince1970:0]];
+        _stories = [Story MR_findAllSortedBy:@"publishedDate" ascending:NO withPredicate:predicate].mutableCopy;
+    }
     
     //done loading! what a relief
     loading = NO;
@@ -540,6 +540,7 @@
             int currentCount = _stories.count;
             NSArray *newStories = [self updateLocalStories:[responseObject objectForKey:@"stories"]];
             NSMutableArray *indexesToInsert = [NSMutableArray array];
+            NSLog(@"current count: %d, newStories.count: %d",currentCount, newStories.count);
             for (int i = currentCount; i < newStories.count+currentCount; i++){
                 [indexesToInsert addObject:[NSIndexPath indexPathForRow:i inSection:0]];
             }
@@ -548,11 +549,13 @@
                 NSLog(@"Can't load more, we now have %i stories", _stories.count);
             }
             
-            [_tableView beginUpdates];
-            [_tableView insertRowsAtIndexPaths:indexesToInsert withRowAnimation:UITableViewRowAnimationFade];
-            [_tableView endUpdates];
-        
-            //[_tableView reloadSections:[NSIndexSet indexSetWithIndex:0] withRowAnimation:UITableViewRowAnimationFade];
+            if (self.tableView.numberOfSections){
+                [_tableView beginUpdates];
+                [_tableView insertRowsAtIndexPaths:indexesToInsert withRowAnimation:UITableViewRowAnimationFade];
+                [_tableView endUpdates];
+            } else {
+                [_tableView reloadData];
+            }
             
         } failure:^(AFHTTPRequestOperation *operation, NSError *error) {
             

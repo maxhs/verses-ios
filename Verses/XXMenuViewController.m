@@ -631,7 +631,7 @@
                 UINavigationController *nav = [[UINavigationController alloc] initWithRootViewController:vc];
                 [dynamicsViewController setPaneViewController:nav animated:YES completion:nil];
             } else if (notification.circle.identifier){
-                [ProgressHUD show:@"Fetching that writing circle..."];
+                [ProgressHUD show:@"Fetching that circle..."];
                 XXCircleDetailViewController *vc = [[self storyboard] instantiateViewControllerWithIdentifier:@"CircleDetail"];
                 [vc setCircle:notification.circle];
                 [vc setNeedsNavigation:YES];
