@@ -9,6 +9,6 @@
 #import <UIKit/UIKit.h>
 
 @interface XXSettingsBackgroundCell : UITableViewCell
-@property (weak, nonatomic) IBOutlet UIImageView *backgroundImageView;
+@property (weak, nonatomic) IBOutlet UIImageView *userBackground;
 @property (weak, nonatomic) IBOutlet UILabel *backgroundImageViewLabel;
 @end

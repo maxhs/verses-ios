@@ -36,7 +36,7 @@
         
         toViewController.view.frame = startFrame;
         
-        [UIView animateWithDuration:[self transitionDuration:transitionContext] delay:0 usingSpringWithDamping:.8 initialSpringVelocity:.0001 options:UIViewAnimationOptionCurveEaseInOut animations:^{
+        [UIView animateWithDuration:[self transitionDuration:transitionContext] delay:0 usingSpringWithDamping:.85 initialSpringVelocity:.0001 options:UIViewAnimationOptionCurveEaseOut animations:^{
             fromViewController.view.tintAdjustmentMode = UIViewTintAdjustmentModeDimmed;
             toViewController.view.frame = endFrame;
             fromViewController.view.frame = originEndFrame;

@@ -602,7 +602,7 @@
     NSMutableParagraphStyle *paragraphStyle = [[NSMutableParagraphStyle alloc] init];
     paragraphStyle.lineHeightMultiple = 1.f;
     paragraphStyle.lineSpacing = 3.f;
-    paragraphStyle.paragraphSpacing = 27.f;
+    paragraphStyle.paragraphSpacing = 17.f;
     
     NSDictionary* attributes = @{/*NSFontAttributeName:[UIFont fontWithDescriptor:[UIFontDescriptor preferredCrimsonTextFontDescriptorWithTextStyle:UIFontTextStyleBody] size:0],*/
                                  NSParagraphStyleAttributeName : paragraphStyle,
@@ -615,7 +615,7 @@
      NSMutableAttributedString *attributedContributionBody = [[NSMutableAttributedString alloc] initWithData:[contribution.body dataUsingEncoding:NSUnicodeStringEncoding] options:attributes documentAttributes:&documentAttributes error:&error];
     NSMutableAttributedString* attributedContributionBody = [[NSMutableAttributedString alloc] initWithHTMLData:[contribution.body dataUsingEncoding:NSUTF8StringEncoding] options:@{NSTextEncodingNameDocumentOption: @"UTF-8"} documentAttributes:nil];*/
     
-    DTCSSStylesheet *styleSheet = [[DTCSSStylesheet alloc] initWithStyleBlock:@".screen {font-family:'Courier';}.screen.actor{text-transform:uppercase;text-align:center;width:100%;display:block;}"];
+    DTCSSStylesheet *styleSheet = [[DTCSSStylesheet alloc] initWithStyleBlock:@".screen {font-family:'Courier';}"];
     
     NSDictionary *options = @{DTUseiOS6Attributes: [NSNumber numberWithBool:YES],
                               DTDefaultFontSize: @21,

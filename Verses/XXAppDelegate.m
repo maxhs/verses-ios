@@ -36,6 +36,7 @@
 @synthesize manager = _manager;
 @synthesize backgroundURL = _backgroundURL;
 @synthesize currentUser = _currentUser;
+@synthesize windowBackground = _windowBackground;
 
 - (BOOL)application:(UIApplication *)application didFinishLaunchingWithOptions:(NSDictionary *)launchOptions
 {
@@ -117,9 +118,7 @@
         welcome.ether = YES;
         [self transition];
     }
-
-    [self.window addSubview:self.windowBackground];
-    [self.window sendSubviewToBack:self.windowBackground];
+    [self setupWindowBackground];
     [self customizeAppearance];
     return YES;
 }
@@ -167,23 +166,26 @@
     return _defaultBackground;
 }
 
-- (UIImageView *)windowBackground
+- (void)setupWindowBackground
 {
     if (!_windowBackground) {
-        if (_currentUser.backgroundImageView) {
-            _windowBackground = _currentUser.backgroundImageView;
+        NSLog(@"establishing window background");
+        if ([(UIImageView*)_currentUser.backgroundImageView image]) {
+            _windowBackground = [[UIImageView alloc] initWithFrame:[UIScreen mainScreen].bounds];
+            [_windowBackground setImage:[(UIImageView*)_currentUser.backgroundImageView image]];
         } else {
             if (UI_USER_INTERFACE_IDIOM() == UIUserInterfaceIdiomPad){
                 _windowBackground = [[UIImageView alloc] initWithImage:[UIImage imageNamed:@"background_ipad"]];
             } else {
-                _windowBackground = [[UIImageView alloc] initWithImage:[UIImage imageNamed:@"background"]];
+                _windowBackground = [[UIImageView alloc] initWithImage:[UIImage imageNamed:@"blueFlipped"]];
             }
         }
         [_windowBackground setAlpha:1];
     }
     
     [_windowBackground setContentMode:UIViewContentModeScaleAspectFill];
-    return _windowBackground;
+    [self.window addSubview:_windowBackground];
+    [self.window sendSubviewToBack:_windowBackground];
 }
 
 -(UIImage *)blurredSnapshot {
@@ -228,6 +230,7 @@
 }
 
 - (void)switchBackgroundTheme {
+    [self.window setBackgroundColor:[UIColor blackColor]];
     NSShadow *clearShadow = [[NSShadow alloc] init];
     clearShadow.shadowColor = [UIColor clearColor];
     if ([[NSUserDefaults standardUserDefaults] boolForKey:kDarkBackground]){
@@ -240,7 +243,6 @@
         [UIView animateWithDuration:.23 animations:^{
             [_windowBackground setAlpha:.14];
             [[UIBarButtonItem appearance] setTintColor:[UIColor whiteColor]];
-            [self.window setBackgroundColor:[UIColor blackColor]];
             [[UINavigationBar appearance] setBarStyle:UIBarStyleBlackTranslucent];
         }];
         
@@ -254,7 +256,6 @@
         [UIView animateWithDuration:.23 animations:^{
             [_windowBackground setAlpha:1];
             [[UIBarButtonItem appearance] setTintColor:[UIColor blackColor]];
-            [self.window setBackgroundColor:[UIColor blackColor]];
             [[UINavigationBar appearance] setBarStyle:UIBarStyleDefault];
         }];
         

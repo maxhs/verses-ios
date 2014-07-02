@@ -58,6 +58,7 @@
     refreshControl = [[UIRefreshControl alloc] init];
     [refreshControl addTarget:self action:@selector(handleRefresh) forControlEvents:UIControlEventValueChanged];
     [refreshControl setTintColor:[UIColor darkGrayColor]];
+    [self.view setBackgroundColor:[UIColor clearColor]];
     [self.tableView addSubview:refreshControl];
     [self.tableView setSeparatorStyle:UITableViewCellSeparatorStyleNone];
     [self.navigationController setNavigationBarHidden:NO animated:YES];

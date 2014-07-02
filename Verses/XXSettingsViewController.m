@@ -18,6 +18,7 @@
 #import "XXGuideViewController.h"
 #import "XXGuideInteractor.h"
 #import "XXSettingsBackgroundCell.h"
+#import "UIImage+ImageEffects.h"
 
 @interface XXSettingsViewController () <UITextFieldDelegate,UITextViewDelegate, MFMailComposeViewControllerDelegate, UIImagePickerControllerDelegate, UINavigationControllerDelegate, UIActionSheetDelegate, UIViewControllerTransitioningDelegate> {
     UIBarButtonItem *doneButton;
@@ -45,6 +46,7 @@
     UISwitch *backgroundThemeSwitch;
     UISwitch *storyPagingSwitch;
     BOOL avatar;
+    UIImage *blurredImage;
 }
 
 @end
@@ -64,12 +66,16 @@
                                             target:nil action:nil];
     negativeRightButton.width = -14.f;
     self.navigationItem.rightBarButtonItems = @[negativeRightButton,guideButton];
-    self.navigationItem.leftBarButtonItem = saveButton;
+    
+    UIBarButtonItem *leftSpacerButton = [[UIBarButtonItem alloc]
+                                            initWithBarButtonSystemItem:UIBarButtonSystemItemFixedSpace
+                                            target:nil action:nil];
+    leftSpacerButton.width = 10.f;
+    self.navigationItem.leftBarButtonItems = @[leftSpacerButton,saveButton];
     [self.logoutButton.titleLabel setFont:[UIFont fontWithName:kSourceSansProSemibold size:16]];
     self.tableView.tableFooterView = self.logoutButton;
     screen = [UIScreen mainScreen].bounds;
     [self loadProfile];
-    
     
     navBarShadowView = [Utilities findNavShadow:self.navigationController.navigationBar];
     
@@ -206,9 +212,10 @@
             cell = [[[NSBundle mainBundle] loadNibNamed:@"XXSettingsCell" owner:nil options:nil] lastObject];
         }
         
+        [cell configure:nil];
+        
         switch (indexPath.row) {
             case 0:
-                [cell configure:nil];
                 [cell.imageLabel setHidden:YES];
                 [cell.imageButton setHidden:YES];
                 [cell.textField setText:currentUser.penName];
@@ -217,7 +224,6 @@
                 penNameTextField.delegate = self;
                 break;
             case 1:
-                [cell configure:nil];
                 [cell.imageLabel setHidden:YES];
                 [cell.imageButton setHidden:YES];
                 locationTextField = cell.textField;
@@ -284,6 +290,9 @@
                 firstNameTextField = cell.textField;
                 [cell.textField setPlaceholder:@"Your first name"];
                 [cell.textField setText:currentUser.firstName];
+                [cell.imageButton setHidden:YES];
+                [cell.imageLabel setHidden:YES];
+                [cell.textField setHidden:NO];
                 break;
             }
             case 2:
@@ -291,6 +300,9 @@
                 lastNameTextField = cell.textField;
                 [cell.textField setPlaceholder:@"Your last name"];
                 [cell.textField setText:currentUser.lastName];
+                [cell.imageButton setHidden:YES];
+                [cell.imageLabel setHidden:YES];
+                [cell.textField setHidden:NO];
                 break;
             }
             default:
@@ -325,20 +337,25 @@
             if (cell == nil) {
                 cell = [[[NSBundle mainBundle] loadNibNamed:@"XXSettingsBackgroundCell" owner:nil options:nil] lastObject];
             }
-            NSLog(@"user background image: %@",currentUser.backgroundImageView);
-            if (currentUser.backgroundImageView){
-                cell.backgroundImageView = currentUser.backgroundImageView;
-                [cell.backgroundImageView setHidden:NO];
-                NSLog(@"cell background image view: %@",cell.backgroundImageView);
-                [cell.backgroundImageViewLabel setHidden:YES];
+            [cell.backgroundImageViewLabel setFont:[UIFont fontWithName:kSourceSansProRegular size:16]];
+            
+            if (blurredImage || currentUser.backgroundImageView){
+                if (blurredImage){
+                    [cell.userBackground setImage:blurredImage];
+                } else {
+                    [cell.userBackground setImage:[(UIImageView*)currentUser.backgroundImageView image]];
+                }
+                [cell.userBackground setHidden:NO];
+                [cell.backgroundImageViewLabel setText:@"Your default background image"];
+                [cell.backgroundImageViewLabel setTextColor:[UIColor whiteColor]];
             } else {
-                [cell.backgroundImageViewLabel setHidden:NO];
-                [cell.backgroundImageView setHidden:YES];
-                [cell.backgroundImageViewLabel setText:@"Set your background image"];
-                [cell.backgroundImageViewLabel setFont:[UIFont fontWithName:kSourceSansProRegular size:16]];
+                [cell.userBackground setHidden:YES];
+                [cell.backgroundImageViewLabel setText:@"Set your default background image"];
+                
                 [cell.backgroundImageViewLabel setTextColor:textColor];
             }
-            
+            cell.userBackground.layer.rasterizationScale = [UIScreen mainScreen].scale;
+            cell.userBackground.layer.shouldRasterize = YES;
             return cell;
         }
         
@@ -588,7 +605,11 @@
     if (indexPath.section == 0 || indexPath.section == 1){
         return 50;
     } else if (indexPath.section == 2 && indexPath.row == 1) {
-        return 100;
+        if (currentUser.backgroundImageView != nil || blurredImage){
+            return 200;
+        } else {
+            return 100;
+        }
     } else {
         return 60;
     }
@@ -629,6 +650,7 @@
 }
 
 - (void)save {
+    [ProgressHUD show:@"Saving your settings..."];
     NSMutableDictionary *parameters = [NSMutableDictionary dictionary];
     if (pushSwitch.isOn){
         [parameters setObject:@YES forKey:@"push_permissions"];
@@ -691,8 +713,14 @@
         //NSLog(@"success updating user: %@",responseObject);
         [currentUser populateFromDict:[responseObject objectForKey:@"user"]];
         [self synchronizeUserDefaults];
-        [self.tableView reloadData];
-        [XXAlert show:@"Profile updated" withTime:2.7f];
+        [ProgressHUD dismiss];
+        [XXAlert show:@"Settings updated" withTime:2.7f];
+        
+        [[NSManagedObjectContext MR_defaultContext] MR_saveToPersistentStoreWithCompletion:^(BOOL success, NSError *error) {
+            NSLog(@"Any success saving settings? %u",success);
+            [[(XXAppDelegate*)[UIApplication sharedApplication].delegate windowBackground] setImage:[(UIImageView*)currentUser.backgroundImageView image]];
+        }];
+        
     } failure:^(AFHTTPRequestOperation *operation, NSError *error) {
         //NSLog(@"Failure updating user: %@",error.description);
         if (operation.response.statusCode == 401) {
@@ -712,9 +740,9 @@
         avatar = YES;
         if ([UIImagePickerController isSourceTypeAvailable:UIImagePickerControllerSourceTypeCamera]){
             if (currentUser.thumbImage || currentUser.picSmall){
-                [[[UIActionSheet alloc] initWithTitle:nil delegate:self cancelButtonTitle:@"Cancel" destructiveButtonTitle:@"Remove Photo" otherButtonTitles:@"Take Photo",@"Pick from Photo Library", nil] showInView:self.view];
+                [[[UIActionSheet alloc] initWithTitle:nil delegate:self cancelButtonTitle:@"Cancel" destructiveButtonTitle:@"Remove Photo" otherButtonTitles:@"Take Photo",@"Pick from Library", nil] showInView:self.view];
             } else {
-                [[[UIActionSheet alloc] initWithTitle:nil delegate:self cancelButtonTitle:@"Cancel" destructiveButtonTitle:nil otherButtonTitles:@"Take Photo",@"Pick from Photo Library", nil] showInView:self.view];
+                [[[UIActionSheet alloc] initWithTitle:nil delegate:self cancelButtonTitle:@"Cancel" destructiveButtonTitle:nil otherButtonTitles:@"Take Photo",@"Pick from Library", nil] showInView:self.view];
             }
         } else {
             [self choosePhoto];
@@ -725,10 +753,10 @@
         } else if (indexPath.row == 1) {
             avatar = NO;
             if ([UIImagePickerController isSourceTypeAvailable:UIImagePickerControllerSourceTypeCamera]){
-                if (currentUser.thumbImage || currentUser.picSmall){
-                    [[[UIActionSheet alloc] initWithTitle:nil delegate:self cancelButtonTitle:@"Cancel" destructiveButtonTitle:@"Remove Photo" otherButtonTitles:@"Take Photo",@"Pick from Photo Library", nil] showInView:self.view];
+                if (currentUser.backgroundImageView){
+                    [[[UIActionSheet alloc] initWithTitle:nil delegate:self cancelButtonTitle:@"Cancel" destructiveButtonTitle:@"Remove Background" otherButtonTitles:@"Take Photo",@"Pick from Library", nil] showInView:self.view];
                 } else {
-                    [[[UIActionSheet alloc] initWithTitle:nil delegate:self cancelButtonTitle:@"Cancel" destructiveButtonTitle:nil otherButtonTitles:@"Take Photo",@"Pick from Photo Library", nil] showInView:self.view];
+                    [[[UIActionSheet alloc] initWithTitle:nil delegate:self cancelButtonTitle:@"Cancel" destructiveButtonTitle:nil otherButtonTitles:@"Take Photo",@"Pick from Library", nil] showInView:self.view];
                 }
             } else {
                 [self choosePhoto];
@@ -745,14 +773,16 @@
 - (void)actionSheet:(UIActionSheet *)actionSheet clickedButtonAtIndex:(NSInteger)buttonIndex {
     if ([[actionSheet buttonTitleAtIndex:buttonIndex] isEqualToString:@"Take Photo"]){
         [self takePhoto];
-    } else if ([[actionSheet buttonTitleAtIndex:buttonIndex] isEqualToString:@"Pick from Photo Library"]){
+    } else if ([[actionSheet buttonTitleAtIndex:buttonIndex] isEqualToString:@"Pick from Library"]){
         [self choosePhoto];
     } else if ([[actionSheet buttonTitleAtIndex:buttonIndex] isEqualToString:@"Remove Photo"]){
-        [self removePhoto];
+        [self removeUserPhoto];
+    } else if ([[actionSheet buttonTitleAtIndex:buttonIndex] isEqualToString:@"Remove Background"]){
+        [self removeBackgroundPhoto];
     }
 }
 
-- (void)removePhoto {
+- (void)removeUserPhoto {
     [ProgressHUD show:@"Removing photo..."];
     [[SDImageCache sharedImageCache] removeImageForKey:currentUser.picSmall fromDisk:YES];
     [manager POST:[NSString stringWithFormat:@"%@/users/%@/remove_photo",kAPIBaseUrl,currentUser.identifier] parameters:nil success:^(AFHTTPRequestOperation *operation, id responseObject) {
@@ -767,6 +797,12 @@
         NSLog(@"Failed to remove profile photo: %@",error.description);
         [[[UIAlertView alloc] initWithTitle:@"Sorry" message:@"Something went wrong while trying to delete your photo. Please try again soon." delegate:nil cancelButtonTitle:@"Okay" otherButtonTitles:nil] show];
     }];
+}
+
+- (void)removeBackgroundPhoto {
+    [[SDImageCache sharedImageCache] removeImageForKey:currentUser.picSmall fromDisk:YES];
+    currentUser.backgroundImageView = nil;
+    [self.tableView reloadRowsAtIndexPaths:@[[NSIndexPath indexPathForRow:1 inSection:2]] withRowAnimation:UITableViewRowAnimationFade];
 }
 
 - (void)choosePhoto {
@@ -790,17 +826,24 @@
         [self.tableView reloadRowsAtIndexPaths:@[[NSIndexPath indexPathForRow:2 inSection:0]] withRowAnimation:UITableViewRowAnimationFade];
         [self uploadUserImage:currentUser.thumbImage];
     } else {
-        UIImageView *imageView = [[UIImageView alloc] initWithFrame:[UIScreen mainScreen].bounds];
-        imageView.clipsToBounds = YES;
-        [imageView setContentMode:UIViewContentModeScaleAspectFill];
-        [imageView setImage:[info objectForKey:UIImagePickerControllerOriginalImage]];
-        [MagicalRecord saveWithBlock:^(NSManagedObjectContext *localContext) {
-            User *theUser = [currentUser MR_inContext:localContext];
-            [theUser setBackgroundImageView:imageView];
-        } completion:^(BOOL success, NSError *error) {
-            NSLog(@"any success? %u",success);
-            [self.tableView reloadRowsAtIndexPaths:@[[NSIndexPath indexPathForRow:1 inSection:2]] withRowAnimation:UITableViewRowAnimationFade];
-        }];
+        
+        if (IDIOM == IPAD){
+            blurredImage = [[info objectForKey:UIImagePickerControllerOriginalImage] applyBlurWithRadius:27 blurType:BOXFILTER tintColor:[UIColor colorWithWhite:0 alpha:.43] saturationDeltaFactor:1.8 maskImage:nil];
+        } else {
+            blurredImage = [[info objectForKey:UIImagePickerControllerOriginalImage] applyBlurWithRadius:33 blurType:BOXFILTER tintColor:[UIColor colorWithWhite:.23 alpha:.37] saturationDeltaFactor:1.8 maskImage:nil];
+        }
+        
+        if (currentUser.backgroundImageView && [currentUser.backgroundImageView isKindOfClass:[UIImageView class]]){
+            [(UIImageView*)currentUser.backgroundImageView setImage:blurredImage];
+        } else {
+            currentUser.backgroundImageView = [[UIImageView alloc] initWithFrame:[UIScreen mainScreen].bounds];
+            [currentUser.backgroundImageView setImage:blurredImage];
+            [currentUser.backgroundImageView setContentMode:UIViewContentModeScaleAspectFill];
+            [(UIImageView*)currentUser.backgroundImageView setClipsToBounds:YES];
+        }
+        [(XXAppDelegate*)[UIApplication sharedApplication].delegate setWindowBackground:currentUser.backgroundImageView];
+        //[self uploadBackgroundImage:blurredImage];
+        [self.tableView reloadRowsAtIndexPaths:@[[NSIndexPath indexPathForRow:1 inSection:2]] withRowAnimation:UITableViewRowAnimationFade];
     }
 }
 
@@ -812,6 +855,17 @@
         NSLog(@"Success uploading user profile image: %@",responseObject);
     } failure:^(AFHTTPRequestOperation *operation, NSError *error) {
         NSLog(@"Failure posting user profile image: %@",error.description);
+    }];
+}
+
+- (void)uploadBackgroundImage:(UIImage*)image {
+    NSData *imageData = UIImageJPEGRepresentation(image, 1);
+    [manager POST:[NSString stringWithFormat:@"%@/users/%@/add_background",kAPIBaseUrl,currentUser.identifier] parameters:nil constructingBodyWithBlock:^(id<AFMultipartFormData> formData) {
+        [formData appendPartWithFileData:imageData name:@"photo" fileName:@"photo.jpg" mimeType:@"image/jpg"];
+    } success:^(AFHTTPRequestOperation *operation, id responseObject) {
+        NSLog(@"Success uploading user background image: %@",responseObject);
+    } failure:^(AFHTTPRequestOperation *operation, NSError *error) {
+        NSLog(@"Failure posting user background image: %@",error.description);
     }];
 }
 
@@ -926,9 +980,5 @@
         [self.tableView setAlpha:0.0];
     }];
 }
-#pragma mark - Navigation
-
-
-
 
 @end

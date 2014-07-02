@@ -38,6 +38,7 @@
     CGFloat height;
     UIMotionEffectGroup *motion;
     UIButton *downButton;
+    User *_currentUser;
 }
 
 @end
@@ -49,6 +50,8 @@
 - (void)viewDidLoad {
     [super viewDidLoad];
     self.automaticallyAdjustsScrollViewInsets = NO;
+    [[UIApplication sharedApplication] setStatusBarStyle:UIStatusBarStyleLightContent animated:YES];
+    
     if (UIInterfaceOrientationIsPortrait(self.interfaceOrientation)){
         width = screenWidth();
         height = screenHeight();
@@ -58,6 +61,11 @@
     }
     if ([[NSUserDefaults standardUserDefaults] objectForKey:kUserDefaultsId]){
         signedIn = YES;
+        if ([(XXAppDelegate*)[UIApplication sharedApplication].delegate currentUser]){
+            _currentUser = [(XXAppDelegate*)[UIApplication sharedApplication].delegate currentUser];
+        } else {
+            _currentUser = [User MR_findFirstByAttribute:@"identifier" withValue:[[NSUserDefaults standardUserDefaults] objectForKey:kUserDefaultsId]];
+        }
     } else {
         signedIn = NO;
     }
@@ -73,15 +81,21 @@
     [self.view setAutoresizingMask:UIViewAutoresizingFlexibleWidth];
     
     UIImageView *backgroundImageView = [[UIImageView alloc] initWithFrame:self.view.frame];
-    [backgroundImageView setAutoresizingMask:UIViewAutoresizingFlexibleWidth];
-    [backgroundImageView setContentMode:UIViewContentModeScaleAspectFill];
-    [backgroundImageView setImage:[(XXAppDelegate*)[UIApplication sharedApplication].delegate windowBackground].image];
     backgroundImageView.clipsToBounds = YES;
+    [backgroundImageView setContentMode:UIViewContentModeScaleAspectFill];
+    if (_currentUser.backgroundImageView){
+        [backgroundImageView setImage:[(UIImageView*)[_currentUser backgroundImageView] image]];
+    } else {
+        [backgroundImageView setImage:[(UIImageView*)[(XXAppDelegate*)[UIApplication sharedApplication].delegate windowBackground] image]];
+    }
+    
     if ([[NSUserDefaults standardUserDefaults] boolForKey:kDarkBackground]){
         [backgroundImageView setAlpha:.14];
     } else {
         [backgroundImageView setAlpha:1];
     }
+    backgroundImageView.layer.rasterizationScale = [UIScreen mainScreen].scale;
+    backgroundImageView.layer.shouldRasterize = YES;
     [self.view addSubview:backgroundImageView];
     [self.view sendSubviewToBack:backgroundImageView];
     _filteredResults = [NSMutableArray array];
