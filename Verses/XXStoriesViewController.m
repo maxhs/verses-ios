@@ -207,18 +207,20 @@
 
 - (void)viewDidAppear:(BOOL)animated {
     [super viewDidAppear:animated];
-    double delayInSeconds = 0.0;
-    dispatch_time_t delayTime = dispatch_time(DISPATCH_TIME_NOW, (int64_t)(delayInSeconds *   NSEC_PER_SEC));
-    dispatch_after(delayTime, dispatch_get_main_queue(), ^(void){
-        if (![[NSUserDefaults standardUserDefaults] boolForKey:kExistingUser]) {
+    if (![[NSUserDefaults standardUserDefaults] boolForKey:kExistingUser]) {
+        double delayInSeconds = 0.0;
+        dispatch_time_t delayTime = dispatch_time(DISPATCH_TIME_NOW, (int64_t)(delayInSeconds *   NSEC_PER_SEC));
+        dispatch_after(delayTime, dispatch_get_main_queue(), ^(void){
+            
             XXNewUserWalkthroughViewController *vc = [[XXNewUserWalkthroughViewController alloc] init];
             XXNoRotateNavController *nav = [[XXNoRotateNavController alloc] initWithRootViewController:vc];
             nav.modalTransitionStyle = UIModalTransitionStyleCrossDissolve;
             [self.view.window.rootViewController presentViewController:nav animated:YES completion:^{
                 [[NSUserDefaults standardUserDefaults] setBool:YES forKey:kExistingUser];
             }];
-        }
-    });
+            
+        });
+    }
 }
 
 - (id<UIViewControllerAnimatedTransitioning>)animationControllerForPresentedController:(UIViewController *)presented
@@ -233,7 +235,6 @@
 
     XXGuideAnimator *animator = [XXGuideAnimator new];
     return animator;
-
 }
 
 - (void)handleRefresh{

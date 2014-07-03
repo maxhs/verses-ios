@@ -83,10 +83,11 @@
     if ([[NSUserDefaults standardUserDefaults] boolForKey:kDarkBackground]){
         [self.view setBackgroundColor:[UIColor clearColor]];
         textColor = [UIColor whiteColor];
-        
+        [[UIApplication sharedApplication] setStatusBarStyle:UIStatusBarStyleLightContent animated:YES];
     } else {
         [self.view setBackgroundColor:[UIColor whiteColor]];
         textColor = [UIColor blackColor];
+        [[UIApplication sharedApplication] setStatusBarStyle:UIStatusBarStyleDefault animated:YES];
     }
    
     navBarShadowView.hidden = YES;
@@ -305,12 +306,14 @@
     if (currentUser.circles.count){
         if (indexPath.section == 0){
             Circle *circle = [currentUser.circles objectAtIndex:indexPath.row];
-            circle.unreadCommentCount = 0;
-            circle.fresh = NO;
-            
-            [self.tableView beginUpdates];
-            [self.tableView reloadRowsAtIndexPaths:@[indexPath] withRowAnimation:UITableViewRowAnimationFade];
-            [self.tableView endUpdates];
+            if (circle.unreadCommentCount.intValue > 0 || [circle.fresh isEqualToNumber:[NSNumber numberWithBool:YES]]){
+                circle.unreadCommentCount = 0;
+                circle.fresh = NO;
+                
+                [self.tableView beginUpdates];
+                [self.tableView reloadRowsAtIndexPaths:@[indexPath] withRowAnimation:UITableViewRowAnimationNone];
+                [self.tableView endUpdates];
+            }
             
             [self performSegueWithIdentifier:@"CircleDetail" sender:circle];
         } else {

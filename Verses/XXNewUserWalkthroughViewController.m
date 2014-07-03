@@ -23,6 +23,7 @@
     UITapGestureRecognizer *tapGesture;
     BOOL animating;
     BOOL swiped;
+    BOOL shouldAnimate;
     UILabel *writeLabel;
     UIImageView *writeImage;
     UILabel *circleLabel;
@@ -104,6 +105,7 @@
     group = [UIMotionEffectGroup new];
     group.motionEffects = @[horizontalMotionEffect, verticalMotionEffect];
     
+    shouldAnimate = YES;
     [self.view addSubview:_backgroundImageView];
     [self.view addSubview:_blurredBackgroundImageView];
     [self.view addSubview:_scrollView];
@@ -171,13 +173,14 @@
 }
 
 - (void)animateRightArrow {
+    
     [UIView animateWithDuration:2 delay:0 options:UIViewAnimationOptionCurveEaseInOut animations:^{
         rightArrow.transform = CGAffineTransformMakeTranslation(10, 0);
     } completion:^(BOOL finished) {
         [UIView animateWithDuration:2 delay:0 options:UIViewAnimationOptionCurveEaseInOut animations:^{
             rightArrow.transform = CGAffineTransformIdentity;
         } completion:^(BOOL finished) {
-            [self animateRightArrow];
+            if (shouldAnimate) [self animateRightArrow];
         }];
     }];
 }
@@ -604,6 +607,12 @@
 {
     [super didReceiveMemoryWarning];
     // Dispose of any resources that can be recreated.
+}
+
+- (void)viewDidDisappear:(BOOL)animated {
+    shouldAnimate = NO;
+    rightArrow = nil;
+    [super viewDidDisappear:animated];
 }
 
 @end

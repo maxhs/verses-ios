@@ -96,6 +96,7 @@
     } else {
         [backgroundImageView setAlpha:1];
     }
+    [backgroundImageView setAutoresizingMask:UIViewAutoresizingFlexibleWidth];
     //backgroundImageView.layer.rasterizationScale = [UIScreen mainScreen].scale;
     //backgroundImageView.layer.shouldRasterize = YES;
     [self.view insertSubview:backgroundImageView belowSubview:self.collectionView];
@@ -105,9 +106,18 @@
         [downButton setImage:[UIImage imageNamed:@"smallDownWhiteArrow"] forState:UIControlStateNormal];
         [downButton setAutoresizingMask:UIViewAutoresizingFlexibleWidth];
         [downButton setFrame:CGRectMake(width/2-44, height-66, 88, 88)];
-        [downButton addTarget:self action:@selector(scrollDown) forControlEvents:UIControlEventTouchUpInside];
+        [downButton setAlpha:0.0];
+        //[downButton addTarget:self action:@selector(scrollDown) forControlEvents:UIControlEventTouchUpInside];
         [self.view insertSubview:downButton aboveSubview:self.collectionView];
-        [self pulsate:downButton withDelay:.75];
+        [UIView animateWithDuration:1.23 delay:.5 usingSpringWithDamping:.8 initialSpringVelocity:.001 options:UIViewAnimationOptionCurveEaseIn animations:^{
+            [downButton setAlpha:1.0];
+        } completion:^(BOOL finished) {
+            [UIView animateWithDuration:.77 delay:.5 usingSpringWithDamping:.8 initialSpringVelocity:.001 options:UIViewAnimationOptionCurveEaseOut animations:^{
+                [downButton setAlpha:0.0];
+            } completion:^(BOOL finished) {
+                [downButton removeFromSuperview];
+            }];
+        }];
     }
     
     UIInterpolatingMotionEffect *verticalMotionEffect = [[UIInterpolatingMotionEffect alloc] initWithKeyPath:@"center.y" type:UIInterpolatingMotionEffectTypeTiltAlongVerticalAxis];
@@ -159,7 +169,6 @@
 }
 
 - (void)reload{
-    NSLog(@"Reloading the guide view");
     if ([[NSUserDefaults standardUserDefaults] objectForKey:kUserDefaultsId]){
         signedIn = YES;
         if ([delegate currentUser]){
@@ -170,7 +179,6 @@
     } else {
         signedIn = NO;
     }
-    NSLog(@"signed in %u and current user? %@",signedIn, _currentUser);
 }
 
 - (void)viewWillAppear:(BOOL)animated {
@@ -222,16 +230,11 @@
     [self.collectionView invalidateIntrinsicContentSize];
 }
 
-- (void)didRotateFromInterfaceOrientation:(UIInterfaceOrientation)fromInterfaceOrientation {
-    
-}
-
 - (void)searchBarTextDidBeginEditing:(UISearchBar *)searchBar {
     searching = YES;
     [[UIApplication sharedApplication] setStatusBarHidden:YES withAnimation:UIStatusBarAnimationFade];
-    
     [self.searchBar setShowsCancelButton:YES animated:YES];
-    
+    [self.searchResultsTableView setHidden:NO];
     [UIView animateWithDuration:.33 animations:^{
         [self.searchResultsTableView setAlpha:1.0];
     }];
@@ -286,7 +289,7 @@
     [UIView animateWithDuration:.23 delay:0 options:UIViewAnimationOptionCurveEaseInOut animations:^{
         self.searchBar.transform = CGAffineTransformIdentity;
     } completion:^(BOOL finished) {
-        
+        [self.searchResultsTableView setHidden:YES];
     }];
 }
 
@@ -354,12 +357,14 @@
 
 - (UICollectionViewCell *)collectionView:(UICollectionView *)cv cellForItemAtIndexPath:(NSIndexPath *)indexPath {
     XXGuideCollectionCell *cell = [cv dequeueReusableCellWithReuseIdentifier:@"GuideCell" forIndexPath:indexPath];
-    [cell.guideLabel setTextColor:[UIColor whiteColor]];
-    [cell.guideLabel setFont:[UIFont fontWithName:kSourceSansProSemibold size:19]];
-    cell.guideLabel.numberOfLines = 0;
-    
+    [cell.guideButton setTitleColor:[UIColor whiteColor] forState:UIControlStateNormal];
+    [cell.guideButton.titleLabel setFont:[UIFont fontWithName:kSourceSansProSemibold size:19]];
+    cell.guideButton.titleLabel.numberOfLines = 0;
+    [cell.guideButton.titleLabel setTextAlignment:NSTextAlignmentCenter];
     [cell.imageView addMotionEffect:motion];
-    [cell.guideLabel addMotionEffect:motion];
+    [cell.guideButton addMotionEffect:motion];
+    [cell.imageView setUserInteractionEnabled:NO];
+    [cell.guideButton setUserInteractionEnabled:YES];
     
     cell.layer.borderColor = [UIColor colorWithWhite:1 alpha:.023].CGColor;
     cell.layer.borderWidth = .5f;
@@ -368,57 +373,65 @@
         //left column
         case 0:
             [cell.imageView setImage:[UIImage imageNamed:@"menuHome"]];
-            [cell.guideLabel setText:@"Browse"];
+            [cell.guideButton setTitle:@"Browse" forState:UIControlStateNormal];
+            [cell.guideButton addTarget:self action:@selector(goBrowse) forControlEvents:UIControlEventTouchUpInside];
             break;
         case 2:
             [cell.imageView setImage:[UIImage imageNamed:@"menuFeatured"]];
-            [cell.guideLabel setText:@"Featured"];
+            [cell.guideButton setTitle:@"Featured" forState:UIControlStateNormal];
+            [cell.guideButton addTarget:self action:@selector(goFeatured) forControlEvents:UIControlEventTouchUpInside];
             break;
         case 4:
             [cell.imageView setImage:[UIImage imageNamed:@"menuTrending"]];
-            [cell.guideLabel setText:@"Trending"];
+            [cell.guideButton setTitle:@"Trending" forState:UIControlStateNormal];
+            [cell.guideButton addTarget:self action:@selector(goTrending) forControlEvents:UIControlEventTouchUpInside];
             break;
         case 6:
             [cell.imageView setImage:[UIImage imageNamed:@"menuCircles"]];
-            [cell.guideLabel setText:@"Writing Circles"];
+            [cell.guideButton setTitle:@"Writing Circles" forState:UIControlStateNormal];
+            [cell.guideButton addTarget:self action:@selector(goToCircles) forControlEvents:UIControlEventTouchUpInside];
             
             break;
         case 8:
             [cell.imageView setImage:[UIImage imageNamed:@"menuShared"]];
-            [cell.guideLabel setText:@"Shared"];
+            [cell.guideButton setTitle:@"Shared" forState:UIControlStateNormal];
+            [cell.guideButton addTarget:self action:@selector(goShared) forControlEvents:UIControlEventTouchUpInside];
             break;
         case 10:
             [cell.imageView setImage:[UIImage imageNamed:@"menuPhotos"]];
-            [cell.guideLabel setText:@"Photo Gallery"];
+            [cell.guideButton setTitle:@"Photo Gallery" forState:UIControlStateNormal];
+            [cell.guideButton addTarget:self action:@selector(goGallery) forControlEvents:UIControlEventTouchUpInside];
             break;
             
         case 1:
             [cell.imageView setImage:[UIImage imageNamed:@"menuWrite"]];
-            [cell.guideLabel setText:@"Write"];
+            [cell.guideButton setTitle:@"Write" forState:UIControlStateNormal];
+            [cell.guideButton addTarget:self action:@selector(goWrite) forControlEvents:UIControlEventTouchUpInside];
             break;
         case 3:
             [cell.imageView setImage:[UIImage imageNamed:@"menuSlowReveal"]];
-            [cell.guideLabel setText:@"Slow Reveal"];
+            [cell.guideButton setTitle:@"Slow Reveal" forState:UIControlStateNormal];
+            [cell.guideButton addTarget:self action:@selector(goSlowReveal) forControlEvents:UIControlEventTouchUpInside];
             break;
         case 5:
             [cell.imageView setImage:[UIImage imageNamed:@"menuDrafts"]];
-            [cell.guideLabel setText:@"Drafts"];
+            [cell.guideButton setTitle:@"Drafts" forState:UIControlStateNormal];
+            [cell.guideButton addTarget:self action:@selector(goToDrafts) forControlEvents:UIControlEventTouchUpInside];
             break;
         case 7:
             [cell.imageView setImage:[UIImage imageNamed:@"menuPortfolio"]];
-            [cell.guideLabel setText:@"Portfolio"];
+            [cell.guideButton setTitle:@"Portfolio" forState:UIControlStateNormal];
+            [cell.guideButton addTarget:self action:@selector(goToPortfolio) forControlEvents:UIControlEventTouchUpInside];
             break;
         case 9:
             [cell.imageView setImage:[UIImage imageNamed:@"menuBookmarks"]];
-            [cell.guideLabel setText:@"Bookmarks"];
-
+            [cell.guideButton setTitle:@"Bookmarks" forState:UIControlStateNormal];
+            [cell.guideButton addTarget:self action:@selector(goToBookmarks) forControlEvents:UIControlEventTouchUpInside];
             break;
-            
-        
         case 11:
             [cell.imageView setImage:[UIImage imageNamed:@"menuSettings"]];
-            [cell.guideLabel setText:@"Settings"];
-        
+            [cell.guideButton setTitle:@"Settings" forState:UIControlStateNormal];
+            [cell.guideButton addTarget:self action:@selector(goToSettings) forControlEvents:UIControlEventTouchUpInside];
             break;
         default:
             break;
@@ -434,77 +447,38 @@
             [self goBrowse];
             break;
         case 1:
-            if (signedIn){
-                [self goWrite];
-            } else {
-                [self login];
-            }
-            
+            [self goWrite];
             break;
         case 2:
             [self goFeatured];
             break;
         case 3:
-            if (signedIn){
-                [self goSlowReveal];
-            } else {
-                [self login];
-            }
-            
+            [self goSlowReveal];
             break;
         case 4:
             [self goTrending];
             break;
         case 5:
-            if (signedIn){
-                [self goToDrafts];
-            } else {
-                [self login];
-            }
-            
+            [self goToDrafts];
             break;
-            
         case 6:
-            if (signedIn){
-                [self goToCircles];
-            } else {
-                [self login];
-            }
+            [self goToCircles];
             break;
         case 8:
-            if (signedIn){
-                [self goShared];
-            } else {
-                [self login];
-            }
+            [self goShared];
             break;
         case 7:
-            if (signedIn){
-                [self goToPortfolio];
-            } else {
-                [self login];
-            }
+            [self goToPortfolio];
             break;
-            
         case 10:
             [self goGallery];
             break;
         case 9:
-            if (signedIn){
-                [self goToBookmarks];
-            } else {
-                [self login];
-            }
-            
+            [self goToBookmarks];
             break;
         case 11:
-            if (signedIn){
-                [self goToSettings];
-            } else {
-                [self login];
-            }
+            [self goToSettings];
             break;
-            
         default:
             break;
     }
@@ -514,10 +488,6 @@
     if (scrollView.contentOffset.y > 100){
         [self removeDownButton];
     }
-}
-
-- (void)collectionView:(UICollectionView *)collectionView didDeselectItemAtIndexPath:(NSIndexPath *)indexPath {
-
 }
 
 #pragma mark - Table view data source
@@ -649,14 +619,6 @@
     }*/
 }
 
-- (void)pulsate:(id)obj withDelay:(CGFloat)delay{
-    [UIView animateWithDuration:.75 delay:delay usingSpringWithDamping:.8 initialSpringVelocity:.001 options:UIViewAnimationOptionCurveEaseInOut animations:^{
-        [obj setAlpha:1.0];
-    } completion:^(BOOL finished) {
-
-    }];
-}
-
 - (void)tableView:(UITableView *)tableView willDisplayCell:(UITableViewCell *)cell forRowAtIndexPath:(NSIndexPath *)indexPath {
     cell.backgroundColor = [UIColor clearColor];
     UIView *selectionView = [[UIView alloc] initWithFrame:cell.frame];
@@ -715,11 +677,15 @@
 }
 
 - (void)goShared {
-    [self setStoriesAsPane];
-    stories.shared = YES;
-    [self.presentingViewController dismissViewControllerAnimated:YES completion:^{
-        
-    }];
+    if (signedIn){
+        [self setStoriesAsPane];
+        stories.shared = YES;
+        [self.presentingViewController dismissViewControllerAnimated:YES completion:^{
+            
+        }];
+    } else {
+        [self login];
+    }
 }
 
 - (void)goGallery {
@@ -739,7 +705,7 @@
 }
 
 - (void)goWrite {
-    if ([[NSUserDefaults standardUserDefaults] objectForKey:kUserDefaultsId]){
+    if (signedIn){
         [[UIApplication sharedApplication] setStatusBarHidden:YES withAnimation:UIStatusBarAnimationFade];
         XXWriteViewController *write = [[self storyboard] instantiateViewControllerWithIdentifier:@"Write"];
         write.mystery = NO;
@@ -754,7 +720,7 @@
     
 }
 - (void)goSlowReveal {
-    if ([[NSUserDefaults standardUserDefaults] objectForKey:kUserDefaultsId]){
+    if (signedIn){
         [[UIApplication sharedApplication] setStatusBarHidden:YES withAnimation:UIStatusBarAnimationFade];
         XXWriteViewController *write = [[self storyboard] instantiateViewControllerWithIdentifier:@"Write"];
         write.mystery = YES;
@@ -778,55 +744,75 @@
 }
 
 - (void)goToPortfolio {
-    [[UIApplication sharedApplication] setStatusBarHidden:YES withAnimation:UIStatusBarAnimationFade];
-    XXPortfolioViewController *portfolio = [[self storyboard] instantiateViewControllerWithIdentifier:@"Portfolio"];
-    [portfolio setDraftMode:NO];
-    UINavigationController *nav = [[UINavigationController alloc] initWithRootViewController:portfolio];
-    [delegate.dynamicsDrawerViewController setPaneViewController:nav];
-    [self dismissViewControllerAnimated:YES completion:^{
-    
-    }];
+    if (signedIn){
+        [[UIApplication sharedApplication] setStatusBarHidden:YES withAnimation:UIStatusBarAnimationFade];
+        XXPortfolioViewController *portfolio = [[self storyboard] instantiateViewControllerWithIdentifier:@"Portfolio"];
+        [portfolio setDraftMode:NO];
+        UINavigationController *nav = [[UINavigationController alloc] initWithRootViewController:portfolio];
+        [delegate.dynamicsDrawerViewController setPaneViewController:nav];
+        [self dismissViewControllerAnimated:YES completion:^{
+        
+        }];
+    } else {
+        [self login];
+    }
 }
 
 - (void)goToDrafts {
-    [[UIApplication sharedApplication] setStatusBarHidden:YES withAnimation:UIStatusBarAnimationFade];
-    XXPortfolioViewController *portfolio = [[self storyboard] instantiateViewControllerWithIdentifier:@"Portfolio"];
-    [portfolio setDraftMode:YES];
-    UINavigationController *nav = [[UINavigationController alloc] initWithRootViewController:portfolio];
-    [delegate.dynamicsDrawerViewController setPaneViewController:nav];
-    [self dismissViewControllerAnimated:YES completion:^{
-        
-    }];
+    if (signedIn){
+        [[UIApplication sharedApplication] setStatusBarHidden:YES withAnimation:UIStatusBarAnimationFade];
+        XXPortfolioViewController *portfolio = [[self storyboard] instantiateViewControllerWithIdentifier:@"Portfolio"];
+        [portfolio setDraftMode:YES];
+        UINavigationController *nav = [[UINavigationController alloc] initWithRootViewController:portfolio];
+        [delegate.dynamicsDrawerViewController setPaneViewController:nav];
+        [self dismissViewControllerAnimated:YES completion:^{
+            
+        }];
+    } else {
+        [self login];
+    }
 }
 
 - (void)goToBookmarks {
-    [[UIApplication sharedApplication] setStatusBarHidden:YES withAnimation:UIStatusBarAnimationFade];
-    XXBookmarksViewController *bookmarks = [[self storyboard] instantiateViewControllerWithIdentifier:@"Bookmarks"];
-    UINavigationController *nav = [[UINavigationController alloc] initWithRootViewController:bookmarks];
-    [delegate.dynamicsDrawerViewController setPaneViewController:nav];
-    [self dismissViewControllerAnimated:YES completion:^{
-        
-    }];
+    if (signedIn){
+        [[UIApplication sharedApplication] setStatusBarHidden:YES withAnimation:UIStatusBarAnimationFade];
+        XXBookmarksViewController *bookmarks = [[self storyboard] instantiateViewControllerWithIdentifier:@"Bookmarks"];
+        UINavigationController *nav = [[UINavigationController alloc] initWithRootViewController:bookmarks];
+        [delegate.dynamicsDrawerViewController setPaneViewController:nav];
+        [self dismissViewControllerAnimated:YES completion:^{
+            
+        }];
+    } else {
+        [self login];
+    }
 }
 
 - (void)goToCircles {
-    [[UIApplication sharedApplication] setStatusBarHidden:YES withAnimation:UIStatusBarAnimationFade];
-    XXCirclesViewController *circles = [[self storyboard] instantiateViewControllerWithIdentifier:@"Circles"];
-    UINavigationController *nav = [[UINavigationController alloc] initWithRootViewController:circles];
-    [delegate.dynamicsDrawerViewController setPaneViewController:nav];
-    [self dismissViewControllerAnimated:YES completion:^{
-        
-    }];
+    if (signedIn){
+        [[UIApplication sharedApplication] setStatusBarHidden:YES withAnimation:UIStatusBarAnimationFade];
+        XXCirclesViewController *circles = [[self storyboard] instantiateViewControllerWithIdentifier:@"Circles"];
+        UINavigationController *nav = [[UINavigationController alloc] initWithRootViewController:circles];
+        [delegate.dynamicsDrawerViewController setPaneViewController:nav];
+        [self dismissViewControllerAnimated:YES completion:^{
+            
+        }];
+    } else {
+        [self login];
+    }
 }
 
 - (void)goToSettings {
-    [[UIApplication sharedApplication] setStatusBarHidden:YES withAnimation:UIStatusBarAnimationFade];
-    XXSettingsViewController *settings = [[self storyboard] instantiateViewControllerWithIdentifier:@"Settings"];
-    UINavigationController *nav = [[UINavigationController alloc] initWithRootViewController:settings];
-    [delegate.dynamicsDrawerViewController setPaneViewController:nav];
-    [self dismissViewControllerAnimated:YES completion:^{
-        
-    }];
+    if (signedIn){
+        [[UIApplication sharedApplication] setStatusBarHidden:YES withAnimation:UIStatusBarAnimationFade];
+        XXSettingsViewController *settings = [[self storyboard] instantiateViewControllerWithIdentifier:@"Settings"];
+        UINavigationController *nav = [[UINavigationController alloc] initWithRootViewController:settings];
+        [delegate.dynamicsDrawerViewController setPaneViewController:nav];
+        [self dismissViewControllerAnimated:YES completion:^{
+            
+        }];
+    } else {
+        [self login];
+    }
 }
 
 - (void)viewWillDisappear:(BOOL)animated {

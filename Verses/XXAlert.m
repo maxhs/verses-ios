@@ -78,6 +78,7 @@
 	if (background == nil)
 	{
         background = [[UIImageView alloc] initWithImage:[self blurredSnapshot]];
+        [background setAutoresizingMask:UIViewAutoresizingFlexibleWidth];
         [background setFrame:self.window.frame];
 		[[NSNotificationCenter defaultCenter] addObserver:self selector:@selector(rotate:) name:UIDeviceOrientationDidChangeNotification object:nil];
         [self addSubview:background];

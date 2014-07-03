@@ -20,6 +20,7 @@
 
 @interface XXStoryInfoViewController () <UITextViewDelegate, UIAlertViewDelegate, UIPopoverControllerDelegate> {
     AFHTTPRequestOperationManager *manager;
+    XXAppDelegate *delegate;
     UIButton *cancelFeedback;
     UIButton *sendFeedback;
     UITextView *feedbackTextView;
@@ -28,6 +29,7 @@
     NSIndexPath *indexPathForDeletion;
     CGFloat infoHeight;
     CGRect screen;
+    User *_currentUser;
 }
 @end
 
@@ -36,7 +38,8 @@
 
 - (void)viewDidLoad {
     [self.tableView setSeparatorStyle:UITableViewCellSeparatorStyleNone];
-    manager = [(XXAppDelegate*)[UIApplication sharedApplication].delegate manager];
+    delegate = (XXAppDelegate*)[UIApplication sharedApplication].delegate;
+    manager = [delegate manager];
     _formatter= [[NSDateFormatter alloc] init];
     [_formatter setLocale:[NSLocale currentLocale]];
     [_formatter setDateFormat:@"MMM d , h:mm a"];
@@ -45,6 +48,21 @@
     else signedIn = NO;
     [super viewDidLoad];
     [[NSNotificationCenter defaultCenter] addObserver:self selector:@selector(reloadStoryInfo:) name:@"ReloadStoryInfo" object:nil];
+    [[NSNotificationCenter defaultCenter] addObserver:self selector:@selector(reload) name:@"ReloadMenu" object:nil];
+}
+
+- (void)reload{
+    if ([[NSUserDefaults standardUserDefaults] objectForKey:kUserDefaultsId]){
+        signedIn = YES;
+        if ([delegate currentUser]){
+            _currentUser = delegate.currentUser;
+        } else {
+            _currentUser = [User MR_findFirstByAttribute:@"identifier" withValue:[[NSUserDefaults standardUserDefaults] objectForKey:kUserDefaultsId]];
+        }
+    } else {
+        signedIn = NO;
+    }
+    [self.tableView reloadData];
 }
 
 - (void)reloadStoryInfo:(NSNotification*)notification {
@@ -58,6 +76,13 @@
             [self.tableView setAlpha:1.0];
             [_dynamicsDrawerViewController.view setAlpha:1.0];
             self.tableView.transform = CGAffineTransformIdentity;
+        }];
+    }
+    if (_dynamicsDrawerViewController.paneViewController.view.alpha != 1.0){
+        [UIView animateWithDuration:.23 animations:^{
+            [_dynamicsDrawerViewController.paneViewController.view setAlpha:1.0];
+        } completion:^(BOOL finished) {
+            
         }];
     }
     [self.tableView reloadData];
@@ -239,8 +264,16 @@
 
 - (void)textViewDidBeginEditing:(UITextView *)textView {
     [UIView animateWithDuration:.25 animations:^{
-        [textView setBackgroundColor:[UIColor colorWithWhite:1 alpha:1]];
-        [textView setTextColor:[UIColor blackColor]];
+        if ([[NSUserDefaults standardUserDefaults] boolForKey:kDarkBackground]){
+            [textView setBackgroundColor:[UIColor clearColor]];
+            textView.layer.borderColor = [UIColor whiteColor].CGColor;
+            textView.layer.borderWidth = 1.f;
+            [textView setTextColor:[UIColor whiteColor]];
+        } else {
+            [textView setBackgroundColor:[UIColor colorWithWhite:1 alpha:1]];
+            [textView setTextColor:[UIColor blackColor]];
+        }
+        
         [textView setFont:[UIFont fontWithName:kSourceSansProRegular size:17]];
     }];
     
@@ -270,6 +303,11 @@
             [textView setFont:[UIFont fontWithName:kSourceSansProLight size:17]];
         }
         [textView setTextColor:[UIColor whiteColor]];
+        
+        if ([[NSUserDefaults standardUserDefaults] boolForKey:kDarkBackground]){
+            textView.layer.borderWidth = 0.f;
+        }
+        
     }];
     
     [UIView animateWithDuration:.5 delay:0 usingSpringWithDamping:.5 initialSpringVelocity:.0001 options:UIViewAnimationOptionCurveEaseInOut animations:^{
@@ -353,6 +391,7 @@
 - (void)tableView:(UITableView *)tableView didSelectRowAtIndexPath:(NSIndexPath *)indexPath {
     if (!signedIn && indexPath.section == 2){
         [self confirmLoginPrompt];
+        [self.tableView deselectRowAtIndexPath:indexPath animated:YES];
     } else if (indexPath.section == 1){
         //[ProgressHUD show:@"Fetching profile..."];
         if (IDIOM == IPAD){
@@ -364,25 +403,25 @@
             self.popover.delegate = self;
             XXAuthorInfoCell *cell = (XXAuthorInfoCell*)[self.tableView cellForRowAtIndexPath:indexPath];
             [self.popover presentPopoverFromRect:cell.frame inView:self.view permittedArrowDirections:UIPopoverArrowDirectionAny animated:YES];
-
+            [self.tableView deselectRowAtIndexPath:indexPath animated:YES];
         } else {
             User *user = [_story.users objectAtIndex:indexPath.row];
             XXProfileViewController* vc = [[self storyboard] instantiateViewControllerWithIdentifier:@"Profile"];
             [vc setUser:user];
             UINavigationController *nav = [[UINavigationController alloc] initWithRootViewController:vc];
-            [self presentViewController:nav animated:YES completion:^{
+            
+            [UIView animateWithDuration:.23 animations:^{
+                [_dynamicsDrawerViewController.paneViewController.view setAlpha:0.0];
+                [self.tableView setAlpha:0.0];
+                
+            } completion:^(BOOL finished) {
                 
             }];
-        }
-        if ([[NSUserDefaults standardUserDefaults] boolForKey:kDarkBackground]){
-            [UIView animateWithDuration:.23 animations:^{
-                [self.tableView setAlpha:0.0];
-                self.tableView.transform = CGAffineTransformMakeScale(.77, .77);
-                [_dynamicsDrawerViewController.view setAlpha:0.0];
-            }];
+            
+            [self presentViewController:nav animated:YES completion:NULL];
+            [self.tableView deselectRowAtIndexPath:indexPath animated:NO];
         }
     }
-    [self.tableView deselectRowAtIndexPath:indexPath animated:YES];
 }
 
 - (void)confirmLoginPrompt {

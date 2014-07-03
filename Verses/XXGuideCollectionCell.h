@@ -11,6 +11,6 @@
 @interface XXGuideCollectionCell : UICollectionViewCell
 
 @property (weak, nonatomic) IBOutlet UIImageView *imageView;
-@property (weak, nonatomic) IBOutlet UILabel *guideLabel;
+@property (weak, nonatomic) IBOutlet UIButton *guideButton;
 
 @end

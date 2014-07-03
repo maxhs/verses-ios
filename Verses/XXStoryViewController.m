@@ -201,8 +201,6 @@
         [self loadFeedbacks];
     } else if (_story) {
         [self loadStory:_story.identifier];
-    } else {
-        [self.navigationController popViewControllerAnimated:YES];
     }
     
     if (_scrollView.alpha == 0.0){
@@ -223,7 +221,7 @@
     [manager GET:[NSString stringWithFormat:@"%@/stories/%@",kAPIBaseUrl,identifier] parameters:parameters success:^(AFHTTPRequestOperation *operation, id responseObject) {
         //NSLog(@"load story response: %@",responseObject);
         _story = [Story MR_findFirstByAttribute:@"identifier" withValue:identifier];
-        if (_story) {
+        if (!_story) {
             _story = [Story MR_createInContext:[NSManagedObjectContext MR_defaultContext]];
             [_story populateFromDict:[responseObject objectForKey:@"story"]];
         }
@@ -596,17 +594,13 @@
 
 - (void)generateAttributedString:(Contribution*)contribution {
     
-    if (IDIOM == IPAD){
-        header1spacing = 23;
-        header2spacing = 21;
-    } else {
-        header1spacing = 23;
-        header2spacing = 21;
-    }
+    header1spacing = 14;
+    header2spacing = 0;
+  
     NSMutableParagraphStyle *paragraphStyle = [[NSMutableParagraphStyle alloc] init];
-    paragraphStyle.lineHeightMultiple = 1.f;
+    paragraphStyle.lineHeightMultiple = 1.1f;
     paragraphStyle.lineSpacing = 3.f;
-    paragraphStyle.paragraphSpacing = 7.f;
+    paragraphStyle.paragraphSpacing = 21.f;
     
     NSDictionary* attributes = @{/*NSFontAttributeName:[UIFont fontWithDescriptor:[UIFontDescriptor preferredCrimsonTextFontDescriptorWithTextStyle:UIFontTextStyleBody] size:0],*/
                                  NSParagraphStyleAttributeName : paragraphStyle,
@@ -875,7 +869,7 @@
         [_titleLabel setFont:[UIFont fontWithName:kSourceSansProSemibold size:textSize]];
         [_authorsLabel setFont:[UIFont fontWithName:kCrimsonRoman size:19]];
     } else {
-        imageHeight = height*.8;
+        imageHeight = height*.7;
         textSize = 37;
         spacer = 14;
         [_titleLabel setFont:[UIFont fontWithName:kSourceSansProSemibold size:textSize]];

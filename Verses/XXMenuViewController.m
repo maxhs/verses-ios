@@ -432,7 +432,7 @@
             [_loginButton setBackgroundColor:[UIColor clearColor]];
             [cell addSubview:_loginButton];
         }
-        [_loginButton setFrame:CGRectMake(0, 0, screenWidth()*.923, self.tableView.frame.size.height-self.tableView.tableHeaderView.frame.size.height-44)];
+        [_loginButton setFrame:CGRectMake(0, 0, self.tableView.frame.size.width, self.tableView.frame.size.height-self.tableView.tableHeaderView.frame.size.height-44)];
         [_loginButton setAutoresizingMask:UIViewAutoresizingFlexibleWidth];
         [_loginButton setAutoresizingMask:UIViewAutoresizingFlexibleHeight];
         [_loginButton setAutoresizingMask:UIViewAutoresizingFlexibleRightMargin];

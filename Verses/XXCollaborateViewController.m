@@ -75,10 +75,12 @@
         [self.view setBackgroundColor:[UIColor clearColor]];
         textColor = [UIColor whiteColor];
         [refreshControl setTintColor:[UIColor whiteColor]];
+        [[UIApplication sharedApplication] setStatusBarStyle:UIStatusBarStyleLightContent animated:YES];
     } else {
         [self.view setBackgroundColor:[UIColor whiteColor]];
         textColor = [UIColor blackColor];
         [refreshControl setTintColor:[UIColor blackColor]];
+        [[UIApplication sharedApplication] setStatusBarStyle:UIStatusBarStyleDefault animated:YES];
     }
     navBarShadowView.hidden = YES;
     

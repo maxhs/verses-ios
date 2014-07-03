@@ -72,7 +72,6 @@
 - (void)viewWillAppear:(BOOL)animated {
     [super viewWillAppear:animated];
     [self loadBookmarks];
-    [[UIApplication sharedApplication] setStatusBarStyle:UIStatusBarStyleDefault animated:YES];
     [[UIApplication sharedApplication] setStatusBarHidden:NO withAnimation:UIStatusBarAnimationFade];
     [delegate.dynamicsDrawerViewController setPaneDragRevealEnabled:NO forDirection:MSDynamicsDrawerDirectionRight];
     if ([[NSUserDefaults standardUserDefaults] boolForKey:kDarkBackground]){
@@ -85,9 +84,11 @@
                 self.tableView.transform = CGAffineTransformIdentity;
             }];
         }
+        [[UIApplication sharedApplication] setStatusBarStyle:UIStatusBarStyleLightContent animated:YES];
     } else {
         [self.view setBackgroundColor:[UIColor whiteColor]];
         textColor = [UIColor blackColor];
+        [[UIApplication sharedApplication] setStatusBarStyle:UIStatusBarStyleDefault animated:YES];
     }
     self.navigationItem.leftBarButtonItem = backButton;
     navBarShadowView.hidden = YES;
@@ -220,16 +221,18 @@
 
 - (void)tableView:(UITableView *)tableView didSelectRowAtIndexPath:(NSIndexPath *)indexPath {
     [tableView deselectRowAtIndexPath:indexPath animated:YES];
-    [self performSegueWithIdentifier:@"Read" sender:indexPath];
+    Story *story = [currentUser.bookmarks[indexPath.row] story];
+    if (story && story.identifier){
+        [self performSegueWithIdentifier:@"Read" sender:story];
+    }
 }
 
-- (void)prepareForSegue:(UIStoryboardSegue *)segue sender:(NSIndexPath*)indexPath {
-    [super prepareForSegue:segue sender:indexPath];
+- (void)prepareForSegue:(UIStoryboardSegue *)segue sender:(id)sender {
+    [super prepareForSegue:segue sender:sender];
     
-    if ([segue.identifier isEqualToString:@"Read"]){
+    if ([segue.identifier isEqualToString:@"Read"] && [sender isKindOfClass:[Story class]]){
         XXStoryViewController *storyVC = [segue destinationViewController];
-        Story *story = [(Bookmark*)[currentUser.bookmarks objectAtIndex:indexPath.row] story];
-        [storyVC setStory:story];
+        [storyVC setStory:(Story*)sender];
         [ProgressHUD show:@"Fetching story..."];
         if ([[NSUserDefaults standardUserDefaults] boolForKey:kDarkBackground]){
             [UIView animateWithDuration:.23 animations:^{
@@ -269,7 +272,12 @@
 - (void)deleteBookmark {
     if (indexPathForDeletion){
         Bookmark *bookmark = [currentUser.bookmarks objectAtIndex:indexPathForDeletion.row];
-        [manager DELETE:[NSString stringWithFormat:@"%@/bookmarks/%@",kAPIBaseUrl,bookmark.identifier] parameters:@{@"story_id":bookmark.story.identifier,@"user_id":[[NSUserDefaults standardUserDefaults] objectForKey:kUserDefaultsId]} success:^(AFHTTPRequestOperation *operation, id responseObject) {
+        NSMutableDictionary *parameters = [NSMutableDictionary dictionary];
+        if (bookmark.story && bookmark.story.identifier){
+            [parameters setObject:bookmark.story.identifier forKey:@"story_id"];
+        }
+        [parameters setObject:[[NSUserDefaults standardUserDefaults] objectForKey:kUserDefaultsId] forKey:@"user_id"];
+        [manager DELETE:[NSString stringWithFormat:@"%@/bookmarks/%@",kAPIBaseUrl,bookmark.identifier] parameters:parameters success:^(AFHTTPRequestOperation *operation, id responseObject) {
             NSLog(@"Success deleting bookmark: %@",responseObject);
             [currentUser removeBookmark:bookmark];
             [bookmark MR_deleteInContext:[NSManagedObjectContext MR_defaultContext]];

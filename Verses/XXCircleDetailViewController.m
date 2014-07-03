@@ -15,6 +15,7 @@
 #import "XXStoryViewController.h"
 #import "XXCircleNotificationCell.h"
 #import "XXManageCircleViewController.h"
+#import "XXFlowLayout.h"
 
 @interface XXCircleDetailViewController () <XXSegmentedControlDelegate, XXChatDelegate> {
     XXSegmentedControl *_circleControl;
@@ -85,14 +86,14 @@
         [self setupChat];
         [self.view addSubview:self.collectionView];
         [self.view addSubview:_chatInput];
+        [self scrollToBottom];
     }
-    [self.view bringSubviewToFront:self.storiesTableView];
-    [self scrollToBottom];
     
     //show stories by default
     [self reset];
     stories = YES;
     [self showTableView];
+    [self.view bringSubviewToFront:self.storiesTableView];
     
     self.detailsTableView.rowHeight = 60;
     self.storiesTableView.rowHeight = 80;
@@ -189,6 +190,7 @@
         [_circleControl darkBackground];
         [_chatInput.bgToolbar setBarStyle:UIBarStyleBlackTranslucent];
         _chatInput.textView.keyboardAppearance = UIKeyboardAppearanceDark;
+        [[UIApplication sharedApplication] setStatusBarStyle:UIStatusBarStyleLightContent animated:YES];
     } else {
         [self.view setBackgroundColor:[UIColor whiteColor]];
         [self.storiesTableView setBackgroundColor:[UIColor whiteColor]];
@@ -197,6 +199,7 @@
         [_circleControl lightBackground];
         [_chatInput.bgToolbar setBarStyle:UIBarStyleDefault];
         _chatInput.textView.keyboardAppearance = UIKeyboardAppearanceDefault;
+        [[UIApplication sharedApplication] setStatusBarStyle:UIStatusBarStyleDefault animated:YES];
     }
     
     if (self.view.alpha != 1.0){
@@ -232,7 +235,7 @@
     _chatInput.delegate = self;
     _chatInput.backgroundColor = [UIColor colorWithWhite:1 alpha:0.725f];
     
-    UICollectionViewFlowLayout *flow = [[UICollectionViewFlowLayout alloc]init];
+    XXFlowLayout *flow = [[XXFlowLayout alloc]init];
     flow.sectionInset = UIEdgeInsetsMake(0, 0, 0, 0);
     flow.scrollDirection = UICollectionViewScrollDirectionVertical;
     flow.minimumLineSpacing = 6;
@@ -247,6 +250,7 @@
     self.collectionView.allowsSelection = YES;
     self.collectionView.autoresizingMask = UIViewAutoresizingFlexibleHeight | UIViewAutoresizingFlexibleWidth;
     [self.collectionView registerClass:[XXChatCell class] forCellWithReuseIdentifier:@"ChatCell"];
+    self.collectionView.transform = CGAffineTransformIdentity;
 
     [[NSNotificationCenter defaultCenter] addObserver:self
                                              selector:@selector(keyboardWillShow:)
@@ -291,7 +295,7 @@
         case 3:
             [self reset];
             chat = YES;
-            [self hideTableView];
+            [self showChat];
             
             break;
         default:
@@ -305,16 +309,17 @@
     stories = NO;
 }
 
-- (void)hideTableView {
+- (void)showChat {
+    [self.collectionView invalidateIntrinsicContentSize];
     [UIView animateWithDuration:.5 delay:0 usingSpringWithDamping:.5 initialSpringVelocity:.0001 options:UIViewAnimationOptionCurveEaseIn animations:^{
         self.collectionView.transform = CGAffineTransformIdentity;
         self.collectionView.alpha = 1.0;
         _chatInput.transform = CGAffineTransformIdentity;
-        
         [self.detailsTableView setAlpha:0.0];
         self.detailsTableView.transform = CGAffineTransformMakeScale(.87, .87);
         [self.storiesTableView setAlpha:0.0];
         self.storiesTableView.transform = CGAffineTransformMakeScale(.87, .87);
+        
     } completion:^(BOOL finished) {
         
     }];
@@ -338,6 +343,7 @@
         }
         
     } completion:^(BOOL finished) {
+        
     }];
 }
 
@@ -465,7 +471,7 @@
             if ([notification.type isEqualToString:kCircleComment]){
                 [self reset];
                 chat = YES;
-                [self hideTableView];
+                [self showChat];
             }
         }
     }

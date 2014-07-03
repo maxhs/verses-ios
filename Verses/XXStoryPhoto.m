@@ -126,7 +126,7 @@
         [delegate.windowBackground setContentMode:UIViewContentModeScaleAspectFill];
         UIImage *blurred;
         if (IDIOM == IPAD){
-            blurred = [image applyBlurWithRadius:27 blurType:BOXFILTER tintColor:[UIColor colorWithWhite:0 alpha:.43] saturationDeltaFactor:1.8 maskImage:nil];
+            blurred = [image applyBlurWithRadius:23 blurType:BOXFILTER tintColor:[UIColor colorWithWhite:0 alpha:.33] saturationDeltaFactor:1.8 maskImage:nil];
         } else {
             blurred = [image applyBlurWithRadius:33 blurType:BOXFILTER tintColor:[UIColor colorWithWhite:.23 alpha:.37] saturationDeltaFactor:1.8 maskImage:nil];
         }
