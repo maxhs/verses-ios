@@ -12,5 +12,6 @@
 
 @property (weak, nonatomic) IBOutlet UIImageView *imageView;
 @property (weak, nonatomic) IBOutlet UIButton *guideButton;
+@property (weak, nonatomic) IBOutlet UILabel *alertLabel;
 
 @end

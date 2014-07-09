@@ -31,9 +31,9 @@
             user = [User MR_createInContext:[NSManagedObjectContext MR_defaultContext]];
             [user populateFromDict:[dictionary objectForKey:@"user"]];
         }
-        
         self.user = user;
     }
+    
     if ([dictionary objectForKey:@"story"] && [dictionary objectForKey:@"story"] != [NSNull null]) {
         Story *story = [Story MR_findFirstByAttribute:@"identifier" withValue:[[dictionary objectForKey:@"story"] objectForKey:@"id"]];
         if (story){

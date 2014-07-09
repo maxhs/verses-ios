@@ -27,6 +27,7 @@
 @dynamic picMedium;
 @dynamic picSmall;
 @dynamic picThumb;
+@dynamic backgroundUrl;
 @dynamic pushBookmarks;
 @dynamic pushCircleComments;
 @dynamic pushCirclePublish;

@@ -21,12 +21,14 @@ static inline CGFloat height(UIView *view) { return view.frame.size.height; }
 #define kAPIBaseUrl @"https://www.writeverses.com/api/v1"
 #define kTermsUrl @"https://www.writeverses.com/terms"
 #define kUrlScheme @"verses"
+#define kCoreDataStore @"Verses"
 
 #define MIXPANEL_TOKEN @"8184fc9baafab30a5c51cceefb90e2d0"
 #define RADIANS(degrees) ((degrees * M_PI) / 180.0)
 
 #define IDIOM    UI_USER_INTERFACE_IDIOM()
 #define IPAD     UIUserInterfaceIdiomPad
+#define kGuideAnimatorTime .65f
 
 #define kFeedbackEmail @"feedback@writeverses.com"
 #define kDarkBackground @"darkBackground"
@@ -39,6 +41,7 @@ static inline CGFloat height(UIView *view) { return view.frame.size.height; }
 #define kExistingUser @"existingUser"
 #define kExistingUserWrite @"existingUserWrite"
 #define kHasSeenGuideView @"hasSeenGuideView"
+#define kAlreadyDestroyed @"Already destroyed"
 
 #define kUserDefaultsId @"userId"
 #define kUserDefaultsPassword @"password"

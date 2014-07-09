@@ -41,6 +41,7 @@
     CGRect screen;
     User *currentUser;
     UIBarButtonItem *guideButton;
+    UIBarButtonItem *negativeRightButton;
     UIColor *textColor;
     UIImageView *navBarShadowView;
     UISwitch *backgroundThemeSwitch;
@@ -61,22 +62,17 @@
     saveButton = [[UIBarButtonItem alloc] initWithBarButtonSystemItem:UIBarButtonSystemItemSave target:self action:@selector(save)];
     doneButton = [[UIBarButtonItem alloc] initWithBarButtonSystemItem:UIBarButtonSystemItemDone target:self action:@selector(doneEditing)];
     guideButton = [[UIBarButtonItem alloc]initWithImage:[UIImage imageNamed:@"more"] style:UIBarButtonItemStylePlain target:self action:@selector(showGuide)];
-    UIBarButtonItem *negativeRightButton = [[UIBarButtonItem alloc]
+    negativeRightButton = [[UIBarButtonItem alloc]
                                             initWithBarButtonSystemItem:UIBarButtonSystemItemFixedSpace
                                             target:nil action:nil];
     negativeRightButton.width = -14.f;
     self.navigationItem.rightBarButtonItems = @[negativeRightButton,guideButton];
     
-    UIBarButtonItem *leftSpacerButton = [[UIBarButtonItem alloc]
-                                            initWithBarButtonSystemItem:UIBarButtonSystemItemFixedSpace
-                                            target:nil action:nil];
-    leftSpacerButton.width = 10.f;
-    self.navigationItem.leftBarButtonItems = @[leftSpacerButton,saveButton];
     [self.logoutButton.titleLabel setFont:[UIFont fontWithName:kSourceSansProSemibold size:16]];
     self.tableView.tableFooterView = self.logoutButton;
     screen = [UIScreen mainScreen].bounds;
     [self loadProfile];
-    
+    self.title = @"Settings";
     navBarShadowView = [Utilities findNavShadow:self.navigationController.navigationBar];
     
     if (![(XXAppDelegate*)[UIApplication sharedApplication].delegate currentUser]){
@@ -161,15 +157,20 @@
     }
     if (indexPath != nil) [self.tableView scrollToRowAtIndexPath:indexPath atScrollPosition:UITableViewScrollPositionMiddle animated:YES];
     
-    self.navigationItem.rightBarButtonItem = doneButton;
+    self.navigationItem.rightBarButtonItem = nil;
+    self.navigationItem.rightBarButtonItem = saveButton;
+    self.navigationItem.leftBarButtonItem = doneButton;
 }
 
 - (void)textFieldDidEndEditing:(UITextField *)textField {
-    self.navigationItem.rightBarButtonItem = guideButton;
+    
 }
 
 - (void)doneEditing {
     [self.view endEditing:YES];
+    self.navigationItem.rightBarButtonItem = nil;
+    self.navigationItem.rightBarButtonItems = @[negativeRightButton,guideButton];
+    self.navigationItem.leftBarButtonItem = nil;
 }
 
 #pragma mark - Table view data source
@@ -222,6 +223,7 @@
                 [cell.textField setText:currentUser.penName];
                 penNameTextField = cell.textField;
                 [penNameTextField setPlaceholder:@"Your pen name"];
+                [penNameTextField setAutocapitalizationType:UITextAutocapitalizationTypeWords];
                 penNameTextField.delegate = self;
                 break;
             case 1:
@@ -230,6 +232,7 @@
                 locationTextField = cell.textField;
                 [cell.textField setPlaceholder:@"Where you're from"];
                 [cell.textField setText:currentUser.location];
+                [locationTextField setAutocapitalizationType:UITextAutocapitalizationTypeWords];
                 [locationTextField setDelegate:self];
                 break;
             case 2:
@@ -284,6 +287,8 @@
                 emailTextField = cell.textField;
                 [cell.textField setPlaceholder:@"Your email"];
                 [cell.textField setText:currentUser.email];
+                [emailTextField setAutocapitalizationType:UITextAutocapitalizationTypeNone];
+                [emailTextField setKeyboardType:UIKeyboardTypeEmailAddress];
                 break;
             }
             case 1:
@@ -294,6 +299,7 @@
                 [cell.imageButton setHidden:YES];
                 [cell.imageLabel setHidden:YES];
                 [cell.textField setHidden:NO];
+                [firstNameTextField setAutocapitalizationType:UITextAutocapitalizationTypeWords];
                 break;
             }
             case 2:
@@ -304,6 +310,7 @@
                 [cell.imageButton setHidden:YES];
                 [cell.imageLabel setHidden:YES];
                 [cell.textField setHidden:NO];
+                [lastNameTextField setAutocapitalizationType:UITextAutocapitalizationTypeWords];
                 break;
             }
             default:
@@ -664,6 +671,8 @@
 
 - (void)save {
     [ProgressHUD show:@"Saving your settings..."];
+    [self doneEditing];
+    
     NSMutableDictionary *parameters = [NSMutableDictionary dictionary];
     if (pushSwitch.isOn){
         [parameters setObject:@YES forKey:@"push_permissions"];
@@ -736,12 +745,9 @@
         
     } failure:^(AFHTTPRequestOperation *operation, NSError *error) {
         //NSLog(@"Failure updating user: %@",error.description);
-        if (operation.response.statusCode == 401) {
-            if ([operation.responseString isEqualToString:@"Pen name taken"]) {
-                
-                [XXAlert show:@"Sorry, but that pen name has already been taken." withTime:2.7f];
-                //[self addShakeAnimationForView:self.registerPenNameTextField withDuration:.77];
-            }
+        [ProgressHUD dismiss];
+        if ([operation.responseString isEqualToString:@"Pen name taken"]) {
+            [XXAlert show:@"Sorry, but that pen name has already been taken." withTime:2.7f];
         } else {
             [[[UIAlertView alloc] initWithTitle:@"Shoot" message:@"Something went wrong while updating your profile. Please try again soon." delegate:nil cancelButtonTitle:@"Okay" otherButtonTitles:nil] show];
         }
@@ -813,9 +819,17 @@
 }
 
 - (void)removeBackgroundPhoto {
-    [[SDImageCache sharedImageCache] removeImageForKey:currentUser.picSmall fromDisk:YES];
+    [[SDImageCache sharedImageCache] removeImageForKey:currentUser.backgroundUrl fromDisk:YES];
     currentUser.backgroundImageView = nil;
     [self.tableView reloadRowsAtIndexPaths:@[[NSIndexPath indexPathForRow:1 inSection:2]] withRowAnimation:UITableViewRowAnimationFade];
+
+    [manager POST:[NSString stringWithFormat:@"%@/users/%@/remove_background",kAPIBaseUrl,currentUser.identifier] parameters:nil success:^(AFHTTPRequestOperation *operation, id responseObject) {
+        currentUser.backgroundUrl = @"";
+        NSLog(@"Success removing background photo");
+    } failure:^(AFHTTPRequestOperation *operation, NSError *error) {
+        NSLog(@"Failed to remove profile photo: %@",error.description);
+        //[[[UIAlertView alloc] initWithTitle:@"Sorry" message:@"Something went wrong while trying to delete your photo. Please try again soon." delegate:nil cancelButtonTitle:@"Okay" otherButtonTitles:nil] show];
+    }];
 }
 
 - (void)choosePhoto {
@@ -841,9 +855,9 @@
     } else {
         
         if (IDIOM == IPAD){
-            blurredImage = [[info objectForKey:UIImagePickerControllerOriginalImage] applyBlurWithRadius:27 blurType:BOXFILTER tintColor:[UIColor colorWithWhite:0 alpha:.43] saturationDeltaFactor:1.8 maskImage:nil];
+            blurredImage = [[info objectForKey:UIImagePickerControllerOriginalImage] applyBlurWithRadius:23 blurType:BOXFILTER tintColor:[UIColor colorWithWhite:0 alpha:.43] saturationDeltaFactor:1.7 maskImage:nil];
         } else {
-            blurredImage = [[info objectForKey:UIImagePickerControllerOriginalImage] applyBlurWithRadius:33 blurType:BOXFILTER tintColor:[UIColor colorWithWhite:.23 alpha:.37] saturationDeltaFactor:1.8 maskImage:nil];
+            blurredImage = [[info objectForKey:UIImagePickerControllerOriginalImage] applyBlurWithRadius:27 blurType:BOXFILTER tintColor:[UIColor colorWithWhite:.23 alpha:.37] saturationDeltaFactor:1.7 maskImage:nil];
         }
         if (currentUser.backgroundImageView && [currentUser.backgroundImageView isKindOfClass:[UIImageView class]]){
             [(UIImageView*)currentUser.backgroundImageView setImage:blurredImage];
@@ -919,11 +933,28 @@
     [[NSUserDefaults standardUserDefaults] setBool:YES forKey:kExistingUser];
     [[NSUserDefaults standardUserDefaults] synchronize];
     [[[SDWebImageManager sharedManager] imageCache] clearDisk];
+    
+    if (UI_USER_INTERFACE_IDIOM() == UIUserInterfaceIdiomPad){
+        [[(XXAppDelegate*)[UIApplication sharedApplication].delegate windowBackground] setImage:[UIImage imageNamed:@"background_ipad"]];
+    } else {
+        [[(XXAppDelegate*)[UIApplication sharedApplication].delegate windowBackground] setImage:[UIImage imageNamed:@"background"]];
+    }
+    [(XXAppDelegate*)[UIApplication sharedApplication].delegate setCurrentUser:nil];
     //re-fetch the user's push credentials
     [[UIApplication sharedApplication] registerForRemoteNotificationTypes:(UIRemoteNotificationTypeAlert | UIRemoteNotificationTypeBadge | UIRemoteNotificationTypeSound)];
-    XXStoriesViewController *welcomeVC = [[self storyboard] instantiateViewControllerWithIdentifier:@"Stories"];
-    welcomeVC.ether = YES;
-    [self.navigationController pushViewController:welcomeVC animated:YES];
+    [self cleanAndResetupDB];
+    [self showGuide];
+}
+
+- (void)cleanAndResetupDB {
+    NSError *error = nil;
+    NSURL *storeURL = [NSPersistentStore MR_urlForStoreName:kCoreDataStore];
+    [MagicalRecord cleanUp];
+    if([[NSFileManager defaultManager] removeItemAtURL:storeURL error:&error]){
+        [MagicalRecord setupCoreDataStackWithAutoMigratingSqliteStoreNamed:kCoreDataStore];
+    } else{
+        NSLog(@"Error deleting persistent store description: %@ %@", error.description,storeURL);
+    }
 }
 
 /*

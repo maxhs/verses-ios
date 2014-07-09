@@ -41,7 +41,6 @@
     NSDateFormatter *_monthFormatter;
     NSDateFormatter *_timeFormatter;
     UIButton *_loginButton;
-    NSInteger _circleAlertCount;
     NSAttributedString *searchPlaceholder;
     MSDynamicsDrawerViewController *dynamicsViewController;
     User *currentUser;
@@ -70,7 +69,11 @@
     _timeFormatter = [[NSDateFormatter alloc] init];
     [_timeFormatter setLocale:[NSLocale currentLocale]];
     [_timeFormatter setDateFormat:@"h:mm a"];
-    currentUser = delegate.currentUser;
+    if (delegate.currentUser){
+        currentUser = delegate.currentUser;
+    } else if ([[NSUserDefaults standardUserDefaults] objectForKey:kUserDefaultsId]) {
+        currentUser = [User MR_findFirstByAttribute:@"identifier" withValue:[[NSUserDefaults standardUserDefaults] objectForKey:kUserDefaultsId]];
+    }
     
     [super viewDidLoad];
     searchPlaceholder = [[NSAttributedString alloc] initWithString:@"Search stories" attributes:@{ NSForegroundColorAttributeName : [UIColor whiteColor] }];
@@ -175,22 +178,6 @@
     }
 }*/
 
-- (void)loadCirclesAlert {
-    if (loggedIn){
-        [manager GET:[NSString stringWithFormat:@"%@/circles/alert",kAPIBaseUrl] parameters:@{@"user_id":[[NSUserDefaults standardUserDefaults] objectForKey:kUserDefaultsId]} success:^(AFHTTPRequestOperation *operation, id responseObject) {
-            //NSLog(@"circle alert response: %@",responseObject);
-            _circleAlertCount = [[responseObject objectForKeyedSubscript:@"count"] integerValue];
-            
-            [self.tableView beginUpdates];
-            [self.tableView reloadSections:[NSIndexSet indexSetWithIndex:0] withRowAnimation:UITableViewRowAnimationFade];
-            [self.tableView endUpdates];
-            
-        } failure:^(AFHTTPRequestOperation *operation, NSError *error) {
-            NSLog(@"Failure getting circle alerts: %@",error.description);
-        }];
-    }
-}
-
 - (void)loadNotifications {
     if (loggedIn){
         //[manager.requestSerializer setValue:[[NSUserDefaults standardUserDefaults] objectForKey:kUserDefaultsAuthToken] forHTTPHeaderField:@"Authorization"];
@@ -214,17 +201,13 @@
                     [notification MR_deleteInContext:[NSManagedObjectContext MR_defaultContext]];
                 }
             }
-            NSLog(@"notification set count: %d",notificationSet.count);
             if (currentUser){
                 currentUser.notifications = notificationSet;
-        
                 [[NSManagedObjectContext MR_defaultContext] MR_saveToPersistentStoreWithCompletion:^(BOOL success, NSError *error) {
                     [self.tableView reloadData];
-                    NSLog(@"current user notification count: %d",currentUser.notifications.count);
-                    [self loadCirclesAlert];
+                    //[self loadCirclesAlert];
                 }];
-                }
-            
+            }
         } failure:^(AFHTTPRequestOperation *operation, NSError *error) {
             NSLog(@"Failure getting user notifications: %@",error.description);
         }];
@@ -354,8 +337,7 @@
                 cell = [[[NSBundle mainBundle] loadNibNamed:@"XXMenuCell" owner:nil options:nil] lastObject];
             }
             
-            if (indexPath.row == 1) [cell configureAlert:_circleAlertCount];
-            else [cell configureAlert:0];
+            [cell configureAlert:0];
             
             UIView *selectedBackgroundView = [[UIView alloc] initWithFrame:cell.frame];
             [selectedBackgroundView setBackgroundColor:[UIColor colorWithWhite:1 alpha:.5]];
@@ -382,7 +364,7 @@
                     [cell.menuLabel setText:@"Portfolio"];
                     return cell;
                 }
-                    break;*/
+                    break;
                 case 1:
                 {
                     [cell.menuImage setImage:[UIImage imageNamed:@"menuCircles"]];
@@ -390,19 +372,19 @@
                     return cell;
                 }
                     break;
-                /*case 2:
+                case 2:
                 {
                     [cell.menuImage setImage:[UIImage imageNamed:@"menuBookmarks"]];
                     [cell.menuLabel setText:@"Bookmarks"];
                     return cell;
                 }
-                    break;*/
+                    break;
                 case 2:
                 {
                     [cell.menuImage setImage:[UIImage imageNamed:@"menuSettings"]];
                     [cell.menuLabel setText:@"Settings"];
                     return cell;
-                }
+                }*/
                     break;
                 default:
                     return nil;
@@ -432,7 +414,7 @@
             [_loginButton setBackgroundColor:[UIColor clearColor]];
             [cell addSubview:_loginButton];
         }
-        [_loginButton setFrame:CGRectMake(0, 0, self.tableView.frame.size.width, self.tableView.frame.size.height-self.tableView.tableHeaderView.frame.size.height-44)];
+        [_loginButton setFrame:CGRectMake(0, 0, self.tableView.frame.size.width, screenHeight()-self.tableView.tableHeaderView.frame.size.height-44)];
         [_loginButton setAutoresizingMask:UIViewAutoresizingFlexibleWidth];
         [_loginButton setAutoresizingMask:UIViewAutoresizingFlexibleHeight];
         [_loginButton setAutoresizingMask:UIViewAutoresizingFlexibleRightMargin];
@@ -781,7 +763,16 @@
         [ProgressHUD dismiss];
     } failure:^(AFHTTPRequestOperation *operation, NSError *error) {
         [ProgressHUD dismiss];
-        [[[UIAlertView alloc] initWithTitle:@"Sorry" message:@"Something went wrong while trying to delete this notification. Please try again soon." delegate:nil cancelButtonTitle:@"Okay" otherButtonTitles:nil] show];
+        if ([operation.responseString isEqualToString:kAlreadyDestroyed]){
+            //it was actually already deleted from the server
+            [currentUser removeNotification:notification];
+            [self.tableView beginUpdates];
+            [self.tableView deleteRowsAtIndexPaths:@[indexPathForDeletion] withRowAnimation:UITableViewRowAnimationFade];
+            [self.tableView endUpdates];
+        } else {
+            [[[UIAlertView alloc] initWithTitle:@"Sorry" message:@"Something went wrong while trying to delete this notification. Please try again soon." delegate:nil cancelButtonTitle:@"Okay" otherButtonTitles:nil] show];
+        }
+        
         //NSLog(@"Failure deleting notification: %@",error.description);
     }];
 }

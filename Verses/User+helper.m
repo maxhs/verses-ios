@@ -47,6 +47,9 @@
     if ([dictionary objectForKey:@"pic_large_url"] && [dictionary objectForKey:@"pic_large_url"] != [NSNull null]) {
         self.picLarge = [dictionary objectForKey:@"pic_large_url"];
     }
+    if ([dictionary objectForKey:@"background_url"] && [dictionary objectForKey:@"background_url"] != [NSNull null]) {
+        self.backgroundUrl = [dictionary objectForKey:@"background_url"];
+    }
     if ([dictionary objectForKey:@"push_permissions"] && [dictionary objectForKey:@"push_permissions"] != [NSNull null]) {
         self.pushPermissions = [dictionary objectForKey:@"push_permissions"];
     }
@@ -107,7 +110,9 @@
     if ([dictionary objectForKey:@"pic_large_url"] && [dictionary objectForKey:@"pic_large_url"] != [NSNull null]) {
         self.picLarge = [dictionary objectForKey:@"pic_large_url"];
     }
-
+    if ([dictionary objectForKey:@"background_url"] && [dictionary objectForKey:@"background_url"] != [NSNull null]) {
+        self.backgroundUrl = [dictionary objectForKey:@"background_url"];
+    }
     if ([dictionary objectForKey:@"subscribed"] && [dictionary objectForKey:@"subscribed"] != [NSNull null]) {
         self.subscribed = [dictionary objectForKey:@"subscribed"];
     }

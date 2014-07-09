@@ -70,7 +70,7 @@
         CGRect unreadFrame = _alertLabel.frame;
         unreadFrame.size.width = alertWidth;
         CGRect expectedSize = [_circleName.text boundingRectWithSize:_circleName.frame.size options:NSStringDrawingUsesLineFragmentOrigin attributes:@{NSFontAttributeName:_circleName.font} context:nil];
-        unreadFrame.origin.x = expectedSize.size.width;
+        unreadFrame.origin.x = expectedSize.size.width+4;
         [_alertLabel setFrame:unreadFrame];
         [_alertLabel setBackgroundColor:[UIColor redColor]];
         [_alertLabel setTextColor:[UIColor whiteColor]];

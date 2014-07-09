@@ -61,6 +61,7 @@
     BOOL underlineSelected;
     BOOL italicsSelected;
     BOOL saveToLibrary;
+    BOOL mysteryPrompt;
     XXStoryPhoto *storyPhoto;
     Photo *thePhoto;
     CGFloat imageHeight;
@@ -112,10 +113,14 @@
     
     [super viewDidLoad];
     
+    
+    mysteryPrompt = NO;
     if (_mystery){
         [_slowRevealLabel setHidden:NO];
         [_slowRevealSwitch setOn:YES];
         [_slowRevealSwitch setHidden:NO];
+        
+        
     } else {
         [_slowRevealLabel setHidden:YES];
         [_slowRevealSwitch setHidden:YES];
@@ -189,6 +194,16 @@
     [self drawStory];
 }
 
+- (void)viewDidAppear:(BOOL)animated {
+    [super viewDidAppear:animated];
+    if (_mystery && mysteryPrompt == NO){
+        dispatch_after(dispatch_time(DISPATCH_TIME_NOW, 1.23 * NSEC_PER_SEC), dispatch_get_main_queue(), ^{
+            [XXAlert show:@"Participants will only see the last 250 characters of each contribution." withTime:3.3f];
+        });
+        mysteryPrompt = YES;
+    }
+}
+
 - (void)prepareStory{
     [self setupControls];
 }
@@ -226,7 +241,7 @@
     if (_contribution && ![_contribution.identifier isEqualToNumber:[NSNumber numberWithInt:0]]){
         _story = _contribution.story;
         [self setupContributionBooleans];
-    } else if (!_story || [_story.identifier isEqualToNumber:[NSNumber numberWithInt:0]]){
+    } else if (!_story){
         _story = [Story MR_createInContext:[NSManagedObjectContext MR_defaultContext]];
         _story.draft = [NSNumber numberWithBool:YES];
         _story.inviteOnly = [NSNumber numberWithBool:YES];
@@ -242,9 +257,6 @@
         Contribution *firstContribution = [Contribution MR_createInContext:[NSManagedObjectContext MR_defaultContext]];
         [firstContribution setAllowFeedback:[NSNumber numberWithBool:NO]];
         [_story addContribution:firstContribution];
-        CGRect doneRect = _doneOptionsButton.frame;
-        doneRect.origin.x = (self.optionsContainerView.frame.size.width/2-doneRect.size.width/2) + width;
-        [_doneOptionsButton setFrame:doneRect];
         [self.deleteButton setHidden:YES];
         
     } else {
@@ -288,12 +300,6 @@
     self.draftLabel.transform = CGAffineTransformMakeTranslation(width, 0);
     self.draftSwitch.transform = CGAffineTransformMakeTranslation(width, 0);
     [self.draftSwitch addTarget:self action:@selector(shareButton) forControlEvents:UIControlEventValueChanged];
-    
-    if (![_story.owner.identifier isEqualToNumber:[[NSUserDefaults standardUserDefaults] objectForKey:kUserDefaultsId]] && !_contribution){
-        CGRect doneRect = _doneOptionsButton.frame;
-        doneRect.origin.x = (width/2)-(doneRect.size.width/2);
-        [_doneOptionsButton setFrame:doneRect];
-    }
     
     self.doneOptionsButton.transform = CGAffineTransformMakeTranslation(width, 0);
     self.deleteButton.transform = CGAffineTransformMakeTranslation(-width, 0);
@@ -496,7 +502,6 @@
 }
 
 - (void)showImageOptions {
-    NSLog(@"should be showing image options");
     [self doneEditing];
     [[[UIActionSheet alloc] initWithTitle:@"Add a title image:" delegate:self cancelButtonTitle:@"Cancel" destructiveButtonTitle:nil otherButtonTitles:@"Take photo",@"Choose from library", nil] showInView:self.view];
 }
@@ -586,19 +591,21 @@
 }
 
 - (void)imagePickerController:(UIImagePickerController *)picker didFinishPickingMediaWithInfo:(NSDictionary *)info {
-    [self dismissViewControllerAnimated:YES completion:nil];
-    thePhoto = [Photo MR_createInContext:[NSManagedObjectContext MR_defaultContext]];
-    UIImage *image = [self fixOrientation:[info objectForKey:UIImagePickerControllerOriginalImage]];
-    [thePhoto setImage:image];
-    storyPhoto = [[XXStoryPhoto alloc] initWithFrame:CGRectMake(0, 0, width, imageHeight)];
-    [storyPhoto initializeWithPhoto:thePhoto forStory:_story inVC:self withButton:YES];
-    [storyPhoto setAutoresizingMask:UIViewAutoresizingFlexibleWidth];
-
-    [storyPhoto.button addTarget:self action:@selector(imageButtonTapped) forControlEvents:UIControlEventTouchUpInside];
-    [_scrollView addSubview:storyPhoto];
-    _titleTextField.transform = CGAffineTransformMakeTranslation(0, imageHeight-40);
-    _bodyTextView.transform = CGAffineTransformMakeTranslation(0, imageHeight-40);
-    [_bodyTextView.cameraButton setHidden:YES];
+    
+    [self dismissViewControllerAnimated:YES completion:^{
+        thePhoto = [Photo MR_createInContext:[NSManagedObjectContext MR_defaultContext]];
+        UIImage *image = [self fixOrientation:[info objectForKey:UIImagePickerControllerOriginalImage]];
+        [thePhoto setImage:image];
+        storyPhoto = [[XXStoryPhoto alloc] initWithFrame:CGRectMake(0, 0, width, imageHeight)];
+        [storyPhoto initializeWithPhoto:thePhoto forStory:_story inVC:self withButton:YES];
+        [storyPhoto setAutoresizingMask:UIViewAutoresizingFlexibleWidth];
+        
+        [storyPhoto.button addTarget:self action:@selector(imageButtonTapped) forControlEvents:UIControlEventTouchUpInside];
+        [_scrollView addSubview:storyPhoto];
+        _titleTextField.transform = CGAffineTransformMakeTranslation(0, imageHeight-40);
+        _bodyTextView.transform = CGAffineTransformMakeTranslation(0, imageHeight-40);
+        [_bodyTextView.cameraButton setHidden:YES];
+    }];
 }
 
 - (void)imageButtonTapped {
@@ -609,7 +616,7 @@
     if (self.draftSwitch.isOn){
         [[[UIAlertView alloc] initWithTitle:@"Ready to Publish?" message:@"This story is still in draft mode. Are you sure you want to publish?" delegate:self cancelButtonTitle:@"No" otherButtonTitles:@"Publish", nil] show];
     } else if (self.inviteOnlySwitch.isOn) {
-        [[[UIAlertView alloc] initWithTitle:@"Ready to Publish?" message:@"This story is in private mode. Publishing will only make it visible to your collaborators." delegate:self cancelButtonTitle:@"No" otherButtonTitles:@"Publish", nil] show];
+        [[[UIAlertView alloc] initWithTitle:@"Ready to Share?" message:@"This story is in private mode. Sharing will only make it visible to your collaborators." delegate:self cancelButtonTitle:@"No" otherButtonTitles:@"Publish", nil] show];
     } else {
         [[[UIAlertView alloc] initWithTitle:@"Ready to Publish?" message:@"This will make the story visible to the public." delegate:self cancelButtonTitle:@"No" otherButtonTitles:@"Publish", nil] show];
     }
@@ -660,7 +667,14 @@
         [self clearStoryAndReset];
     } failure:^(AFHTTPRequestOperation *operation, NSError *error) {
         NSLog(@"Failed to delete story: %@",error.description);
-        [[[UIAlertView alloc] initWithTitle:@"Sorry" message:@"Something went wrong while trying to delete this story. Please try agian soon." delegate:nil cancelButtonTitle:@"Okay" otherButtonTitles:nil] show];
+        if ([operation.responseString isEqualToString:kAlreadyDestroyed]){
+            //it was already deleted from the server
+            [_story MR_deleteInContext:[NSManagedObjectContext MR_defaultContext]];
+            [self saveContext];
+            [self clearStoryAndReset];
+        } else {
+            [[[UIAlertView alloc] initWithTitle:@"Sorry" message:@"Something went wrong while trying to delete this story. Please try agian soon." delegate:nil cancelButtonTitle:@"Okay" otherButtonTitles:nil] show];
+        }
         [self clearStoryAndReset];
     }];
 }
@@ -767,8 +781,8 @@
         [manager POST:[NSString stringWithFormat:@"%@/stories",kAPIBaseUrl] parameters:@{@"story":storyParameters,@"contribution":contributionParameters, @"user_id":[[NSUserDefaults standardUserDefaults] objectForKey:kUserDefaultsId]} success:^(AFHTTPRequestOperation *operation, id responseObject) {
             //NSLog(@"Success POSTing your story: %@",responseObject);
             [_story createFromDict:[responseObject objectForKey:@"story"]];
-    
             [self postImage:_story.contributions.firstObject];
+            
             if (saving){
                 [XXAlert show:@"Story saved" withTime:1.5f];
             } else {
@@ -777,13 +791,9 @@
             }
             
             [_deleteButton setHidden:NO];
-            CGRect doneRect = _doneOptionsButton.frame;
-            doneRect.origin.x = (width*75)-(doneRect.size.width/2);
-            [_doneOptionsButton setFrame:doneRect];
             
             [[NSManagedObjectContext MR_defaultContext] MR_saveToPersistentStoreWithCompletion:^(BOOL success, NSError *error) {
                 NSLog(@"Create story: %u",success);
-                
             }];
             [ProgressHUD dismiss];
         } failure:^(AFHTTPRequestOperation *operation, NSError *error) {
@@ -816,16 +826,20 @@
         [manager PATCH:[NSString stringWithFormat:@"%@/stories/%@",kAPIBaseUrl,_story.identifier] parameters:@{@"story":storyParameters,@"contribution":contributionParameters,@"user_id":[[NSUserDefaults standardUserDefaults] objectForKey:kUserDefaultsId]} success:^(AFHTTPRequestOperation *operation, id responseObject) {
             //NSLog(@"Success PUTing your story: %@",responseObject);
             [_story populateFromDict:[responseObject objectForKey:@"story"]];
-            [self postImage:_story.contributions.firstObject];
+            
             if (saving){
                 [XXAlert show:@"Story saved" withTime:1.5f];
             } else {
                 [XXAlert show:@"Published" withTime:1.5f];
                 [self showStory];
             }
-            [[NSManagedObjectContext MR_defaultContext] MR_saveToPersistentStoreWithCompletion:^(BOOL success, NSError *error) {
-                NSLog(@"Save story status: %u",success);
-            }];
+            if (thePhoto.image){
+                [self postImage:_story.contributions.firstObject];
+            } else {
+                [[NSManagedObjectContext MR_defaultContext] MR_saveToPersistentStoreWithCompletion:^(BOOL success, NSError *error) {
+                    NSLog(@"Save story status: %u",success);
+                }];
+            }
             [ProgressHUD dismiss];
         } failure:^(AFHTTPRequestOperation *operation, NSError *error) {
             [ProgressHUD dismiss];
@@ -836,15 +850,19 @@
 }
 
 - (void)postImage:(Contribution*)contribution {
+    NSLog(@"There's a photo image.");
     if (thePhoto.image && ![contribution.identifier isEqualToNumber:[NSNumber numberWithInt:0]]){
+        NSLog(@"Posting the photo image.");
         NSData *imageData = UIImageJPEGRepresentation(thePhoto.image,1);
         [manager POST:[NSString stringWithFormat:@"%@/photos",kAPIBaseUrl] parameters:@{@"photo[contribution_id]":contribution.identifier,@"photo[user_id]":[[NSUserDefaults standardUserDefaults] objectForKey:kUserDefaultsId]} constructingBodyWithBlock:^(id<AFMultipartFormData> formData) {
             [formData appendPartWithFileData:imageData name:@"photo[image]" fileName:@"photo.jpg" mimeType:@"image/jpg"];
         } success:^(AFHTTPRequestOperation *operation, id responseObject) {
-            NSLog(@"Success posting image: %@",responseObject);
+            //NSLog(@"Success posting image: %@",responseObject);
             [thePhoto populateFromDict:[responseObject objectForKey:@"photo"]];
-            //[contribution thePhoto];
             [_story addPhoto:thePhoto];
+            [[NSManagedObjectContext MR_defaultContext] MR_saveToPersistentStoreWithCompletion:^(BOOL success, NSError *error) {
+                NSLog(@"Save story and photo status: %u",success);
+            }];
         } failure:^(AFHTTPRequestOperation *operation, NSError *error) {
             NSLog(@"Failed to post image: %@",error.description);
         }];
@@ -1188,10 +1206,11 @@
         textView.text = @"";
         textView.textColor = textColor;
         Mixpanel *mixpanel = [Mixpanel sharedInstance];
-        [mixpanel track:@"Started Writing" properties:@{
-                                                        @"user_id":[[NSUserDefaults standardUserDefaults] objectForKey:kUserDefaultsId],
-                                                        @"pen_name":[[NSUserDefaults standardUserDefaults] objectForKey:kUserDefaultsPenName]
+        if ([[NSUserDefaults standardUserDefaults] objectForKey:kUserDefaultsId]){
+            [mixpanel track:@"Started Writing" properties:@{
+                                                        @"user_id":[[NSUserDefaults standardUserDefaults] objectForKey:kUserDefaultsId]
                                                         }];
+        }
     }
     if ([[NSUserDefaults standardUserDefaults] boolForKey:kDarkBackground]){
         textView.keyboardAppearance = UIKeyboardAppearanceDark;

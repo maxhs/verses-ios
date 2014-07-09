@@ -23,6 +23,7 @@
 #import "XXCirclesViewController.h"
 #import "XXSettingsViewController.h"
 #import "XXFlowLayout.h"
+#import "XXGuideHeaderView.h"
 
 @interface XXGuideViewController () <UISearchBarDelegate> {
     XXAppDelegate *delegate;
@@ -33,13 +34,14 @@
     NSMutableArray *_filteredResults;
     NSMutableArray *_searchResults;
     AFHTTPRequestOperationManager *manager;
-    UIView *headerView;
     XXStoriesViewController *stories;
     CGFloat width;
     CGFloat height;
     UIMotionEffectGroup *motion;
     UIButton *downButton;
     User *_currentUser;
+    NSInteger _circleAlertCount;
+    CGFloat dismissThreshhold;
 }
 
 @end
@@ -71,6 +73,18 @@
     } else {
         signedIn = NO;
     }
+    
+    if (UIInterfaceOrientationIsPortrait(self.interfaceOrientation)){
+        //only dismiss from portrait mode
+        if (IDIOM == IPAD){
+            dismissThreshhold = self.collectionView.frame.size.height*.4;
+        } else if (screenHeight() == 568) {
+            dismissThreshhold = self.collectionView.frame.size.height*1.1;
+        } else {
+            dismissThreshhold = self.collectionView.frame.size.height*1.4;
+        }
+    }
+    
     dismissButton = [UIButton buttonWithType:UIButtonTypeCustom];
     [self.view addSubview:dismissButton];
     [dismissButton setFrame:CGRectMake(width-54, height-54, 54, 54)];
@@ -109,10 +123,10 @@
         [downButton setAlpha:0.0];
         //[downButton addTarget:self action:@selector(scrollDown) forControlEvents:UIControlEventTouchUpInside];
         [self.view insertSubview:downButton aboveSubview:self.collectionView];
-        [UIView animateWithDuration:1.23 delay:.5 usingSpringWithDamping:.8 initialSpringVelocity:.001 options:UIViewAnimationOptionCurveEaseIn animations:^{
+        [UIView animateWithDuration:1.23 delay:1 usingSpringWithDamping:.8 initialSpringVelocity:.001 options:UIViewAnimationOptionCurveEaseIn animations:^{
             [downButton setAlpha:1.0];
         } completion:^(BOOL finished) {
-            [UIView animateWithDuration:.77 delay:.5 usingSpringWithDamping:.8 initialSpringVelocity:.001 options:UIViewAnimationOptionCurveEaseOut animations:^{
+            [UIView animateWithDuration:.77 delay:.75 usingSpringWithDamping:.8 initialSpringVelocity:.001 options:UIViewAnimationOptionCurveEaseOut animations:^{
                 [downButton setAlpha:0.0];
             } completion:^(BOOL finished) {
                 [downButton removeFromSuperview];
@@ -132,32 +146,6 @@
     self.searchResultsTableView.rowHeight = 60.f;
     [self.searchResultsTableView setBackgroundColor:[UIColor colorWithWhite:0 alpha:.77]];
     [self.searchResultsTableView setAlpha:0.0];
-    [self.searchBar setImage:[UIImage imageNamed:@"whiteSearchIcon"] forSearchBarIcon:UISearchBarIconSearch state:UIControlStateNormal];
-    [self.searchBar setBackgroundColor:[UIColor clearColor]];
-    searchPlaceholder = [[NSAttributedString alloc] initWithString:@"Search stories" attributes:@{ NSForegroundColorAttributeName : [UIColor whiteColor] }];
-    
-    headerView = [[UIView alloc] initWithFrame:CGRectMake(0, 0, width, height/5)];
-    [headerView setAutoresizingMask:UIViewAutoresizingFlexibleWidth];
-    [headerView addSubview:self.searchBar];
-    [self.searchBar setFrame:CGRectMake(0, 0, width, 44)];
-    [self.searchBar setAutoresizingMask:UIViewAutoresizingFlexibleWidth];
-    [self.collectionView addSubview:headerView];
-    
-    for (id subview in [self.searchBar.subviews.firstObject subviews]){
-        [subview setTintColor:[UIColor whiteColor]];
-        if ([subview isKindOfClass:[UITextField class]]){
-            UITextField *searchTextField = (UITextField*)subview;
-            [searchTextField setKeyboardAppearance:UIKeyboardAppearanceDark];
-            [searchTextField setBackgroundColor:[UIColor clearColor]];
-            searchTextField.layer.borderColor = [UIColor colorWithWhite:1 alpha:.7].CGColor;
-            searchTextField.layer.borderWidth = 1.f;
-            searchTextField.layer.cornerRadius = 14.f;
-            searchTextField.clipsToBounds = YES;
-            searchTextField.attributedPlaceholder = searchPlaceholder;
-            [searchTextField setFont:[UIFont fontWithName:kSourceSansProRegular size:16]];
-            break;
-        }
-    }
     
     _filteredResults = [NSMutableArray array];
     _searchResults = [NSMutableArray array];
@@ -179,10 +167,12 @@
     } else {
         signedIn = NO;
     }
+    
 }
 
 - (void)viewWillAppear:(BOOL)animated {
     [super viewWillAppear:animated];
+    [self loadCirclesAlert];
     [[UIApplication sharedApplication] setStatusBarHidden:NO withAnimation:UIStatusBarAnimationFade];
 }
 
@@ -223,10 +213,16 @@
     if (UIInterfaceOrientationIsPortrait(toInterfaceOrientation)){
         width = screenWidth();
         height = screenHeight();
+        if (IDIOM == IPAD){
+            dismissThreshhold = self.collectionView.frame.size.height*.4;
+        } else {
+            dismissThreshhold = self.collectionView.frame.size.height*1.1;
+        }
     } else {
         height = screenWidth();
         width = screenHeight();
     }
+ 
     [self.collectionView invalidateIntrinsicContentSize];
 }
 
@@ -365,7 +361,7 @@
     [cell.guideButton addMotionEffect:motion];
     [cell.imageView setUserInteractionEnabled:NO];
     [cell.guideButton setUserInteractionEnabled:YES];
-    
+    [cell.alertLabel setHidden:YES];
     cell.layer.borderColor = [UIColor colorWithWhite:1 alpha:.023].CGColor;
     cell.layer.borderWidth = .5f;
     
@@ -390,7 +386,32 @@
             [cell.imageView setImage:[UIImage imageNamed:@"menuCircles"]];
             [cell.guideButton setTitle:@"Writing Circles" forState:UIControlStateNormal];
             [cell.guideButton addTarget:self action:@selector(goToCircles) forControlEvents:UIControlEventTouchUpInside];
-            
+            if (_circleAlertCount > 0){
+                [cell.alertLabel setText:[NSString stringWithFormat:@"%d",_circleAlertCount]];
+                                CGFloat alertWidth;
+                if (_circleAlertCount > 999){
+                    alertWidth = 33;
+                } else if (_circleAlertCount > 99){
+                    alertWidth = 27;
+                } else {
+                    alertWidth = 20;
+                }
+                [cell.alertLabel setFrame:CGRectMake(cell.alertLabel.frame.origin.x, cell.alertLabel.frame.origin.y, alertWidth, 21)];
+                if (cell.alertLabel.backgroundColor != [UIColor redColor]){
+                    [cell.alertLabel setBackgroundColor:[UIColor redColor]];
+                    [cell.alertLabel setTextColor:[UIColor whiteColor]];
+                    [cell.alertLabel setFont:[UIFont systemFontOfSize:13]];
+                    [cell.alertLabel.layer setBackgroundColor:[UIColor clearColor].CGColor];
+                    cell.alertLabel.layer.cornerRadius = cell.alertLabel.frame.size.height/2;
+                    [cell.alertLabel setTextAlignment:NSTextAlignmentCenter];
+                }
+                [cell.alertLabel setHidden:NO];
+                cell.alertLabel.layer.rasterizationScale = [UIScreen mainScreen].scale;
+                cell.alertLabel.layer.shouldRasterize = YES;
+                [UIView animateWithDuration:.33 animations:^{
+                    [cell.alertLabel setAlpha:1.0];
+                }];
+            }
             break;
         case 8:
             [cell.imageView setImage:[UIImage imageNamed:@"menuShared"]];
@@ -419,6 +440,7 @@
             [cell.guideButton addTarget:self action:@selector(goToDrafts) forControlEvents:UIControlEventTouchUpInside];
             break;
         case 7:
+            [cell.alertLabel setHidden:YES];
             [cell.imageView setImage:[UIImage imageNamed:@"menuPortfolio"]];
             [cell.guideButton setTitle:@"Portfolio" forState:UIControlStateNormal];
             [cell.guideButton addTarget:self action:@selector(goToPortfolio) forControlEvents:UIControlEventTouchUpInside];
@@ -437,6 +459,40 @@
             break;
     }
     return cell;
+}
+
+- (UICollectionReusableView *)collectionView:(UICollectionView *)collectionView viewForSupplementaryElementOfKind:(NSString *)kind atIndexPath:(NSIndexPath *)indexPath{
+    if (kind == UICollectionElementKindSectionHeader){
+        XXGuideHeaderView *headerView = [collectionView dequeueReusableSupplementaryViewOfKind:UICollectionElementKindSectionHeader withReuseIdentifier:@"Header" forIndexPath:indexPath];
+        [headerView setAutoresizingMask:UIViewAutoresizingFlexibleWidth];
+        [headerView addSubview:self.searchBar];
+        [self.searchBar setFrame:CGRectMake(0, headerView.frame.size.height/2-22, width, 44)];
+        [self.searchBar setAutoresizingMask:UIViewAutoresizingFlexibleWidth];
+        [headerView setBackgroundColor:[UIColor clearColor]];
+        [self.searchBar setImage:[UIImage imageNamed:@"whiteSearchIcon"] forSearchBarIcon:UISearchBarIconSearch state:UIControlStateNormal];
+        [self.searchBar setBackgroundColor:[UIColor clearColor]];
+        searchPlaceholder = [[NSAttributedString alloc] initWithString:@"Search stories" attributes:@{ NSForegroundColorAttributeName : [UIColor whiteColor] }];
+        
+        for (id subview in [self.searchBar.subviews.firstObject subviews]){
+            [subview setTintColor:[UIColor whiteColor]];
+            if ([subview isKindOfClass:[UITextField class]]){
+                UITextField *searchTextField = (UITextField*)subview;
+                [searchTextField setKeyboardAppearance:UIKeyboardAppearanceDark];
+                [searchTextField setBackgroundColor:[UIColor clearColor]];
+                searchTextField.layer.borderColor = [UIColor colorWithWhite:1 alpha:.7].CGColor;
+                searchTextField.layer.borderWidth = 1.f;
+                searchTextField.layer.cornerRadius = 14.f;
+                searchTextField.clipsToBounds = YES;
+                searchTextField.attributedPlaceholder = searchPlaceholder;
+                [searchTextField setFont:[UIFont fontWithName:kSourceSansProRegular size:16]];
+                break;
+            }
+        }
+        return headerView;
+    } else {
+        UICollectionReusableView *footerView = [collectionView dequeueReusableSupplementaryViewOfKind:UICollectionElementKindSectionFooter withReuseIdentifier:@"Footer" forIndexPath:indexPath];
+        return footerView;
+    }
 }
 
 #pragma mark - UICollectionViewDelegate
@@ -485,8 +541,12 @@
 }
 
 - (void)scrollViewDidScroll:(UIScrollView *)scrollView {
-    if (scrollView.contentOffset.y > 100){
+    CGFloat y = scrollView.contentOffset.y;
+    if (y > 100){
         [self removeDownButton];
+        if (y > dismissThreshhold && UIInterfaceOrientationIsPortrait(self.interfaceOrientation)){
+            [self dismiss];
+        }
     }
 }
 
@@ -726,8 +786,8 @@
         write.mystery = YES;
         UINavigationController *nav = [[UINavigationController alloc] initWithRootViewController:write];
         [delegate.dynamicsDrawerViewController setPaneViewController:nav];
-        [self dismissViewControllerAnimated:YES completion:^{
-            [XXAlert show:@"Participants will only see the last 250 characters of each contribution." withTime:3.3f];
+        [self.presentingViewController dismissViewControllerAnimated:YES completion:^{
+            
         }];
     } else {
         [self login];
@@ -738,9 +798,8 @@
     [[UIApplication sharedApplication] setStatusBarHidden:YES withAnimation:UIStatusBarAnimationFade];
     XXLoginController *login = [[self storyboard] instantiateViewControllerWithIdentifier:@"Login"];
     XXNoRotateNavController *nav = [[XXNoRotateNavController alloc] initWithRootViewController:login];
-    [self presentViewController:nav animated:YES completion:^{
-        
-    }];
+    [delegate.dynamicsDrawerViewController setPaneViewController:nav];
+    [self.presentingViewController dismissViewControllerAnimated:YES completion:nil];
 }
 
 - (void)goToPortfolio {
@@ -750,7 +809,7 @@
         [portfolio setDraftMode:NO];
         UINavigationController *nav = [[UINavigationController alloc] initWithRootViewController:portfolio];
         [delegate.dynamicsDrawerViewController setPaneViewController:nav];
-        [self dismissViewControllerAnimated:YES completion:^{
+        [self.presentingViewController dismissViewControllerAnimated:YES completion:^{
         
         }];
     } else {
@@ -765,7 +824,7 @@
         [portfolio setDraftMode:YES];
         UINavigationController *nav = [[UINavigationController alloc] initWithRootViewController:portfolio];
         [delegate.dynamicsDrawerViewController setPaneViewController:nav];
-        [self dismissViewControllerAnimated:YES completion:^{
+        [self.presentingViewController dismissViewControllerAnimated:YES completion:^{
             
         }];
     } else {
@@ -779,7 +838,7 @@
         XXBookmarksViewController *bookmarks = [[self storyboard] instantiateViewControllerWithIdentifier:@"Bookmarks"];
         UINavigationController *nav = [[UINavigationController alloc] initWithRootViewController:bookmarks];
         [delegate.dynamicsDrawerViewController setPaneViewController:nav];
-        [self dismissViewControllerAnimated:YES completion:^{
+        [self.presentingViewController dismissViewControllerAnimated:YES completion:^{
             
         }];
     } else {
@@ -792,8 +851,8 @@
         [[UIApplication sharedApplication] setStatusBarHidden:YES withAnimation:UIStatusBarAnimationFade];
         XXCirclesViewController *circles = [[self storyboard] instantiateViewControllerWithIdentifier:@"Circles"];
         UINavigationController *nav = [[UINavigationController alloc] initWithRootViewController:circles];
-        [delegate.dynamicsDrawerViewController setPaneViewController:nav];
-        [self dismissViewControllerAnimated:YES completion:^{
+        [delegate.dynamicsDrawerViewController setPaneViewController:nav animated:NO completion:NULL];
+        [self.presentingViewController dismissViewControllerAnimated:YES completion:^{
             
         }];
     } else {
@@ -806,12 +865,28 @@
         [[UIApplication sharedApplication] setStatusBarHidden:YES withAnimation:UIStatusBarAnimationFade];
         XXSettingsViewController *settings = [[self storyboard] instantiateViewControllerWithIdentifier:@"Settings"];
         UINavigationController *nav = [[UINavigationController alloc] initWithRootViewController:settings];
-        [delegate.dynamicsDrawerViewController setPaneViewController:nav];
-        [self dismissViewControllerAnimated:YES completion:^{
+        [delegate.dynamicsDrawerViewController setPaneViewController:nav animated:NO completion:nil];
+        [self.presentingViewController dismissViewControllerAnimated:YES completion:^{
             
         }];
+        
     } else {
         [self login];
+    }
+}
+
+- (void)loadCirclesAlert {
+    if (signedIn){
+        [manager GET:[NSString stringWithFormat:@"%@/circles/alert",kAPIBaseUrl] parameters:@{@"user_id":[[NSUserDefaults standardUserDefaults] objectForKey:kUserDefaultsId]} success:^(AFHTTPRequestOperation *operation, id responseObject) {
+            //NSLog(@"circle alert response: %@",responseObject);
+            if ([responseObject objectForKey:@"count"] && [responseObject objectForKey:@"count"] != [NSNull null]){
+                _circleAlertCount = [[responseObject objectForKey:@"count"] integerValue];
+                [self.collectionView reloadItemsAtIndexPaths:@[[NSIndexPath indexPathForItem:6 inSection:0]]];
+            }
+            
+        } failure:^(AFHTTPRequestOperation *operation, NSError *error) {
+            NSLog(@"Failure getting circle alerts: %@",error.description);
+        }];
     }
 }
 
@@ -834,7 +909,14 @@
 }
 
 - (void)dismiss {
-    [self dismissViewControllerAnimated:YES completion:nil];
+    if ([self.presentingViewController isKindOfClass:[MSDynamicsDrawerViewController class]]){
+        UIViewController *vc = [(MSDynamicsDrawerViewController*)self.presentingViewController paneViewController];
+        if ([vc isKindOfClass:[XXNoRotateNavController class]] || ([vc isKindOfClass:[UINavigationController class]] && [[[(UINavigationController*)vc viewControllers] firstObject] isKindOfClass:[XXSettingsViewController class]])){
+            [self setStoriesAsPane];
+            stories.ether = YES;
+        }
+    }
+    [self.presentingViewController dismissViewControllerAnimated:YES completion:nil];
 }
 
 @end

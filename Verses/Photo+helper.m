@@ -15,15 +15,19 @@
     }
     if ([dictionary objectForKey:@"image_medium_url"] && [dictionary objectForKey:@"image_medium_url"] != [NSNull null]) {
         self.mediumUrl = [dictionary objectForKey:@"image_medium_url"];
+        self.image = nil;
     }
     if ([dictionary objectForKey:@"image_small_url"] && [dictionary objectForKey:@"image_small_url"] != [NSNull null]) {
         self.smallUrl = [dictionary objectForKey:@"image_small_url"];
+        self.image = nil;
     }
     if ([dictionary objectForKey:@"image_large_url"] && [dictionary objectForKey:@"image_large_url"] != [NSNull null]) {
         self.largeUrl = [dictionary objectForKey:@"image_large_url"];
+        self.image = nil;
     }
     if ([dictionary objectForKey:@"image_thumb_url"] && [dictionary objectForKey:@"image_thumb_url"] != [NSNull null]) {
         self.thumbUrl = [dictionary objectForKey:@"image_thumb_url"];
+        self.image = nil;
     }
     if ([dictionary objectForKey:@"created_date"] && [dictionary objectForKey:@"created_date"] != [NSNull null]) {
         NSTimeInterval _interval = [[dictionary objectForKey:@"created_date"] doubleValue];
@@ -47,15 +51,19 @@
 - (void)update:(NSDictionary*)dictionary {
     if ([dictionary objectForKey:@"image_medium_url"] && [dictionary objectForKey:@"image_medium_url"] != [NSNull null]) {
         self.mediumUrl = [dictionary objectForKey:@"image_medium_url"];
+        self.image = nil;
     }
     if ([dictionary objectForKey:@"image_small_url"] && [dictionary objectForKey:@"image_small_url"] != [NSNull null]) {
         self.smallUrl = [dictionary objectForKey:@"image_small_url"];
+        self.image = nil;
     }
     if ([dictionary objectForKey:@"image_large_url"] && [dictionary objectForKey:@"image_large_url"] != [NSNull null]) {
         self.largeUrl = [dictionary objectForKey:@"image_large_url"];
+        self.image = nil;
     }
     if ([dictionary objectForKey:@"image_thumb_url"] && [dictionary objectForKey:@"image_thumb_url"] != [NSNull null]) {
         self.thumbUrl = [dictionary objectForKey:@"image_thumb_url"];
+        self.image = nil;
     }
     if ([dictionary objectForKey:@"updated_date"] && [dictionary objectForKey:@"updated_date"] != [NSNull null]) {
         NSTimeInterval _interval = [[dictionary objectForKey:@"updated_date"] doubleValue];

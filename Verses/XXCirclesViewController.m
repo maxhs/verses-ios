@@ -212,7 +212,7 @@
 - (NSInteger)numberOfSectionsInTableView:(UITableView *)tableView
 {
     if (currentUser.circles.count == 0 && !loading) self.tableView.rowHeight = screenHeight() - 84;
-    else self.tableView.rowHeight = 70;
+    else self.tableView.rowHeight = 80;
     
     if (loading) return 0;
     else return 2;

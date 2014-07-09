@@ -269,6 +269,7 @@
 		F2C2008518FC4301003C401A /* XXProfileCell.m in Sources */ = {isa = PBXBuildFile; fileRef = F2C2008418FC4301003C401A /* XXProfileCell.m */; };
 		F2C2008718FC430D003C401A /* XXProfileCell.xib in Resources */ = {isa = PBXBuildFile; fileRef = F2C2008618FC430D003C401A /* XXProfileCell.xib */; };
 		F2C2008918FC4318003C401A /* XXProfileStoryCell.xib in Resources */ = {isa = PBXBuildFile; fileRef = F2C2008818FC4318003C401A /* XXProfileStoryCell.xib */; };
+		F2C4452A196898FE0079AF62 /* XXGuideHeaderView.m in Sources */ = {isa = PBXBuildFile; fileRef = F2C44529196898FE0079AF62 /* XXGuideHeaderView.m */; };
 		F2C7211F1927C7A900434C04 /* XXAlert.m in Sources */ = {isa = PBXBuildFile; fileRef = F2C7211E1927C7A900434C04 /* XXAlert.m */; };
 		F2D83FB51915D13300592F3D /* whiteSearchIcon.png in Resources */ = {isa = PBXBuildFile; fileRef = F2D83FB31915D13300592F3D /* whiteSearchIcon.png */; };
 		F2D83FB61915D13300592F3D /* whiteSearchIcon@2x.png in Resources */ = {isa = PBXBuildFile; fileRef = F2D83FB41915D13300592F3D /* whiteSearchIcon@2x.png */; };
@@ -673,6 +674,8 @@
 		F2C2008418FC4301003C401A /* XXProfileCell.m */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.objc; path = XXProfileCell.m; sourceTree = "<group>"; };
 		F2C2008618FC430D003C401A /* XXProfileCell.xib */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = file.xib; path = XXProfileCell.xib; sourceTree = "<group>"; };
 		F2C2008818FC4318003C401A /* XXProfileStoryCell.xib */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = file.xib; path = XXProfileStoryCell.xib; sourceTree = "<group>"; };
+		F2C44528196898FE0079AF62 /* XXGuideHeaderView.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = XXGuideHeaderView.h; sourceTree = "<group>"; };
+		F2C44529196898FE0079AF62 /* XXGuideHeaderView.m */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.objc; path = XXGuideHeaderView.m; sourceTree = "<group>"; };
 		F2C7211D1927C7A900434C04 /* XXAlert.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = XXAlert.h; sourceTree = "<group>"; };
 		F2C7211E1927C7A900434C04 /* XXAlert.m */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.objc; path = XXAlert.m; sourceTree = "<group>"; };
 		F2D83FB31915D13300592F3D /* whiteSearchIcon.png */ = {isa = PBXFileReference; lastKnownFileType = image.png; path = whiteSearchIcon.png; sourceTree = "<group>"; };
@@ -949,6 +952,8 @@
 				F261471E1962F17C00E82DC5 /* XXFlowLayout.m */,
 				F29F269319017AD700B283D8 /* XXChatCell.h */,
 				F29F269419017AD700B283D8 /* XXChatCell.m */,
+				F2C44528196898FE0079AF62 /* XXGuideHeaderView.h */,
+				F2C44529196898FE0079AF62 /* XXGuideHeaderView.m */,
 				F2528F1B196076E300B6F5BA /* XXGuideCollectionCell.h */,
 				F2528F1C196076E300B6F5BA /* XXGuideCollectionCell.m */,
 				F227B63F19450C6A007DE86F /* XXPhotoCollectionCell.h */,
@@ -1682,6 +1687,7 @@
 				F285E97718E7600D008FFEC1 /* XXStoryPhoto.m in Sources */,
 				F2653712194A2B8500E21EB4 /* Tag.m in Sources */,
 				F28C782B18E3866A0088B4C9 /* XXBookmarkCell.m in Sources */,
+				F2C4452A196898FE0079AF62 /* XXGuideHeaderView.m in Sources */,
 				F227B6781947907D007DE86F /* Bookmark.m in Sources */,
 				F29F26AA1903364B00B283D8 /* UIFontDescriptor+SourceSansPro.m in Sources */,
 				F29224791827BB4C00BEB9EF /* XXStoryViewController.m in Sources */,

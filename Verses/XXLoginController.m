@@ -14,10 +14,14 @@
 #import "XXMenuViewController.h"
 #import "XXWebViewController.h"
 #import "XXAlert.h"
+#import <SDWebImage/UIImageView+WebCache.h>
+#import "XXGuideAnimator.h"
+#import "XXStoriesViewController.h"
+#import "XXGuideViewController.h"
 
 static NSString * const kShakeAnimationKey = @"XXShakeItNow";
 
-@interface XXLoginController () <UITextFieldDelegate, UIAlertViewDelegate> {
+@interface XXLoginController () <UITextFieldDelegate, UIAlertViewDelegate,UIViewControllerTransitioningDelegate> {
     AFHTTPRequestOperationManager *manager;
     XXAppDelegate *delegate;
     CGRect screen;
@@ -433,27 +437,29 @@ static NSString * const kShakeAnimationKey = @"XXShakeItNow";
                 }
                 [blankUser MR_deleteInContext:[NSManagedObjectContext MR_defaultContext]];
             }
+            if (currentUser.backgroundUrl.length){
+                [[[SDWebImageManager sharedManager] imageCache] clearDisk];
+                [[SDWebImageManager sharedManager] downloadWithURL:[NSURL URLWithString:currentUser.backgroundUrl] options:0 progress:^(NSInteger receivedSize, NSInteger expectedSize) {
+                    
+                } completed:^(UIImage *image, NSError *error, SDImageCacheType cacheType, BOOL finished) {
+                    currentUser.backgroundImageView = [[UIImageView alloc] initWithFrame:[UIScreen mainScreen].bounds];
+                    [currentUser.backgroundImageView setImage:image];
+                    [currentUser.backgroundImageView setContentMode:UIViewContentModeScaleAspectFill];
+                    [(UIImageView*)currentUser.backgroundImageView setClipsToBounds:YES];
+                    [[(XXAppDelegate*)[UIApplication sharedApplication].delegate windowBackground] setImage:image];
+                }];
+            }
             
-            [delegate.dynamicsDrawerViewController setPaneState:MSDynamicsDrawerPaneStateClosed animated:YES allowUserInterruption:YES completion:nil];
-        
             [[NSManagedObjectContext MR_defaultContext] MR_saveToPersistentStoreWithCompletion:^(BOOL success, NSError *error) {
                 delegate.currentUser = currentUser;
                 [[NSUserDefaults standardUserDefaults] setObject:currentUser.identifier forKey:kUserDefaultsId];
                 [[NSUserDefaults standardUserDefaults] setObject:currentUser.email forKey:kUserDefaultsEmail];
-                [[NSUserDefaults standardUserDefaults] setObject:[parameters objectForKey:@"password"] forKey:kUserDefaultsPassword];
-                [[NSUserDefaults standardUserDefaults] setObject:currentUser.authToken forKey:kUserDefaultsAuthToken];
-                [[NSUserDefaults standardUserDefaults] setObject:currentUser.penName forKey:kUserDefaultsPenName];
-                [[NSUserDefaults standardUserDefaults] setObject:currentUser.picSmall forKey:kUserDefaultsPicSmall];
-                [[NSUserDefaults standardUserDefaults] setObject:currentUser.picLarge forKey:kUserDefaultsPicLarge];
                 [[NSUserDefaults standardUserDefaults] synchronize];
                 
                 //not sure if we need this one anymore since we got rid of the slot view in favor of the collectionview
                 //[[NSNotificationCenter defaultCenter] postNotificationName:@"ReloadGuide" object:nil];
-                
                 [[NSNotificationCenter defaultCenter] postNotificationName:@"ReloadMenu" object:nil];
-                [self dismissViewControllerAnimated:YES completion:^{
-                    [ProgressHUD dismiss];
-                }];
+                [self cancel];
             }];
             
         } failure:^(AFHTTPRequestOperation *operation, NSError *error) {
@@ -495,12 +501,36 @@ static NSString * const kShakeAnimationKey = @"XXShakeItNow";
 }
 
 - (IBAction)cancel{
-    [UIView animateWithDuration:.13 animations:^{
-        [self.logo setAlpha:0.0];
-    }];
-    [self.presentingViewController dismissViewControllerAnimated:YES completion:^{
+    [ProgressHUD dismiss];
+    if (self.presentingViewController){
+        [self.presentingViewController dismissViewControllerAnimated:YES completion:^{
+            
+        }];
+    } else {
+        [self showGuide];
+    }
+}
+
+- (void)showGuide {
+    XXGuideViewController *vc = [[self storyboard] instantiateViewControllerWithIdentifier:@"Guide"];
+    vc.transitioningDelegate = self;
+    vc.modalPresentationStyle = UIModalPresentationCustom;
+    [self presentViewController:vc animated:YES completion:^{
         
     }];
+}
+
+- (id<UIViewControllerAnimatedTransitioning>)animationControllerForPresentedController:(UIViewController *)presented
+                                                                  presentingController:(UIViewController *)presenting
+                                                                      sourceController:(UIViewController *)source {
+    XXGuideAnimator *animator = [XXGuideAnimator new];
+    animator.presenting = YES;
+    return animator;
+}
+
+- (id<UIViewControllerAnimatedTransitioning>)animationControllerForDismissedController:(UIViewController *)dismissed {
+    XXGuideAnimator *animator = [XXGuideAnimator new];
+    return animator;
 }
 
 - (void)viewDidDisappear:(BOOL)animated {

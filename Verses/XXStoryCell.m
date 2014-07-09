@@ -75,35 +75,40 @@
         [_countLabel setTextColor:[UIColor whiteColor]];
         [_backgroundImageView setHidden:NO];
         [_backgroundImageView setImageWithURL:[NSURL URLWithString:[(Photo*)story.photos.firstObject mediumUrl]] completed:^(UIImage *image, NSError *error, SDImageCacheType cacheType) {
-            if (error && [[NSUserDefaults standardUserDefaults] boolForKey:kDarkBackground]){
-                [_titleLabel setTextColor:[UIColor blackColor]];
-                [_authorLabel setTextColor:[UIColor blackColor]];
-                [_countLabel setTextColor:[UIColor blackColor]];
+            if (error){
+                if (![[NSUserDefaults standardUserDefaults] boolForKey:kDarkBackground]){
+                    [_titleLabel setTextColor:[UIColor blackColor]];
+                    [_authorLabel setTextColor:[UIColor blackColor]];
+                    [_countLabel setTextColor:[UIColor blackColor]];
+                }
                 [UIView animateWithDuration:.3 animations:^{
                     [_titleLabel setAlpha:1.0];
                     [_authorLabel setAlpha:1.0];
                     [_countLabel setAlpha:1.0];
                 } completion:^(BOOL finished) {
+                    
                 }];
-                
-            }
-            dispatch_async(dispatch_get_global_queue(DISPATCH_QUEUE_PRIORITY_HIGH, 0), ^{
-                UIImage *blurredImage = [image applyBlurWithRadius:21 blurType:BOXFILTER tintColor:[UIColor colorWithWhite:0 alpha:.13] saturationDeltaFactor:1.8 maskImage:nil];
-                dispatch_async(dispatch_get_main_queue(), ^{
-                    [_backgroundImageView setImage:blurredImage];
-                    [UIView animateWithDuration:.3 animations:^{
-                        [_backgroundImageView setAlpha:.75];
-                        [_titleLabel setAlpha:1.0];
-                        [_authorLabel setAlpha:1.0];
-                        [_countLabel setAlpha:1.0];
-                    } completion:^(BOOL finished) {
-                        _backgroundImageView.layer.rasterizationScale = [UIScreen mainScreen].scale;
-                        _backgroundImageView.layer.shouldRasterize = YES;
-                    }];
+
+            } else {
+                dispatch_async(dispatch_get_global_queue(DISPATCH_QUEUE_PRIORITY_HIGH, 0), ^{
+                    UIImage *blurredImage = [image applyBlurWithRadius:21 blurType:BOXFILTER tintColor:[UIColor colorWithWhite:0 alpha:.13] saturationDeltaFactor:1.8 maskImage:nil];
+                    dispatch_async(dispatch_get_main_queue(), ^{
+                        [_backgroundImageView setImage:blurredImage];
+                        [UIView animateWithDuration:.3 animations:^{
+                            [_backgroundImageView setAlpha:.75];
+                            [_titleLabel setAlpha:1.0];
+                            [_authorLabel setAlpha:1.0];
+                            [_countLabel setAlpha:1.0];
+                        } completion:^(BOOL finished) {
+                            _backgroundImageView.layer.rasterizationScale = [UIScreen mainScreen].scale;
+                            _backgroundImageView.layer.shouldRasterize = YES;
+                        }];
+                    });
                 });
-            });
+                [_separatorView setHidden:YES];
+            }
         }];
-        [_separatorView setHidden:YES];
+        
     } else {
         [_backgroundImageView setHidden:YES];
         [_separatorView setHidden:NO];

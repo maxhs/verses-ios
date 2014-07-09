@@ -256,6 +256,15 @@
     if ([dictionary objectForKey:@"to_param"] && [dictionary objectForKey:@"to_param"] != [NSNull null]) {
         self.storyUrl = [NSString stringWithFormat:@"%@/stories/%@",kBaseUrl,[dictionary objectForKey:@"to_param"]];
     }
+    if ([dictionary objectForKey:@"contributions"] && [dictionary objectForKey:@"contributions"] != [NSNull null]) {
+        NSMutableOrderedSet *orderedContributions = [NSMutableOrderedSet orderedSet];
+        for (NSDictionary *dict in [dictionary objectForKey:@"contributions"]){
+            Contribution *contribution = [Contribution MR_createInContext:[NSManagedObjectContext MR_defaultContext]];
+            [contribution populateFromDict:dict];
+            [orderedContributions addObject:contribution];
+        }
+        self.contributions = orderedContributions;
+    }
 }
 
 - (void)addContribution:(Contribution*)contribution{

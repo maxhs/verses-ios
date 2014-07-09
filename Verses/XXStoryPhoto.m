@@ -43,79 +43,88 @@
     _photo = photo;
     _vc = vc;
     delegate = (XXAppDelegate*)[UIApplication sharedApplication].delegate;
-    [self addProgressView];
     
     if (withButton){
-        _button = [UIButton buttonWithType:UIButtonTypeCustom];
+        if (!_button){
+            _button = [UIButton buttonWithType:UIButtonTypeCustom];
+            [self addSubview:_button];
+        }
         [_button setFrame:self.frame];
         [_button.imageView setContentMode:UIViewContentModeScaleAspectFill];
         _button.clipsToBounds = YES;
         [_button setAlpha:0.0];
         [_button setBackgroundColor:[UIColor clearColor]];
         [_button setAutoresizingMask:UIViewAutoresizingFlexibleWidth];
-        [self addSubview:_button];
+        
     } else {
-        _imageView = [[UIImageView alloc] initWithFrame:self.frame];
+        if (!_imageView){
+            _imageView = [[UIImageView alloc] initWithFrame:self.frame];
+            [self addSubview:_imageView];
+        }
         [_imageView setContentMode:UIViewContentModeScaleAspectFill];
         _imageView.clipsToBounds = YES;
         [_imageView setAlpha:0.0];
         [_imageView setAutoresizingMask:UIViewAutoresizingFlexibleWidth];
-        [self addSubview:_imageView];
     }
     
-    SDWebImageManager *manager = [SDWebImageManager sharedManager];
-    
-    if (photo.image){
+    if (photo.image && !photo.largeUrl.length){
         if (withButton){
             [_button setImage:photo.image forState:UIControlStateNormal];
         } else {
             [_imageView setImage:photo.image];
         }
-        [UIView animateWithDuration:.27 animations:^{
+        [UIView animateWithDuration:.27 delay:.23 options:UIViewAnimationOptionCurveEaseInOut animations:^{
             if (withButton){
                 [_button setAlpha:1.0];
             } else {
                 [_imageView setAlpha:1.0];
             }
-            
         } completion:^(BOOL finished) {
+            if ([[(NSURL*)[delegate backgroundURL] absoluteString] isEqualToString:[[NSURL URLWithString:photo.largeUrl] absoluteString]] || delegate.loadingBackground){
+                //NSLog(@"Background image already set");
+            } else {
+                
+                //Turns out trying to blur photo.image is very memory inefficient. oops.
+                //delegate.loadingBackground = YES;
+                //[self appBackground:photo forImage:photo.image];
+            }
         }];
         
-        if ([[(NSURL*)[delegate backgroundURL] absoluteString] isEqualToString:[[NSURL URLWithString:photo.largeUrl] absoluteString]] || delegate.loadingBackground){
-            //NSLog(@"Background image already set");
-        } else {
-            delegate.loadingBackground = YES;
-            [self appBackground:photo forImage:photo.image];
-        }
     } else {
+    
+        [self addProgressView];
+    
+        SDWebImageManager *manager = [SDWebImageManager sharedManager];
         [manager downloadWithURL:[NSURL URLWithString:photo.largeUrl] options:0 progress:^(NSInteger receivedSize, NSInteger expectedSize) {
             _progressView.progress = ((CGFloat)receivedSize / (CGFloat)expectedSize);
            
         } completed:^(UIImage *image, NSError *error, SDImageCacheType cacheType, BOOL finished) {
-            if (withButton){
-                [_button setImage:image forState:UIControlStateNormal];
-            } else {
-                [_imageView setImage:image];
-            }
-            
-            [UIView animateWithDuration:.27 animations:^{
-                [_progressView setAlpha:0.0];
+            if (finished && !error){
                 if (withButton){
-                    [_button setAlpha:1.0];
+                    [_button setImage:image forState:UIControlStateNormal];
                 } else {
-                    [_imageView setAlpha:1.0];
+                    [_imageView setImage:image];
                 }
-                if ([[(NSURL*)[delegate backgroundURL] absoluteString] isEqualToString:[[NSURL URLWithString:photo.largeUrl] absoluteString]] || delegate.loadingBackground){
-                    NSLog(@"Background image already set");
-                }/* else if (delegate.currentUser.backgroundImageView) {
-                    NSLog(@"User already has a background image");
-                }*/ else {
-                    delegate.loadingBackground = YES;
-                    [self appBackground:photo forImage:image];
-                }
-            } completion:^(BOOL finished) {
-                [_progressView removeFromSuperview];
-            }];
+                
+                [UIView animateWithDuration:.27 animations:^{
+                    [_progressView setAlpha:0.0];
+                    if (withButton){
+                        [_button setAlpha:1.0];
+                    } else {
+                        [_imageView setAlpha:1.0];
+                    }
+                    if ([[(NSURL*)[delegate backgroundURL] absoluteString] isEqualToString:[[NSURL URLWithString:photo.largeUrl] absoluteString]] || delegate.loadingBackground){
+                        NSLog(@"Background image already set");
+                    }/* else if (delegate.currentUser.backgroundImageView) {
+                        NSLog(@"User already has a background image");
+                    }*/ else {
+                        delegate.loadingBackground = YES;
+                        [self appBackground:photo forImage:image];
+                    }
+                } completion:^(BOOL finished) {
+                    [_progressView removeFromSuperview];
+                }];
+            }
         }];
     }
 }
@@ -124,25 +133,27 @@
     dispatch_async(dispatch_get_global_queue(DISPATCH_QUEUE_PRIORITY_DEFAULT, 0), ^{
         
         [delegate.windowBackground setContentMode:UIViewContentModeScaleAspectFill];
-        UIImage *blurred;
+        UIImage *blurred = nil;
         if (IDIOM == IPAD){
             blurred = [image applyBlurWithRadius:23 blurType:BOXFILTER tintColor:[UIColor colorWithWhite:0 alpha:.33] saturationDeltaFactor:1.8 maskImage:nil];
         } else {
             blurred = [image applyBlurWithRadius:33 blurType:BOXFILTER tintColor:[UIColor colorWithWhite:.23 alpha:.37] saturationDeltaFactor:1.8 maskImage:nil];
         }
-        dispatch_async(dispatch_get_main_queue(), ^{
-            CATransition *transition = [CATransition animation];
-            transition.duration = 1.0f;
-            transition.timingFunction = [CAMediaTimingFunction functionWithName:kCAMediaTimingFunctionEaseInEaseOut];
-            transition.type = kCATransitionFade;
-            
-            [UIView transitionWithView:[(XXAppDelegate*)[UIApplication sharedApplication].delegate windowBackground] duration:1 options:UIViewAnimationOptionTransitionCrossDissolve animations:^{
-                [[(XXAppDelegate*)[UIApplication sharedApplication].delegate windowBackground] setImage:blurred];
-            } completion:^(BOOL finished) {
-                [(XXAppDelegate*)[UIApplication sharedApplication].delegate setBackgroundURL:[NSURL URLWithString:photo.largeUrl]];
-                delegate.loadingBackground = NO;
-            }];
-        });
+        if (blurred){
+            dispatch_async(dispatch_get_main_queue(), ^{
+                CATransition *transition = [CATransition animation];
+                transition.duration = 1.0f;
+                transition.timingFunction = [CAMediaTimingFunction functionWithName:kCAMediaTimingFunctionEaseInEaseOut];
+                transition.type = kCATransitionFade;
+                
+                [UIView transitionWithView:[(XXAppDelegate*)[UIApplication sharedApplication].delegate windowBackground] duration:1 options:UIViewAnimationOptionTransitionCrossDissolve animations:^{
+                    [[(XXAppDelegate*)[UIApplication sharedApplication].delegate windowBackground] setImage:blurred];
+                } completion:^(BOOL finished) {
+                    [(XXAppDelegate*)[UIApplication sharedApplication].delegate setBackgroundURL:[NSURL URLWithString:photo.largeUrl]];
+                    delegate.loadingBackground = NO;
+                }];
+            });
+        }
     });
 }
 

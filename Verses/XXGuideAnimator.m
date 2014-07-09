@@ -11,7 +11,7 @@
 @implementation XXGuideAnimator
 
 - (NSTimeInterval)transitionDuration:(id <UIViewControllerContextTransitioning>)transitionContext {
-    return .65f;
+    return kGuideAnimatorTime;
 }
 
 - (void)animateTransition:(id <UIViewControllerContextTransitioning>)transitionContext {

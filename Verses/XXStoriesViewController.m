@@ -590,8 +590,9 @@
             } else {
                 [_tableView reloadData];
             }
-            
+            if (refreshControl.isRefreshing) [refreshControl endRefreshing];
         } failure:^(AFHTTPRequestOperation *operation, NSError *error) {
+            if (refreshControl.isRefreshing) [refreshControl endRefreshing];
             canLoadMoreFeatured = NO;
             NSLog(@"Failure loading more featured stories: %@",error.description);
         }];
@@ -654,8 +655,9 @@
                     [self.tableView reloadData];
                 }
             }
-            
+            if (refreshControl.isRefreshing) [refreshControl endRefreshing];
         } failure:^(AFHTTPRequestOperation *operation, NSError *error) {
+            if (refreshControl.isRefreshing) [refreshControl endRefreshing];
             NSLog(@"Failure loading more shared stories: %@",error.description);
         }];
     } else {

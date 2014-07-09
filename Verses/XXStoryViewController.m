@@ -54,6 +54,7 @@
     BOOL loading;
 
     BOOL signedIn;
+    CGFloat textSize;
     CGRect titleFrame;
     CGRect authorsFrame;
     CGFloat imageHeight;
@@ -339,7 +340,7 @@
                 [self setupNavButtons];
             } else {
                 [currentUser.bookmarks.array enumerateObjectsUsingBlock:^(Bookmark *bookmark, NSUInteger idx, BOOL *stop) {
-                    NSLog(@"bookmark id %@ and bookmark story id: %@",bookmark.identifier, bookmark.story);
+                    
                     if (bookmark.story && [_story.identifier isEqualToNumber:bookmark.story.identifier]){
                         [_story setBookmarked:[NSNumber numberWithBool:YES]];
                         [self setupNavButtons];
@@ -534,6 +535,7 @@
     if (_titleLabel == nil) {
         _titleLabel = [[UILabel alloc] initWithFrame:CGRectZero];
     }
+    
     NSMutableParagraphStyle *titleCenterStyle = [[NSMutableParagraphStyle alloc] init];
     titleCenterStyle.alignment = NSTextAlignmentCenter;
     titleCenterStyle.lineSpacing = 0.f;
@@ -552,9 +554,7 @@
                                                                                        NSParagraphStyleAttributeName:titleCenterStyle
                                                                                        }];
     [_titleLabel setAttributedText:attributedTitle];
-    titleFrame = [attributedTitle boundingRectWithSize:CGSizeMake(width-spacer, CGFLOAT_MAX)
-                                               options:(NSStringDrawingUsesLineFragmentOrigin|NSStringDrawingUsesFontLeading)
-                                               context:nil];
+    [self resizeFontForLabel:_titleLabel maxSize:textSize minSize:14 labelWidth:width-spacer labelHeight:height*.223f];
     
     titleFrame.origin.x += spacer/2;
     if (_story.photos.count){
@@ -563,8 +563,28 @@
         titleFrame.origin.y = height/2 - titleFrame.size.height;
     }
     titleFrame.size.width = width-spacer;
-        [_titleLabel setFrame:titleFrame];
+    [_titleLabel setFrame:titleFrame];
     
+}
+
+- (void)resizeFontForLabel:(UILabel*)aLabel maxSize:(int)maxSize minSize:(int)minSize labelWidth:(float)labelWidth labelHeight:(float)labelHeight {
+    UIFont *font = aLabel.font;
+    
+    // start with maxSize and keep reducing until it doesn't clip
+    for(int i = maxSize; i >= minSize; i--) {
+        font = [font fontWithSize:i];
+        titleFrame = [aLabel.text boundingRectWithSize:CGSizeMake(labelWidth, CGFLOAT_MAX)
+                                                     options:(NSStringDrawingUsesLineFragmentOrigin|NSStringDrawingUsesFontLeading)
+                                            attributes:@{NSFontAttributeName: font}
+                                                     context:nil];
+
+        if (titleFrame.size.height <= labelHeight){
+            break;
+        }
+    }
+    NSMutableAttributedString *newTitle = [[NSMutableAttributedString alloc] initWithAttributedString:_titleLabel.attributedText];
+    [newTitle addAttribute:NSFontAttributeName value:font range:NSMakeRange(0, newTitle.length)];
+    _titleLabel.attributedText = newTitle;
 }
 
 - (void)drawAuthors {
@@ -855,7 +875,6 @@
 
 - (void)drawStoryBody {
     [self setupNavButtons];
-    CGFloat textSize;
     if (visiblePages == nil){
         visiblePages = [NSMutableSet set];
     } else {

@@ -36,6 +36,7 @@
 @property (nonatomic, retain) NSString * picMedium;
 @property (nonatomic, retain) NSString * picSmall;
 @property (nonatomic, retain) NSString * picThumb;
+@property (nonatomic, retain) NSString * backgroundUrl;
 @property (nonatomic, retain) NSNumber * pushBookmarks;
 @property (nonatomic, retain) NSNumber * pushCircleComments;
 @property (nonatomic, retain) NSNumber * pushCirclePublish;

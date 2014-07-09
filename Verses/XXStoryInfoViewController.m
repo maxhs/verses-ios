@@ -402,7 +402,7 @@
             self.popover = [[UIPopoverController alloc] initWithContentViewController:vc];
             self.popover.delegate = self;
             XXAuthorInfoCell *cell = (XXAuthorInfoCell*)[self.tableView cellForRowAtIndexPath:indexPath];
-            [self.popover presentPopoverFromRect:cell.frame inView:self.view permittedArrowDirections:UIPopoverArrowDirectionAny animated:YES];
+            [self.popover presentPopoverFromRect:cell.frame inView:self.tableView permittedArrowDirections:UIPopoverArrowDirectionAny animated:YES];
             [self.tableView deselectRowAtIndexPath:indexPath animated:YES];
         } else {
             User *user = [_story.users objectAtIndex:indexPath.row];

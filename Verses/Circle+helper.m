@@ -19,6 +19,9 @@
     if ([dictionary objectForKey:@"story_titles"] && [dictionary objectForKey:@"story_titles"] != [NSNull null]) {
         self.titles = [dictionary objectForKey:@"story_titles"];
     }
+    if ([dictionary objectForKey:@"unread_comments"] && [dictionary objectForKey:@"unread_comments"] != [NSNull null]) {
+        self.unreadCommentCount = [NSNumber numberWithInteger:[self unreadComments:[dictionary objectForKey:@"unread_comments"]]];
+    }
 }
 
 - (void)populateFromDict:(NSDictionary*)dictionary {
