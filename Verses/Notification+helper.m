@@ -24,7 +24,7 @@
         self.type = [dictionary objectForKey:@"notification_type"];
     }
     if ([dictionary objectForKey:@"the_story_id"] && [dictionary objectForKey:@"the_story_id"] != [NSNull null]) {
-        Story *story = [Story MR_findFirstByAttribute:@"identifier" withValue:[dictionary objectForKey:@"the_story_id"]];
+        Story *story = [Story MR_findFirstByAttribute:@"identifier" withValue:[dictionary objectForKey:@"the_story_id"] inContext:[NSManagedObjectContext MR_defaultContext]];
         if (!story){
             story = [Story MR_createInContext:[NSManagedObjectContext MR_defaultContext]];
             story.identifier = [dictionary objectForKey:@"the_story_id"];
@@ -32,7 +32,7 @@
         self.story = story;
     }
     if ([dictionary objectForKey:@"circle"] && [dictionary objectForKey:@"circle"] != [NSNull null]) {
-        Circle *circle = [Circle MR_findFirstByAttribute:@"identifier" withValue:[[dictionary objectForKey:@"circle"] objectForKey:@"id"]];
+        Circle *circle = [Circle MR_findFirstByAttribute:@"identifier" withValue:[[dictionary objectForKey:@"circle"] objectForKey:@"id"] inContext:[NSManagedObjectContext MR_defaultContext]];
         if (!circle){
             circle = [Circle MR_createInContext:[NSManagedObjectContext MR_defaultContext]];
         }
@@ -40,7 +40,7 @@
         self.circle = circle;
     }
     if ([dictionary objectForKey:@"user"] && [dictionary objectForKey:@"user"] != [NSNull null]) {
-        User *user = [User MR_findFirstByAttribute:@"identifier" withValue:[[dictionary objectForKey:@"user"] objectForKey:@"id"]];
+        User *user = [User MR_findFirstByAttribute:@"identifier" withValue:[[dictionary objectForKey:@"user"] objectForKey:@"id"] inContext:[NSManagedObjectContext MR_defaultContext]];
         if (!user){
             user = [User MR_createInContext:[NSManagedObjectContext MR_defaultContext]];
         }
@@ -48,7 +48,7 @@
         self.user = user;
     }
     if ([dictionary objectForKey:@"target_user"] && [dictionary objectForKey:@"target_user"] != [NSNull null]) {
-        User *user = [User MR_findFirstByAttribute:@"identifier" withValue:[[dictionary objectForKey:@"target_user"] objectForKey:@"id"]];
+        User *user = [User MR_findFirstByAttribute:@"identifier" withValue:[[dictionary objectForKey:@"target_user"] objectForKey:@"id"] inContext:[NSManagedObjectContext MR_defaultContext]];
         if (!user){
             user = [User MR_createInContext:[NSManagedObjectContext MR_defaultContext]];
         }

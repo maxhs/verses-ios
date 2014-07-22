@@ -41,15 +41,14 @@
 - (BOOL)application:(UIApplication *)application didFinishLaunchingWithOptions:(NSDictionary *)launchOptions
 {
     [[UIApplication sharedApplication] registerForRemoteNotificationTypes:(UIRemoteNotificationTypeAlert | UIRemoteNotificationTypeBadge | UIRemoteNotificationTypeSound)];
-    [MagicalRecord setupCoreDataStackWithAutoMigratingSqliteStoreNamed:kCoreDataStore];
+    [self customizeAppearance];
+    
+    [MagicalRecord setShouldDeleteStoreOnModelMismatch:YES];
+    [MagicalRecord setupAutoMigratingCoreDataStack];
+    
+    //[[Crashlytics sharedInstance] setDebugMode:YES];
     [Crashlytics startWithAPIKey:@"5c452a0455dfb4bdd2ee98051181f661006365a4"];
     [Mixpanel sharedInstanceWithToken:MIXPANEL_TOKEN];
-    
-    /*for (NSString* family in [UIFont familyNames]){
-        NSLog(@"%@", family);
-        for (NSString* name in [UIFont fontNamesForFamilyName: family])
-            NSLog(@"  %@", name);
-    }*/
     
     [[AFNetworkReachabilityManager sharedManager] startMonitoring];
     [[AFNetworkReachabilityManager sharedManager] setReachabilityStatusChangeBlock:^(AFNetworkReachabilityStatus status) {
@@ -69,9 +68,14 @@
     }];
     
     if ([[NSUserDefaults standardUserDefaults] objectForKey:kUserDefaultsId]){
-        _currentUser = [User MR_findFirstByAttribute:@"identifier" withValue:[[NSUserDefaults standardUserDefaults] objectForKey:kUserDefaultsId]];
+        _currentUser = [User MR_findFirstByAttribute:@"identifier" withValue:[[NSUserDefaults standardUserDefaults] objectForKey:kUserDefaultsId] inContext:[NSManagedObjectContext MR_defaultContext]];
     } else {
-        _currentUser = [User MR_findFirstByAttribute:@"identifier" withValue:[NSNumber numberWithInt:0]];
+        _currentUser = [User MR_findFirstByAttribute:@"identifier" withValue:[NSNumber numberWithInt:0] inContext:[NSManagedObjectContext MR_defaultContext]];
+        
+        // if there's still no user, i.e. this is the first time the user has opened the app, create one.
+        if (!_currentUser){
+            _currentUser = [User MR_createInContext:[NSManagedObjectContext MR_defaultContext]];
+        }
     }
     
     self.dynamicsDrawerViewController = (MSDynamicsDrawerViewController *)self.window.rootViewController;
@@ -119,7 +123,7 @@
         [self transition];
     }
     [self setupWindowBackground];
-    [self customizeAppearance];
+
     return YES;
 }
 
@@ -178,6 +182,11 @@
                 _windowBackground = [[UIImageView alloc] initWithImage:[UIImage imageNamed:@"background"]];
             }
         }
+    }
+    
+    if ([[NSUserDefaults standardUserDefaults] boolForKey:kDarkBackground]){
+        [_windowBackground setAlpha:.14];
+    } else {
         [_windowBackground setAlpha:1];
     }
     
@@ -195,7 +204,13 @@
     return blurredSnapshotImage;
 }
 
-- (void)customizeAppearance {    
+- (void)customizeAppearance {
+    /*for (NSString* family in [UIFont familyNames]){
+     NSLog(@"%@", family);
+     for (NSString* name in [UIFont fontNamesForFamilyName: family])
+     NSLog(@"  %@", name);
+     }*/
+    
     [[UITextField appearanceWhenContainedIn:[UISearchBar class], nil] setTextColor:[UIColor whiteColor]];
     [[UIButton appearanceWhenContainedIn:[UISearchBar class], nil] setTitleColor:[UIColor whiteColor] forState:UIControlStateNormal];
     [[UIButton appearance] setTitleColor:kElectricBlue forState:UIControlStateHighlighted];
@@ -401,7 +416,7 @@
 - (void)applicationDidBecomeActive:(UIApplication *)application
 {
     if (!_currentUser && [[NSUserDefaults standardUserDefaults] objectForKey:kUserDefaultsId]){
-        _currentUser = [User MR_findFirstByAttribute:@"identifier" withValue:[[NSUserDefaults standardUserDefaults] objectForKey:kUserDefaultsId]];
+        _currentUser = [User MR_findFirstByAttribute:@"identifier" withValue:[[NSUserDefaults standardUserDefaults] objectForKey:kUserDefaultsId] inContext:[NSManagedObjectContext MR_defaultContext]];
     }
     // Restart any tasks that were paused (or not yet started) while the application was inactive. If the application was previously in the background, optionally refresh the user interface.
     

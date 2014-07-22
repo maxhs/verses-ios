@@ -39,7 +39,7 @@
     UITextField *lastNameTextField;
     UITextField *locationTextField;
     CGRect screen;
-    User *currentUser;
+    User *_currentUser;
     UIBarButtonItem *guideButton;
     UIBarButtonItem *negativeRightButton;
     UIColor *textColor;
@@ -67,7 +67,7 @@
                                             target:nil action:nil];
     negativeRightButton.width = -14.f;
     self.navigationItem.rightBarButtonItems = @[negativeRightButton,guideButton];
-    
+    self.navigationItem.leftBarButtonItem = saveButton;
     [self.logoutButton.titleLabel setFont:[UIFont fontWithName:kSourceSansProSemibold size:16]];
     self.tableView.tableFooterView = self.logoutButton;
     screen = [UIScreen mainScreen].bounds;
@@ -75,10 +75,10 @@
     self.title = @"Settings";
     navBarShadowView = [Utilities findNavShadow:self.navigationController.navigationBar];
     
-    if (![(XXAppDelegate*)[UIApplication sharedApplication].delegate currentUser]){
-        currentUser = [User MR_findFirstByAttribute:@"identifier" withValue:[[NSUserDefaults standardUserDefaults] objectForKey:kUserDefaultsId]];
+    if ([(XXAppDelegate*)[UIApplication sharedApplication].delegate currentUser]){
+        _currentUser = [(XXAppDelegate*)[UIApplication sharedApplication].delegate currentUser];
     } else {
-        currentUser = [(XXAppDelegate*)[UIApplication sharedApplication].delegate currentUser];
+        _currentUser = [User MR_findFirstByAttribute:@"identifier" withValue:[[NSUserDefaults standardUserDefaults] objectForKey:kUserDefaultsId] inContext:[NSManagedObjectContext MR_defaultContext]];
     }
 }
 
@@ -114,9 +114,9 @@
 - (void)loadProfile {
     [manager GET:[NSString stringWithFormat:@"%@/users/%@/edit",kAPIBaseUrl,[[NSUserDefaults standardUserDefaults] objectForKey:kUserDefaultsId]] parameters:@{@"user_id":[[NSUserDefaults standardUserDefaults] objectForKey:kUserDefaultsId]} success:^(AFHTTPRequestOperation *operation, id responseObject) {
         //NSLog(@"success getting profile: %@",responseObject);
-        [currentUser populateFromDict:[responseObject objectForKey:@"user"]];
+        [_currentUser populateFromDict:[responseObject objectForKey:@"user"]];
         [[NSManagedObjectContext MR_defaultContext] MR_saveToPersistentStoreWithCompletion:^(BOOL success, NSError *error) {
-            //NSLog(@"current user: %@",currentUser);
+            [self assignBackgroundImage];
             [self.tableView reloadData];
             [ProgressHUD dismiss];
         }];
@@ -134,11 +134,24 @@
     }];
 }
 
+- (void)assignBackgroundImage {
+    _currentUser.backgroundImageView = [[UIImageView alloc] initWithFrame:[UIScreen mainScreen].bounds];
+    [[SDWebImageManager sharedManager] downloadWithURL:[NSURL URLWithString:_currentUser.backgroundUrl] options:SDWebImageProgressiveDownload progress:^(NSInteger receivedSize, NSInteger expectedSize) {
+        
+    } completed:^(UIImage *image, NSError *error, SDImageCacheType cacheType, BOOL finished) {
+        [_currentUser.backgroundImageView setImage:image];
+        [_currentUser.backgroundImageView setContentMode:UIViewContentModeScaleAspectFill];
+        [(UIImageView*)_currentUser.backgroundImageView setClipsToBounds:YES];
+        [[(XXAppDelegate*)[UIApplication sharedApplication].delegate windowBackground] setImage:image];
+    }];
+
+}
+
 - (void)synchronizeUserDefaults {
-    [[NSUserDefaults standardUserDefaults] setObject:currentUser.email forKey:kUserDefaultsEmail];
-    [[NSUserDefaults standardUserDefaults] setObject:currentUser.penName forKey:kUserDefaultsPenName];
-    [[NSUserDefaults standardUserDefaults] setObject:currentUser.picSmall forKey:kUserDefaultsPicSmall];
-    [[NSUserDefaults standardUserDefaults] setObject:currentUser.location forKey:kUserDefaultsLocation];
+    [[NSUserDefaults standardUserDefaults] setObject:_currentUser.email forKey:kUserDefaultsEmail];
+    [[NSUserDefaults standardUserDefaults] setObject:_currentUser.penName forKey:kUserDefaultsPenName];
+    [[NSUserDefaults standardUserDefaults] setObject:_currentUser.picSmall forKey:kUserDefaultsPicSmall];
+    [[NSUserDefaults standardUserDefaults] setObject:_currentUser.location forKey:kUserDefaultsLocation];
     [[NSUserDefaults standardUserDefaults] synchronize];
 }
 
@@ -157,9 +170,7 @@
     }
     if (indexPath != nil) [self.tableView scrollToRowAtIndexPath:indexPath atScrollPosition:UITableViewScrollPositionMiddle animated:YES];
     
-    self.navigationItem.rightBarButtonItem = nil;
-    self.navigationItem.rightBarButtonItem = saveButton;
-    self.navigationItem.leftBarButtonItem = doneButton;
+    self.navigationItem.leftBarButtonItems = @[saveButton,doneButton];
 }
 
 - (void)textFieldDidEndEditing:(UITextField *)textField {
@@ -171,6 +182,7 @@
     self.navigationItem.rightBarButtonItem = nil;
     self.navigationItem.rightBarButtonItems = @[negativeRightButton,guideButton];
     self.navigationItem.leftBarButtonItem = nil;
+    self.navigationItem.leftBarButtonItem = saveButton;
 }
 
 #pragma mark - Table view data source
@@ -220,7 +232,7 @@
             case 0:
                 [cell.imageLabel setHidden:YES];
                 [cell.imageButton setHidden:YES];
-                [cell.textField setText:currentUser.penName];
+                [cell.textField setText:_currentUser.penName];
                 penNameTextField = cell.textField;
                 [penNameTextField setPlaceholder:@"Your pen name"];
                 [penNameTextField setAutocapitalizationType:UITextAutocapitalizationTypeWords];
@@ -231,32 +243,32 @@
                 [cell.imageButton setHidden:YES];
                 locationTextField = cell.textField;
                 [cell.textField setPlaceholder:@"Where you're from"];
-                [cell.textField setText:currentUser.location];
+                [cell.textField setText:_currentUser.location];
                 [locationTextField setAutocapitalizationType:UITextAutocapitalizationTypeWords];
                 [locationTextField setDelegate:self];
                 break;
             case 2:
             {
-                [cell configure:currentUser];
+                [cell configure:_currentUser];
                 [cell.imageLabel setHidden:NO];
                 [cell.imageLabel setTextColor:textColor];
                 [cell.imageButton setHidden:NO];
                 [cell.textField setHidden:YES];
-                if (currentUser.picSmall.length){
-                    [cell.imageButton setImageWithURL:[NSURL URLWithString:currentUser.picSmall] forState:UIControlStateNormal completed:^(UIImage *image, NSError *error, SDImageCacheType cacheType) {
+                if (_currentUser.picSmall.length){
+                    [cell.imageButton setImageWithURL:[NSURL URLWithString:_currentUser.picSmall] forState:UIControlStateNormal completed:^(UIImage *image, NSError *error, SDImageCacheType cacheType) {
                        [UIView animateWithDuration:.23 animations:^{
                            [cell.imageButton setAlpha:1.0];
                        }];
                     }];
-                } else if (currentUser.thumbImage) {
-                    [cell.imageButton setImage:currentUser.thumbImage forState:UIControlStateNormal];
+                } else if (_currentUser.thumbImage) {
+                    [cell.imageButton setImage:_currentUser.thumbImage forState:UIControlStateNormal];
                     [UIView animateWithDuration:.23 animations:^{
                         [cell.imageButton setAlpha:1.0];
                     }];
                 } else {
                     [cell.imageLabel setText:@"Your profile photo"];
                     [cell.imageButton setImage:nil forState:UIControlStateNormal];
-                    [cell.imageButton setTitle:[currentUser.penName substringToIndex:2] forState:UIControlStateNormal];
+                    [cell.imageButton setTitle:[_currentUser.penName substringToIndex:2] forState:UIControlStateNormal];
                     [UIView animateWithDuration:.23 animations:^{
                         [cell.imageButton setAlpha:1.0];
                     }];
@@ -277,7 +289,7 @@
         if (cell == nil) {
             cell = [[[NSBundle mainBundle] loadNibNamed:@"XXSettingsCell" owner:nil options:nil] lastObject];
         }
-        [cell configure:currentUser];
+        [cell configure:_currentUser];
         switch (indexPath.row) {
             case 0:
             {
@@ -286,7 +298,7 @@
                 [cell.textField setHidden:NO];
                 emailTextField = cell.textField;
                 [cell.textField setPlaceholder:@"Your email"];
-                [cell.textField setText:currentUser.email];
+                [cell.textField setText:_currentUser.email];
                 [emailTextField setAutocapitalizationType:UITextAutocapitalizationTypeNone];
                 [emailTextField setKeyboardType:UIKeyboardTypeEmailAddress];
                 break;
@@ -295,7 +307,7 @@
             {
                 firstNameTextField = cell.textField;
                 [cell.textField setPlaceholder:@"Your first name"];
-                [cell.textField setText:currentUser.firstName];
+                [cell.textField setText:_currentUser.firstName];
                 [cell.imageButton setHidden:YES];
                 [cell.imageLabel setHidden:YES];
                 [cell.textField setHidden:NO];
@@ -306,7 +318,7 @@
             {
                 lastNameTextField = cell.textField;
                 [cell.textField setPlaceholder:@"Your last name"];
-                [cell.textField setText:currentUser.lastName];
+                [cell.textField setText:_currentUser.lastName];
                 [cell.imageButton setHidden:YES];
                 [cell.imageLabel setHidden:YES];
                 [cell.textField setHidden:NO];
@@ -347,11 +359,11 @@
             }
             [cell.backgroundImageViewLabel setFont:[UIFont fontWithName:kSourceSansProRegular size:16]];
             
-            if (blurredImage || currentUser.backgroundImageView){
+            if (blurredImage || _currentUser.backgroundImageView){
                 if (blurredImage){
                     [cell.userBackground setImage:blurredImage];
                 } else {
-                    [cell.userBackground setImage:[(UIImageView*)currentUser.backgroundImageView image]];
+                    [cell.userBackground setImage:[(UIImageView*)_currentUser.backgroundImageView image]];
                 }
                 [cell.userBackground setHidden:NO];
                 [cell.backgroundImageViewLabel setText:@"Your default background image"];
@@ -385,7 +397,7 @@
                     [pushSwitch addTarget:self action:@selector(masterPushChanged) forControlEvents:UIControlEventValueChanged];
                 }
                 
-                if ([currentUser.pushPermissions isEqualToNumber:[NSNumber numberWithBool:YES]]) {
+                if ([_currentUser.pushPermissions isEqualToNumber:[NSNumber numberWithBool:YES]]) {
                     [pushSwitch setOn:YES animated:YES];
                 } else {
                     [cell.textLabel setFont:[UIFont fontWithName:kSourceSansProLight size:15]];
@@ -400,7 +412,7 @@
                     [circleCommentsPushSwitch addTarget:self action:@selector(switchChanged:) forControlEvents:UIControlEventValueChanged];
                 }
                 
-                if ([currentUser.pushCircleComments isEqualToNumber:[NSNumber numberWithBool:YES]]) {
+                if ([_currentUser.pushCircleComments isEqualToNumber:[NSNumber numberWithBool:YES]]) {
                     [circleCommentsPushSwitch setOn:YES animated:YES];
                 } else {
                     [cell.textLabel setFont:[UIFont fontWithName:kSourceSansProLight size:15]];
@@ -415,7 +427,7 @@
                     [feedbackPushSwitch addTarget:self action:@selector(switchChanged:) forControlEvents:UIControlEventValueChanged];
                 }
                 
-                if ([currentUser.pushFeedbacks isEqualToNumber:[NSNumber numberWithBool:YES]]) {
+                if ([_currentUser.pushFeedbacks isEqualToNumber:[NSNumber numberWithBool:YES]]) {
                     
                     [feedbackPushSwitch setOn:YES animated:YES];
                 } else {
@@ -430,7 +442,7 @@
                     circlePublishPushSwitch = [[UISwitch alloc] init];
                     [circlePublishPushSwitch addTarget:self action:@selector(switchChanged:) forControlEvents:UIControlEventValueChanged];
                 }
-                if ([currentUser.pushCirclePublish isEqualToNumber:[NSNumber numberWithBool:YES]]) {
+                if ([_currentUser.pushCirclePublish isEqualToNumber:[NSNumber numberWithBool:YES]]) {
                     [circlePublishPushSwitch setOn:YES animated:YES];
                 
                 } else {
@@ -446,7 +458,7 @@
                     [subscriptionPushSwitch addTarget:self action:@selector(switchChanged:) forControlEvents:UIControlEventValueChanged];
                 }
                 
-                if ([currentUser.pushSubscribe isEqualToNumber:[NSNumber numberWithBool:YES]]) {
+                if ([_currentUser.pushSubscribe isEqualToNumber:[NSNumber numberWithBool:YES]]) {
                     [subscriptionPushSwitch setOn:YES animated:YES];
                 } else {
                     [cell.textLabel setFont:[UIFont fontWithName:kSourceSansProLight size:15]];
@@ -461,7 +473,7 @@
                     invitationsPushSwitch = [[UISwitch alloc] init];
                     [invitationsPushSwitch addTarget:self action:@selector(switchChanged:) forControlEvents:UIControlEventValueChanged];
                 }
-                if ([currentUser.pushInvitations isEqualToNumber:[NSNumber numberWithBool:YES]]) {
+                if ([_currentUser.pushInvitations isEqualToNumber:[NSNumber numberWithBool:YES]]) {
                     [invitationsPushSwitch setOn:YES animated:YES];
                 } else {
                     [cell.textLabel setFont:[UIFont fontWithName:kSourceSansProLight size:15]];
@@ -477,7 +489,7 @@
                     [bookmarkPushSwitch addTarget:self action:@selector(switchChanged:) forControlEvents:UIControlEventValueChanged];
                 }
                 
-                if ([currentUser.pushBookmarks isEqualToNumber:[NSNumber numberWithBool:YES]]) {
+                if ([_currentUser.pushBookmarks isEqualToNumber:[NSNumber numberWithBool:YES]]) {
                     [bookmarkPushSwitch setOn:YES animated:YES];
                 } else {
                     [cell.textLabel setFont:[UIFont fontWithName:kSourceSansProLight size:15]];
@@ -506,44 +518,44 @@
 
 - (void)masterPushChanged {
     if (pushSwitch.isOn){
-        [currentUser setPushPermissions:[NSNumber numberWithBool:YES]];
-        [currentUser setPushDaily: [NSNumber numberWithBool:YES]];
-        currentUser.pushCirclePublish = [NSNumber numberWithBool:YES];
-        currentUser.pushBookmarks = [NSNumber numberWithBool:YES];
-        currentUser.pushFeedbacks = [NSNumber numberWithBool:YES];
-        currentUser.pushSubscribe = [NSNumber numberWithBool:YES];
-        currentUser.pushInvitations = [NSNumber numberWithBool:YES];
-        currentUser.pushCircleComments = [NSNumber numberWithBool:YES];
+        [_currentUser setPushPermissions:[NSNumber numberWithBool:YES]];
+        [_currentUser setPushDaily: [NSNumber numberWithBool:YES]];
+        _currentUser.pushCirclePublish = [NSNumber numberWithBool:YES];
+        _currentUser.pushBookmarks = [NSNumber numberWithBool:YES];
+        _currentUser.pushFeedbacks = [NSNumber numberWithBool:YES];
+        _currentUser.pushSubscribe = [NSNumber numberWithBool:YES];
+        _currentUser.pushInvitations = [NSNumber numberWithBool:YES];
+        _currentUser.pushCircleComments = [NSNumber numberWithBool:YES];
     } else {
-        currentUser.pushPermissions = [NSNumber numberWithBool:NO];
-        currentUser.pushDaily = [NSNumber numberWithBool:NO];
-        currentUser.pushCirclePublish = [NSNumber numberWithBool:NO];
-        currentUser.pushBookmarks = [NSNumber numberWithBool:NO];
-        currentUser.pushFeedbacks = [NSNumber numberWithBool:NO];
-        currentUser.pushSubscribe = [NSNumber numberWithBool:NO];
-        currentUser.pushInvitations = [NSNumber numberWithBool:NO];
-        currentUser.pushCircleComments = [NSNumber numberWithBool:NO];
+        _currentUser.pushPermissions = [NSNumber numberWithBool:NO];
+        _currentUser.pushDaily = [NSNumber numberWithBool:NO];
+        _currentUser.pushCirclePublish = [NSNumber numberWithBool:NO];
+        _currentUser.pushBookmarks = [NSNumber numberWithBool:NO];
+        _currentUser.pushFeedbacks = [NSNumber numberWithBool:NO];
+        _currentUser.pushSubscribe = [NSNumber numberWithBool:NO];
+        _currentUser.pushInvitations = [NSNumber numberWithBool:NO];
+        _currentUser.pushCircleComments = [NSNumber numberWithBool:NO];
     }
     [self.tableView performSelector:@selector(reloadData) withObject:nil afterDelay:.25];
 }
 
 - (void)switchChanged:(UISwitch*)theSwitch {
     if (theSwitch == pushSwitch){
-        currentUser.pushPermissions = [NSNumber numberWithBool:theSwitch.isOn];
+        _currentUser.pushPermissions = [NSNumber numberWithBool:theSwitch.isOn];
     } else if (theSwitch == bookmarkPushSwitch) {
-        currentUser.pushBookmarks = [NSNumber numberWithBool:theSwitch.isOn];
+        _currentUser.pushBookmarks = [NSNumber numberWithBool:theSwitch.isOn];
     } else if (theSwitch == subscriptionPushSwitch) {
-        currentUser.pushSubscribe = [NSNumber numberWithBool:theSwitch.isOn];
+        _currentUser.pushSubscribe = [NSNumber numberWithBool:theSwitch.isOn];
     } else if (theSwitch == invitationsPushSwitch) {
-        currentUser.pushInvitations = [NSNumber numberWithBool:theSwitch.isOn];
+        _currentUser.pushInvitations = [NSNumber numberWithBool:theSwitch.isOn];
     } else if (theSwitch == circlePublishPushSwitch) {
-        currentUser.pushCirclePublish = [NSNumber numberWithBool:theSwitch.isOn];
+        _currentUser.pushCirclePublish = [NSNumber numberWithBool:theSwitch.isOn];
     } else if (theSwitch == dailyPushSwitch) {
-        currentUser.pushDaily = [NSNumber numberWithBool:theSwitch.isOn];
+        _currentUser.pushDaily = [NSNumber numberWithBool:theSwitch.isOn];
     } else if (theSwitch == feedbackPushSwitch) {
-        currentUser.pushFeedbacks = [NSNumber numberWithBool:theSwitch.isOn];
+        _currentUser.pushFeedbacks = [NSNumber numberWithBool:theSwitch.isOn];
     } else if (theSwitch == circleCommentsPushSwitch) {
-        currentUser.pushCircleComments = [NSNumber numberWithBool:theSwitch.isOn];
+        _currentUser.pushCircleComments = [NSNumber numberWithBool:theSwitch.isOn];
     }
     [self.tableView performSelector:@selector(reloadData) withObject:nil afterDelay:.25];
 }
@@ -622,7 +634,7 @@
     if (indexPath.section == 0 || indexPath.section == 1){
         return 50;
     } else if (indexPath.section == 2 && indexPath.row == 1) {
-        if (currentUser.backgroundImageView != nil || blurredImage){
+        if (_currentUser.backgroundImageView != nil || blurredImage){
             return 200;
         } else {
             return 100;
@@ -732,16 +744,11 @@
     }
     
     [manager PATCH:[NSString stringWithFormat:@"%@/users/%@",kAPIBaseUrl,[[NSUserDefaults standardUserDefaults] objectForKey:kUserDefaultsId]] parameters:@{@"user":parameters} success:^(AFHTTPRequestOperation *operation, id responseObject) {
-        //NSLog(@"success updating user: %@",responseObject);
-        [currentUser populateFromDict:[responseObject objectForKey:@"user"]];
+        [_currentUser populateFromDict:[responseObject objectForKey:@"user"]];
         [self synchronizeUserDefaults];
         [ProgressHUD dismiss];
         [XXAlert show:@"Settings updated" withTime:2.7f];
-        
-        [[NSManagedObjectContext MR_defaultContext] MR_saveToPersistentStoreWithCompletion:^(BOOL success, NSError *error) {
-            NSLog(@"Any success saving settings? %u",success);
-            [[(XXAppDelegate*)[UIApplication sharedApplication].delegate windowBackground] setImage:[(UIImageView*)currentUser.backgroundImageView image]];
-        }];
+        [self saveUser];
         
     } failure:^(AFHTTPRequestOperation *operation, NSError *error) {
         //NSLog(@"Failure updating user: %@",error.description);
@@ -754,11 +761,38 @@
     }];
 }
 
+- (void)saveUser {
+    [MagicalRecord saveWithBlock:^(NSManagedObjectContext *localContext) {
+        User *localUser = [_currentUser MR_inContext:localContext];
+        localUser.firstName = _currentUser.firstName;
+        localUser.lastName = _currentUser.lastName;
+        localUser.email = _currentUser.email;
+        localUser.penName = _currentUser.penName;
+        localUser.picLarge = _currentUser.picLarge;
+        localUser.picMedium = _currentUser.picMedium;
+        localUser.picSmall = _currentUser.picSmall;
+        localUser.pushCircleComments = _currentUser.pushCircleComments;
+        localUser.pushCirclePublish = _currentUser.pushCirclePublish;
+        localUser.pushFeedbacks = _currentUser.pushFeedbacks;
+        localUser.pushDaily = _currentUser.pushDaily;
+        localUser.pushInvitations = _currentUser.pushInvitations;
+        localUser.pushPermissions = _currentUser.pushPermissions;
+        localUser.pushWeekly = _currentUser.pushWeekly;
+        localUser.backgroundUrl = _currentUser.backgroundUrl;
+    } completion:^(BOOL success, NSError *error) {
+        if (_currentUser.backgroundImageView){
+            NSLog(@"Setting the user's background image");
+            [[(XXAppDelegate*)[UIApplication sharedApplication].delegate windowBackground] setImage:[(UIImageView*)_currentUser.backgroundImageView image]];
+        }
+        NSLog(@"Any success saving settings? %u",success);
+    }];
+}
+
 - (void)tableView:(UITableView *)tableView didSelectRowAtIndexPath:(NSIndexPath *)indexPath {
     if (indexPath.section == 0 && indexPath.row == 2){
         avatar = YES;
         if ([UIImagePickerController isSourceTypeAvailable:UIImagePickerControllerSourceTypeCamera]){
-            if (currentUser.thumbImage || currentUser.picSmall){
+            if (_currentUser.thumbImage || _currentUser.picSmall){
                 [[[UIActionSheet alloc] initWithTitle:nil delegate:self cancelButtonTitle:@"Cancel" destructiveButtonTitle:@"Remove Photo" otherButtonTitles:@"Take Photo",@"Pick from Library", nil] showInView:self.view];
             } else {
                 [[[UIActionSheet alloc] initWithTitle:nil delegate:self cancelButtonTitle:@"Cancel" destructiveButtonTitle:nil otherButtonTitles:@"Take Photo",@"Pick from Library", nil] showInView:self.view];
@@ -772,7 +806,7 @@
         } else if (indexPath.row == 1) {
             avatar = NO;
             if ([UIImagePickerController isSourceTypeAvailable:UIImagePickerControllerSourceTypeCamera]){
-                if (currentUser.backgroundImageView){
+                if (_currentUser.backgroundImageView){
                     [[[UIActionSheet alloc] initWithTitle:nil delegate:self cancelButtonTitle:@"Cancel" destructiveButtonTitle:@"Remove Background" otherButtonTitles:@"Take Photo",@"Pick from Library", nil] showInView:self.view];
                 } else {
                     [[[UIActionSheet alloc] initWithTitle:nil delegate:self cancelButtonTitle:@"Cancel" destructiveButtonTitle:nil otherButtonTitles:@"Take Photo",@"Pick from Library", nil] showInView:self.view];
@@ -803,11 +837,11 @@
 
 - (void)removeUserPhoto {
     [ProgressHUD show:@"Removing photo..."];
-    [[SDImageCache sharedImageCache] removeImageForKey:currentUser.picSmall fromDisk:YES];
-    [manager POST:[NSString stringWithFormat:@"%@/users/%@/remove_photo",kAPIBaseUrl,currentUser.identifier] parameters:nil success:^(AFHTTPRequestOperation *operation, id responseObject) {
+    [[SDImageCache sharedImageCache] removeImageForKey:_currentUser.picSmall fromDisk:YES];
+    [manager POST:[NSString stringWithFormat:@"%@/users/%@/remove_photo",kAPIBaseUrl,_currentUser.identifier] parameters:nil success:^(AFHTTPRequestOperation *operation, id responseObject) {
         [ProgressHUD dismiss];
-        currentUser.thumbImage = nil;
-        currentUser.picSmall = @"";
+        _currentUser.thumbImage = nil;
+        _currentUser.picSmall = @"";
         [[NSUserDefaults standardUserDefaults] setObject:nil forKey:kUserDefaultsPicSmall];
         [[NSUserDefaults standardUserDefaults] synchronize];
         [self.tableView reloadRowsAtIndexPaths:@[[NSIndexPath indexPathForRow:2 inSection:0]] withRowAnimation:UITableViewRowAnimationFade];
@@ -819,12 +853,12 @@
 }
 
 - (void)removeBackgroundPhoto {
-    [[SDImageCache sharedImageCache] removeImageForKey:currentUser.backgroundUrl fromDisk:YES];
-    currentUser.backgroundImageView = nil;
+    [[SDImageCache sharedImageCache] removeImageForKey:_currentUser.backgroundUrl fromDisk:YES];
+    _currentUser.backgroundImageView = nil;
     [self.tableView reloadRowsAtIndexPaths:@[[NSIndexPath indexPathForRow:1 inSection:2]] withRowAnimation:UITableViewRowAnimationFade];
 
-    [manager POST:[NSString stringWithFormat:@"%@/users/%@/remove_background",kAPIBaseUrl,currentUser.identifier] parameters:nil success:^(AFHTTPRequestOperation *operation, id responseObject) {
-        currentUser.backgroundUrl = @"";
+    [manager POST:[NSString stringWithFormat:@"%@/users/%@/remove_background",kAPIBaseUrl,_currentUser.identifier] parameters:nil success:^(AFHTTPRequestOperation *operation, id responseObject) {
+        _currentUser.backgroundUrl = @"";
         NSLog(@"Success removing background photo");
     } failure:^(AFHTTPRequestOperation *operation, NSError *error) {
         NSLog(@"Failed to remove profile photo: %@",error.description);
@@ -849,9 +883,9 @@
 - (void)imagePickerController:(UIImagePickerController *)picker didFinishPickingMediaWithInfo:(NSDictionary *)info {
     [picker dismissViewControllerAnimated:YES completion:nil];
     if (avatar){
-        [currentUser setThumbImage:[info objectForKey:UIImagePickerControllerOriginalImage]];
+        [_currentUser setThumbImage:[info objectForKey:UIImagePickerControllerOriginalImage]];
         [self.tableView reloadRowsAtIndexPaths:@[[NSIndexPath indexPathForRow:2 inSection:0]] withRowAnimation:UITableViewRowAnimationFade];
-        [self uploadUserImage:currentUser.thumbImage];
+        [self uploadUserImage:_currentUser.thumbImage];
     } else {
         
         if (IDIOM == IPAD){
@@ -859,13 +893,13 @@
         } else {
             blurredImage = [[info objectForKey:UIImagePickerControllerOriginalImage] applyBlurWithRadius:27 blurType:BOXFILTER tintColor:[UIColor colorWithWhite:.23 alpha:.37] saturationDeltaFactor:1.7 maskImage:nil];
         }
-        if (currentUser.backgroundImageView && [currentUser.backgroundImageView isKindOfClass:[UIImageView class]]){
-            [(UIImageView*)currentUser.backgroundImageView setImage:blurredImage];
+        if (_currentUser.backgroundImageView && [_currentUser.backgroundImageView isKindOfClass:[UIImageView class]]){
+            [(UIImageView*)_currentUser.backgroundImageView setImage:blurredImage];
         } else {
-            currentUser.backgroundImageView = [[UIImageView alloc] initWithFrame:[UIScreen mainScreen].bounds];
-            [currentUser.backgroundImageView setImage:blurredImage];
-            [currentUser.backgroundImageView setContentMode:UIViewContentModeScaleAspectFill];
-            [(UIImageView*)currentUser.backgroundImageView setClipsToBounds:YES];
+            _currentUser.backgroundImageView = [[UIImageView alloc] initWithFrame:[UIScreen mainScreen].bounds];
+            [_currentUser.backgroundImageView setImage:blurredImage];
+            [_currentUser.backgroundImageView setContentMode:UIViewContentModeScaleAspectFill];
+            [(UIImageView*)_currentUser.backgroundImageView setClipsToBounds:YES];
         }
         [[(XXAppDelegate*)[UIApplication sharedApplication].delegate windowBackground] setImage:blurredImage];
         [self uploadBackgroundImage:blurredImage];
@@ -875,7 +909,7 @@
 
 - (void)uploadUserImage:(UIImage*)image {
     NSData *imageData = UIImageJPEGRepresentation(image, 1);
-    [manager POST:[NSString stringWithFormat:@"%@/users/%@/add_photo",kAPIBaseUrl,currentUser.identifier] parameters:nil constructingBodyWithBlock:^(id<AFMultipartFormData> formData) {
+    [manager POST:[NSString stringWithFormat:@"%@/users/%@/add_photo",kAPIBaseUrl,_currentUser.identifier] parameters:nil constructingBodyWithBlock:^(id<AFMultipartFormData> formData) {
         [formData appendPartWithFileData:imageData name:@"photo" fileName:@"photo.jpg" mimeType:@"image/jpg"];
     } success:^(AFHTTPRequestOperation *operation, id responseObject) {
         NSLog(@"Success uploading user profile image: %@",responseObject);
@@ -886,7 +920,7 @@
 
 - (void)uploadBackgroundImage:(UIImage*)image {
     NSData *imageData = UIImageJPEGRepresentation(image, 1);
-    [manager POST:[NSString stringWithFormat:@"%@/users/%@/add_background",kAPIBaseUrl,currentUser.identifier] parameters:nil constructingBodyWithBlock:^(id<AFMultipartFormData> formData) {
+    [manager POST:[NSString stringWithFormat:@"%@/users/%@/add_background",kAPIBaseUrl,_currentUser.identifier] parameters:nil constructingBodyWithBlock:^(id<AFMultipartFormData> formData) {
         [formData appendPartWithFileData:imageData name:@"photo" fileName:@"photo.jpg" mimeType:@"image/jpg"];
     } success:^(AFHTTPRequestOperation *operation, id responseObject) {
         NSLog(@"Success uploading user background image: %@",responseObject);
@@ -948,10 +982,10 @@
 
 - (void)cleanAndResetupDB {
     NSError *error = nil;
-    NSURL *storeURL = [NSPersistentStore MR_urlForStoreName:kCoreDataStore];
+    NSURL *storeURL = [NSPersistentStore MR_urlForStoreName:[MagicalRecord defaultStoreName]];
     [MagicalRecord cleanUp];
     if([[NSFileManager defaultManager] removeItemAtURL:storeURL error:&error]){
-        [MagicalRecord setupCoreDataStackWithAutoMigratingSqliteStoreNamed:kCoreDataStore];
+        [MagicalRecord setupAutoMigratingCoreDataStack];
     } else{
         NSLog(@"Error deleting persistent store description: %@ %@", error.description,storeURL);
     }

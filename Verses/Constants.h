@@ -21,7 +21,6 @@ static inline CGFloat height(UIView *view) { return view.frame.size.height; }
 #define kAPIBaseUrl @"https://www.writeverses.com/api/v1"
 #define kTermsUrl @"https://www.writeverses.com/terms"
 #define kUrlScheme @"verses"
-#define kCoreDataStore @"Verses"
 
 #define MIXPANEL_TOKEN @"8184fc9baafab30a5c51cceefb90e2d0"
 #define RADIANS(degrees) ((degrees * M_PI) / 180.0)
@@ -68,6 +67,7 @@ static inline CGFloat height(UIView *view) { return view.frame.size.height; }
 #define kSlowRevealPlaceholder @"Add to this slow reveal story..."
 #define kTitlePlaceholder @"Title your story..."
 #define kFeedbackPlaceholder @"Leave feedback..."
+#define kFeedbackResponsePlaceholder @"Leave a response..."
 #define kCircleBlurbPlaceholder @"Describe your writing circle..."
 #define kCircleNamePlaceholder @"Name your writing circle..."
 #define kAddCollaboratorPlaceholder @"What's your contact's email address?"

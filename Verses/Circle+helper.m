@@ -57,7 +57,7 @@
         NSMutableOrderedSet *orderedComments = [NSMutableOrderedSet orderedSet];
         for (NSDictionary *commentDict in [dictionary objectForKey:@"comments"]){
             if ([commentDict objectForKey:@"id"] != [NSNull null]){
-                Comment *comment = [Comment MR_findFirstByAttribute:@"identifier" withValue:[commentDict objectForKey:@"id"]];
+                Comment *comment = [Comment MR_findFirstByAttribute:@"identifier" withValue:[commentDict objectForKey:@"id"] inContext:[NSManagedObjectContext MR_defaultContext]];
                 if (!comment){
                     comment = [Comment MR_createInContext:[NSManagedObjectContext MR_defaultContext]];
                 }
@@ -78,7 +78,7 @@
         NSMutableOrderedSet *orderedStories = [NSMutableOrderedSet orderedSet];
         for (NSDictionary *storyDict in [dictionary objectForKey:@"stories"]){
             if ([storyDict objectForKey:@"id"] != [NSNull null]){
-                Story *story = [Story MR_findFirstByAttribute:@"identifier" withValue:[storyDict objectForKey:@"id"]];
+                Story *story = [Story MR_findFirstByAttribute:@"identifier" withValue:[storyDict objectForKey:@"id"] inContext:[NSManagedObjectContext MR_defaultContext]];
                 if (!story){
                     story = [Story MR_createInContext:[NSManagedObjectContext MR_defaultContext]];
                 }
@@ -94,7 +94,7 @@
         self.stories = orderedStories;
     }
     if ([dictionary objectForKey:@"user"] && [dictionary objectForKey:@"user"] != [NSNull null]) {
-        User *user = [User MR_findFirstByAttribute:@"identifier" withValue:[[dictionary objectForKey:@"user"] objectForKey:@"id"]];
+        User *user = [User MR_findFirstByAttribute:@"identifier" withValue:[[dictionary objectForKey:@"user"] objectForKey:@"id"] inContext:[NSManagedObjectContext MR_defaultContext]];
         if (!user){
             user = [User MR_createInContext:[NSManagedObjectContext MR_defaultContext]];
         }
@@ -105,7 +105,7 @@
         NSMutableOrderedSet *orderedUsers = [NSMutableOrderedSet orderedSet];
         for (NSDictionary *userDict in [dictionary objectForKey:@"users"]){
             if ([userDict objectForKey:@"id"] != [NSNull null]){
-                User *user = [User MR_findFirstByAttribute:@"identifier" withValue:[userDict objectForKey:@"id"]];
+                User *user = [User MR_findFirstByAttribute:@"identifier" withValue:[userDict objectForKey:@"id"] inContext:[NSManagedObjectContext MR_defaultContext]];
                 if (!user){
                     user = [User MR_createInContext:[NSManagedObjectContext MR_defaultContext]];
                 }

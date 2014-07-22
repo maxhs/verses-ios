@@ -97,7 +97,6 @@
                 [_blurredBackground setImage:[image applyBlurWithRadius:14 blurType:BOXFILTER tintColor:[UIColor colorWithWhite:1 alpha:.77] saturationDeltaFactor:1.8 maskImage:nil]];
             }
             
-            
                 dispatch_async(dispatch_get_main_queue(), ^{
                     [UIView animateWithDuration:.75 animations:^{
                         [_blurredBackground setAlpha:1.0];

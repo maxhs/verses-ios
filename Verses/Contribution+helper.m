@@ -24,7 +24,7 @@
         self.allowFeedback = [dictionary objectForKey:@"allow_feedback"];
     }
     if ([dictionary objectForKey:@"user"] && [dictionary objectForKey:@"user"] != [NSNull null]) {
-        User *user = [User MR_findFirstByAttribute:@"identifier" withValue:[[dictionary objectForKey:@"user"] objectForKey:@"id"]];
+        User *user = [User MR_findFirstByAttribute:@"identifier" withValue:[[dictionary objectForKey:@"user"] objectForKey:@"id"] inContext:[NSManagedObjectContext MR_defaultContext]];
         if (user){
             [user update:[dictionary objectForKey:@"user"]];
         } else {
@@ -35,7 +35,7 @@
     }
     
     if ([dictionary objectForKey:@"story"] && [dictionary objectForKey:@"story"] != [NSNull null]) {
-        Story *story = [Story MR_findFirstByAttribute:@"identifier" withValue:[[dictionary objectForKey:@"story"] objectForKey:@"id"]];
+        Story *story = [Story MR_findFirstByAttribute:@"identifier" withValue:[[dictionary objectForKey:@"story"] objectForKey:@"id"] inContext:[NSManagedObjectContext MR_defaultContext]];
         if (story){
             self.story = story;
         }
@@ -59,7 +59,7 @@
         NSMutableOrderedSet *orderedPhotos = [NSMutableOrderedSet orderedSet];
         for (NSDictionary *photoDict in [dictionary objectForKey:@"photos"]){
             if ([photoDict objectForKey:@"id"] && [photoDict objectForKey:@"id"] != [NSNull null]){
-                Photo *photo = [Photo MR_findFirstByAttribute:@"identifier" withValue:[photoDict objectForKey:@"id"]];
+                Photo *photo = [Photo MR_findFirstByAttribute:@"identifier" withValue:[photoDict objectForKey:@"id"] inContext:[NSManagedObjectContext MR_defaultContext]];
                 if (photo){
                     [photo update:photoDict];
                 } else {
@@ -90,7 +90,7 @@
         self.allowFeedback = [dictionary objectForKey:@"allow_feedback"];
     }
     if ([dictionary objectForKey:@"user"] && [dictionary objectForKey:@"user"] != [NSNull null]) {
-        User *user = [User MR_findFirstByAttribute:@"identifier" withValue:[[dictionary objectForKey:@"user"] objectForKey:@"id"]];
+        User *user = [User MR_findFirstByAttribute:@"identifier" withValue:[[dictionary objectForKey:@"user"] objectForKey:@"id"] inContext:[NSManagedObjectContext MR_defaultContext]];
         if (user){
             [user update:[dictionary objectForKey:@"user"]];
         } else {
@@ -117,7 +117,7 @@
         NSMutableOrderedSet *orderedPhotos = [NSMutableOrderedSet orderedSet];
         for (NSDictionary *photoDict in [dictionary objectForKey:@"photos"]){
             if ([photoDict objectForKey:@"id"] && [photoDict objectForKey:@"id"] != [NSNull null]){
-                Photo *photo = [Photo MR_findFirstByAttribute:@"identifier" withValue:[photoDict objectForKey:@"id"]];
+                Photo *photo = [Photo MR_findFirstByAttribute:@"identifier" withValue:[photoDict objectForKey:@"id"] inContext:[NSManagedObjectContext MR_defaultContext]];
                 if (photo){
                     [photo update:photoDict];
                 } else {
@@ -136,7 +136,6 @@
         self.photos = orderedPhotos;
     }
 }
-
 
 - (void)addPhoto:(Photo*)photo {
     NSMutableOrderedSet *photoSet = [NSMutableOrderedSet orderedSetWithOrderedSet:self.photos];

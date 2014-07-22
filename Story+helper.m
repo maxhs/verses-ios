@@ -66,7 +66,7 @@
         self.bookmarked = [dictionary objectForKey:@"bookmarked"];
     }
     if ([dictionary objectForKey:@"owner"] && [dictionary objectForKey:@"owner"] != [NSNull null]) {
-        User *owner = [User MR_findFirstByAttribute:@"identifier" withValue:[[dictionary objectForKey:@"owner"] objectForKey:@"id"]];
+        User *owner = [User MR_findFirstByAttribute:@"identifier" withValue:[[dictionary objectForKey:@"owner"] objectForKey:@"id"] inContext:[NSManagedObjectContext MR_defaultContext]];
         if (owner){
             [owner update:[dictionary objectForKey:@"owner"]];
         } else {
@@ -91,7 +91,7 @@
         NSMutableOrderedSet *orderedUsers = [NSMutableOrderedSet orderedSet];
         for (NSDictionary *dict in [dictionary objectForKey:@"users"]){
             if ([dict objectForKey:@"id"] && [dict objectForKey:@"id"] != [NSNull null]){
-                User *user = [User MR_findFirstByAttribute:@"identifier" withValue:[dict objectForKey:@"id"]];
+                User *user = [User MR_findFirstByAttribute:@"identifier" withValue:[dict objectForKey:@"id"] inContext:[NSManagedObjectContext MR_defaultContext]];
                 if (user){
                     [user update:dict];
                 } else {
@@ -113,7 +113,7 @@
         NSMutableOrderedSet *orderedPhotos = [NSMutableOrderedSet orderedSet];
         for (NSDictionary *photoDict in [dictionary objectForKey:@"photos"]){
             if ([photoDict objectForKey:@"id"] && [photoDict objectForKey:@"id"] != [NSNull null]){
-                Photo *photo = [Photo MR_findFirstByAttribute:@"identifier" withValue:[photoDict objectForKey:@"id"]];
+                Photo *photo = [Photo MR_findFirstByAttribute:@"identifier" withValue:[photoDict objectForKey:@"id"] inContext:[NSManagedObjectContext MR_defaultContext]];
                 if (photo){
                     [photo update:photoDict];
                 } else {
@@ -137,14 +137,13 @@
         for (NSDictionary *dict in [dictionary objectForKey:@"feedbacks"]){
             for (NSDictionary *feedbackDict in dict){
                 if ([feedbackDict objectForKey:@"id"] != [NSNull null]){
-                    Feedback *feedback = [Feedback MR_findFirstByAttribute:@"identifier" withValue:[feedbackDict objectForKey:@"id"]];
+                    Feedback *feedback = [Feedback MR_findFirstByAttribute:@"identifier" withValue:[feedbackDict objectForKey:@"id"] inContext:[NSManagedObjectContext MR_defaultContext]];
                     if (feedback){
                         [feedback update:feedbackDict];
                     } else {
                         feedback = [Feedback MR_createInContext:[NSManagedObjectContext MR_defaultContext]];
                         [feedback populateFromDict:feedbackDict];
                     }
-                    
                     [orderedFeedbacks addObject:feedback];
                 }
             }
@@ -160,7 +159,7 @@
     if ([dictionary objectForKey:@"contributions"] && [dictionary objectForKey:@"contributions"] != [NSNull null]) {
         NSMutableOrderedSet *orderedContributions = [NSMutableOrderedSet orderedSet];
         for (NSDictionary *dict in [dictionary objectForKey:@"contributions"]){
-            Contribution *contribution = [Contribution MR_findFirstByAttribute:@"identifier" withValue:[dict objectForKey:@"id"]];
+            Contribution *contribution = [Contribution MR_findFirstByAttribute:@"identifier" withValue:[dict objectForKey:@"id"] inContext:[NSManagedObjectContext MR_defaultContext]];
             if (contribution){
                 [contribution update:dict];
             } else {
@@ -316,25 +315,25 @@
 
 - (void)addUser:(User*)user {
     NSMutableOrderedSet *set = [NSMutableOrderedSet orderedSetWithOrderedSet:self.users];
-    [set addObject:user];
+    if (user)[set addObject:user];
     self.users = set;
 }
 
 - (void)removeUser:(User*)user {
     NSMutableOrderedSet *set = [NSMutableOrderedSet orderedSetWithOrderedSet:self.users];
-    [set removeObject:user];
+    if (user)[set removeObject:user];
     self.users = set;
 }
 
 - (void)addCircle:(Circle*)circle {
     NSMutableOrderedSet *set = [NSMutableOrderedSet orderedSetWithOrderedSet:self.circles];
-    [set addObject:circle];
+    if (circle)[set addObject:circle];
     self.circles = set;
 }
 
 - (void)removeCircle:(Circle*)circle {
     NSMutableOrderedSet *set = [NSMutableOrderedSet orderedSetWithOrderedSet:self.circles];
-    [set removeObject:circle];
+    if (circle)[set removeObject:circle];
     self.circles = set;
 }
 

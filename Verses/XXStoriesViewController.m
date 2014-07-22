@@ -89,7 +89,7 @@
     _featuredStories = [NSMutableArray array];
         
     if (_featured){
-        _featuredStories = [Story MR_findByAttribute:@"featured" withValue:[NSNumber numberWithBool:YES] andOrderBy:@"publishedDate" ascending:NO].mutableCopy;
+        _featuredStories = [Story MR_findByAttribute:@"featured" withValue:[NSNumber numberWithBool:YES] andOrderBy:@"publishedDate" ascending:NO inContext:[NSManagedObjectContext MR_defaultContext]].mutableCopy;
         if (_featuredStories.count == 0) {
             [self loadFeatured];
         } else {
@@ -101,7 +101,7 @@
         NSPredicate *ownerPredicate = [NSPredicate predicateWithFormat:@"ownerId != %@",[[NSUserDefaults standardUserDefaults] objectForKey:kUserDefaultsId]];
         NSPredicate *compoundPredicate = [NSCompoundPredicate andPredicateWithSubpredicates:@[userPredicate,ownerPredicate]];
         
-        _sharedStories = [Story MR_findAllSortedBy:@"updatedDate" ascending:NO withPredicate:compoundPredicate].mutableCopy;
+        _sharedStories = [Story MR_findAllSortedBy:@"updatedDate" ascending:NO withPredicate:compoundPredicate inContext:[NSManagedObjectContext MR_defaultContext]].mutableCopy;
         if (_sharedStories.count == 0) {
             [self loadShared];
         } else {
@@ -109,11 +109,11 @@
         }
     } else if (_trending){
         NSPredicate *predicate = [NSPredicate predicateWithFormat:@"trendingCount != %@ and publishedDate != %@",[NSNumber numberWithInt:0], [NSDate dateWithTimeIntervalSince1970:0]];
-        _trendingStories = [Story MR_findAllSortedBy:@"trendingCount" ascending:NO withPredicate:predicate].mutableCopy;
+        _trendingStories = [Story MR_findAllSortedBy:@"trendingCount" ascending:NO withPredicate:predicate inContext:[NSManagedObjectContext MR_defaultContext]].mutableCopy;
         [self loadTrending];
     } else if (_ether || _stories.count == 0) {
         NSPredicate *predicate = [NSPredicate predicateWithFormat:@"inviteOnly == %@ and draft == %@ and publishedDate != %@",[NSNumber numberWithBool:NO],[NSNumber numberWithBool:NO], [NSDate dateWithTimeIntervalSince1970:0]];
-        _stories = [Story MR_findAllSortedBy:@"publishedDate" ascending:NO withPredicate:predicate].mutableCopy;
+        _stories = [Story MR_findAllSortedBy:@"publishedDate" ascending:NO withPredicate:predicate inContext:[NSManagedObjectContext MR_defaultContext]].mutableCopy;
         if (_stories.count == 0) {
             [self loadEtherStories];
         } else {
@@ -135,7 +135,7 @@
     NSMutableArray *storyArray = [NSMutableArray array];
     for (NSDictionary *dict in array){
         if ([dict objectForKey:@"id"] && [dict objectForKey:@"id"] != [NSNull null]){
-            Story *story = [Story MR_findFirstByAttribute:@"identifier" withValue:[dict objectForKey:@"id"]];
+            Story *story = [Story MR_findFirstByAttribute:@"identifier" withValue:[dict objectForKey:@"id"] inContext:[NSManagedObjectContext MR_defaultContext]];
             if (!story){
                 story = [Story MR_createInContext:[NSManagedObjectContext MR_defaultContext]];
             }
@@ -149,22 +149,22 @@
     
     if (_featured){
         if (_featuredStories.count) [_featuredStories removeAllObjects];
-        _featuredStories = [Story MR_findByAttribute:@"featured" withValue:[NSNumber numberWithBool:YES] andOrderBy:@"publishedDate" ascending:NO].mutableCopy;
+        _featuredStories = [Story MR_findByAttribute:@"featured" withValue:[NSNumber numberWithBool:YES] andOrderBy:@"publishedDate" ascending:NO inContext:[NSManagedObjectContext MR_defaultContext]].mutableCopy;
     } else if (_shared) {
         if (_sharedStories.count) [_sharedStories removeAllObjects];
         NSPredicate *userPredicate = [NSPredicate predicateWithFormat:@"ANY users.identifier CONTAINS[cd] %@",[[NSUserDefaults standardUserDefaults] objectForKey:kUserDefaultsId]];
         NSPredicate *ownerPredicate = [NSPredicate predicateWithFormat:@"ownerId != %@",[[NSUserDefaults standardUserDefaults] objectForKey:kUserDefaultsId]];
         NSPredicate *compoundPredicate = [NSCompoundPredicate andPredicateWithSubpredicates:@[userPredicate,ownerPredicate]];
-        _sharedStories = [Story MR_findAllSortedBy:@"updatedDate" ascending:NO withPredicate:compoundPredicate].mutableCopy;
+        _sharedStories = [Story MR_findAllSortedBy:@"updatedDate" ascending:NO withPredicate:compoundPredicate inContext:[NSManagedObjectContext MR_defaultContext]].mutableCopy;
         NSLog(@"total shared stories count: %d",_sharedStories.count);
     } else if (_trending){
         if (_trendingStories.count) [_trendingStories removeAllObjects];
         NSPredicate *predicate = [NSPredicate predicateWithFormat:@"trendingCount != %@ and publishedDate != %@",[NSNumber numberWithInt:0], [NSDate dateWithTimeIntervalSince1970:0]];
-        _trendingStories = [Story MR_findAllSortedBy:@"trendingCount" ascending:NO withPredicate:predicate].mutableCopy;
+        _trendingStories = [Story MR_findAllSortedBy:@"trendingCount" ascending:NO withPredicate:predicate inContext:[NSManagedObjectContext MR_defaultContext]].mutableCopy;
     } else if (_ether || _stories.count == 0) {
         if (_stories.count) [_stories removeAllObjects];
         NSPredicate *predicate = [NSPredicate predicateWithFormat:@"inviteOnly == %@ and draft == %@ and publishedDate != %@",[NSNumber numberWithBool:NO],[NSNumber numberWithBool:NO], [NSDate dateWithTimeIntervalSince1970:0]];
-        _stories = [Story MR_findAllSortedBy:@"publishedDate" ascending:NO withPredicate:predicate].mutableCopy;
+        _stories = [Story MR_findAllSortedBy:@"publishedDate" ascending:NO withPredicate:predicate inContext:[NSManagedObjectContext MR_defaultContext]].mutableCopy;
     }
     
     //done loading! what a relief
@@ -184,10 +184,12 @@
         [self.view setBackgroundColor:[UIColor clearColor]];
         [refreshControl setTintColor:[UIColor whiteColor]];
         [menuButton setImage:[UIImage imageNamed:@"moreWhite"] forState:UIControlStateNormal];
+        [_tableView setIndicatorStyle:UIScrollViewIndicatorStyleWhite];
     } else {
         textColor = [UIColor blackColor];
         [self.view setBackgroundColor:[UIColor whiteColor]];
         [refreshControl setTintColor:[UIColor darkGrayColor]];
+        [_tableView setIndicatorStyle:UIScrollViewIndicatorStyleBlack];
         [menuButton setImage:[UIImage imageNamed:@"more"] forState:UIControlStateNormal];
     }
     canLoadMore = YES;
@@ -438,22 +440,43 @@
         if (_trending) {
             if (story.trendingCount && ![story.trendingCount isEqualToNumber:[NSNumber numberWithInt:0]]){
                 [cell.countLabel setHidden:NO];
+                NSString *countLabelText;
                 if ([story.trendingCount isEqualToNumber:[NSNumber numberWithInt:1]]){
-                    [cell.countLabel setText:@"1 recent view"];
+                    if ([story.mystery isEqualToNumber:[NSNumber numberWithBool:YES]]){
+                        countLabelText = [NSString stringWithFormat:@"Slow Reveal \u2022 1 recent view"];
+                    } else {
+                        countLabelText = @"1 recent view";
+                    }
                 } else {
-                    [cell.countLabel setText:[NSString stringWithFormat:@"%@ recent views",story.trendingCount]];
+                    if ([story.mystery isEqualToNumber:[NSNumber numberWithBool:YES]]){
+                        countLabelText = [NSString stringWithFormat:@"Slow Reveal \u2022 %@ recent views",story.trendingCount];
+                    } else {
+                        countLabelText = [NSString stringWithFormat:@"%@ recent views",story.trendingCount];
+                    }
                 }
+                [cell.countLabel setText:countLabelText];
             } else {
                 [cell.countLabel setHidden:YES];
             }
             
         } else if (story.views && ![story.views isEqualToNumber:[NSNumber numberWithInt:0]]) {
             [cell.countLabel setHidden:NO];
-            if ([story.views isEqualToNumber:[NSNumber numberWithInt:1]]){
-                [cell.countLabel setText:@"1 view"];
+            NSString *countLabelText;
+            
+            if (story.views.intValue == 1){
+                if ([story.mystery isEqualToNumber:[NSNumber numberWithBool:YES]]){
+                    countLabelText = [NSString stringWithFormat:@"Slow Reveal \u2022 1 view"];
+                } else {
+                    countLabelText = @"1 view";
+                }
             } else {
-                [cell.countLabel setText:[NSString stringWithFormat:@"%@ views",story.views]];
+                if ([story.mystery isEqualToNumber:[NSNumber numberWithBool:YES]]){
+                    countLabelText = @"Slow Reveal \u2022 1 view";
+                } else {
+                    countLabelText = [NSString stringWithFormat:@"%@ views",story.views];
+                }
             }
+            [cell.countLabel setText:countLabelText];
         } else {
             [cell.countLabel setHidden:YES];
         }
@@ -516,16 +539,16 @@
     
     if (actualPosition >= contentHeight && !loading) {
         if (_featured && canLoadMoreFeatured){
-            NSLog(@"should be loading more featured");
+            //NSLog(@"should be loading more featured");
             [self loadMoreFeatured];
         }/* else if (_trending && canLoadMoreTrending) {
             NSLog(@"should be loading more trending");
             [self loadMoreTrending];
         }*/ else if (_shared && canLoadMoreShared) {
-            NSLog(@"should be loading more shared");
+            //NSLog(@"should be loading more shared");
             [self loadMoreShared];
         } else if (_ether && canLoadMore) {
-            NSLog(@"should be loading more");
+            //NSLog(@"should be loading more");
             [self loadMore];
         }
     }
@@ -541,13 +564,12 @@
             int currentCount = _stories.count;
             NSArray *newStories = [self updateLocalStories:[responseObject objectForKey:@"stories"]];
             NSMutableArray *indexesToInsert = [NSMutableArray array];
-            NSLog(@"current count: %d, newStories.count: %d",currentCount, newStories.count);
             for (int i = currentCount; i < newStories.count+currentCount; i++){
                 [indexesToInsert addObject:[NSIndexPath indexPathForRow:i inSection:0]];
             }
             if (newStories.count < 10) {
                 canLoadMore = NO;
-                NSLog(@"Can't load more, we now have %i stories", _stories.count);
+                //NSLog(@"Can't load more, we now have %i stories", _stories.count);
             }
             
             if (self.tableView.numberOfSections){

@@ -17,12 +17,16 @@
 #import "XXNoRotateNavController.h"
 #import "XXProfileViewController.h"
 #import "Feedback+helper.h"
+#import "XXFeedbackResponseCell.h"
+#import "XXFeedbackResponseTextView.h"
 
 @interface XXStoryInfoViewController () <UITextViewDelegate, UIAlertViewDelegate, UIPopoverControllerDelegate> {
     AFHTTPRequestOperationManager *manager;
     XXAppDelegate *delegate;
     UIButton *cancelFeedback;
     UIButton *sendFeedback;
+    UIButton *cancelResponse;
+    UIButton *sendResponse;
     UITextView *feedbackTextView;
     BOOL signedIn;
     NSDateFormatter *_formatter;
@@ -30,6 +34,8 @@
     CGFloat infoHeight;
     CGRect screen;
     User *_currentUser;
+    NSTimeInterval duration;
+    UIViewAnimationOptions animationCurve;
 }
 @end
 
@@ -49,6 +55,38 @@
     [super viewDidLoad];
     [[NSNotificationCenter defaultCenter] addObserver:self selector:@selector(reloadStoryInfo:) name:@"ReloadStoryInfo" object:nil];
     [[NSNotificationCenter defaultCenter] addObserver:self selector:@selector(reload) name:@"ReloadMenu" object:nil];
+    [[NSNotificationCenter defaultCenter] addObserver:self selector:@selector(willShowKeyboard:) name:UIKeyboardWillShowNotification object:nil];
+    [[NSNotificationCenter defaultCenter] addObserver:self selector:@selector(willHideKeyboard:) name:UIKeyboardWillHideNotification object:nil];
+}
+
+-(void)willShowKeyboard:(NSNotification*)notification {
+    NSDictionary* keyboardInfo = [notification userInfo];
+    NSValue* keyboardFrameBegin = [keyboardInfo valueForKey:UIKeyboardFrameBeginUserInfoKey];
+    CGFloat keyboardHeight = [keyboardFrameBegin CGRectValue].size.height;
+    duration = [notification.userInfo[UIKeyboardAnimationDurationUserInfoKey] doubleValue];
+    animationCurve = [notification.userInfo[UIKeyboardAnimationDurationUserInfoKey] unsignedIntegerValue];
+    [UIView animateWithDuration:duration
+                          delay:0
+                        options:(animationCurve << 16)
+                     animations:^{
+                         self.tableView.contentInset = UIEdgeInsetsMake(0, 0, keyboardHeight, 0);
+                         self.tableView.scrollIndicatorInsets = UIEdgeInsetsMake(0, 0, keyboardHeight, 0);
+                     }
+                     completion:NULL];
+}
+
+- (void)willHideKeyboard:(NSNotification *)notification
+{
+    duration = [notification.userInfo[UIKeyboardAnimationDurationUserInfoKey] doubleValue];
+    animationCurve = [notification.userInfo[UIKeyboardAnimationDurationUserInfoKey] unsignedIntegerValue];
+    [UIView animateWithDuration:duration
+                          delay:0
+                        options:(animationCurve << 16)
+                     animations:^{
+                         self.tableView.contentInset = UIEdgeInsetsZero;
+                         self.tableView.scrollIndicatorInsets = UIEdgeInsetsZero;
+                     }
+                     completion:NULL];
 }
 
 - (void)reload{
@@ -57,7 +95,7 @@
         if ([delegate currentUser]){
             _currentUser = delegate.currentUser;
         } else {
-            _currentUser = [User MR_findFirstByAttribute:@"identifier" withValue:[[NSUserDefaults standardUserDefaults] objectForKey:kUserDefaultsId]];
+            _currentUser = [User MR_findFirstByAttribute:@"identifier" withValue:[[NSUserDefaults standardUserDefaults] objectForKey:kUserDefaultsId] inContext:[NSManagedObjectContext MR_defaultContext]];
         }
     } else {
         signedIn = NO;
@@ -114,7 +152,7 @@
         return 1;
     } else {
         Feedback *feedback = [_story.feedbacks objectAtIndex:section-3];
-        return feedback.comments.count;
+        return feedback.comments.count + 1;
     }
 }
 
@@ -156,7 +194,7 @@
         cancelFeedback = cell.cancelButton;
         if (signedIn && _story){
             [cell.cancelButton addTarget:self action:@selector(doneEditing) forControlEvents:UIControlEventTouchUpInside];
-            [cell.sendButton addTarget:self action:@selector(sendFeedback) forControlEvents:UIControlEventTouchUpInside];
+            [cell.sendButton addTarget:self action:@selector(sendFeedback:) forControlEvents:UIControlEventTouchUpInside];
             [feedbackTextView setUserInteractionEnabled:YES];
             [feedbackTextView setDelegate:self];
         } else {
@@ -170,15 +208,42 @@
         
         return cell;
     } else {
-        XXCommentCell *cell = (XXCommentCell *)[tableView dequeueReusableCellWithIdentifier:@"CommentCell"];
-        if (cell == nil) {
-            cell = [[[NSBundle mainBundle] loadNibNamed:@"XXCommentCell" owner:nil options:nil] lastObject];
-        }
         Feedback *feedback = [_story.feedbacks objectAtIndex:indexPath.section-3];
-        Comment *comment = [feedback.comments objectAtIndex:indexPath.row];
-        [cell configureComment:comment];
-        [cell.timestampLabel setText:[NSString stringWithFormat:@"- %@  |  %@",comment.user.penName,[_formatter stringFromDate:comment.createdDate]]];
-        return cell;
+        if (indexPath.row == feedback.comments.count){
+            XXFeedbackResponseCell *cell = (XXFeedbackResponseCell *)[tableView dequeueReusableCellWithIdentifier:@"FeedbackResponseCell"];
+            if (cell == nil) {
+                cell = [[[NSBundle mainBundle] loadNibNamed:@"XXFeedbackResponseCell" owner:nil options:nil] lastObject];
+            }
+            [cell configure];
+            [cell.feedbackTextView setTag:feedback.identifier.integerValue];
+            sendResponse = cell.sendButton;
+            cancelResponse = cell.cancelButton;
+            
+            if (signedIn && _story){
+                [cancelResponse addTarget:self action:@selector(doneEditing) forControlEvents:UIControlEventTouchUpInside];
+                [sendResponse addTarget:self action:@selector(sendFeedback:) forControlEvents:UIControlEventTouchUpInside];
+                [cell.feedbackTextView setUserInteractionEnabled:YES];
+                [cell.feedbackTextView setDelegate:self];
+            } else {
+                [cell.feedbackTextView setUserInteractionEnabled:NO];
+            }
+            if ([[NSUserDefaults standardUserDefaults] boolForKey:kDarkBackground]){
+                cell.feedbackTextView.keyboardAppearance = UIKeyboardAppearanceDark;
+            } else {
+                cell.feedbackTextView.keyboardAppearance = UIKeyboardAppearanceDefault;
+            }
+            return cell;
+        } else {
+            XXCommentCell *cell = (XXCommentCell *)[tableView dequeueReusableCellWithIdentifier:@"CommentCell"];
+            if (cell == nil) {
+                cell = [[[NSBundle mainBundle] loadNibNamed:@"XXCommentCell" owner:nil options:nil] lastObject];
+            }
+            
+            Comment *comment = [feedback.comments objectAtIndex:indexPath.row];
+            [cell configureComment:comment];
+            [cell.timestampLabel setText:[NSString stringWithFormat:@"- %@  |  %@",comment.user.penName,[_formatter stringFromDate:comment.createdDate]]];
+            return cell;
+        }
     }
 }
 
@@ -216,45 +281,60 @@
     }
 }
 
-- (void)sendFeedback {
-    if (signedIn && feedbackTextView.text.length && ![feedbackTextView.text isEqualToString:kFeedbackPlaceholder]){
+- (void)sendFeedback:(id)sender {
+    if (signedIn){
         [self doneEditing];
         [ProgressHUD show:@"Sending Feedback..."];
         NSMutableDictionary *parameters = [NSMutableDictionary dictionary];
         [parameters setObject:[[NSUserDefaults standardUserDefaults] objectForKey:kUserDefaultsId] forKey:@"user_id"];
         [parameters setObject:_story.identifier forKey:@"story_id"];
-        [parameters setObject:feedbackTextView.text forKey:@"feedback"];
-        [manager POST:[NSString stringWithFormat:@"%@/feedbacks",kAPIBaseUrl] parameters:parameters success:^(AFHTTPRequestOperation *operation, id responseObject) {
-            //NSLog(@"Success sending feedback: %@",responseObject);
-            Feedback *feedback = [Feedback MR_findFirstByAttribute:@"identifier" withValue:[[responseObject objectForKey:@"feedback"] objectForKey:@"id"]];
-            if (feedback){
-                [feedback update:[responseObject objectForKey:@"feedback"]];
-            } else {
-                feedback = [Feedback MR_createInContext:[NSManagedObjectContext MR_defaultContext]];
-                [feedback populateFromDict:[responseObject objectForKey:@"feedback"]];
-            }
-            
-            
-            BOOL new = YES;
-            for (Feedback *f in _story.feedbacks) {
-                if ([f.identifier isEqualToNumber:feedback.identifier]){
-                    [_story replaceFeedback:feedback];
-                    new = NO;
-                    [self.tableView reloadData];
-                    break;
+    
+        XXFeedbackResponseTextView *responseTextView;
+        if ([sender isKindOfClass:[XXFeedbackResponseTextView class]]) {
+            responseTextView = (XXFeedbackResponseTextView*)sender;
+            [parameters setObject:[NSNumber numberWithInteger:responseTextView.tag] forKey:@"feedback_id"];
+        }
+        
+        if (feedbackTextView.text.length && ![feedbackTextView.text isEqualToString:kFeedbackPlaceholder]){
+            [parameters setObject:feedbackTextView.text forKey:@"feedback"];
+        } else if (responseTextView.text.length && ![responseTextView.text isEqualToString:kFeedbackResponsePlaceholder]) {
+            [parameters setObject:responseTextView.text forKey:@"feedback"];
+        }
+        
+        NSLog(@"send feedback parameters: %@",parameters);
+        if ([parameters objectForKey:@"feedback"]){
+            [manager POST:[NSString stringWithFormat:@"%@/feedbacks",kAPIBaseUrl] parameters:parameters success:^(AFHTTPRequestOperation *operation, id responseObject) {
+                //NSLog(@"Success sending feedback: %@",responseObject);
+                Feedback *feedback = [Feedback MR_findFirstByAttribute:@"identifier" withValue:[[responseObject objectForKey:@"feedback"] objectForKey:@"id"] inContext:[NSManagedObjectContext MR_defaultContext]];
+                if (feedback){
+                    [feedback update:[responseObject objectForKey:@"feedback"]];
+                } else {
+                    feedback = [Feedback MR_createInContext:[NSManagedObjectContext MR_defaultContext]];
+                    [feedback populateFromDict:[responseObject objectForKey:@"feedback"]];
                 }
-            }
-            if (new){
-                [_story addFeedback:feedback];
-                [self.tableView reloadData];
-            }
-            
-            [ProgressHUD dismiss];
-            
-        } failure:^(AFHTTPRequestOperation *operation, NSError *error) {
-            NSLog(@"Error sending feedback: %@",error.description);
-            [ProgressHUD dismiss];
-        }];
+                
+                BOOL new = YES;
+                for (Feedback *f in _story.feedbacks) {
+                    if ([f.identifier isEqualToNumber:feedback.identifier]){
+                        [_story replaceFeedback:feedback];
+                        new = NO;
+                        [self.tableView reloadData];
+                        break;
+                    }
+                }
+                if (new){
+                    [_story addFeedback:feedback];
+                    [self.tableView reloadData];
+                }
+                
+                [ProgressHUD dismiss];
+                
+            } failure:^(AFHTTPRequestOperation *operation, NSError *error) {
+                NSLog(@"Error sending feedback: %@",error.description);
+                [ProgressHUD dismiss];
+            }];
+        }
+        
     }
 }
 
@@ -273,25 +353,52 @@
             [textView setBackgroundColor:[UIColor colorWithWhite:1 alpha:1]];
             [textView setTextColor:[UIColor blackColor]];
         }
-        
         [textView setFont:[UIFont fontWithName:kSourceSansProRegular size:17]];
     }];
     
-    [UIView animateWithDuration:.5 delay:0 usingSpringWithDamping:.5 initialSpringVelocity:.0001 options:UIViewAnimationOptionCurveEaseInOut animations:^{
-        sendFeedback.alpha = 1.0;
-        cancelFeedback.alpha = 1.0;
-        sendFeedback.transform = CGAffineTransformMakeTranslation(0, 17);
-        cancelFeedback.transform = CGAffineTransformMakeTranslation(0, 17);
-        feedbackTextView.transform = CGAffineTransformMakeTranslation(0, 27);
-    } completion:^(BOOL finished) {
-        
-    }];
+    if (textView == feedbackTextView){
+        [UIView animateWithDuration:.5 delay:0 usingSpringWithDamping:.5 initialSpringVelocity:.0001 options:UIViewAnimationOptionCurveEaseInOut animations:^{
+            sendFeedback.alpha = 1.0;
+            cancelFeedback.alpha = 1.0;
+            sendFeedback.transform = CGAffineTransformMakeTranslation(0, 17);
+            cancelFeedback.transform = CGAffineTransformMakeTranslation(0, 17);
+            feedbackTextView.transform = CGAffineTransformMakeTranslation(0, 27);
+        } completion:^(BOOL finished) {
+            
+        }];
+    }/* else {
+        [UIView animateWithDuration:.5 delay:0 usingSpringWithDamping:.5 initialSpringVelocity:.0001 options:UIViewAnimationOptionCurveEaseInOut animations:^{
+            sendResponse.alpha = 1.0;
+            cancelResponse.alpha = 1.0;
+            sendResponse.transform = CGAffineTransformMakeTranslation(0, 17);
+            cancelResponse.transform = CGAffineTransformMakeTranslation(0, 17);
+            feedbackResponseTextView.transform = CGAffineTransformMakeTranslation(0, 27);
+        } completion:^(BOOL finished) {
+            
+        }];
+    }*/
     
-    if ([textView.text isEqualToString:kFeedbackPlaceholder]) {
+    if ([textView.text isEqualToString:kFeedbackPlaceholder] || [textView.text isEqualToString:kFeedbackResponsePlaceholder]) {
         textView.text = @"";
     }
-    [self.tableView setContentInset:UIEdgeInsetsMake(0, 0, 216, 0)];
-    [self.tableView scrollToRowAtIndexPath:[NSIndexPath indexPathForRow:0 inSection:2] atScrollPosition:UITableViewScrollPositionMiddle animated:YES];
+    if (textView == feedbackTextView){
+        [self.tableView scrollToRowAtIndexPath:[NSIndexPath indexPathForRow:0 inSection:2] atScrollPosition:UITableViewScrollPositionMiddle animated:YES];
+    } else if ([textView isKindOfClass:[XXFeedbackResponseTextView class]]){
+        __block NSIndexPath *indexPath;
+        [_story.feedbacks enumerateObjectsUsingBlock:^(Feedback *feedback, NSUInteger idx, BOOL *stop) {
+            if (feedback.identifier.integerValue == textView.tag){
+                indexPath = [NSIndexPath indexPathForRow:feedback.comments.count inSection:idx+3];                
+                [UIView animateWithDuration:duration
+                                      delay:0
+                                    options:(animationCurve << 16)
+                                 animations:^{
+                                    [self.tableView scrollToRowAtIndexPath:indexPath atScrollPosition:UITableViewScrollPositionMiddle animated:NO];
+                                 }
+                                 completion:NULL];
+                *stop = YES;
+            }
+        }];
+    }
 }
 
 - (void)textViewDidEndEditing:(UITextView *)textView {
@@ -299,7 +406,11 @@
     [UIView animateWithDuration:.25 animations:^{
         [textView setBackgroundColor:[UIColor clearColor]];
         if ([textView.text isEqualToString:@""]) {
-            textView.text = kFeedbackPlaceholder;
+            if (textView == feedbackTextView){
+                textView.text = kFeedbackPlaceholder;
+            } else if ([textView isKindOfClass:[XXFeedbackResponseTextView class]]){
+                textView.text = kFeedbackResponsePlaceholder;
+            }
             [textView setFont:[UIFont fontWithName:kSourceSansProLight size:17]];
         }
         [textView setTextColor:[UIColor whiteColor]];
@@ -307,23 +418,38 @@
         if ([[NSUserDefaults standardUserDefaults] boolForKey:kDarkBackground]){
             textView.layer.borderWidth = 0.f;
         }
-        
     }];
     
-    [UIView animateWithDuration:.5 delay:0 usingSpringWithDamping:.5 initialSpringVelocity:.0001 options:UIViewAnimationOptionCurveEaseInOut animations:^{
-        sendFeedback.alpha = 0;
-        cancelFeedback.alpha = 0;
-        sendFeedback.transform = CGAffineTransformIdentity;
-        cancelFeedback.transform = CGAffineTransformIdentity;
-        feedbackTextView.transform = CGAffineTransformIdentity;
-    } completion:^(BOOL finished) {
-        
-    }];
+    if (textView == feedbackTextView){
+        [UIView animateWithDuration:.5 delay:0 usingSpringWithDamping:.5 initialSpringVelocity:.0001 options:UIViewAnimationOptionCurveEaseInOut animations:^{
+            sendFeedback.alpha = 0;
+            cancelFeedback.alpha = 0;
+            sendFeedback.transform = CGAffineTransformIdentity;
+            cancelFeedback.transform = CGAffineTransformIdentity;
+            feedbackTextView.transform = CGAffineTransformIdentity;
+        } completion:^(BOOL finished) {
+            
+        }];
+    }/* else {
+        [UIView animateWithDuration:.5 delay:0 usingSpringWithDamping:.5 initialSpringVelocity:.0001 options:UIViewAnimationOptionCurveEaseInOut animations:^{
+            sendResponse.alpha = 0;
+            cancelResponse.alpha = 0;
+            sendResponse.transform = CGAffineTransformIdentity;
+            cancelResponse.transform = CGAffineTransformIdentity;
+            feedbackResponseTextView.transform = CGAffineTransformIdentity;
+        } completion:^(BOOL finished) {
+            
+        }];
+    }*/
 }
 
 - (BOOL)textView:(UITextView *)textView shouldChangeTextInRange:(NSRange)range replacementText:(NSString *)text {
     if ([text isEqualToString:@"\n"]) {
-        [self sendFeedback];
+        if ([textView isKindOfClass:[XXFeedbackResponseTextView class]]){
+            [self sendFeedback:textView];
+        } else {
+            [self sendFeedback:nil];
+        }
         return NO;
     } else {
         return YES;
@@ -460,9 +586,13 @@
 - (BOOL)tableView:(UITableView *)tableView canEditRowAtIndexPath:(NSIndexPath *)indexPath {
     if (indexPath.section >= 3){
         Feedback *feedback = [_story.feedbacks objectAtIndex:indexPath.section-3];
-        Comment *comment = [feedback.comments objectAtIndex:indexPath.row];
-        if (signedIn && comment.user.identifier && [[[NSUserDefaults standardUserDefaults] objectForKey:kUserDefaultsId] isEqualToNumber:comment.user.identifier]){
-            return YES;
+        if (indexPath.row != feedback.comments.count){
+            Comment *comment = [feedback.comments objectAtIndex:indexPath.row];
+            if (signedIn && comment.user.identifier && [[[NSUserDefaults standardUserDefaults] objectForKey:kUserDefaultsId] isEqualToNumber:comment.user.identifier]){
+                return YES;
+            }
+        } else {
+            return NO;
         }
     }
     return NO;

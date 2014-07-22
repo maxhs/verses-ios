@@ -16,14 +16,14 @@
     }
     if ([dictionary objectForKey:@"story"] && [dictionary objectForKey:@"story"] != [NSNull null]) {
         NSDictionary *dict = [dictionary objectForKey:@"story"];
-        Story *story = [Story MR_findFirstByAttribute:@"identifier" withValue:[dict objectForKey:@"id"]];
+        Story *story = [Story MR_findFirstByAttribute:@"identifier" withValue:[dict objectForKey:@"id"] inContext:[NSManagedObjectContext MR_defaultContext]];
         if (story){
             self.story = story;
         }
         
     } else if ([dictionary objectForKey:@"contribution_story"] && [dictionary objectForKey:@"contribution_story"] != [NSNull null]) {
         NSDictionary *dict = [dictionary objectForKey:@"contribution_story"];
-        Story *story = [Story MR_findFirstByAttribute:@"identifier" withValue:[dict objectForKey:@"id"]];
+        Story *story = [Story MR_findFirstByAttribute:@"identifier" withValue:[dict objectForKey:@"id"] inContext:[NSManagedObjectContext MR_defaultContext]];
         if (story){
             //already have it
         } else {
@@ -35,7 +35,7 @@
     }
     if ([dictionary objectForKey:@"contribution"] && [dictionary objectForKey:@"contribution"] != [NSNull null]) {
         NSDictionary *dict = [dictionary objectForKey:@"contribution"];
-        Contribution *contribution = [Contribution MR_findFirstByAttribute:@"identifier" withValue:[dict objectForKey:@"id"]];
+        Contribution *contribution = [Contribution MR_findFirstByAttribute:@"identifier" withValue:[dict objectForKey:@"id"] inContext:[NSManagedObjectContext MR_defaultContext]];
         if (contribution){
             [contribution update:dict];
         } else {

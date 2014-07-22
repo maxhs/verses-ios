@@ -38,7 +38,7 @@
         self.updatedDate = [NSDate dateWithTimeIntervalSince1970:_interval];
     }
     if ([dictionary objectForKey:@"contribution_id"] && [dictionary objectForKey:@"contribution_id"] != [NSNull null]) {
-        Contribution *contribution = [Contribution MR_findFirstByAttribute:@"identifier" withValue:[dictionary objectForKey:@"contribution_id"]];
+        Contribution *contribution = [Contribution MR_findFirstByAttribute:@"identifier" withValue:[dictionary objectForKey:@"contribution_id"] inContext:[NSManagedObjectContext MR_defaultContext]];
         if (contribution){
             self.contribution = contribution;
         }

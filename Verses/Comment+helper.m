@@ -28,7 +28,7 @@
         self.createdDate = [NSDate dateWithTimeIntervalSince1970:_interval];
     }
     if ([dictionary objectForKey:@"user"] && [dictionary objectForKey:@"user"] != [NSNull null]) {
-        User *user = [User MR_findFirstByAttribute:@"identifier" withValue:[[dictionary objectForKey:@"user"] objectForKey:@"id"]];
+        User *user = [User MR_findFirstByAttribute:@"identifier" withValue:[[dictionary objectForKey:@"user"] objectForKey:@"id"] inContext:[NSManagedObjectContext MR_defaultContext]];
         if (!user){
             user = [User MR_createInContext:[NSManagedObjectContext MR_defaultContext]];
         }
@@ -36,7 +36,7 @@
         self.user = user;
     }
     if ([dictionary objectForKey:@"target_user"] && [dictionary objectForKey:@"target_user"] != [NSNull null]) {
-        User *targetUser = [User MR_findFirstByAttribute:@"identifier" withValue:[[dictionary objectForKey:@"target_user"] objectForKey:@"id"]];
+        User *targetUser = [User MR_findFirstByAttribute:@"identifier" withValue:[[dictionary objectForKey:@"target_user"] objectForKey:@"id"] inContext:[NSManagedObjectContext MR_defaultContext]];
         if (!targetUser){
             targetUser = [User MR_createInContext:[NSManagedObjectContext MR_defaultContext]];
         }

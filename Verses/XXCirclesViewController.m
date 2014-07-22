@@ -51,7 +51,7 @@
     if (delegate.currentUser){
         currentUser = [delegate currentUser];
     } else {
-        currentUser = [User MR_findFirstByAttribute:@"identifier" withValue:[[NSUserDefaults standardUserDefaults] objectForKey:kUserDefaultsId]];
+        currentUser = [User MR_findFirstByAttribute:@"identifier" withValue:[[NSUserDefaults standardUserDefaults] objectForKey:kUserDefaultsId] inContext:[NSManagedObjectContext MR_defaultContext]];
     }
     [self.tableView reloadData];
     loading = YES;
@@ -166,7 +166,7 @@
         //NSLog(@"success fetching circles: %@",responseObject);
         NSMutableOrderedSet *circleSet = [NSMutableOrderedSet orderedSet];
         for (NSDictionary *circleDict in [responseObject objectForKey:@"circles"]){
-            Circle *circle = [Circle MR_findFirstByAttribute:@"identifier" withValue:[circleDict objectForKey:@"id"]];
+            Circle *circle = [Circle MR_findFirstByAttribute:@"identifier" withValue:[circleDict objectForKey:@"id"] inContext:[NSManagedObjectContext MR_defaultContext]];
             if (circle){
                 //circle already exists. only perform the pertinent updates
                 [circle update:circleDict];

@@ -156,7 +156,7 @@
         //NSLog(@"success getting circle notifications: %@", responseObject);
         NSMutableOrderedSet *circleNotifications = [NSMutableOrderedSet orderedSet];
         for (NSDictionary *dict in [responseObject objectForKey:@"notifications"]){
-            Notification *notification = [Notification MR_findFirstByAttribute:@"identifier" withValue:[dict objectForKey:@"id"]];
+            Notification *notification = [Notification MR_findFirstByAttribute:@"identifier" withValue:[dict objectForKey:@"id"] inContext:[NSManagedObjectContext MR_defaultContext]];
             if (!notification){
                 notification = [Notification MR_createInContext:[NSManagedObjectContext MR_defaultContext]];
             }

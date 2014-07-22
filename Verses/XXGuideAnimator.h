@@ -12,6 +12,4 @@
 
 @property (nonatomic, assign, getter = isPresenting) BOOL presenting;
 
-
-
 @end

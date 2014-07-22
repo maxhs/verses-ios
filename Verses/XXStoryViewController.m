@@ -28,6 +28,7 @@
 #import "XXNoRotateNavController.h"
 #import "XXLoginController.h"
 #import <Mixpanel/Mixpanel.h>
+#import "XXAlert.h"
 
 @interface XXStoryViewController () <UIViewControllerTransitioningDelegate, UIAlertViewDelegate> {
     AFHTTPRequestOperationManager *manager;
@@ -67,7 +68,7 @@
     XXTextView *newContributionTextView;
     NSString *_selectedText;
     UITextRange *_selectedRange;
-    User *currentUser;
+    User *_currentUser;
     CGFloat keyboardHeight;
     UIButton *publishButton;
     UIButton *cancelButton;
@@ -124,9 +125,9 @@
     if ([[NSUserDefaults standardUserDefaults] objectForKey:kUserDefaultsId]){
         signedIn = YES;
         if (delegate.currentUser){
-            currentUser = delegate.currentUser;
+            _currentUser = delegate.currentUser;
         } else {
-            currentUser = [User MR_findFirstByAttribute:@"identifier" withValue:[[NSUserDefaults standardUserDefaults] objectForKey:kUserDefaultsId]];
+            _currentUser = [User MR_findFirstByAttribute:@"identifier" withValue:[[NSUserDefaults standardUserDefaults] objectForKey:kUserDefaultsId] inContext:[NSManagedObjectContext MR_defaultContext]];
         }
     } else {
         signedIn = NO;
@@ -174,23 +175,9 @@
     [[NSNotificationCenter defaultCenter] addObserver:self selector:@selector(storyFlagged) name:@"StoryFlagged" object:nil];
     [[NSNotificationCenter defaultCenter] addObserver:self selector:@selector(removeStory:) name:@"RemoveStory" object:nil];
     [super viewDidLoad];
-}
-
-- (void)viewWillAppear:(BOOL)animated {
-    [super viewWillAppear:animated];
-    navBarShadowView.hidden = YES;
-    [[UIApplication sharedApplication] setStatusBarHidden:NO withAnimation:UIStatusBarAnimationFade];
-    if ([[NSUserDefaults standardUserDefaults] boolForKey:kDarkBackground]){
-        [self.view setBackgroundColor:[UIColor clearColor]];
-        textColor = [UIColor whiteColor];
-        [[UIApplication sharedApplication] setStatusBarStyle:UIStatusBarStyleLightContent animated:YES];
-    } else {
-        [[UIApplication sharedApplication] setStatusBarStyle:UIStatusBarStyleDefault animated:YES];
-        [self.view setBackgroundColor:[UIColor whiteColor]];
-        textColor = [UIColor blackColor];
-    }
-
+    
     if (_storyId){
+        NSLog(@"story id: %@",_storyId);
         [self loadStory:_storyId];
         [ProgressHUD show:@"Loading story..."];
     } else if (_story.contributions.count){
@@ -203,7 +190,23 @@
     } else if (_story) {
         [self loadStory:_story.identifier];
     }
-    
+}
+
+- (void)viewWillAppear:(BOOL)animated {
+    [super viewWillAppear:animated];
+    navBarShadowView.hidden = YES;
+    [[UIApplication sharedApplication] setStatusBarHidden:NO withAnimation:UIStatusBarAnimationFade];
+    if ([[NSUserDefaults standardUserDefaults] boolForKey:kDarkBackground]){
+        [self.view setBackgroundColor:[UIColor clearColor]];
+        textColor = [UIColor whiteColor];
+        [[UIApplication sharedApplication] setStatusBarStyle:UIStatusBarStyleLightContent animated:YES];
+        [_scrollView setIndicatorStyle:UIScrollViewIndicatorStyleWhite];
+    } else {
+        [[UIApplication sharedApplication] setStatusBarStyle:UIStatusBarStyleDefault animated:YES];
+        [self.view setBackgroundColor:[UIColor whiteColor]];
+        textColor = [UIColor blackColor];
+        [_scrollView setIndicatorStyle:UIScrollViewIndicatorStyleBlack];
+    }
     if (_scrollView.alpha == 0.0){
         [UIView animateWithDuration:.23 animations:^{
             [_scrollView setAlpha:1.0];
@@ -221,12 +224,11 @@
     
     [manager GET:[NSString stringWithFormat:@"%@/stories/%@",kAPIBaseUrl,identifier] parameters:parameters success:^(AFHTTPRequestOperation *operation, id responseObject) {
         //NSLog(@"load story response: %@",responseObject);
-        _story = [Story MR_findFirstByAttribute:@"identifier" withValue:identifier];
+        _story = [Story MR_findFirstByAttribute:@"identifier" withValue:identifier inContext:[NSManagedObjectContext MR_defaultContext]];
         if (!_story) {
             _story = [Story MR_createInContext:[NSManagedObjectContext MR_defaultContext]];
-            [_story populateFromDict:[responseObject objectForKey:@"story"]];
         }
-        
+        [_story populateFromDict:[responseObject objectForKey:@"story"]];
         [self drawStoryBody];
         [self loadFeedbacks];
         storyInfoVc.story = _story;
@@ -272,11 +274,11 @@
 
 - (void)createBookmark {
     if (signedIn && ![_story.identifier isEqualToNumber:[NSNumber numberWithInt:0]]){
-        Bookmark *bookmark = [Bookmark MR_findFirstByAttribute:@"story.identifier" withValue:_story.identifier];
+        Bookmark *bookmark = [Bookmark MR_findFirstByAttribute:@"story.identifier" withValue:_story.identifier inContext:[NSManagedObjectContext MR_defaultContext]];
         if (!bookmark) {
             bookmark = [Bookmark MR_createInContext:[NSManagedObjectContext MR_defaultContext]];
         }
-        bookmark.user = currentUser;
+        bookmark.user = _currentUser;
         bookmark.story = _story;
         bookmark.createdDate = [NSDate date];
         [_story setBookmarked:[NSNumber numberWithBool:YES]];
@@ -295,7 +297,7 @@
         [_story setBookmarked:[NSNumber numberWithBool:NO]];
         [self setupNavButtons];
         __block NSNumber *bookmarkId;
-        [currentUser.bookmarks enumerateObjectsUsingBlock:^(Bookmark *bookmark, NSUInteger idx, BOOL *stop) {
+        [_currentUser.bookmarks enumerateObjectsUsingBlock:^(Bookmark *bookmark, NSUInteger idx, BOOL *stop) {
             if ([bookmark.story.identifier isEqualToNumber:_story.identifier] || [bookmark.contribution.story.identifier isEqualToNumber:_story.identifier]){
                 bookmarkId = bookmark.identifier;
                 [manager DELETE:[NSString stringWithFormat:@"%@/bookmarks/%@",kAPIBaseUrl,bookmarkId] parameters:@{@"user_id":[[NSUserDefaults standardUserDefaults] objectForKey:kUserDefaultsId]} success:^(AFHTTPRequestOperation *operation, id responseObject) {
@@ -339,7 +341,7 @@
                 [_story setBookmarked:[NSNumber numberWithBool:YES]];
                 [self setupNavButtons];
             } else {
-                [currentUser.bookmarks.array enumerateObjectsUsingBlock:^(Bookmark *bookmark, NSUInteger idx, BOOL *stop) {
+                [_currentUser.bookmarks.array enumerateObjectsUsingBlock:^(Bookmark *bookmark, NSUInteger idx, BOOL *stop) {
                     
                     if (bookmark.story && [_story.identifier isEqualToNumber:bookmark.story.identifier]){
                         [_story setBookmarked:[NSNumber numberWithBool:YES]];
@@ -357,7 +359,7 @@
 - (void)updateStoryFeedback:(NSArray*)array{
     NSMutableOrderedSet *feedbacks = [NSMutableOrderedSet orderedSet];
     for (NSDictionary *dict in array){
-        Feedback *feedback = [Feedback MR_findFirstByAttribute:@"identifier" withValue:[dict objectForKey:@"id"]];
+        Feedback *feedback = [Feedback MR_findFirstByAttribute:@"identifier" withValue:[dict objectForKey:@"id"] inContext:[NSManagedObjectContext MR_defaultContext]];
         if (feedback){
             [feedback update:dict];
         } else {
@@ -409,6 +411,7 @@
 
     if ([[NSUserDefaults standardUserDefaults] boolForKey:kDarkBackground]){
         [[NSUserDefaults standardUserDefaults] setBool:NO forKey:kDarkBackground];
+        [_scrollView setIndicatorStyle:UIScrollViewIndicatorStyleBlack];
         textColor = [UIColor blackColor];
         [backButton setTintColor:textColor];
         [themeButton setTintColor:textColor];
@@ -434,6 +437,7 @@
         
     } else {
         [[NSUserDefaults standardUserDefaults] setBool:YES forKey:kDarkBackground];
+        [_scrollView setIndicatorStyle:UIScrollViewIndicatorStyleWhite];
         [backButton setTintColor:[UIColor whiteColor]];
         [themeButton setTintColor:[UIColor whiteColor]];
         textColor = [UIColor whiteColor];
@@ -714,7 +718,7 @@
         UILabel *nameLabel = [[UILabel alloc] initWithFrame:CGRectMake(spacer+50, 0, width-50-spacer, 50)];
         [nameLabel setTextColor:textColor];
         [nameLabel setText:[NSString stringWithFormat:@"%@\n%@",contribution.user.penName, [_formatter stringFromDate:contribution.updatedDate]]];
-        [nameLabel setFont:[UIFont fontWithName:kSourceSansProBold size:13]];
+        [nameLabel setFont:[UIFont fontWithName:kSourceSansProRegular size:13]];
         [nameLabel setNumberOfLines:0];
         [nameLabel setTag:kSeparatorTag];
         [contributorView addSubview:nameLabel];
@@ -808,7 +812,7 @@
             UILabel *nameLabel = [[UILabel alloc] initWithFrame:CGRectMake(spacer+50, 0, width-50-spacer, 50)];
             [nameLabel setTextColor:textColor];
             [nameLabel setText:[NSString stringWithFormat:@"%@ | %@",contribution.user.penName, [_formatter stringFromDate:contribution.updatedDate]]];
-            [nameLabel setFont:[UIFont fontWithName:kSourceSansProBold size:14]];
+            [nameLabel setFont:[UIFont fontWithName:kSourceSansProRegular size:14]];
             [nameLabel setNumberOfLines:0];
             [nameLabel setTag:kSeparatorTag];
             [contributorView addSubview:nameLabel];
@@ -875,7 +879,7 @@
 
 - (void)drawStoryBody {
     [self setupNavButtons];
-    if (visiblePages == nil){
+    if (!visiblePages){
         visiblePages = [NSMutableSet set];
     } else {
         [visiblePages removeAllObjects];
@@ -1208,42 +1212,48 @@
 
 - (void)publishContribution {
     [self.view endEditing:YES];
-    if (newContributionTextView.text.length && ![newContributionTextView.text isEqualToString:kSlowRevealPlaceholder]){
-        [UIView animateWithDuration:.23 animations:^{
-            [publishButton setAlpha:0.0];
-            [cancelButton setAlpha:0.0];
-        }completion:^(BOOL finished) {
-            [publishButton removeFromSuperview];
-            [cancelButton removeFromSuperview];
-        }];
-        
-        [ProgressHUD show:@"Adding your contribution..."];
-        NSMutableDictionary *parameters = [NSMutableDictionary dictionary];
-        [parameters setObject:_story.identifier forKey:@"story_id"];
-        [parameters setObject:[[NSUserDefaults standardUserDefaults] objectForKey:kUserDefaultsId] forKey:@"user_id"];
-        [parameters setObject:[newContributionTextView.attributedText htmlFragment] forKey:@"body"];
-        [manager POST:[NSString stringWithFormat:@"%@/contributions",kAPIBaseUrl] parameters:@{@"contribution":parameters} success:^(AFHTTPRequestOperation *operation, id responseObject) {
-            NSLog(@"success posting a new contribution: %@",responseObject);
+    if (_currentUser){
+        if (newContributionTextView.text.length && ![newContributionTextView.text isEqualToString:kSlowRevealPlaceholder]){
+            [UIView animateWithDuration:.23 animations:^{
+                [publishButton setAlpha:0.0];
+                [cancelButton setAlpha:0.0];
+            }completion:^(BOOL finished) {
+                [publishButton removeFromSuperview];
+                [cancelButton removeFromSuperview];
+            }];
             
-            Contribution *newContribution = [Contribution MR_findFirstByAttribute:@"identifier" withValue:[[responseObject objectForKey:@"contribution"] objectForKey:@"id"]];
-            if (!newContribution){
-                newContribution = [Contribution MR_createInContext:[NSManagedObjectContext MR_defaultContext]];
-            }
-            [newContribution populateFromDict:[responseObject objectForKey:@"contribution"]];
-            
-            [_story addContribution:newContribution];
-            [newContributionTextView removeFromSuperview];
-            [self resetStoryBody];
-            [self drawStoryBody];
-            UIEdgeInsets contentInsets = _scrollView.contentInset;
-            contentInsets.bottom = 0;
-            [_scrollView setContentInset:contentInsets];
-            _scrollView.pagingEnabled = YES;
-            [ProgressHUD dismiss];
-        } failure:^(AFHTTPRequestOperation *operation, NSError *error) {
-            _scrollView.pagingEnabled = YES;
-            [ProgressHUD dismiss];
-            NSLog(@"Failed to post a new contribution: %@",error.description);
+            [ProgressHUD show:@"Adding your contribution..."];
+            NSMutableDictionary *parameters = [NSMutableDictionary dictionary];
+            [parameters setObject:_story.identifier forKey:@"story_id"];
+            [parameters setObject:_currentUser.identifier forKey:@"user_id"];
+            [parameters setObject:[newContributionTextView.attributedText htmlFragment] forKey:@"body"];
+            [manager POST:[NSString stringWithFormat:@"%@/contributions",kAPIBaseUrl] parameters:@{@"contribution":parameters} success:^(AFHTTPRequestOperation *operation, id responseObject) {
+                NSLog(@"success posting a new contribution: %@",responseObject);
+                Contribution *newContribution = [Contribution MR_findFirstByAttribute:@"identifier" withValue:[[responseObject objectForKey:@"contribution"] objectForKey:@"id"] inContext:[NSManagedObjectContext MR_defaultContext]];
+                if (!newContribution){
+                    newContribution = [Contribution MR_createInContext:[NSManagedObjectContext MR_defaultContext]];
+                }
+                [newContribution populateFromDict:[responseObject objectForKey:@"contribution"]];
+                
+                [_story addContribution:newContribution];
+                [newContributionTextView removeFromSuperview];
+                [self resetStoryBody];
+                [self drawStoryBody];
+                UIEdgeInsets contentInsets = _scrollView.contentInset;
+                contentInsets.bottom = 0;
+                [_scrollView setContentInset:contentInsets];
+                _scrollView.pagingEnabled = YES;
+                [ProgressHUD dismiss];
+            } failure:^(AFHTTPRequestOperation *operation, NSError *error) {
+                _scrollView.pagingEnabled = YES;
+                [ProgressHUD dismiss];
+                NSLog(@"Failed to post a new contribution: %@",error.description);
+            }];
+        }
+    } else {
+        XXLoginController *vc = [[self storyboard] instantiateViewControllerWithIdentifier:@"Login"];
+        [self presentViewController:vc animated:YES completion:^{
+            [XXAlert show:@"Please login before publishing" withTime:2.7f];
         }];
     }
 }

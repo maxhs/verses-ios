@@ -60,11 +60,13 @@
     [self setNeedsStatusBarAppearanceUpdate];
     
     if ([[NSUserDefaults standardUserDefaults] boolForKey:kDarkBackground]){
+        [_tableView setIndicatorStyle:UIScrollViewIndicatorStyleWhite];
         [self.view setBackgroundColor:[UIColor clearColor]];
         textColor = [UIColor whiteColor];
         backButton = [[UIBarButtonItem alloc] initWithImage:[UIImage imageNamed:@"blackX"] style:UIBarButtonItemStylePlain target:self action:@selector(back)];
         [backButton setTintColor:[UIColor whiteColor]];
     } else {
+        [_tableView setIndicatorStyle:UIScrollViewIndicatorStyleBlack];
         [self.view setBackgroundColor:[UIColor whiteColor]];
         textColor = [UIColor blackColor];
         backButton = [[UIBarButtonItem alloc] initWithImage:[UIImage imageNamed:@"blackX"] style:UIBarButtonItemStylePlain target:self action:@selector(back)];
@@ -106,7 +108,7 @@
         if (_user){
             [_user populateFromDict:[responseObject objectForKey:@"user"]];
         } else {
-            _user = [User MR_findFirstByAttribute:@"identifier" withValue:[[responseObject objectForKey:@"user"] objectForKey:@"id"]];
+            _user = [User MR_findFirstByAttribute:@"identifier" withValue:[[responseObject objectForKey:@"user"] objectForKey:@"id"] inContext:[NSManagedObjectContext MR_defaultContext]];
             if (!_user){
                 _user = [User MR_createInContext:[NSManagedObjectContext MR_defaultContext]];
             }

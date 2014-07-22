@@ -46,7 +46,7 @@
     if (delegate.currentUser){
         _currentUser = delegate.currentUser;
     } else {
-        _currentUser = [User MR_findFirstByAttribute:@"identifier" withValue:[[NSUserDefaults standardUserDefaults] objectForKey:kUserDefaultsId]];
+        _currentUser = [User MR_findFirstByAttribute:@"identifier" withValue:[[NSUserDefaults standardUserDefaults] objectForKey:kUserDefaultsId] inContext:[NSManagedObjectContext MR_defaultContext]];
     }
     
     //if (_currentUser.contacts.count == 0){
@@ -138,7 +138,7 @@
         //NSLog(@"success getting user's contacts: %@",[responseObject objectForKey:@"users"]);
         NSMutableOrderedSet *contactSet = [NSMutableOrderedSet orderedSet];
         for (NSDictionary *userDict in [responseObject objectForKey:@"users"]){
-            User *user = [User MR_findFirstByAttribute:@"identifier" withValue:[userDict objectForKey:@"id"]];
+            User *user = [User MR_findFirstByAttribute:@"identifier" withValue:[userDict objectForKey:@"id"] inContext:[NSManagedObjectContext MR_defaultContext]];
             if (!user){
                 user = [User MR_createInContext:[NSManagedObjectContext MR_defaultContext]];
             }

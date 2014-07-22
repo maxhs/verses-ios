@@ -63,7 +63,7 @@
     [manager GET:[NSString stringWithFormat:@"%@/feedbacks",kAPIBaseUrl] parameters:@{@"user_id":[[NSUserDefaults standardUserDefaults] objectForKey:kUserDefaultsId]} success:^(AFHTTPRequestOperation *operation, id responseObject) {
         NSLog(@"success fetching feedback: %@",responseObject);
         for (NSDictionary *feedbackDict in [responseObject objectForKey:@"feedbacks"]){
-            Feedback *feedback = [Feedback MR_findFirstByAttribute:@"identifier" withValue:[feedbackDict objectForKey:@"id"]];
+            Feedback *feedback = [Feedback MR_findFirstByAttribute:@"identifier" withValue:[feedbackDict objectForKey:@"id"] inContext:[NSManagedObjectContext MR_defaultContext]];
             if (!feedback){
                 feedback = [Feedback MR_createInContext:[NSManagedObjectContext MR_defaultContext]];
             }

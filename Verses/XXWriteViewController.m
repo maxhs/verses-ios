@@ -30,6 +30,7 @@
 @interface XXWriteViewController () <UITextFieldDelegate, UITextViewDelegate, UIGestureRecognizerDelegate, UIAlertViewDelegate, UITextInputDelegate, UIViewControllerTransitioningDelegate, UIImagePickerControllerDelegate, UINavigationControllerDelegate, UIActionSheetDelegate> {
     CGFloat width;
     CGFloat height;
+    XXAppDelegate *delegate;
     AFHTTPRequestOperationManager *manager;
     BOOL joinable;
     BOOL private;
@@ -98,8 +99,10 @@
         width = screenHeight();
     }
     
-    manager = [(XXAppDelegate*)[UIApplication sharedApplication].delegate manager];
-    _currentUser = [(XXAppDelegate*)[UIApplication sharedApplication].delegate currentUser];
+    [super viewDidLoad];
+    delegate = (XXAppDelegate*)[UIApplication sharedApplication].delegate;
+    manager = delegate.manager;
+    _currentUser = delegate.currentUser;
     
     publishButton = [[UIBarButtonItem alloc] initWithTitle:@"   Share   " style:UIBarButtonItemStylePlain target:self action:@selector(confirmPublish)];
     doneButton = [[UIBarButtonItem alloc] initWithBarButtonSystemItem:UIBarButtonSystemItemDone target:self action:@selector(doneEditing)];
@@ -111,16 +114,12 @@
     [self offsetOptions];
     [self setupControls];
     
-    [super viewDidLoad];
-    
     
     mysteryPrompt = NO;
     if (_mystery){
         [_slowRevealLabel setHidden:NO];
         [_slowRevealSwitch setOn:YES];
         [_slowRevealSwitch setHidden:NO];
-        
-        
     } else {
         [_slowRevealLabel setHidden:YES];
         [_slowRevealSwitch setHidden:YES];
@@ -872,13 +871,11 @@
 - (void)showStory {
     XXStoryViewController *vc = [[self storyboard] instantiateViewControllerWithIdentifier:@"Story"];
     [vc setStory:_story];
-    XXAppDelegate *delegate = [UIApplication sharedApplication].delegate;
     [vc setTitle:_story.title];
     UINavigationController *nav = [[UINavigationController alloc] initWithRootViewController:vc];
     [delegate.dynamicsDrawerViewController setPaneState:MSDynamicsDrawerPaneStateClosed];
-    [delegate.dynamicsDrawerViewController setPaneViewController:nav animated:NO completion:^{
-        [self dismissViewControllerAnimated:YES completion:nil];
-    }];
+    [delegate.dynamicsDrawerViewController setPaneViewController:nav animated:NO completion:NULL];
+    [self dismissViewControllerAnimated:YES completion:NULL];
 }
 
 - (void)shareButton {
@@ -1475,7 +1472,6 @@
         [self presentViewController:vc animated:YES completion:nil];
        
         //[self dismissViewControllerAnimated:YES completion:nil];
-         XXAppDelegate *delegate = (XXAppDelegate*)[UIApplication sharedApplication].delegate;
         if ([[NSUserDefaults standardUserDefaults] boolForKey:kDarkBackground]){
             [UIView animateWithDuration:.3 animations:^{
                 [[delegate.dynamicsDrawerViewController paneViewController].view setAlpha:1.0];

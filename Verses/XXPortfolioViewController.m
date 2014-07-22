@@ -81,7 +81,7 @@
     _filteredResults = [NSMutableArray array];
     if (_draftMode){
         NSPredicate *predicate = [NSPredicate predicateWithFormat:@"ownerId == %@ && draft == 1",[[NSUserDefaults standardUserDefaults] objectForKey:kUserDefaultsId]];
-        drafts = [Story MR_findAllSortedBy:@"updatedDate" ascending:NO withPredicate:predicate].mutableCopy;
+        drafts = [Story MR_findAllSortedBy:@"updatedDate" ascending:NO withPredicate:predicate inContext:[NSManagedObjectContext MR_defaultContext]].mutableCopy;
         if (drafts.count < 2){
             [self loadDrafts];
         } else {
@@ -89,7 +89,7 @@
         }
     } else {
         NSPredicate *predicate = [NSPredicate predicateWithFormat:@"ownerId == %@",[[NSUserDefaults standardUserDefaults] objectForKey:kUserDefaultsId]];
-        stories = [Story MR_findAllSortedBy:@"updatedDate" ascending:NO withPredicate:predicate].mutableCopy;
+        stories = [Story MR_findAllSortedBy:@"updatedDate" ascending:NO withPredicate:predicate inContext:[NSManagedObjectContext MR_defaultContext]].mutableCopy;
         if (stories.count < 2){
             [self loadStories];
         } else {
@@ -141,6 +141,7 @@
     [self.navigationController setNavigationBarHidden:YES animated:YES];
     [[(XXAppDelegate*)[UIApplication sharedApplication].delegate dynamicsDrawerViewController] setPaneDragRevealEnabled:NO forDirection:MSDynamicsDrawerDirectionRight];
     if ([[NSUserDefaults standardUserDefaults] boolForKey:kDarkBackground]){
+        [_tableView setIndicatorStyle:UIScrollViewIndicatorStyleWhite];
         [self.view setBackgroundColor:[UIColor clearColor]];
         textColor = [UIColor whiteColor];
         [refreshControl setTintColor:[UIColor whiteColor]];
@@ -156,6 +157,7 @@
         }
         [self.searchBar setBackgroundColor:[UIColor colorWithWhite:0 alpha:.87]];
     } else {
+        [_tableView setIndicatorStyle:UIScrollViewIndicatorStyleBlack];
         [self.searchBar setBackgroundColor:[UIColor whiteColor]];
         [self.searchResultsTableView setBackgroundColor:[UIColor colorWithWhite:1 alpha:.97]];
         for (id subview in [self.searchBar.subviews.firstObject subviews]){
@@ -262,7 +264,7 @@
             NSMutableArray *newStoryArray = [NSMutableArray array];
             for (NSDictionary *dict in [responseObject objectForKey:@"stories"]){
                 if ([dict objectForKey:@"id"] && [dict objectForKey:@"id"] != [NSNull null]){
-                    Story *story = [Story MR_findFirstByAttribute:@"identifier" withValue:[dict objectForKey:@"id"]];
+                    Story *story = [Story MR_findFirstByAttribute:@"identifier" withValue:[dict objectForKey:@"id"] inContext:[NSManagedObjectContext MR_defaultContext]];
                     if (!story){
                         story = [Story MR_createInContext:[NSManagedObjectContext MR_defaultContext]];
                     }
@@ -305,7 +307,7 @@
             NSMutableArray *newStoryArray = [NSMutableArray array];
             for (NSDictionary *dict in [responseObject objectForKey:@"stories"]){
                 if ([dict objectForKey:@"id"] && [dict objectForKey:@"id"] != [NSNull null]){
-                    Story *story = [Story MR_findFirstByAttribute:@"identifier" withValue:[dict objectForKey:@"id"]];
+                    Story *story = [Story MR_findFirstByAttribute:@"identifier" withValue:[dict objectForKey:@"id"] inContext:[NSManagedObjectContext MR_defaultContext]];
                     if (!story){
                         story = [Story MR_createInContext:[NSManagedObjectContext MR_defaultContext]];
                     }
@@ -341,7 +343,7 @@
 - (void)updateLocalStories:(NSArray*)array{
     NSMutableOrderedSet *storySet = [NSMutableOrderedSet orderedSet];
     for (NSDictionary *dict in array){
-        Story *story = [Story MR_findFirstByAttribute:@"identifier" withValue:[dict objectForKey:@"id"]];
+        Story *story = [Story MR_findFirstByAttribute:@"identifier" withValue:[dict objectForKey:@"id"] inContext:[NSManagedObjectContext MR_defaultContext]];
         if (!story){
             story = [Story MR_createInContext:[NSManagedObjectContext MR_defaultContext]];
         }
@@ -360,13 +362,13 @@
         
         if (_draftMode){
             NSPredicate *predicate = [NSPredicate predicateWithFormat:@"ownerId == %@ && draft == 1",[[NSUserDefaults standardUserDefaults] objectForKey:kUserDefaultsId]];
-            drafts = [Story MR_findAllSortedBy:@"updatedDate" ascending:NO withPredicate:predicate].mutableCopy;
+            drafts = [Story MR_findAllSortedBy:@"updatedDate" ascending:NO withPredicate:predicate inContext:[NSManagedObjectContext MR_defaultContext]].mutableCopy;
             [self.tableView beginUpdates];
             [self.tableView reloadSections:[NSIndexSet indexSetWithIndex:0] withRowAnimation:UITableViewRowAnimationFade];
             [self.tableView endUpdates];
         } else {
             NSPredicate *predicate = [NSPredicate predicateWithFormat:@"ownerId == %@",[[NSUserDefaults standardUserDefaults] objectForKey:kUserDefaultsId]];
-            stories = [Story MR_findAllSortedBy:@"updatedDate" ascending:NO withPredicate:predicate].mutableCopy;
+            stories = [Story MR_findAllSortedBy:@"updatedDate" ascending:NO withPredicate:predicate inContext:[NSManagedObjectContext MR_defaultContext]].mutableCopy;
             [self.tableView beginUpdates];
             [self.tableView reloadSections:[NSIndexSet indexSetWithIndex:0] withRowAnimation:UITableViewRowAnimationFade];
             [self.tableView endUpdates];

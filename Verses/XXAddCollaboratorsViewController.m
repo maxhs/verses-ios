@@ -55,7 +55,7 @@
     if (_currentUser){
         
     } else {
-        _currentUser = [User MR_findFirstByAttribute:@"identifier" withValue:[[NSUserDefaults standardUserDefaults] objectForKey:kUserDefaultsId]];
+        _currentUser = [User MR_findFirstByAttribute:@"identifier" withValue:[[NSUserDefaults standardUserDefaults] objectForKey:kUserDefaultsId] inContext:[NSManagedObjectContext MR_defaultContext]];
     }
     
     [self.tableView setBackgroundColor:[UIColor clearColor]];
@@ -185,7 +185,7 @@
     [manager POST:[NSString stringWithFormat:@"%@/users/%@/add_contact",kAPIBaseUrl,[[NSUserDefaults standardUserDefaults] objectForKey:kUserDefaultsId]] parameters:contactDict success:^(AFHTTPRequestOperation *operation, id responseObject) {
         //NSLog(@"Successfully created contact: %@",responseObject);
         if ([responseObject objectForKey:@"user"]){
-            User *newContact = [User MR_findFirstByAttribute:@"identifier" withValue:[[responseObject objectForKey:@"user"] objectForKey:@"id"]];
+            User *newContact = [User MR_findFirstByAttribute:@"identifier" withValue:[[responseObject objectForKey:@"user"] objectForKey:@"id"] inContext:[NSManagedObjectContext MR_defaultContext]];
             if (!newContact){
                 newContact = [User MR_createInContext:[NSManagedObjectContext MR_defaultContext]];
             }

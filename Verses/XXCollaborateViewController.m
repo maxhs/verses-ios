@@ -39,7 +39,7 @@
 {
     [super viewDidLoad];
     manager = [(XXAppDelegate*)[UIApplication sharedApplication].delegate manager];
-    currentUser = [User MR_findFirstByAttribute:@"identifier" withValue:[[NSUserDefaults standardUserDefaults] objectForKey:kUserDefaultsId]];
+    currentUser = [User MR_findFirstByAttribute:@"identifier" withValue:[[NSUserDefaults standardUserDefaults] objectForKey:kUserDefaultsId] inContext:[NSManagedObjectContext MR_defaultContext]];
     if (self.navigationController.viewControllers.firstObject == self){
         cancelButton = [[UIBarButtonItem alloc] initWithImage:[UIImage imageNamed:@"blackX"] style:UIBarButtonItemStylePlain target:self action:@selector(dismissView)];
         self.navigationItem.leftBarButtonItem = cancelButton;
@@ -106,7 +106,7 @@
         //NSLog(@"success getting user's contacts: %@",[responseObject objectForKey:@"users"]);
         NSMutableOrderedSet *contactSet = [NSMutableOrderedSet orderedSet];
         for (NSDictionary *userDict in [responseObject objectForKey:@"users"]){
-            User *user = [User MR_findFirstByAttribute:@"identifier" withValue:[userDict objectForKey:@"id"]];
+            User *user = [User MR_findFirstByAttribute:@"identifier" withValue:[userDict objectForKey:@"id"] inContext:[NSManagedObjectContext MR_defaultContext]];
             if (!user){
                 user = [User MR_createInContext:[NSManagedObjectContext MR_defaultContext]];
             }
@@ -145,7 +145,7 @@
         //NSLog(@"success fetching circles: %@",responseObject);
         NSMutableOrderedSet *circleSet = [NSMutableOrderedSet orderedSet];
         for (NSDictionary *circleDict in [responseObject objectForKey:@"circles"]){
-            Circle *circle = [Circle MR_findFirstByAttribute:@"identifier" withValue:[circleDict objectForKey:@"id"]];
+            Circle *circle = [Circle MR_findFirstByAttribute:@"identifier" withValue:[circleDict objectForKey:@"id"] inContext:[NSManagedObjectContext MR_defaultContext]];
             if (!circle){
                 circle = [Circle MR_createInContext:[NSManagedObjectContext MR_defaultContext]];
             }

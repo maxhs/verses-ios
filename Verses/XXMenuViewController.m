@@ -72,7 +72,7 @@
     if (delegate.currentUser){
         currentUser = delegate.currentUser;
     } else if ([[NSUserDefaults standardUserDefaults] objectForKey:kUserDefaultsId]) {
-        currentUser = [User MR_findFirstByAttribute:@"identifier" withValue:[[NSUserDefaults standardUserDefaults] objectForKey:kUserDefaultsId]];
+        currentUser = [User MR_findFirstByAttribute:@"identifier" withValue:[[NSUserDefaults standardUserDefaults] objectForKey:kUserDefaultsId] inContext:[NSManagedObjectContext MR_defaultContext]];
     }
     
     [super viewDidLoad];
@@ -166,7 +166,7 @@
 
 - (void)viewDidAppear:(BOOL)animated {
     NSPredicate *predicate = [NSPredicate predicateWithFormat:@"draft == %@ and inviteOnly == %@",[NSNumber numberWithBool:NO],[NSNumber numberWithBool:NO]];
-    _searchResults = [Story MR_findAllWithPredicate:predicate].mutableCopy;
+    _searchResults = [Story MR_findAllWithPredicate:predicate inContext:[NSManagedObjectContext MR_defaultContext]].mutableCopy;
     _filteredResults = [NSMutableArray arrayWithArray:_searchResults];
 }
 
@@ -185,7 +185,7 @@
             //NSLog(@"success fetching user notifications: %@",responseObject);
             NSMutableOrderedSet *notificationSet = [NSMutableOrderedSet orderedSet];
             for (NSDictionary *dict in [responseObject objectForKey:@"notifications"]){
-                Notification *notification = [Notification MR_findFirstByAttribute:@"identifier" withValue:[dict objectForKey:@"id"]];
+                Notification *notification = [Notification MR_findFirstByAttribute:@"identifier" withValue:[dict objectForKey:@"id"] inContext:[NSManagedObjectContext MR_defaultContext]];
                 if (!notification){
                     //create a new notification.
                     notification = [Notification MR_createInContext:[NSManagedObjectContext MR_defaultContext]];
@@ -224,7 +224,7 @@
                 NSMutableOrderedSet *notificationSet = [NSMutableOrderedSet orderedSetWithOrderedSet:currentUser.notifications];
                 int count = 0;
                 for (NSDictionary *dict in [responseObject objectForKey:@"notifications"]){
-                    Notification *notification = [Notification MR_findFirstByAttribute:@"identifier" withValue:[dict objectForKey:@"id"]];
+                    Notification *notification = [Notification MR_findFirstByAttribute:@"identifier" withValue:[dict objectForKey:@"id"] inContext:[NSManagedObjectContext MR_defaultContext]];
                     if (!notification){
                         notification = [Notification MR_createInContext:[NSManagedObjectContext MR_defaultContext]];
                     }
@@ -606,13 +606,13 @@
             }
         } else if (indexPath.section == 1){
             Notification *notification = [currentUser.notifications objectAtIndex:indexPath.row];
-            if (notification.story.identifier){
+            if (notification.story.identifier && ![notification.story.identifier isEqualToNumber:[NSNumber numberWithInt:0]]){
                 XXStoryViewController *vc = [[self storyboard] instantiateViewControllerWithIdentifier:@"Story"];
                 [ProgressHUD show:@"Fetching story..."];
                 [vc setStoryId:notification.story.identifier];
                 UINavigationController *nav = [[UINavigationController alloc] initWithRootViewController:vc];
                 [dynamicsViewController setPaneViewController:nav animated:YES completion:nil];
-            } else if (notification.circle.identifier){
+            } else if (notification.circle.identifier && ![notification.circle.identifier isEqualToNumber:[NSNumber numberWithInt:0]]){
                 [ProgressHUD show:@"Fetching that circle..."];
                 XXCircleDetailViewController *vc = [[self storyboard] instantiateViewControllerWithIdentifier:@"CircleDetail"];
                 [vc setCircle:notification.circle];
@@ -694,7 +694,7 @@
 - (void)updateLocalStories:(NSArray*)array{
     for (NSDictionary *dict in array){
         if ([dict objectForKey:@"id"] && [dict objectForKey:@"id"] != [NSNull null]){
-            Story *story = [Story MR_findFirstByAttribute:@"identifier" withValue:[dict objectForKey:@"id"]];
+            Story *story = [Story MR_findFirstByAttribute:@"identifier" withValue:[dict objectForKey:@"id"] inContext:[NSManagedObjectContext MR_defaultContext]];
             if (!story){
                 story = [Story MR_createInContext:[NSManagedObjectContext MR_defaultContext]];
             }
@@ -703,7 +703,7 @@
     }
     [[NSManagedObjectContext MR_defaultContext] MR_saveToPersistentStoreWithCompletion:^(BOOL success, NSError *error) {
         NSPredicate *predicate = [NSPredicate predicateWithFormat:@"draft == %@ and inviteOnly == %@",[NSNumber numberWithBool:NO],[NSNumber numberWithBool:NO]];
-        _searchResults = [Story MR_findAllWithPredicate:predicate].mutableCopy;
+        _searchResults = [Story MR_findAllWithPredicate:predicate inContext:[NSManagedObjectContext MR_defaultContext]].mutableCopy;
     }];
 }
 

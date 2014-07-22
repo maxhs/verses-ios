@@ -42,7 +42,7 @@
     if (delegate.currentUser){
         currentUser = delegate.currentUser;
     } else {
-        currentUser = [User MR_findFirstByAttribute:@"identifier" withValue:[[NSUserDefaults standardUserDefaults] objectForKey:kUserDefaultsId]];
+        currentUser = [User MR_findFirstByAttribute:@"identifier" withValue:[[NSUserDefaults standardUserDefaults] objectForKey:kUserDefaultsId] inContext:[NSManagedObjectContext MR_defaultContext]];
     }
     guideButton = [[UIBarButtonItem alloc] initWithImage:[UIImage imageNamed:@"more"] style:UIBarButtonItemStylePlain target:self action:@selector(showGuide)];
     UIBarButtonItem *negativeRightButton = [[UIBarButtonItem alloc]
@@ -125,7 +125,7 @@
         //NSLog(@"success getting bookmarks: %@",responseObject);
         NSMutableOrderedSet *bookmarkSet = [NSMutableOrderedSet orderedSet];
         for (NSDictionary *bookmarkDict in [responseObject objectForKey:@"bookmarks"]){
-            Bookmark *bookmark = [Bookmark MR_findFirstByAttribute:@"identifier" withValue:[bookmarkDict objectForKey:@"id"]];
+            Bookmark *bookmark = [Bookmark MR_findFirstByAttribute:@"identifier" withValue:[bookmarkDict objectForKey:@"id"] inContext:[NSManagedObjectContext MR_defaultContext]];
             if (!bookmark){
                 bookmark = [Bookmark MR_createInContext:[NSManagedObjectContext MR_defaultContext]];
             }

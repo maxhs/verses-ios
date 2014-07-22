@@ -21,7 +21,7 @@
         NSMutableOrderedSet *orderedComments = [NSMutableOrderedSet orderedSet];
         for (NSDictionary *commentDict in [dictionary objectForKey:@"comments"]){
             if ([commentDict objectForKey:@"id"] != [NSNull null]){
-                Comment *comment = [Comment MR_findFirstByAttribute:@"identifier" withValue:[commentDict objectForKey:@"id"]];
+                Comment *comment = [Comment MR_findFirstByAttribute:@"identifier" withValue:[commentDict objectForKey:@"id"] inContext:[NSManagedObjectContext MR_defaultContext]];
                 if (comment){
                     [comment update:commentDict];
                 } else {
@@ -40,7 +40,7 @@
         self.comments = orderedComments;
     }
     if ([dictionary objectForKey:@"user"] && [dictionary objectForKey:@"user"] != [NSNull null]) {
-        User *user = [User MR_findFirstByAttribute:@"identifier" withValue:[[dictionary objectForKey:@"user"] objectForKey:@"id"]];
+        User *user = [User MR_findFirstByAttribute:@"identifier" withValue:[[dictionary objectForKey:@"user"] objectForKey:@"id"] inContext:[NSManagedObjectContext MR_defaultContext]];
         if (!user){
             user = [User MR_createInContext:[NSManagedObjectContext MR_defaultContext]];
             [user populateFromDict:[dictionary objectForKey:@"user"]];
@@ -49,7 +49,7 @@
         self.user = user;
     }
     if ([dictionary objectForKey:@"recipient"] && [dictionary objectForKey:@"recipient"] != [NSNull null]) {
-        User *recipient = [User MR_findFirstByAttribute:@"identifier" withValue:[[dictionary objectForKey:@"recipient"] objectForKey:@"id"]];
+        User *recipient = [User MR_findFirstByAttribute:@"identifier" withValue:[[dictionary objectForKey:@"recipient"] objectForKey:@"id"] inContext:[NSManagedObjectContext MR_defaultContext]];
         if (!recipient){
             recipient = [User MR_createInContext:[NSManagedObjectContext MR_defaultContext]];
             [recipient populateFromDict:[dictionary objectForKey:@"recipient"]];
@@ -59,7 +59,7 @@
     }
     if ([dictionary objectForKey:@"story"] && [dictionary objectForKey:@"story"] != [NSNull null]) {
         NSDictionary *dict = [dictionary objectForKey:@"story"];
-        Story *story = [Story MR_findFirstByAttribute:@"identifier" withValue:[dict objectForKey:@"id"]];
+        Story *story = [Story MR_findFirstByAttribute:@"identifier" withValue:[dict objectForKey:@"id"] inContext:[NSManagedObjectContext MR_defaultContext]];
         if (!story){
             story = [Story MR_createInContext:[NSManagedObjectContext MR_defaultContext]];
             [story populateFromDict:dict];
@@ -78,7 +78,7 @@
         NSMutableOrderedSet *orderedComments = [NSMutableOrderedSet orderedSet];
         for (NSDictionary *commentDict in [dictionary objectForKey:@"comments"]){
             if ([commentDict objectForKey:@"id"] != [NSNull null]){
-                Comment *comment = [Comment MR_findFirstByAttribute:@"identifier" withValue:[commentDict objectForKey:@"id"]];
+                Comment *comment = [Comment MR_findFirstByAttribute:@"identifier" withValue:[commentDict objectForKey:@"id"] inContext:[NSManagedObjectContext MR_defaultContext]];
                 if (comment){
                     [comment update:commentDict];
                 } else {
@@ -97,7 +97,7 @@
         self.comments = orderedComments;
     }
     if ([dictionary objectForKey:@"user"] && [dictionary objectForKey:@"user"] != [NSNull null]) {
-        User *user = [User MR_findFirstByAttribute:@"identifier" withValue:[[dictionary objectForKey:@"user"] objectForKey:@"id"]];
+        User *user = [User MR_findFirstByAttribute:@"identifier" withValue:[[dictionary objectForKey:@"user"] objectForKey:@"id"] inContext:[NSManagedObjectContext MR_defaultContext]];
         if (user){
             [user update:[dictionary objectForKey:@"user"]];
         } else {
@@ -108,7 +108,7 @@
         self.user = user;
     }
     if ([dictionary objectForKey:@"recipient"] && [dictionary objectForKey:@"recipient"] != [NSNull null]) {
-        User *recipient = [User MR_findFirstByAttribute:@"identifier" withValue:[[dictionary objectForKey:@"recipient"] objectForKey:@"id"]];
+        User *recipient = [User MR_findFirstByAttribute:@"identifier" withValue:[[dictionary objectForKey:@"recipient"] objectForKey:@"id"] inContext:[NSManagedObjectContext MR_defaultContext]];
         if (recipient){
             [recipient update:[dictionary objectForKey:@"recipient"]];
         } else {

@@ -430,7 +430,7 @@ static NSString * const kShakeAnimationKey = @"XXShakeItNow";
             [currentUser populateFromDict:[responseObject objectForKey:@"user"]];
             
             //the only purpose of this user was to store the background image. get rid of it now
-            User *blankUser = [User MR_findFirstByAttribute:@"identifier" withValue:[NSNumber numberWithInt:0]];
+            User *blankUser = [User MR_findFirstByAttribute:@"identifier" withValue:[NSNumber numberWithInt:0] inContext:[NSManagedObjectContext MR_defaultContext]];
             if (blankUser){
                 if (blankUser.backgroundImageView){
                     currentUser.backgroundImageView = blankUser.backgroundImageView;

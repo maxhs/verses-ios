@@ -22,7 +22,6 @@
 #import "XXBookmarksViewController.h"
 #import "XXCirclesViewController.h"
 #import "XXSettingsViewController.h"
-#import "XXFlowLayout.h"
 #import "XXGuideHeaderView.h"
 
 @interface XXGuideViewController () <UISearchBarDelegate> {
@@ -68,7 +67,7 @@
         if ([delegate currentUser]){
             _currentUser = delegate.currentUser;
         } else {
-            _currentUser = [User MR_findFirstByAttribute:@"identifier" withValue:[[NSUserDefaults standardUserDefaults] objectForKey:kUserDefaultsId]];
+            _currentUser = [User MR_findFirstByAttribute:@"identifier" withValue:[[NSUserDefaults standardUserDefaults] objectForKey:kUserDefaultsId] inContext:[NSManagedObjectContext MR_defaultContext]];
         }
     } else {
         signedIn = NO;
@@ -162,7 +161,7 @@
         if ([delegate currentUser]){
             _currentUser = delegate.currentUser;
         } else {
-            _currentUser = [User MR_findFirstByAttribute:@"identifier" withValue:[[NSUserDefaults standardUserDefaults] objectForKey:kUserDefaultsId]];
+            _currentUser = [User MR_findFirstByAttribute:@"identifier" withValue:[[NSUserDefaults standardUserDefaults] objectForKey:kUserDefaultsId] inContext:[NSManagedObjectContext MR_defaultContext]];
         }
     } else {
         signedIn = NO;
@@ -257,7 +256,7 @@
     NSMutableArray *storyArray = [NSMutableArray array];
     for (NSDictionary *dict in array){
         if ([dict objectForKey:@"id"] && [dict objectForKey:@"id"] != [NSNull null]){
-            Story *story = [Story MR_findFirstByAttribute:@"identifier" withValue:[dict objectForKey:@"id"]];
+            Story *story = [Story MR_findFirstByAttribute:@"identifier" withValue:[dict objectForKey:@"id"] inContext:[NSManagedObjectContext MR_defaultContext]];
             if (!story){
                 story = [Story MR_createInContext:[NSManagedObjectContext MR_defaultContext]];
             }

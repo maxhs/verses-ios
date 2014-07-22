@@ -168,6 +168,7 @@
 		F261472B1963D75300E82DC5 /* background@2x.png in Resources */ = {isa = PBXBuildFile; fileRef = F26147291963D75300E82DC5 /* background@2x.png */; };
 		F2653712194A2B8500E21EB4 /* Tag.m in Sources */ = {isa = PBXBuildFile; fileRef = F2653711194A2B8500E21EB4 /* Tag.m */; };
 		F2653715194A2B9100E21EB4 /* Tag+helper.m in Sources */ = {isa = PBXBuildFile; fileRef = F2653714194A2B9100E21EB4 /* Tag+helper.m */; };
+		F26D84B4197E91C400494149 /* XXFeedbackResponseTextView.m in Sources */ = {isa = PBXBuildFile; fileRef = F26D84B3197E91C400494149 /* XXFeedbackResponseTextView.m */; };
 		F26F95341905D01B0022F968 /* smallX.png in Resources */ = {isa = PBXBuildFile; fileRef = F26F95321905D01B0022F968 /* smallX.png */; };
 		F26F95351905D01B0022F968 /* smallX@2x.png in Resources */ = {isa = PBXBuildFile; fileRef = F26F95331905D01B0022F968 /* smallX@2x.png */; };
 		F26F95381906E80B0022F968 /* XXCircleNotificationCell.m in Sources */ = {isa = PBXBuildFile; fileRef = F26F95371906E80B0022F968 /* XXCircleNotificationCell.m */; };
@@ -210,6 +211,8 @@
 		F285E95D18E69177008FFEC1 /* XXCommentCell.m in Sources */ = {isa = PBXBuildFile; fileRef = F285E95C18E69177008FFEC1 /* XXCommentCell.m */; };
 		F285E95F18E69183008FFEC1 /* XXCommentCell.xib in Resources */ = {isa = PBXBuildFile; fileRef = F285E95E18E69183008FFEC1 /* XXCommentCell.xib */; };
 		F285E97718E7600D008FFEC1 /* XXStoryPhoto.m in Sources */ = {isa = PBXBuildFile; fileRef = F285E97618E7600D008FFEC1 /* XXStoryPhoto.m */; };
+		F285ECD1197B266A00B684E9 /* XXFeedbackResponseCell.m in Sources */ = {isa = PBXBuildFile; fileRef = F285ECD0197B266A00B684E9 /* XXFeedbackResponseCell.m */; };
+		F285ECD3197B267200B684E9 /* XXFeedbackResponseCell.xib in Resources */ = {isa = PBXBuildFile; fileRef = F285ECD2197B267200B684E9 /* XXFeedbackResponseCell.xib */; };
 		F28976DF1807DB4300B9E8A5 /* XXStoriesViewController.m in Sources */ = {isa = PBXBuildFile; fileRef = F28976DE1807DB4300B9E8A5 /* XXStoriesViewController.m */; };
 		F28976E31808EC0000B9E8A5 /* XXProgress.m in Sources */ = {isa = PBXBuildFile; fileRef = F28976E21808EC0000B9E8A5 /* XXProgress.m */; };
 		F28976E61808FFBA00B9E8A5 /* XXStoryCell.m in Sources */ = {isa = PBXBuildFile; fileRef = F28976E51808FFBA00B9E8A5 /* XXStoryCell.m */; };
@@ -528,6 +531,8 @@
 		F2653711194A2B8500E21EB4 /* Tag.m */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.objc; name = Tag.m; path = ../Tag.m; sourceTree = "<group>"; };
 		F2653713194A2B9100E21EB4 /* Tag+helper.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = "Tag+helper.h"; sourceTree = "<group>"; };
 		F2653714194A2B9100E21EB4 /* Tag+helper.m */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.objc; path = "Tag+helper.m"; sourceTree = "<group>"; };
+		F26D84B2197E91C400494149 /* XXFeedbackResponseTextView.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = XXFeedbackResponseTextView.h; sourceTree = "<group>"; };
+		F26D84B3197E91C400494149 /* XXFeedbackResponseTextView.m */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.objc; path = XXFeedbackResponseTextView.m; sourceTree = "<group>"; };
 		F26F95321905D01B0022F968 /* smallX.png */ = {isa = PBXFileReference; lastKnownFileType = image.png; path = smallX.png; sourceTree = "<group>"; };
 		F26F95331905D01B0022F968 /* smallX@2x.png */ = {isa = PBXFileReference; lastKnownFileType = image.png; path = "smallX@2x.png"; sourceTree = "<group>"; };
 		F26F95361906E80B0022F968 /* XXCircleNotificationCell.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = XXCircleNotificationCell.h; sourceTree = "<group>"; };
@@ -586,6 +591,9 @@
 		F285E95E18E69183008FFEC1 /* XXCommentCell.xib */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = file.xib; path = XXCommentCell.xib; sourceTree = "<group>"; };
 		F285E97518E7600D008FFEC1 /* XXStoryPhoto.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = XXStoryPhoto.h; sourceTree = "<group>"; };
 		F285E97618E7600D008FFEC1 /* XXStoryPhoto.m */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.objc; path = XXStoryPhoto.m; sourceTree = "<group>"; };
+		F285ECCF197B266A00B684E9 /* XXFeedbackResponseCell.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = XXFeedbackResponseCell.h; sourceTree = "<group>"; };
+		F285ECD0197B266A00B684E9 /* XXFeedbackResponseCell.m */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.objc; path = XXFeedbackResponseCell.m; sourceTree = "<group>"; };
+		F285ECD2197B267200B684E9 /* XXFeedbackResponseCell.xib */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = file.xib; path = XXFeedbackResponseCell.xib; sourceTree = "<group>"; };
 		F28976D21807B73D00B9E8A5 /* SystemConfiguration.framework */ = {isa = PBXFileReference; lastKnownFileType = wrapper.framework; name = SystemConfiguration.framework; path = System/Library/Frameworks/SystemConfiguration.framework; sourceTree = SDKROOT; };
 		F28976D41807B74300B9E8A5 /* MobileCoreServices.framework */ = {isa = PBXFileReference; lastKnownFileType = wrapper.framework; name = MobileCoreServices.framework; path = System/Library/Frameworks/MobileCoreServices.framework; sourceTree = SDKROOT; };
 		F28976D61807B74800B9E8A5 /* QuartzCore.framework */ = {isa = PBXFileReference; lastKnownFileType = wrapper.framework; name = QuartzCore.framework; path = System/Library/Frameworks/QuartzCore.framework; sourceTree = SDKROOT; };
@@ -978,6 +986,8 @@
 				F28976E21808EC0000B9E8A5 /* XXProgress.m */,
 				F285E97518E7600D008FFEC1 /* XXStoryPhoto.h */,
 				F285E97618E7600D008FFEC1 /* XXStoryPhoto.m */,
+				F26D84B2197E91C400494149 /* XXFeedbackResponseTextView.h */,
+				F26D84B3197E91C400494149 /* XXFeedbackResponseTextView.m */,
 				F273B85418D61E88003C4818 /* XXTextView.h */,
 				F273B85518D61E88003C4818 /* XXTextView.m */,
 				F279DA0F18D628A900E0DB8B /* XXTextStorage.h */,
@@ -1226,6 +1236,9 @@
 				F231109D18DFA2A60054062B /* XXLeaveFeedbackCell.h */,
 				F231109E18DFA2A60054062B /* XXLeaveFeedbackCell.m */,
 				F23110A018DFA2B20054062B /* XXLeaveFeedbackCell.xib */,
+				F285ECCF197B266A00B684E9 /* XXFeedbackResponseCell.h */,
+				F285ECD0197B266A00B684E9 /* XXFeedbackResponseCell.m */,
+				F285ECD2197B267200B684E9 /* XXFeedbackResponseCell.xib */,
 				F285E95B18E69177008FFEC1 /* XXCommentCell.h */,
 				F285E95C18E69177008FFEC1 /* XXCommentCell.m */,
 				F285E95E18E69183008FFEC1 /* XXCommentCell.xib */,
@@ -1533,6 +1546,7 @@
 				F2528F201960A5DF00B6F5BA /* menuFeatured.png in Resources */,
 				F2D83FF51915F17000592F3D /* menuPortfolio.png in Resources */,
 				F25EDA8D195B2906009C4386 /* back@2x.png in Resources */,
+				F285ECD3197B267200B684E9 /* XXFeedbackResponseCell.xib in Resources */,
 				F2E41ED219415BE6006C7583 /* whiteFlag@2x.png in Resources */,
 				F2D83FF21915F0AB00592F3D /* menuBrowse@2x.png in Resources */,
 				F249D6B6192044D700EFF59E /* sendButtonBlack@2x.png in Resources */,
@@ -1658,6 +1672,7 @@
 				F227B68D19479C2A007DE86F /* Comment+helper.m in Sources */,
 				F29F26A71902F20000B283D8 /* UIFontDescriptor+CrimsonText.m in Sources */,
 				F21F6ED219329D1F003BC323 /* XXNewUserWalkthroughViewController.m in Sources */,
+				F285ECD1197B266A00B684E9 /* XXFeedbackResponseCell.m in Sources */,
 				F29F269519017AD700B283D8 /* XXChatCell.m in Sources */,
 				F227B68419479812007DE86F /* Notification+helper.m in Sources */,
 				F28C782618E2B0440088B4C9 /* XXSettingsCell.m in Sources */,
@@ -1704,6 +1719,7 @@
 				F2E41F1A1943B90F006C7583 /* XXClipView.m in Sources */,
 				F2F2F19218BD69EC00840F31 /* XXStoryInfoCell.m in Sources */,
 				F270409E194E1D700037C9A7 /* Notification.m in Sources */,
+				F26D84B4197E91C400494149 /* XXFeedbackResponseTextView.m in Sources */,
 				F28C782E18E386800088B4C9 /* XXBookmarksViewController.m in Sources */,
 				F2528EFE195F353900B6F5BA /* XXAddCollaboratorsViewController.m in Sources */,
 				F227B63E19450C45007DE86F /* Photo+helper.m in Sources */,
@@ -1904,7 +1920,7 @@
 			baseConfigurationReference = 8BA29E3B4C4140D4AB44C270 /* Pods.xcconfig */;
 			buildSettings = {
 				ARCHS = "$(ARCHS_STANDARD_32_BIT)";
-				CODE_SIGN_IDENTITY = "iPhone Distribution";
+				CODE_SIGN_IDENTITY = "iPhone Distribution: VERSES, INC. (54TNC5M737)";
 				FRAMEWORK_SEARCH_PATHS = (
 					"$(inherited)",
 					"$(PROJECT_DIR)",
