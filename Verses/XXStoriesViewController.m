@@ -89,7 +89,7 @@
     _featuredStories = [NSMutableArray array];
         
     if (_featured){
-        _featuredStories = [Story MR_findByAttribute:@"featured" withValue:[NSNumber numberWithBool:YES] andOrderBy:@"publishedDate" ascending:NO inContext:[NSManagedObjectContext MR_defaultContext]].mutableCopy;
+        _featuredStories = [Story MR_findByAttribute:@"featured" withValue:@YES andOrderBy:@"publishedDate" ascending:NO inContext:[NSManagedObjectContext MR_defaultContext]].mutableCopy;
         if (_featuredStories.count == 0) {
             [self loadFeatured];
         } else {
@@ -112,7 +112,7 @@
         _trendingStories = [Story MR_findAllSortedBy:@"trendingCount" ascending:NO withPredicate:predicate inContext:[NSManagedObjectContext MR_defaultContext]].mutableCopy;
         [self loadTrending];
     } else if (_ether || _stories.count == 0) {
-        NSPredicate *predicate = [NSPredicate predicateWithFormat:@"inviteOnly == %@ and draft == %@ and publishedDate != %@",[NSNumber numberWithBool:NO],[NSNumber numberWithBool:NO], [NSDate dateWithTimeIntervalSince1970:0]];
+        NSPredicate *predicate = [NSPredicate predicateWithFormat:@"inviteOnly == %@ and draft == %@ and publishedDate != %@",@NO,@NO, [NSDate dateWithTimeIntervalSince1970:0]];
         _stories = [Story MR_findAllSortedBy:@"publishedDate" ascending:NO withPredicate:predicate inContext:[NSManagedObjectContext MR_defaultContext]].mutableCopy;
         if (_stories.count == 0) {
             [self loadEtherStories];
@@ -149,7 +149,7 @@
     
     if (_featured){
         if (_featuredStories.count) [_featuredStories removeAllObjects];
-        _featuredStories = [Story MR_findByAttribute:@"featured" withValue:[NSNumber numberWithBool:YES] andOrderBy:@"publishedDate" ascending:NO inContext:[NSManagedObjectContext MR_defaultContext]].mutableCopy;
+        _featuredStories = [Story MR_findByAttribute:@"featured" withValue:@YES andOrderBy:@"publishedDate" ascending:NO inContext:[NSManagedObjectContext MR_defaultContext]].mutableCopy;
     } else if (_shared) {
         if (_sharedStories.count) [_sharedStories removeAllObjects];
         NSPredicate *userPredicate = [NSPredicate predicateWithFormat:@"ANY users.identifier CONTAINS[cd] %@",[[NSUserDefaults standardUserDefaults] objectForKey:kUserDefaultsId]];
@@ -163,7 +163,7 @@
         _trendingStories = [Story MR_findAllSortedBy:@"trendingCount" ascending:NO withPredicate:predicate inContext:[NSManagedObjectContext MR_defaultContext]].mutableCopy;
     } else if (_ether || _stories.count == 0) {
         if (_stories.count) [_stories removeAllObjects];
-        NSPredicate *predicate = [NSPredicate predicateWithFormat:@"inviteOnly == %@ and draft == %@ and publishedDate != %@",[NSNumber numberWithBool:NO],[NSNumber numberWithBool:NO], [NSDate dateWithTimeIntervalSince1970:0]];
+        NSPredicate *predicate = [NSPredicate predicateWithFormat:@"inviteOnly == %@ and draft == %@ and publishedDate != %@",@NO,@NO, [NSDate dateWithTimeIntervalSince1970:0]];
         _stories = [Story MR_findAllSortedBy:@"publishedDate" ascending:NO withPredicate:predicate inContext:[NSManagedObjectContext MR_defaultContext]].mutableCopy;
     }
     
@@ -438,17 +438,17 @@
         [cell.flagButton addTarget:self action:@selector(flagStory:) forControlEvents:UIControlEventTouchUpInside];
         
         if (_trending) {
-            if (story.trendingCount && ![story.trendingCount isEqualToNumber:[NSNumber numberWithInt:0]]){
+            if (story.trendingCount && ![story.trendingCount isEqualToNumber:@0]){
                 [cell.countLabel setHidden:NO];
                 NSString *countLabelText;
-                if ([story.trendingCount isEqualToNumber:[NSNumber numberWithInt:1]]){
-                    if ([story.mystery isEqualToNumber:[NSNumber numberWithBool:YES]]){
+                if ([story.trendingCount isEqualToNumber:@1]){
+                    if ([story.mystery isEqualToNumber:@YES]){
                         countLabelText = [NSString stringWithFormat:@"Slow Reveal \u2022 1 recent view"];
                     } else {
                         countLabelText = @"1 recent view";
                     }
                 } else {
-                    if ([story.mystery isEqualToNumber:[NSNumber numberWithBool:YES]]){
+                    if ([story.mystery isEqualToNumber:@YES]){
                         countLabelText = [NSString stringWithFormat:@"Slow Reveal \u2022 %@ recent views",story.trendingCount];
                     } else {
                         countLabelText = [NSString stringWithFormat:@"%@ recent views",story.trendingCount];
@@ -459,18 +459,18 @@
                 [cell.countLabel setHidden:YES];
             }
             
-        } else if (story.views && ![story.views isEqualToNumber:[NSNumber numberWithInt:0]]) {
+        } else if (story.views && ![story.views isEqualToNumber:@0]) {
             [cell.countLabel setHidden:NO];
             NSString *countLabelText;
             
             if (story.views.intValue == 1){
-                if ([story.mystery isEqualToNumber:[NSNumber numberWithBool:YES]]){
+                if ([story.mystery isEqualToNumber:@YES]){
                     countLabelText = [NSString stringWithFormat:@"Slow Reveal \u2022 1 view"];
                 } else {
                     countLabelText = @"1 view";
                 }
             } else {
-                if ([story.mystery isEqualToNumber:[NSNumber numberWithBool:YES]]){
+                if ([story.mystery isEqualToNumber:@YES]){
                     countLabelText = @"Slow Reveal \u2022 1 view";
                 } else {
                     countLabelText = [NSString stringWithFormat:@"%@ views",story.views];

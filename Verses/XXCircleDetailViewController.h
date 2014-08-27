@@ -22,6 +22,7 @@
 @property (strong, nonatomic) Circle *circle;
 @property (strong, nonatomic) UICollectionView *collectionView;
 @property (strong, nonatomic) XXChat *chatInput;
+@property (strong, nonatomic) User *currentUser;
 @property (nonatomic) BOOL needsNavigation;
 
 @end

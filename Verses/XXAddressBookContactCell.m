@@ -33,10 +33,10 @@
 
 - (void)configureContact:(NSDictionary *)contactDict {
     NSString *name;
-    if ([contactDict objectForKey:@"firstName"] && [contactDict objectForKey:@"lastName"]){
-        name = [NSString stringWithFormat:@"%@ %@",[contactDict objectForKey:@"firstName"], [contactDict objectForKey:@"lastName"]];
-    } else if ([contactDict objectForKey:@"firstName"]){
-        name = [contactDict objectForKey:@"firstName"];
+    if ([contactDict objectForKey:@"first_name"] && [contactDict objectForKey:@"last_name"]){
+        name = [NSString stringWithFormat:@"%@ %@",[contactDict objectForKey:@"first_name"], [contactDict objectForKey:@"last_name"]];
+    } else if ([contactDict objectForKey:@"first_name"]){
+        name = [contactDict objectForKey:@"first_name"];
     }
     [self.textLabel setFont:[UIFont fontWithName:kSourceSansProRegular size:19]];
     [self.textLabel setText:name];
@@ -49,6 +49,16 @@
     }
     [self.detailTextLabel setFont:[UIFont fontWithName:kSourceSansProItalic size:15]];
     [self.detailTextLabel setText:detail];
+
+    if ([contactDict objectForKey:@"image"] && [[contactDict objectForKey:@"image"] isKindOfClass:[UIImage class]]){
+        [self.imageView setImage:[contactDict objectForKey:@"image"]];
+    } else {
+        [self.imageView setImage:nil];
+    }
+    self.imageView.layer.cornerRadius = self.imageView.frame.size.width/2;
+    self.imageView.clipsToBounds = YES;
+    self.imageView.layer.rasterizationScale = [UIScreen mainScreen].scale;
+    self.imageView.layer.shouldRasterize = YES;
 }
 
 @end

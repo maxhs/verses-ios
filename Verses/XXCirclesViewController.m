@@ -28,7 +28,6 @@
     NSDateFormatter *_formatter;
     BOOL loading;
     BOOL showGuide;
-    User *currentUser;
 }
 
 @end
@@ -36,23 +35,20 @@
 @implementation XXCirclesViewController
 
 @synthesize freshCircles = _freshCircles;
+@synthesize currentUser = _currentUser;
 
 - (void)viewDidLoad
 {
     [super viewDidLoad];
     self.title = @"Writing Circles";
     delegate = (XXAppDelegate*)[UIApplication sharedApplication].delegate;
+    manager = [delegate manager];
     _formatter = [[NSDateFormatter alloc] init];
     [_formatter setLocale:[NSLocale currentLocale]];
     [_formatter setDateStyle:NSDateFormatterMediumStyle];
     [_formatter setTimeStyle:NSDateFormatterShortStyle];
-    manager = [delegate manager];
     
-    if (delegate.currentUser){
-        currentUser = [delegate currentUser];
-    } else {
-        currentUser = [User MR_findFirstByAttribute:@"identifier" withValue:[[NSUserDefaults standardUserDefaults] objectForKey:kUserDefaultsId] inContext:[NSManagedObjectContext MR_defaultContext]];
-    }
+    
     [self.tableView reloadData];
     loading = YES;
     [self loadCircles];
@@ -177,13 +173,13 @@
             }
             [circleSet addObject:circle];
         }
-        for (Circle *circle in currentUser.circles){
+        for (Circle *circle in _currentUser.circles){
             if (![circleSet containsObject:circle]){
                 NSLog(@"Deleting a circle that no longer exists: %@",circle.name);
                 [circle MR_deleteInContext:[NSManagedObjectContext MR_defaultContext]];
             }
         }
-        currentUser.circles = circleSet;
+        _currentUser.circles = circleSet;
         loading = NO;
         if (self.tableView.numberOfSections){
             [self.tableView beginUpdates];
@@ -211,7 +207,7 @@
 
 - (NSInteger)numberOfSectionsInTableView:(UITableView *)tableView
 {
-    if (currentUser.circles.count == 0 && !loading) self.tableView.rowHeight = screenHeight() - 84;
+    if (_currentUser.circles.count == 0 && !loading) self.tableView.rowHeight = screenHeight() - 84;
     else self.tableView.rowHeight = 80;
     
     if (loading) return 0;
@@ -220,15 +216,15 @@
 
 - (NSInteger)tableView:(UITableView *)tableView numberOfRowsInSection:(NSInteger)section
 {
-    if (currentUser.circles.count == 0 && !loading) return 1;
-    else if (section == 0) return currentUser.circles.count;
+    if (_currentUser.circles.count == 0 && !loading) return 1;
+    else if (section == 0) return _currentUser.circles.count;
     else if (section == 1) return 1;
     else return 0;
 }
 
 - (UITableViewCell *)tableView:(UITableView *)tableView cellForRowAtIndexPath:(NSIndexPath *)indexPath
 {
-    if (currentUser.circles.count == 0 && indexPath.section == 0){
+    if (_currentUser.circles.count == 0 && indexPath.section == 0){
         XXNothingCell *cell = (XXNothingCell *)[tableView dequeueReusableCellWithIdentifier:@"NothingCell"];
         if (cell == nil) {
             cell = [[[NSBundle mainBundle] loadNibNamed:@"XXNothingCell" owner:nil options:nil] lastObject];
@@ -249,7 +245,7 @@
         if (cell == nil) {
             cell = [[[NSBundle mainBundle] loadNibNamed:@"XXCircleCell" owner:nil options:nil] lastObject];
         }
-        Circle *circle = [currentUser.circles objectAtIndex:indexPath.row];
+        Circle *circle = [_currentUser.circles objectAtIndex:indexPath.row];
         [cell configureCell:circle withTextColor:textColor];
         [cell.textLabel setText:@""];
         return cell;
@@ -303,24 +299,24 @@
 }
 
 - (void)tableView:(UITableView *)tableView didSelectRowAtIndexPath:(NSIndexPath *)indexPath {
-    if (currentUser.circles.count){
-        if (indexPath.section == 0){
-            Circle *circle = [currentUser.circles objectAtIndex:indexPath.row];
+    NSLog(@"indexPath section %d, row %d, and cricles count: %d",indexPath.section, indexPath.row, _currentUser.circles.count);
+    if (_currentUser.circles.count && indexPath.section == 0){
+        if (_currentUser.circles.count > indexPath.row){
+            Circle *circle = [_currentUser.circles objectAtIndex:indexPath.row];
             if (circle.unreadCommentCount.intValue > 0 || [circle.fresh isEqualToNumber:[NSNumber numberWithBool:YES]]){
                 circle.unreadCommentCount = 0;
                 circle.fresh = NO;
-                
-                [self.tableView beginUpdates];
+                //[self.tableView beginUpdates];
                 [self.tableView reloadRowsAtIndexPaths:@[indexPath] withRowAnimation:UITableViewRowAnimationNone];
-                [self.tableView endUpdates];
+                //[self.tableView endUpdates];
             }
             
             [self performSegueWithIdentifier:@"CircleDetail" sender:circle];
-        } else {
-            [self newCircle];
         }
-        [tableView deselectRowAtIndexPath:indexPath animated:YES];
+    } else if (indexPath.section == 1) {
+        [self newCircle];
     }
+    [tableView deselectRowAtIndexPath:indexPath animated:YES];
 }
 
 #pragma mark - Navigation
@@ -331,6 +327,7 @@
     if ([[segue identifier] isEqualToString:@"CircleDetail"]){
         XXCircleDetailViewController *vc = [segue destinationViewController];
         [vc setCircle:(Circle*)sender];
+        [vc setCurrentUser:_currentUser];
         if ([[NSUserDefaults standardUserDefaults] boolForKey:kDarkBackground]){
             [UIView animateWithDuration:.23 animations:^{
                 [self.tableView setAlpha:0.0];
@@ -342,10 +339,10 @@
 
 - (void)createCircle:(NSNotification*)notification{
     Circle *circle = [notification.userInfo objectForKey:@"circle"];
-    [currentUser addCircle:circle];
-    NSIndexPath *indexPath = [NSIndexPath indexPathForRow:[currentUser.circles indexOfObject:circle] inSection:0];
+    [_currentUser addCircle:circle];
+    NSIndexPath *indexPath = [NSIndexPath indexPathForRow:[_currentUser.circles indexOfObject:circle] inSection:0];
     
-    if (currentUser.circles.count > 1){
+    if (_currentUser.circles.count > 1){
         [self.tableView beginUpdates];
         [self.tableView insertRowsAtIndexPaths:@[indexPath] withRowAnimation:UITableViewRowAnimationFade];
         [self.tableView endUpdates];
@@ -356,11 +353,11 @@
 
 - (void)deleteCircle:(NSNotification*)notification{
     Circle *circle = [notification.userInfo objectForKey:@"circle"];
-    NSIndexPath *indexPath = [NSIndexPath indexPathForRow:[currentUser.circles indexOfObject:circle] inSection:0];
-    [currentUser removeCircle:circle];
+    NSIndexPath *indexPath = [NSIndexPath indexPathForRow:[_currentUser.circles indexOfObject:circle] inSection:0];
+    [_currentUser removeCircle:circle];
     [circle MR_deleteInContext:[NSManagedObjectContext MR_defaultContext]];
 
-    if (currentUser.circles.count){
+    if (_currentUser.circles.count){
         [self.tableView beginUpdates];
         [self.tableView deleteRowsAtIndexPaths:@[indexPath] withRowAnimation:UITableViewRowAnimationFade];
         [self.tableView endUpdates];

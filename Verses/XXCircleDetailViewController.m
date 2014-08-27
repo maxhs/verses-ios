@@ -42,7 +42,7 @@
 
 @synthesize circle = _circle;
 @synthesize circleId = _circleId;
-
+@synthesize currentUser = _currentUser;
 - (void)viewDidLoad
 {
     screen = [UIScreen mainScreen].bounds;
@@ -429,6 +429,7 @@
             cell = [[[NSBundle mainBundle] loadNibNamed:@"XXProfileStoryCell" owner:nil options:nil] lastObject];
         }
         if (_stories.count == 0){
+            cell.selectionStyle = UITableViewCellSelectionStyleNone;
             [cell.textLabel setText:@"No stories"];
             [cell.textLabel setFont:[UIFont fontWithName:kSourceSansProLight size:20]];
             [cell.textLabel setTextAlignment:NSTextAlignmentCenter];
@@ -439,6 +440,7 @@
             }
             
         } else {
+            cell.selectionStyle = UITableViewCellSelectionStyleDefault;
             Story *story = [_stories objectAtIndex:indexPath.row];
             [cell configureStory:story withTextColor:textColor];
             [cell.titleLabel setTextAlignment:NSTextAlignmentLeft];
@@ -462,9 +464,12 @@
 }
 
 - (void)tableView:(UITableView *)tableView didSelectRowAtIndexPath:(NSIndexPath *)indexPath {
-    if (tableView == self.storiesTableView){
+    if (tableView == _storiesTableView){
         [tableView deselectRowAtIndexPath:indexPath animated:YES];
-        [self performSegueWithIdentifier:@"Read" sender:indexPath];
+        if (_stories.count > indexPath.row){
+            Story *story = (Story*)[_stories objectAtIndex:indexPath.row];
+            [self performSegueWithIdentifier:@"Read" sender:story];
+        }
     } else if (tableView == self.detailsTableView){
         if (indexPath.section == 1){
             Notification *notification = [_circle.notifications objectAtIndex:indexPath.row];
@@ -477,12 +482,11 @@
     }
 }
 
-- (void)prepareForSegue:(UIStoryboardSegue *)segue sender:(NSIndexPath*)indexPath {
-    [super prepareForSegue:segue sender:indexPath];
+- (void)prepareForSegue:(UIStoryboardSegue *)segue sender:(Story*)story {
+    [super prepareForSegue:segue sender:story];
     
     if ([segue.identifier isEqualToString:@"Read"]){
         XXStoryViewController *storyVC = [segue destinationViewController];
-        Story *story = (Story*)[_stories objectAtIndex:indexPath.row];
         [storyVC setStory:story];
         [ProgressHUD show:@"Fetching story..."];
         if ([[NSUserDefaults standardUserDefaults] boolForKey:kDarkBackground]){
@@ -610,10 +614,10 @@
 - (void) chatInputNewMessageSent:(NSString *)messageString {
     NSMutableDictionary *commentDict = [NSMutableDictionary dictionary];
     [commentDict setObject:messageString forKey:@"body"];
-    if ([[NSUserDefaults standardUserDefaults] objectForKey:kUserDefaultsPicSmall]){
-        [commentDict setObject:@{@"id":[[NSUserDefaults standardUserDefaults] objectForKey:kUserDefaultsId],@"pen_name":[[NSUserDefaults standardUserDefaults] objectForKey:kUserDefaultsPenName],@"pic_small_url":[[NSUserDefaults standardUserDefaults] objectForKey:kUserDefaultsPicSmall]} forKey:@"user"];
+    if (_currentUser.picSmall.length){
+        [commentDict setObject:@{@"id":[[NSUserDefaults standardUserDefaults] objectForKey:kUserDefaultsId],@"pen_name":_currentUser.penName,@"pic_small_url":_currentUser.picSmall} forKey:@"user"];
     } else {
-        [commentDict setObject:@{@"id":[[NSUserDefaults standardUserDefaults] objectForKey:kUserDefaultsId],@"pen_name":[[NSUserDefaults standardUserDefaults] objectForKey:kUserDefaultsPenName],} forKey:@"user"];
+        [commentDict setObject:@{@"id":[[NSUserDefaults standardUserDefaults] objectForKey:kUserDefaultsId],@"pen_name":_currentUser.penName,} forKey:@"user"];
     }
     Comment *newComment = [Comment MR_createInContext:[NSManagedObjectContext MR_defaultContext]];
     [newComment populateFromDict:commentDict];

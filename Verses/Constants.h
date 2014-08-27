@@ -70,7 +70,7 @@ static inline CGFloat height(UIView *view) { return view.frame.size.height; }
 #define kFeedbackResponsePlaceholder @"Leave a response..."
 #define kCircleBlurbPlaceholder @"Describe your writing circle..."
 #define kCircleNamePlaceholder @"Name your writing circle..."
-#define kAddCollaboratorPlaceholder @"What's your contact's email address?"
+#define kAddCollaboratorPlaceholder @"Add an email address..."
 
 //Notification constants
 #define kCircleComment @"circle_comment"

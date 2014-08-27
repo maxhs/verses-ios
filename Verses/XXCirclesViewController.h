@@ -12,5 +12,6 @@
 
 @property (weak, nonatomic) IBOutlet UITableView *tableView;
 @property (strong, nonatomic) NSMutableArray *freshCircles;
+@property (strong, nonatomic) User *currentUser;
 - (void)loadCircles;
 @end

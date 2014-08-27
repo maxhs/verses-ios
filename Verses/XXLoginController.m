@@ -454,6 +454,7 @@ static NSString * const kShakeAnimationKey = @"XXShakeItNow";
                 delegate.currentUser = currentUser;
                 [[NSUserDefaults standardUserDefaults] setObject:currentUser.identifier forKey:kUserDefaultsId];
                 [[NSUserDefaults standardUserDefaults] setObject:currentUser.email forKey:kUserDefaultsEmail];
+                [[NSUserDefaults standardUserDefaults] setObject:currentUser.penName forKey:kUserDefaultsPenName];
                 [[NSUserDefaults standardUserDefaults] synchronize];
                 
                 //not sure if we need this one anymore since we got rid of the slot view in favor of the collectionview

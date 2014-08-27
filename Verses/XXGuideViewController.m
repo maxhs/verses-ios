@@ -72,6 +72,8 @@
     } else {
         signedIn = NO;
     }
+    //ensure the user has an ID and everything and if he/she doesnt, make sure they're not "signed in"
+    if (!_currentUser) signedIn = NO;
     
     if (UIInterfaceOrientationIsPortrait(self.interfaceOrientation)){
         //only dismiss from portrait mode
@@ -849,6 +851,7 @@
     if (signedIn){
         [[UIApplication sharedApplication] setStatusBarHidden:YES withAnimation:UIStatusBarAnimationFade];
         XXCirclesViewController *circles = [[self storyboard] instantiateViewControllerWithIdentifier:@"Circles"];
+        [circles setCurrentUser:_currentUser];
         UINavigationController *nav = [[UINavigationController alloc] initWithRootViewController:circles];
         [delegate.dynamicsDrawerViewController setPaneViewController:nav animated:NO completion:NULL];
         [self.presentingViewController dismissViewControllerAnimated:YES completion:^{

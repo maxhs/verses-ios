@@ -52,9 +52,7 @@
     saveButton = [[UIBarButtonItem alloc] initWithTitle:@"Save" style:UIBarButtonItemStylePlain target:self action:@selector(addContacts)];
     self.navigationItem.rightBarButtonItem = saveButton;
     
-    if (_currentUser){
-        
-    } else {
+    if (!_currentUser){
         _currentUser = [User MR_findFirstByAttribute:@"identifier" withValue:[[NSUserDefaults standardUserDefaults] objectForKey:kUserDefaultsId] inContext:[NSManagedObjectContext MR_defaultContext]];
     }
     
@@ -138,10 +136,10 @@
                 [userDict setObject:[UIImage imageWithData:imgData] forKey:@"image"];
             }
             if (firstName) {
-                [userDict setObject:firstName forKey:@"firstName"];
+                [userDict setObject:firstName forKey:@"first_name"];
             }
             if (lastName){
-                [userDict setObject:lastName forKey:@"lastName"];
+                [userDict setObject:lastName forKey:@"last_name"];
             }
             if (phone1) {
                 phone1 = [phone1 stringByReplacingOccurrencesOfString:@"+" withString:@""];
@@ -154,7 +152,7 @@
                 [userDict setObject:email forKey:@"email"];
             }
             
-            if ([userDict objectForKey:@"firstName"] || [userDict objectForKey:@"email"]){
+            if ([userDict objectForKey:@"first_name"] || [userDict objectForKey:@"email"]){
                 [_addressBookContacts addObject:userDict];
             }
         }
@@ -162,8 +160,8 @@
     
     
     NSArray *newArray = [_addressBookContacts sortedArrayUsingComparator:^NSComparisonResult(id a, id b) {
-        NSString *first = [(NSDictionary*)a objectForKey:@"firstName"];
-        NSString *second = [(NSDictionary*)b objectForKey:@"firstName"];
+        NSString *first = [(NSDictionary*)a objectForKey:@"first_name"];
+        NSString *second = [(NSDictionary*)b objectForKey:@"first_name"];
         return [first compare:second];
     }];
     _addressBookContacts = [newArray mutableCopy];
@@ -182,7 +180,20 @@
 
 - (void)createContact:(NSDictionary*) contactDict{
     //NSLog(@"contactDict: %@",contactDict);
-    [manager POST:[NSString stringWithFormat:@"%@/users/%@/add_contact",kAPIBaseUrl,[[NSUserDefaults standardUserDefaults] objectForKey:kUserDefaultsId]] parameters:contactDict success:^(AFHTTPRequestOperation *operation, id responseObject) {
+    NSMutableDictionary *parameters = [NSMutableDictionary dictionary];
+    if ([contactDict objectForKey:@"email"]){
+        [parameters setObject:[contactDict objectForKey:@"email"] forKey:@"email"];
+    }
+    if ([contactDict objectForKey:@"phone"]){
+        [parameters setObject:[contactDict objectForKey:@"phone"] forKey:@"phone"];
+    }
+    if ([contactDict objectForKey:@"first_name"]){
+        [parameters setObject:[contactDict objectForKey:@"first_name"] forKey:@"first_name"];
+    }
+    if ([contactDict objectForKey:@"last_name"]){
+        [parameters setObject:[contactDict objectForKey:@"last_name"] forKey:@"last_name"];
+    }
+    [manager POST:[NSString stringWithFormat:@"%@/users/%@/add_contact",kAPIBaseUrl,[[NSUserDefaults standardUserDefaults] objectForKey:kUserDefaultsId]] parameters:parameters success:^(AFHTTPRequestOperation *operation, id responseObject) {
         //NSLog(@"Successfully created contact: %@",responseObject);
         if ([responseObject objectForKey:@"user"]){
             User *newContact = [User MR_findFirstByAttribute:@"identifier" withValue:[[responseObject objectForKey:@"user"] objectForKey:@"id"] inContext:[NSManagedObjectContext MR_defaultContext]];
@@ -212,8 +223,8 @@
             NSString *contactString;
             if ([contactDict objectForKey:@"email"]){
                 contactString = [contactDict objectForKey:@"email"];
-            } else if ([contactDict objectForKey:@"firstName"]){
-                contactString = [contactDict objectForKey:@"firstName"];
+            } else if ([contactDict objectForKey:@"first_name"]){
+                contactString = [contactDict objectForKey:@"first_name"];
             }
             
             [XXAlert show:[NSString stringWithFormat:@"%@ doesn't use Verses yet, but we've sent them an invite to join you.",contactString] withTime:3.7f];

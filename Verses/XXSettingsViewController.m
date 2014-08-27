@@ -14,6 +14,7 @@
 #import <MessageUI/MessageUI.h>
 #import "XXLoginController.h"
 #import <SDWebImage/UIButton+WebCache.h>
+#import <SDWebImage/UIImageView+WebCache.h>
 #import "XXAlert.h"
 #import "XXGuideViewController.h"
 #import "XXGuideInteractor.h"
@@ -136,15 +137,20 @@
 
 - (void)assignBackgroundImage {
     _currentUser.backgroundImageView = [[UIImageView alloc] initWithFrame:[UIScreen mainScreen].bounds];
-    [[SDWebImageManager sharedManager] downloadWithURL:[NSURL URLWithString:_currentUser.backgroundUrl] options:SDWebImageProgressiveDownload progress:^(NSInteger receivedSize, NSInteger expectedSize) {
+    [_currentUser.backgroundImageView setContentMode:UIViewContentModeScaleAspectFill];
+    [_currentUser.backgroundImageView setClipsToBounds:YES];
+    [[(UIImageView*)_currentUser.backgroundImageView layer] setRasterizationScale:[UIScreen mainScreen].scale];
+    [[(UIImageView*)_currentUser.backgroundImageView layer] shouldRasterize];
+    typeof(self) __weak weakSelf = self;
+    [_currentUser.backgroundImageView setImageWithURL:[NSURL URLWithString:_currentUser.backgroundUrl] completed:^(UIImage *image, NSError *error, SDImageCacheType cacheType) {
+        [[(XXAppDelegate*)[UIApplication sharedApplication].delegate windowBackground] setImage:image];
+        [weakSelf.tableView reloadRowsAtIndexPaths:@[[NSIndexPath indexPathForRow:1 inSection:2]] withRowAnimation:UITableViewRowAnimationFade];
+    }];
+    /*[[SDWebImageManager sharedManager] downloadWithURL: options:SDWebImageProgressiveDownload progress:^(NSInteger receivedSize, NSInteger expectedSize) {
         
     } completed:^(UIImage *image, NSError *error, SDImageCacheType cacheType, BOOL finished) {
-        [_currentUser.backgroundImageView setImage:image];
-        [_currentUser.backgroundImageView setContentMode:UIViewContentModeScaleAspectFill];
-        [(UIImageView*)_currentUser.backgroundImageView setClipsToBounds:YES];
-        [[(XXAppDelegate*)[UIApplication sharedApplication].delegate windowBackground] setImage:image];
-    }];
-
+     
+    }];*/
 }
 
 - (void)synchronizeUserDefaults {

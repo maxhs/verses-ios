@@ -876,7 +876,7 @@
 				F28976DE1807DB4300B9E8A5 /* XXStoriesViewController.m */,
 				F227B63619450A96007DE86F /* XXGalleryViewController.h */,
 				F227B63719450A96007DE86F /* XXGalleryViewController.m */,
-				F279DA1B18D632AA00E0DB8B /* Custom Subclasses */,
+				F279DA1B18D632AA00E0DB8B /* Custom Objects & Stuff */,
 				F2021B411802908C008B1BAE /* Supporting Files */,
 				F279DA1C18D632BB00E0DB8B /* Fonts */,
 				F28976DC1807BE4500B9E8A5 /* Images */,
@@ -953,7 +953,7 @@
 			name = "Image Stuff";
 			sourceTree = "<group>";
 		};
-		F279DA1B18D632AA00E0DB8B /* Custom Subclasses */ = {
+		F279DA1B18D632AA00E0DB8B /* Custom Objects & Stuff */ = {
 			isa = PBXGroup;
 			children = (
 				F261471D1962F17C00E82DC5 /* XXFlowLayout.h */,
@@ -995,7 +995,7 @@
 				F2E41F181943B90F006C7583 /* XXClipView.h */,
 				F2E41F191943B90F006C7583 /* XXClipView.m */,
 			);
-			name = "Custom Subclasses";
+			name = "Custom Objects & Stuff";
 			sourceTree = "<group>";
 		};
 		F279DA1C18D632BB00E0DB8B /* Fonts */ = {

@@ -311,7 +311,12 @@
             cell.textField.keyboardAppearance = UIKeyboardAppearanceDefault;
             cell.textView.keyboardAppearance = UIKeyboardAppearanceDefault;
         }
-       
+        
+        //reset values to nothing/nil before setting them to something 
+        [cell.textField setText:@""];
+        [cell.textLabel setText:@""];
+        cell.accessoryView = UITableViewCellAccessoryNone;
+    
         switch (indexPath.row) {
             case 0:
                 nameTextField = cell.textField;
