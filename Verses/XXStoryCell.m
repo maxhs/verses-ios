@@ -74,7 +74,7 @@
         [_authorLabel setTextColor:[UIColor whiteColor]];
         [_countLabel setTextColor:[UIColor whiteColor]];
         [_backgroundImageView setHidden:NO];
-        [_backgroundImageView setImageWithURL:[NSURL URLWithString:[(Photo*)story.photos.firstObject mediumUrl]] completed:^(UIImage *image, NSError *error, SDImageCacheType cacheType) {
+        [_backgroundImageView sd_setImageWithURL:[NSURL URLWithString:[(Photo*)story.photos.firstObject mediumUrl]] completed:^(UIImage *image, NSError *error, SDImageCacheType cacheType, NSURL *imageURL) {
             if (error){
                 if (![[NSUserDefaults standardUserDefaults] boolForKey:kDarkBackground]){
                     [_titleLabel setTextColor:[UIColor blackColor]];

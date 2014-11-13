@@ -70,7 +70,6 @@
 - (void)viewWillAppear:(BOOL)animated {
     [super viewWillAppear:animated];
     if (self.manageContacts) [[(XXAppDelegate*)[UIApplication sharedApplication].delegate dynamicsDrawerViewController] registerTouchForwardingClass:[XXContactCell class]];
-    [[UIApplication sharedApplication] setStatusBarHidden:NO withAnimation:UIStatusBarAnimationFade];
     if ([[NSUserDefaults standardUserDefaults] boolForKey:kDarkBackground]){
         [self.view setBackgroundColor:[UIColor clearColor]];
         textColor = [UIColor whiteColor];
@@ -220,22 +219,25 @@
 - (UITableViewCell *)tableView:(UITableView *)tableView cellForRowAtIndexPath:(NSIndexPath *)indexPath
 {
     if (indexPath.section == 0 && !self.manageContacts){
-        if (currentUser.contacts.count){
+        if (currentUser.circles.count){
             XXContactCell *cell = (XXContactCell *)[tableView dequeueReusableCellWithIdentifier:@"ContactCell"];
             if (cell == nil) {
                 cell = [[[NSBundle mainBundle] loadNibNamed:@"XXContactCell" owner:nil options:nil] lastObject];
             }
-            Circle *circle = [currentUser.circles objectAtIndex:indexPath.row];
-            [cell configureCircle:circle];
-            [cell.locationLabel setTextColor:textColor];
-            [cell.nameLabel setTextColor:textColor];
             
-            if ([_story.circles containsObject:circle]){
-                cell.accessoryType = UITableViewCellAccessoryCheckmark;
-            } else {
-                cell.accessoryType = UITableViewCellAccessoryNone;
+            if (currentUser.circles.count > indexPath.row){
+                Circle *circle = [currentUser.circles objectAtIndex:indexPath.row];
+                [cell configureCircle:circle];
+                [cell.locationLabel setTextColor:textColor];
+                [cell.nameLabel setTextColor:textColor];
+                
+                
+                if ([_story.circles containsObject:circle]){
+                    cell.accessoryType = UITableViewCellAccessoryCheckmark;
+                } else {
+                    cell.accessoryType = UITableViewCellAccessoryNone;
+                }
             }
-        
             return cell;
         } else {
             XXNothingCell *cell = (XXNothingCell *)[tableView dequeueReusableCellWithIdentifier:@"NothingCell"];

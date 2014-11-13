@@ -411,7 +411,7 @@ static NSString * const kShakeAnimationKey = @"XXShakeItNow";
             [parameters setObject:self.registerEmailTextField.text forKey:@"email"];
             [parameters setObject:self.registerPasswordTextField.text forKey:@"password"];
             [parameters setObject:self.registerPenNameTextField.text forKey:@"pen_name"];
-            [parameters setObject:[NSNumber numberWithBool:YES] forKey:@"signup"];
+            [parameters setObject:@YES forKey:@"signup"];
         } else {
             [parameters setObject:self.emailTextField.text forKey:@"email"];
             [parameters setObject:self.passwordTextField.text forKey:@"password"];
@@ -421,6 +421,9 @@ static NSString * const kShakeAnimationKey = @"XXShakeItNow";
         }
 
         [manager POST:[NSString stringWithFormat:@"%@/sessions", kAPIBaseUrl] parameters:@{@"user":parameters} success:^(AFHTTPRequestOperation *operation, id responseObject) {
+            
+            [self askForPushPermissions];
+            
             //NSLog(@"success logging in: %@",responseObject);
             NSPredicate *predicate = [NSPredicate predicateWithFormat:@"identifier == %@",[[responseObject objectForKey:@"user"] objectForKey:@"id"]];\
             User *currentUser = [User MR_findFirstWithPredicate:predicate inContext:[NSManagedObjectContext MR_defaultContext]];
@@ -439,9 +442,10 @@ static NSString * const kShakeAnimationKey = @"XXShakeItNow";
             }
             if (currentUser.backgroundUrl.length){
                 [[[SDWebImageManager sharedManager] imageCache] clearDisk];
-                [[SDWebImageManager sharedManager] downloadWithURL:[NSURL URLWithString:currentUser.backgroundUrl] options:0 progress:^(NSInteger receivedSize, NSInteger expectedSize) {
+                [[SDWebImageManager sharedManager] downloadImageWithURL:[NSURL URLWithString:currentUser.backgroundUrl] options:0 progress:^(NSInteger receivedSize, NSInteger expectedSize) {
                     
-                } completed:^(UIImage *image, NSError *error, SDImageCacheType cacheType, BOOL finished) {
+                } completed:^(UIImage *image, NSError *error, SDImageCacheType cacheType, BOOL finished, NSURL *imageURL) {
+
                     currentUser.backgroundImageView = [[UIImageView alloc] initWithFrame:[UIScreen mainScreen].bounds];
                     [currentUser.backgroundImageView setImage:image];
                     [currentUser.backgroundImageView setContentMode:UIViewContentModeScaleAspectFill];
@@ -490,6 +494,16 @@ static NSString * const kShakeAnimationKey = @"XXShakeItNow";
                 [[[UIAlertView alloc] initWithTitle:@"Sorry" message:@"Something went wrong while trying to log you in." delegate:self cancelButtonTitle:@"Okay" otherButtonTitles:nil] show];
             }
         }];
+    }
+}
+
+- (void)askForPushPermissions {
+    //only ask for push notifications when a user has successfully logged in
+    if ([[[UIDevice currentDevice] systemVersion] floatValue] >= 8.f){
+        [[UIApplication sharedApplication] registerUserNotificationSettings:[UIUserNotificationSettings settingsForTypes:(UIUserNotificationTypeSound | UIUserNotificationTypeAlert | UIUserNotificationTypeBadge) categories:nil]];
+        [[UIApplication sharedApplication] registerForRemoteNotifications];
+    } else {
+        [[UIApplication sharedApplication] registerForRemoteNotificationTypes:(UIRemoteNotificationTypeAlert | UIRemoteNotificationTypeBadge | UIRemoteNotificationTypeSound)];
     }
 }
 

@@ -94,7 +94,7 @@
 {
     self.automaticallyAdjustsScrollViewInsets = NO;
     orientation = self.interfaceOrientation;
-    if (UIInterfaceOrientationIsPortrait(orientation)){
+    if (UIInterfaceOrientationIsPortrait(orientation) || [[[UIDevice currentDevice] systemVersion] floatValue] >= 8.f){
         width = screenWidth();
         height = screenHeight();
         if (IDIOM == IPAD){
@@ -281,7 +281,7 @@
         bookmark.user = _currentUser;
         bookmark.story = _story;
         bookmark.createdDate = [NSDate date];
-        [_story setBookmarked:[NSNumber numberWithBool:YES]];
+        [_story setBookmarked:@YES];
         [self setupNavButtons];
         
         [manager POST:[NSString stringWithFormat:@"%@/bookmarks",kAPIBaseUrl] parameters:@{@"user_id":[[NSUserDefaults standardUserDefaults] objectForKey:kUserDefaultsId],@"story_id":_story.identifier} success:^(AFHTTPRequestOperation *operation, id responseObject) {
@@ -294,7 +294,7 @@
 
 - (void)destroyBookmark {
     if (![_story.identifier isEqualToNumber:[NSNumber numberWithInt:0]]){
-        [_story setBookmarked:[NSNumber numberWithBool:NO]];
+        [_story setBookmarked:@NO];
         [self setupNavButtons];
         __block NSNumber *bookmarkId;
         [_currentUser.bookmarks enumerateObjectsUsingBlock:^(Bookmark *bookmark, NSUInteger idx, BOOL *stop) {
@@ -338,13 +338,13 @@
             //NSLog(@"success getting feedbacks for story %@, %@",_story.title,responseObject);
             [self updateStoryFeedback:[responseObject objectForKey:@"feedbacks"]];
             if ([responseObject objectForKey:@"bookmarked"]){
-                [_story setBookmarked:[NSNumber numberWithBool:YES]];
+                [_story setBookmarked:@YES];
                 [self setupNavButtons];
             } else {
                 [_currentUser.bookmarks.array enumerateObjectsUsingBlock:^(Bookmark *bookmark, NSUInteger idx, BOOL *stop) {
                     
                     if (bookmark.story && [_story.identifier isEqualToNumber:bookmark.story.identifier]){
-                        [_story setBookmarked:[NSNumber numberWithBool:YES]];
+                        [_story setBookmarked:@YES];
                         [self setupNavButtons];
                         *stop = YES;
                     }
@@ -382,7 +382,7 @@
 - (void)setupNavButtons {
     if (signedIn && [_story.owner.identifier isEqualToNumber:[[NSUserDefaults standardUserDefaults] objectForKey:kUserDefaultsId]] && _story.contributions.count <= 1){
         editButton = [[UIBarButtonItem alloc] initWithImage:[UIImage imageNamed:@"whitePencil"] style:UIBarButtonItemStylePlain target:self action:@selector(edit)];
-    } else if (signedIn && [_story.bookmarked isEqualToNumber:[NSNumber numberWithBool:YES]]){
+    } else if (signedIn && [_story.bookmarked isEqualToNumber:@YES]){
         editButton = [[UIBarButtonItem alloc] initWithImage:[UIImage imageNamed:@"bookmarked"] style:UIBarButtonItemStylePlain target:self action:@selector(destroyBookmark)];
     } else if (signedIn){
         editButton = [[UIBarButtonItem alloc] initWithImage:[UIImage imageNamed:@"bookmark"] style:UIBarButtonItemStylePlain target:self action:@selector(createBookmark)];
@@ -639,7 +639,7 @@
     
     DTCSSStylesheet *styleSheet = [[DTCSSStylesheet alloc] initWithStyleBlock:@".screen {font-family:'Courier';}"];
     
-    NSDictionary *options = @{DTUseiOS6Attributes: [NSNumber numberWithBool:YES],
+    NSDictionary *options = @{DTUseiOS6Attributes: @YES,
                               DTDefaultFontSize: @21,
                               DTDefaultFontFamily: @"Crimson Text",
                               DTDefaultStyleSheet: styleSheet,
@@ -679,7 +679,7 @@
 }
 
 - (void)drawContributionBody:(NSMutableAttributedString*)attributedContributionBody forContribution:(Contribution*)contribution {
-    if ([_story.mystery isEqualToNumber:[NSNumber numberWithBool:YES]]){
+    if ([_story.mystery isEqualToNumber:@YES]){
         NSString *tempString = [attributedContributionBody string];
         NSString *mysteryString;
         if (tempString.length > 250){
@@ -695,7 +695,7 @@
         
         UIButton *userImgButton = [UIButton buttonWithType:UIButtonTypeCustom];
         if (contribution.user.picSmall.length){
-            [userImgButton setImageWithURL:[NSURL URLWithString:contribution.user.picSmall] forState:UIControlStateNormal];
+            [userImgButton sd_setImageWithURL:[NSURL URLWithString:contribution.user.picSmall] forState:UIControlStateNormal];
             [userImgButton.imageView.layer setBackgroundColor:[UIColor clearColor].CGColor];
             [userImgButton.imageView setBackgroundColor:[UIColor clearColor]];
             [userImgButton.imageView.layer setCornerRadius:25.f];
@@ -790,7 +790,7 @@
             
             UIButton *userImgButton = [UIButton buttonWithType:UIButtonTypeCustom];
             if (contribution.user.picSmall.length){
-                [userImgButton setImageWithURL:[NSURL URLWithString:contribution.user.picSmall] forState:UIControlStateNormal];
+                [userImgButton sd_setImageWithURL:[NSURL URLWithString:contribution.user.picSmall] forState:UIControlStateNormal];
                 [userImgButton.imageView.layer setBackgroundColor:[UIColor clearColor].CGColor];
                 [userImgButton.imageView setBackgroundColor:[UIColor clearColor]];
                 [userImgButton.imageView.layer setCornerRadius:25.f];
@@ -937,22 +937,27 @@
     }
     
     contributionOffset = height;
-    if ([_story.mystery isEqualToNumber:[NSNumber numberWithBool:NO]] && _story.contributions.count == 1){
+    if ([_story.mystery isEqualToNumber:@NO] && _story.contributions.count == 1){
         if ([_story.contributions.firstObject body].length) {
             [self generateAttributedString:_story.contributions.firstObject];
         }
     } else {
         for (Contribution *contribution in _story.contributions){
             if (contribution.body.length){
-                if ([contribution.draft isEqualToNumber:[NSNumber numberWithBool:NO]]  || [contribution.user.identifier isEqualToNumber:[[NSUserDefaults standardUserDefaults] objectForKey:kUserDefaultsId]]){
-                    //this is the method that generates the contribution string. it then calls the method to draw the contribution.
+                
+                if ([contribution.draft isEqualToNumber:@NO] || ([[NSUserDefaults standardUserDefaults] objectForKey:kUserDefaultsId] && [contribution.user.identifier isEqualToNumber:[[NSUserDefaults standardUserDefaults] objectForKey:kUserDefaultsId]])){
+                    
+                    //This is the method that generates the contribution string. it then calls the method to draw the contribution. Not getting in here means the piece was a draft and the current user is NOT the user that wrote the contribution
+                    
                     [self generateAttributedString:contribution];
+                    
+                    //TODO draw what a draft placeholder
                 }
             }
         }
     }
     
-    if ([_story.mystery isEqualToNumber:[NSNumber numberWithBool:YES]]){
+    if ([_story.mystery isEqualToNumber:@YES]){
         addSlowRevealButton = [UIButton buttonWithType:UIButtonTypeCustom];
         [addSlowRevealButton setAutoresizingMask:UIViewAutoresizingFlexibleWidth];
         [addSlowRevealButton setFrame:CGRectMake(0, contributionOffset, width, 176)];
@@ -1062,7 +1067,7 @@
         [self hideControls];
     }
     
-    if ([_story.mystery isEqualToNumber:[NSNumber numberWithBool:0]]){
+    if ([_story.mystery isEqualToNumber:@NO]){
         static NSInteger previousPage = 0;
         CGFloat pageHeight = scrollView.frame.size.height;
         float fractionalPage = y / pageHeight;
@@ -1148,35 +1153,42 @@
 }
 
 - (void)addFeedback:(NSNotification*)notification {
-    [self hideControls];
-    if (UIInterfaceOrientationIsPortrait(self.interfaceOrientation)){
-        _backgroundImageView = [[UIImageView alloc] initWithFrame:[UIScreen mainScreen].bounds];
-    } else {
-        _backgroundImageView = [[UIImageView alloc] initWithFrame:CGRectMake(0, 0, height, width)];
-    }
-    backgroundImage = [self blurredSnapshot:YES];
-    [_backgroundImageView setAlpha:0.0];
-    [_backgroundImageView setImage:backgroundImage];
-    [self.view addSubview:_backgroundImageView];
-    [_backgroundImageView setAutoresizingMask:UIViewAutoresizingFlexibleWidth];
-    
-    [UIView animateWithDuration:.55 delay:0 usingSpringWithDamping:.67 initialSpringVelocity:.01 options:UIViewAnimationOptionAllowAnimatedContent animations:^{
-        [_backgroundImageView setAlpha:1.0];
-    } completion:^(BOOL finished) {
+    if ([[NSUserDefaults standardUserDefaults] objectForKey:kUserDefaultsId]){
+        [self hideControls];
+        if (UIInterfaceOrientationIsPortrait(self.interfaceOrientation)){
+            _backgroundImageView = [[UIImageView alloc] initWithFrame:[UIScreen mainScreen].bounds];
+        } else {
+            _backgroundImageView = [[UIImageView alloc] initWithFrame:CGRectMake(0, 0, height, width)];
+        }
+        backgroundImage = [self blurredSnapshot:YES];
+        [_backgroundImageView setAlpha:0.0];
+        [_backgroundImageView setImage:backgroundImage];
+        [self.view addSubview:_backgroundImageView];
+        [_backgroundImageView setAutoresizingMask:UIViewAutoresizingFlexibleWidth];
         
-    }];
-    
-    XXAddFeedbackViewController *vc = [[self storyboard] instantiateViewControllerWithIdentifier:@"AddFeedback"];
-    vc.transitioningDelegate = self;
-    vc.modalPresentationStyle = UIModalPresentationCustom;
-    [vc setStory:_story];
-    [vc setContribution:[notification.userInfo objectForKey:@"contribution"]];
-    [vc setSnippet:[notification.userInfo objectForKey:@"text"]];
-    [vc setStringLocation:[notification.userInfo objectForKey:@"location"]];
-    [vc setStoryViewController:self];
-    [vc setTextColor:textColor];
-    
-    [self presentViewController:vc animated:YES completion:nil];
+        [UIView animateWithDuration:.55 delay:0 usingSpringWithDamping:.67 initialSpringVelocity:.01 options:UIViewAnimationOptionAllowAnimatedContent animations:^{
+            [_backgroundImageView setAlpha:1.0];
+        } completion:^(BOOL finished) {
+            
+        }];
+        
+        XXAddFeedbackViewController *vc = [[self storyboard] instantiateViewControllerWithIdentifier:@"AddFeedback"];
+        vc.transitioningDelegate = self;
+        vc.modalPresentationStyle = UIModalPresentationCustom;
+        [vc setStory:_story];
+        [vc setContribution:[notification.userInfo objectForKey:@"contribution"]];
+        [vc setSnippet:[notification.userInfo objectForKey:@"text"]];
+        [vc setStringLocation:[notification.userInfo objectForKey:@"location"]];
+        [vc setStoryViewController:self];
+        [vc setTextColor:textColor];
+        
+        [self presentViewController:vc animated:YES completion:nil];
+    } else {
+        XXLoginController *vc = [[self storyboard] instantiateViewControllerWithIdentifier:@"Login"];
+        [self presentViewController:vc animated:YES completion:^{
+            [XXAlert show:@"You'll need to log in before leaving feedback" withTime:2.7f];
+        }];
+    }
 }
 
 - (id<UIViewControllerAnimatedTransitioning>)animationControllerForPresentedController:(UIViewController *)presented

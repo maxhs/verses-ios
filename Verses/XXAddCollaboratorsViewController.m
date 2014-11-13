@@ -202,7 +202,7 @@
             }
             [newContact populateFromDict:[responseObject objectForKey:@"user"]];
             [[NSNotificationCenter defaultCenter] postNotificationName:@"AddContact" object:self userInfo:@{@"contact":newContact}];
-        } else if ([[responseObject objectForKey:@"failure"] isEqualToNumber:[NSNumber numberWithBool:YES]]) {
+        } else if ([[responseObject objectForKey:@"failure"] isEqualToNumber:@YES]) {
             [_invitations addObject:contactDict];
         }
         if (contactDict == _selectedContacts.lastObject){

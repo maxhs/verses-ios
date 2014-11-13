@@ -66,7 +66,7 @@
     if ([[[NSUserDefaults standardUserDefaults] objectForKey:kUserDefaultsId] isEqualToNumber:user.identifier]){
         [_subscribeButton setHidden:YES];
     } else {
-        if ([user.subscribed isEqualToNumber:[NSNumber numberWithBool:YES]]){
+        if ([user.subscribed isEqualToNumber:@YES]){
             [_subscribeButton setTitle:@"Unsubscribe" forState:UIControlStateNormal];
             [_subscribeButton addTarget:self action:@selector(unsubscribe:) forControlEvents:UIControlEventTouchUpInside];
         } else {
@@ -89,7 +89,7 @@
         urlString = user.picMedium;
     }
     if (urlString.length){
-        [_imageButton setImageWithURL:[NSURL URLWithString:urlString] forState:UIControlStateNormal completed:^(UIImage *image, NSError *error, SDImageCacheType cacheType) {
+        [_imageButton sd_setImageWithURL:[NSURL URLWithString:urlString] forState:UIControlStateNormal completed:^(UIImage *image, NSError *error, SDImageCacheType cacheType, NSURL *imageURL) {
             //dispatch_async(dispatch_get_global_queue(DISPATCH_QUEUE_PRIORITY_HIGH, 0), ^{
             if ([[NSUserDefaults standardUserDefaults] boolForKey:kDarkBackground]){
                 [_blurredBackground setImage:[image applyDarkEffect]];

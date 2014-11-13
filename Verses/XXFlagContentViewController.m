@@ -43,7 +43,7 @@
     self.navigationController.navigationBar.shadowImage = [UIImage new];
     self.navigationController.navigationBar.translucent = YES;
     
-    if (UIInterfaceOrientationIsPortrait(self.interfaceOrientation)){
+    if (UIInterfaceOrientationIsPortrait(self.interfaceOrientation) || [[[UIDevice currentDevice] systemVersion] floatValue] >= 8.f){
         width = screenWidth();
         height = screenHeight();
     } else {
@@ -168,7 +168,7 @@
         
         [[(XXAppDelegate*)[UIApplication sharedApplication].delegate manager] POST:[NSString stringWithFormat:@"%@/users/flag_content",kAPIBaseUrl] parameters:@{@"flag":parameters} success:^(AFHTTPRequestOperation *operation, id responseObject) {
             //NSLog(@"success creating flag: %@",responseObject);
-            if ([[responseObject objectForKey:@"success"] isEqualToNumber:[NSNumber numberWithBool:YES]]){
+            if ([[responseObject objectForKey:@"success"] isEqualToNumber:@YES]){
                 [self back];
             }
             

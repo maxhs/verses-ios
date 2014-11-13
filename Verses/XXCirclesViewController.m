@@ -48,7 +48,6 @@
     [_formatter setDateStyle:NSDateFormatterMediumStyle];
     [_formatter setTimeStyle:NSDateFormatterShortStyle];
     
-    
     [self.tableView reloadData];
     loading = YES;
     [self loadCircles];
@@ -303,7 +302,7 @@
     if (_currentUser.circles.count && indexPath.section == 0){
         if (_currentUser.circles.count > indexPath.row){
             Circle *circle = [_currentUser.circles objectAtIndex:indexPath.row];
-            if (circle.unreadCommentCount.intValue > 0 || [circle.fresh isEqualToNumber:[NSNumber numberWithBool:YES]]){
+            if (circle.unreadCommentCount.intValue > 0 || [circle.fresh isEqualToNumber:@YES]){
                 circle.unreadCommentCount = 0;
                 circle.fresh = NO;
                 //[self.tableView beginUpdates];

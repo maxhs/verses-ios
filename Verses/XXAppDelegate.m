@@ -40,7 +40,7 @@
 
 - (BOOL)application:(UIApplication *)application didFinishLaunchingWithOptions:(NSDictionary *)launchOptions
 {
-    [[UIApplication sharedApplication] registerForRemoteNotificationTypes:(UIRemoteNotificationTypeAlert | UIRemoteNotificationTypeBadge | UIRemoteNotificationTypeSound)];
+    
     [self customizeAppearance];
     
     [MagicalRecord setShouldDeleteStoreOnModelMismatch:YES];
@@ -205,11 +205,11 @@
 }
 
 - (void)customizeAppearance {
-    /*for (NSString* family in [UIFont familyNames]){
-     NSLog(@"%@", family);
-     for (NSString* name in [UIFont fontNamesForFamilyName: family])
-     NSLog(@"  %@", name);
-     }*/
+    for (NSString* family in [UIFont familyNames]){
+        NSLog(@"%@", family);
+        for (NSString* name in [UIFont fontNamesForFamilyName: family])
+            NSLog(@"  %@", name);
+    }
     
     [[UITextField appearanceWhenContainedIn:[UISearchBar class], nil] setTextColor:[UIColor whiteColor]];
     [[UIButton appearanceWhenContainedIn:[UISearchBar class], nil] setTitleColor:[UIColor whiteColor] forState:UIControlStateNormal];
@@ -235,6 +235,7 @@
     [[UIBarButtonItem appearance] setTitlePositionAdjustment:UIOffsetMake(0, 0) forBarMetrics:UIBarMetricsDefault];
 
     [[UISwitch appearance] setOnTintColor:kElectricBlue];
+    
     [DTCoreTextFontDescriptor setOverrideFontName:@"CrimsonText-Roman" forFontFamily:@"Crimson" bold:NO italic:NO];
     [DTCoreTextFontDescriptor setOverrideFontName:@"CrimsonText-Italic" forFontFamily:@"Crimson" bold:NO italic:YES];
     [DTCoreTextFontDescriptor setOverrideFontName:@"CrimsonText-Semibold" forFontFamily:@"Crimson" bold:YES italic:NO];
@@ -308,7 +309,7 @@
 {
     //[Flurry logEvent:@"Did Receive Remote Notification"];
     [[Mixpanel sharedInstance] track:@"Just received a push message"];
-    //NSLog(@"Received push: %@",pushMessage);
+    NSLog(@"Received push: %@",pushMessage);
     [self redirect:pushMessage];
 }
 

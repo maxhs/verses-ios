@@ -261,7 +261,7 @@
                 [cell.imageButton setHidden:NO];
                 [cell.textField setHidden:YES];
                 if (_currentUser.picSmall.length){
-                    [cell.imageButton setImageWithURL:[NSURL URLWithString:_currentUser.picSmall] forState:UIControlStateNormal completed:^(UIImage *image, NSError *error, SDImageCacheType cacheType) {
+                    [cell.imageButton sd_setImageWithURL:[NSURL URLWithString:_currentUser.picSmall] forState:UIControlStateNormal completed:^(UIImage *image, NSError *error, SDImageCacheType cacheType, NSURL *imageURL) {
                        [UIView animateWithDuration:.23 animations:^{
                            [cell.imageButton setAlpha:1.0];
                        }];
@@ -403,7 +403,7 @@
                     [pushSwitch addTarget:self action:@selector(masterPushChanged) forControlEvents:UIControlEventValueChanged];
                 }
                 
-                if ([_currentUser.pushPermissions isEqualToNumber:[NSNumber numberWithBool:YES]]) {
+                if ([_currentUser.pushPermissions isEqualToNumber:@YES]) {
                     [pushSwitch setOn:YES animated:YES];
                 } else {
                     [cell.textLabel setFont:[UIFont fontWithName:kSourceSansProLight size:15]];
@@ -418,7 +418,7 @@
                     [circleCommentsPushSwitch addTarget:self action:@selector(switchChanged:) forControlEvents:UIControlEventValueChanged];
                 }
                 
-                if ([_currentUser.pushCircleComments isEqualToNumber:[NSNumber numberWithBool:YES]]) {
+                if ([_currentUser.pushCircleComments isEqualToNumber:@YES]) {
                     [circleCommentsPushSwitch setOn:YES animated:YES];
                 } else {
                     [cell.textLabel setFont:[UIFont fontWithName:kSourceSansProLight size:15]];
@@ -433,7 +433,7 @@
                     [feedbackPushSwitch addTarget:self action:@selector(switchChanged:) forControlEvents:UIControlEventValueChanged];
                 }
                 
-                if ([_currentUser.pushFeedbacks isEqualToNumber:[NSNumber numberWithBool:YES]]) {
+                if ([_currentUser.pushFeedbacks isEqualToNumber:@YES]) {
                     
                     [feedbackPushSwitch setOn:YES animated:YES];
                 } else {
@@ -448,7 +448,7 @@
                     circlePublishPushSwitch = [[UISwitch alloc] init];
                     [circlePublishPushSwitch addTarget:self action:@selector(switchChanged:) forControlEvents:UIControlEventValueChanged];
                 }
-                if ([_currentUser.pushCirclePublish isEqualToNumber:[NSNumber numberWithBool:YES]]) {
+                if ([_currentUser.pushCirclePublish isEqualToNumber:@YES]) {
                     [circlePublishPushSwitch setOn:YES animated:YES];
                 
                 } else {
@@ -464,7 +464,7 @@
                     [subscriptionPushSwitch addTarget:self action:@selector(switchChanged:) forControlEvents:UIControlEventValueChanged];
                 }
                 
-                if ([_currentUser.pushSubscribe isEqualToNumber:[NSNumber numberWithBool:YES]]) {
+                if ([_currentUser.pushSubscribe isEqualToNumber:@YES]) {
                     [subscriptionPushSwitch setOn:YES animated:YES];
                 } else {
                     [cell.textLabel setFont:[UIFont fontWithName:kSourceSansProLight size:15]];
@@ -479,7 +479,7 @@
                     invitationsPushSwitch = [[UISwitch alloc] init];
                     [invitationsPushSwitch addTarget:self action:@selector(switchChanged:) forControlEvents:UIControlEventValueChanged];
                 }
-                if ([_currentUser.pushInvitations isEqualToNumber:[NSNumber numberWithBool:YES]]) {
+                if ([_currentUser.pushInvitations isEqualToNumber:@YES]) {
                     [invitationsPushSwitch setOn:YES animated:YES];
                 } else {
                     [cell.textLabel setFont:[UIFont fontWithName:kSourceSansProLight size:15]];
@@ -495,7 +495,7 @@
                     [bookmarkPushSwitch addTarget:self action:@selector(switchChanged:) forControlEvents:UIControlEventValueChanged];
                 }
                 
-                if ([_currentUser.pushBookmarks isEqualToNumber:[NSNumber numberWithBool:YES]]) {
+                if ([_currentUser.pushBookmarks isEqualToNumber:@YES]) {
                     [bookmarkPushSwitch setOn:YES animated:YES];
                 } else {
                     [cell.textLabel setFont:[UIFont fontWithName:kSourceSansProLight size:15]];
@@ -524,23 +524,23 @@
 
 - (void)masterPushChanged {
     if (pushSwitch.isOn){
-        [_currentUser setPushPermissions:[NSNumber numberWithBool:YES]];
-        [_currentUser setPushDaily: [NSNumber numberWithBool:YES]];
-        _currentUser.pushCirclePublish = [NSNumber numberWithBool:YES];
-        _currentUser.pushBookmarks = [NSNumber numberWithBool:YES];
-        _currentUser.pushFeedbacks = [NSNumber numberWithBool:YES];
-        _currentUser.pushSubscribe = [NSNumber numberWithBool:YES];
-        _currentUser.pushInvitations = [NSNumber numberWithBool:YES];
-        _currentUser.pushCircleComments = [NSNumber numberWithBool:YES];
+        [_currentUser setPushPermissions:@YES];
+        [_currentUser setPushDaily: @YES];
+        _currentUser.pushCirclePublish = @YES;
+        _currentUser.pushBookmarks = @YES;
+        _currentUser.pushFeedbacks = @YES;
+        _currentUser.pushSubscribe = @YES;
+        _currentUser.pushInvitations = @YES;
+        _currentUser.pushCircleComments = @YES;
     } else {
-        _currentUser.pushPermissions = [NSNumber numberWithBool:NO];
-        _currentUser.pushDaily = [NSNumber numberWithBool:NO];
-        _currentUser.pushCirclePublish = [NSNumber numberWithBool:NO];
-        _currentUser.pushBookmarks = [NSNumber numberWithBool:NO];
-        _currentUser.pushFeedbacks = [NSNumber numberWithBool:NO];
-        _currentUser.pushSubscribe = [NSNumber numberWithBool:NO];
-        _currentUser.pushInvitations = [NSNumber numberWithBool:NO];
-        _currentUser.pushCircleComments = [NSNumber numberWithBool:NO];
+        _currentUser.pushPermissions = @NO;
+        _currentUser.pushDaily = @NO;
+        _currentUser.pushCirclePublish = @NO;
+        _currentUser.pushBookmarks = @NO;
+        _currentUser.pushFeedbacks = @NO;
+        _currentUser.pushSubscribe = @NO;
+        _currentUser.pushInvitations = @NO;
+        _currentUser.pushCircleComments = @NO;
     }
     [self.tableView performSelector:@selector(reloadData) withObject:nil afterDelay:.25];
 }

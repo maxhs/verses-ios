@@ -124,9 +124,9 @@
     _editButton.transform = CGAffineTransformMakeTranslation(width, editY);
     _readButton.transform = CGAffineTransformMakeTranslation(-width, readY);
     
-    if ([story.draft isEqualToNumber:[NSNumber numberWithBool:YES]]){
+    if ([story.draft isEqualToNumber:@YES]){
         [_draftLabel setHidden:NO];
-        if ([story.mystery isEqualToNumber:[NSNumber numberWithBool:YES]]){
+        if ([story.mystery isEqualToNumber:@YES]){
             [_revealLabel setHidden:NO];
         } else {
             [_revealLabel setHidden:YES];

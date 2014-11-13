@@ -37,7 +37,7 @@
 
     self.userPhotoButton.imageView.layer.shouldRasterize = YES;
     self.userPhotoButton.imageView.layer.rasterizationScale = [UIScreen mainScreen].scale;
-    [self.userPhotoButton setImageWithURL:[NSURL URLWithString:user.picSmall] forState:UIControlStateNormal completed:^(UIImage *image, NSError *error, SDImageCacheType cacheType) {
+    [self.userPhotoButton sd_setImageWithURL:[NSURL URLWithString:user.picSmall] forState:UIControlStateNormal completed:^(UIImage *image, NSError *error, SDImageCacheType cacheType, NSURL *imageURL) {
         [self.userPhotoButton setImage:image forState:UIControlStateNormal];
         [UIView animateWithDuration:.25 animations:^{
             [self.userPhotoButton setAlpha:1.0];

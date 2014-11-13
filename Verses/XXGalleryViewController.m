@@ -43,7 +43,7 @@
     [super viewDidLoad];
     self.automaticallyAdjustsScrollViewInsets = NO;
 
-    if (UIInterfaceOrientationIsPortrait(self.interfaceOrientation)){
+    if (UIInterfaceOrientationIsPortrait(self.interfaceOrientation) || [[[UIDevice currentDevice] systemVersion] floatValue] >= 8.f){
         width = screenWidth();
         height = screenHeight();
     } else {

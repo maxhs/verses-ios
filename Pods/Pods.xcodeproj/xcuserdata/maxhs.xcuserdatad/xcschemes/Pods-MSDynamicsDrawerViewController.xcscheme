@@ -14,7 +14,7 @@
             buildForAnalyzing = "YES">
             <BuildableReference
                BuildableIdentifier = "primary"
-               BlueprintIdentifier = "8BC42AF46A9548DEAFC0C98B"
+               BlueprintIdentifier = "BBF84D1665BF43B2A672A299"
                BuildableName = "libPods-MSDynamicsDrawerViewController.a"
                BlueprintName = "Pods-MSDynamicsDrawerViewController"
                ReferencedContainer = "container:Pods.xcodeproj">

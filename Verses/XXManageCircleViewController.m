@@ -73,7 +73,7 @@
         
     } else {
         _circle = [Circle MR_createInContext:[NSManagedObjectContext MR_defaultContext]];
-        _circle.publicCircle = [NSNumber numberWithBool:NO];
+        _circle.publicCircle = @NO;
         _circle.owner = _currentUser;
         NSMutableOrderedSet *set = [NSMutableOrderedSet orderedSet];
         [set addObject:_currentUser];
@@ -358,7 +358,7 @@
                 [cell.textField setHidden:YES];
                 cell.accessoryView = publicSwitch;
                 [cell.textLabel setTextColor:textColor];
-                if ([_circle.publicCircle isEqualToNumber:[NSNumber numberWithBool:YES]]){
+                if ([_circle.publicCircle isEqualToNumber:@YES]){
                     [cell.textLabel setText:@"Circle is public"];
                     [cell.textLabel setFont:[UIFont fontWithName:kSourceSansProRegular size:16]];
                 } else {

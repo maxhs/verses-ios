@@ -43,7 +43,7 @@
     if (author.picSmall.length){
         [_authorPhoto setTitle:@"" forState:UIControlStateNormal];
         _authorPhoto.layer.borderWidth = 0.f;
-        [_authorPhoto setImageWithURL:[NSURL URLWithString:author.picSmall] forState:UIControlStateNormal completed:^(UIImage *image, NSError *error, SDImageCacheType cacheType) {
+        [_authorPhoto sd_setImageWithURL:[NSURL URLWithString:author.picSmall] forState:UIControlStateNormal completed:^(UIImage *image, NSError *error, SDImageCacheType cacheType, NSURL *imageURL) {
             [UIView animateWithDuration:.27 animations:^{
                 [_authorPhoto setAlpha:1.0];
             }];

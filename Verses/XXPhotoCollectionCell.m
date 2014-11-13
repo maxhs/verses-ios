@@ -8,8 +8,11 @@
 
 #import "XXPhotoCollectionCell.h"
 #import <SDWebImage/UIButton+WebCache.h>
+
 @implementation XXPhotoCollectionCell
+
 @synthesize photo = _photo;
+
 - (id)initWithFrame:(CGRect)frame
 {
     self = [super initWithFrame:frame];
@@ -32,7 +35,7 @@
     _photo = photo;
     [_photoButton setBackgroundColor:[UIColor clearColor]];
     if (!_photoButton.imageView.image)[_photoButton setAlpha:0.0];
-    [_photoButton setImageWithURL:[NSURL URLWithString:photo.mediumUrl] forState:UIControlStateNormal completed:^(UIImage *image, NSError *error, SDImageCacheType cacheType) {
+    [_photoButton sd_setImageWithURL:[NSURL URLWithString:photo.mediumUrl] forState:UIControlStateNormal completed:^(UIImage *image, NSError *error, SDImageCacheType cacheType, NSURL *imageURL) {
         [UIView animateWithDuration:.3 animations:^{
             [_photoButton setAlpha:1.0];
         }];

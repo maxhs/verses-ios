@@ -1,24 +1,25 @@
 PODS:
-  - AFNetworking (2.0.0):
+  - AFNetworking (2.4.1):
     - AFNetworking/NSURLConnection
     - AFNetworking/NSURLSession
     - AFNetworking/Reachability
     - AFNetworking/Security
     - AFNetworking/Serialization
     - AFNetworking/UIKit
-  - AFNetworking/NSURLConnection (2.0.0):
+  - AFNetworking/NSURLConnection (2.4.1):
     - AFNetworking/Reachability
     - AFNetworking/Security
     - AFNetworking/Serialization
-  - AFNetworking/NSURLSession (2.0.0):
+  - AFNetworking/NSURLSession (2.4.1):
     - AFNetworking/Reachability
     - AFNetworking/Security
     - AFNetworking/Serialization
-  - AFNetworking/Reachability (2.0.0)
-  - AFNetworking/Security (2.0.0)
-  - AFNetworking/Serialization (2.0.0)
-  - AFNetworking/UIKit (2.0.0):
+  - AFNetworking/Reachability (2.4.1)
+  - AFNetworking/Security (2.4.1)
+  - AFNetworking/Serialization (2.4.1)
+  - AFNetworking/UIKit (2.4.1):
     - AFNetworking/NSURLConnection
+    - AFNetworking/NSURLSession
   - DTCoreText (1.6.10):
     - DTFoundation/Core (~> 1.6.1)
     - DTFoundation/DTHTMLParser (~> 1.6.1)
@@ -31,11 +32,11 @@ PODS:
   - MagicalRecord (2.2):
     - MagicalRecord/Core
   - MagicalRecord/Core (2.2)
-  - Mixpanel (2.3.4)
-  - MSDynamicsDrawerViewController (1.0.1)
-  - SDWebImage (3.6):
+  - Mixpanel (2.5.3)
+  - MSDynamicsDrawerViewController (1.5.1)
+  - SDWebImage (3.7.1):
     - SDWebImage/Core
-  - SDWebImage/Core (3.6)
+  - SDWebImage/Core (3.7.1)
 
 DEPENDENCIES:
   - AFNetworking
@@ -46,12 +47,12 @@ DEPENDENCIES:
   - SDWebImage
 
 SPEC CHECKSUMS:
-  AFNetworking: 6d4a33f2a7edf1d394455c543b446fdfae6b4082
+  AFNetworking: 0aabc6fae66d6e5d039eeb21c315843c7aae51ab
   DTCoreText: c75a1e41b18f80573fbf6c500e18975ea0497a47
   DTFoundation: d8a7f570a0f89c5a81661e6537289c578f4f97a8
   MagicalRecord: 2b471584fc9e3137f3d0a56967917baa4979e224
-  Mixpanel: f80261f894ae0a71231da2a7eed67ce9ba1d5a26
-  MSDynamicsDrawerViewController: e96d200802f94a18d39d80420345330e235ecbbb
-  SDWebImage: c6989652c1cdf27cbdf3f56957e2030f825af5bc
+  Mixpanel: 708ec9a6ee6e741f7db107831e18b2fc2e7531f1
+  MSDynamicsDrawerViewController: 0002059480a4b5ddde7eafbafb958a79a9b0ffaf
+  SDWebImage: 116e88633b5b416ea0ca4b334a4ac59cf72dd38d
 
 COCOAPODS: 0.33.1

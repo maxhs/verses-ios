@@ -8,6 +8,8 @@
 
 #import "XXAddFeedbackViewController.h"
 #import "XXLeaveFeedbackCell.h"
+#import "XXLoginController.h"
+#import "XXAlert.h"
 
 @interface XXAddFeedbackViewController () {
     UITextView *feedbackTextView;
@@ -136,7 +138,6 @@
         [textView setFont:[UIFont fontWithName:kSourceSansProRegular size:17]];
     }];
     
-    
     if ([textView.text isEqualToString:kFeedbackPlaceholder]) {
         textView.text = @"";
     }
@@ -165,28 +166,35 @@
 
 - (void)postFeedback {
     [self doneEditing];
-    if (feedbackTextView.text.length){
-        NSMutableDictionary *parameters = [NSMutableDictionary dictionary];
-        if (_snippet.length){
-            [parameters setObject:_snippet forKey:@"snippet"];
+    if ([[NSUserDefaults standardUserDefaults] objectForKey:kUserDefaultsId]){
+        if (feedbackTextView.text.length){
+            NSMutableDictionary *parameters = [NSMutableDictionary dictionary];
+            if (_snippet.length){
+                [parameters setObject:_snippet forKey:@"snippet"];
+            }
+            if (_stringLocation){
+                [parameters setObject:_stringLocation forKey:@"location"];
+            }
+            if (_contribution && ![_contribution.identifier isEqualToNumber:[NSNumber numberWithInt:0]]){
+                [parameters setObject:_contribution.identifier forKey:@"contribution_id"];
+            }
+            if (_story && ![_story.identifier isEqualToNumber:[NSNumber numberWithInt:0]]){
+                [parameters setObject:_story.identifier forKey:@"story_id"];
+            }
+            [parameters setObject:feedbackTextView.text forKey:@"feedback"];
+            [parameters setObject:[[NSUserDefaults standardUserDefaults] objectForKey:kUserDefaultsId] forKey:@"user_id"];
+            [[(XXAppDelegate*)[UIApplication sharedApplication].delegate manager] POST:[NSString stringWithFormat:@"%@/feedbacks",kAPIBaseUrl] parameters:parameters success:^(AFHTTPRequestOperation *operation, id responseObject) {
+                //NSLog(@"success posting feedback for snippet %@, %@",_snippet, responseObject);
+                [self dismiss];
+            } failure:^(AFHTTPRequestOperation *operation, NSError *error) {
+                NSLog(@"Error posting feedback");
+                [[[UIAlertView alloc] initWithTitle:@"Sorry" message:@"Something went wrong while trying to post your feedback. Please try again soon." delegate:nil cancelButtonTitle:@"Okay" otherButtonTitles:nil] show];
+            }];
         }
-        if (_stringLocation){
-            [parameters setObject:_stringLocation forKey:@"location"];
-        }
-        if (_contribution && ![_contribution.identifier isEqualToNumber:[NSNumber numberWithInt:0]]){
-            [parameters setObject:_contribution.identifier forKey:@"contribution_id"];
-        }
-        if (_story && ![_story.identifier isEqualToNumber:[NSNumber numberWithInt:0]]){
-            [parameters setObject:_story.identifier forKey:@"story_id"];
-        }
-        [parameters setObject:feedbackTextView.text forKey:@"feedback"];
-        [parameters setObject:[[NSUserDefaults standardUserDefaults] objectForKey:kUserDefaultsId] forKey:@"user_id"];
-        [[(XXAppDelegate*)[UIApplication sharedApplication].delegate manager] POST:[NSString stringWithFormat:@"%@/feedbacks",kAPIBaseUrl] parameters:parameters success:^(AFHTTPRequestOperation *operation, id responseObject) {
-            //NSLog(@"success posting feedback for snippet %@, %@",_snippet, responseObject);
-            [self dismiss];
-        } failure:^(AFHTTPRequestOperation *operation, NSError *error) {
-            NSLog(@"Error posting feedback");
-            [[[UIAlertView alloc] initWithTitle:@"Sorry" message:@"Something went wrong while trying to post your feedback. Please try again soon." delegate:nil cancelButtonTitle:@"Okay" otherButtonTitles:nil] show];
+    } else {
+        XXLoginController *vc = [[self storyboard] instantiateViewControllerWithIdentifier:@"Login"];
+        [self presentViewController:vc animated:YES completion:^{
+            [XXAlert show:@"You'll need to log in to leave feedback" withTime:2.7f];
         }];
     }
 }

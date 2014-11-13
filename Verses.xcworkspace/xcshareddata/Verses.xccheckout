@@ -10,29 +10,29 @@
 	<string>Verses</string>
 	<key>IDESourceControlProjectOriginsDictionary</key>
 	<dict>
-		<key>1997818A-EAB4-4BE1-B223-B382E123FCEC</key>
+		<key>5FCEF24B11C74F182034562575C6AE3360320D1C</key>
 		<string>https://github.com/maxhs/verses-ios.git</string>
 	</dict>
 	<key>IDESourceControlProjectPath</key>
 	<string>Verses.xcworkspace</string>
 	<key>IDESourceControlProjectRelativeInstallPathDictionary</key>
 	<dict>
-		<key>1997818A-EAB4-4BE1-B223-B382E123FCEC</key>
+		<key>5FCEF24B11C74F182034562575C6AE3360320D1C</key>
 		<string>..</string>
 	</dict>
 	<key>IDESourceControlProjectURL</key>
 	<string>https://github.com/maxhs/verses-ios.git</string>
 	<key>IDESourceControlProjectVersion</key>
-	<integer>110</integer>
+	<integer>111</integer>
 	<key>IDESourceControlProjectWCCIdentifier</key>
-	<string>1997818A-EAB4-4BE1-B223-B382E123FCEC</string>
+	<string>5FCEF24B11C74F182034562575C6AE3360320D1C</string>
 	<key>IDESourceControlProjectWCConfigurations</key>
 	<array>
 		<dict>
 			<key>IDESourceControlRepositoryExtensionIdentifierKey</key>
 			<string>public.vcs.git</string>
 			<key>IDESourceControlWCCIdentifierKey</key>
-			<string>1997818A-EAB4-4BE1-B223-B382E123FCEC</string>
+			<string>5FCEF24B11C74F182034562575C6AE3360320D1C</string>
 			<key>IDESourceControlWCCName</key>
 			<string>Verses-iOS</string>
 		</dict>

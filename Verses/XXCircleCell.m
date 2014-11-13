@@ -49,7 +49,7 @@
     }
     
     int count = circle.unreadCommentCount.intValue;
-    if ([circle.fresh isEqualToNumber:[NSNumber numberWithBool:YES]]) count ++;
+    if ([circle.fresh isEqualToNumber:@YES]) count ++;
     
     if (count == 0){
         [_alertLabel setText:@""];

@@ -129,7 +129,7 @@ static int minimumHeight = 30;
     }
     
     if (comment.user.picSmall) {
-        [_imageButton setImageWithURL:[NSURL URLWithString:comment.user.picSmall] forState:UIControlStateNormal];
+        [_imageButton sd_setImageWithURL:[NSURL URLWithString:comment.user.picSmall] forState:UIControlStateNormal];
         [_imageButton.imageView setBackgroundColor:[UIColor clearColor]];
         _imageButton.layer.borderColor = [UIColor colorWithWhite:0 alpha:0].CGColor;
         _imageButton.layer.borderWidth = 0.f;

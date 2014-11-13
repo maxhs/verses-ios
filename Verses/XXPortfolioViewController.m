@@ -43,7 +43,7 @@
     manager = [(XXAppDelegate*)[UIApplication sharedApplication].delegate manager];
     currentUser = [(XXAppDelegate*)[UIApplication sharedApplication].delegate currentUser];
     [self.view setAutoresizingMask:UIViewAutoresizingFlexibleWidth];
-    if (UIInterfaceOrientationIsPortrait(self.interfaceOrientation)){
+    if (UIInterfaceOrientationIsPortrait(self.interfaceOrientation) || [[[UIDevice currentDevice] systemVersion] floatValue] >= 8.f){
         width = screenWidth();
         height = screenHeight();
     } else {

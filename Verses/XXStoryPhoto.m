@@ -95,10 +95,10 @@
         [self addProgressView];
     
         SDWebImageManager *manager = [SDWebImageManager sharedManager];
-        [manager downloadWithURL:[NSURL URLWithString:photo.largeUrl] options:0 progress:^(NSInteger receivedSize, NSInteger expectedSize) {
+        [manager downloadImageWithURL:[NSURL URLWithString:photo.largeUrl] options:0 progress:^(NSInteger receivedSize, NSInteger expectedSize) {
             _progressView.progress = ((CGFloat)receivedSize / (CGFloat)expectedSize);
            
-        } completed:^(UIImage *image, NSError *error, SDImageCacheType cacheType, BOOL finished) {
+        } completed:^(UIImage *image, NSError *error, SDImageCacheType cacheType, BOOL finished, NSURL *imageURL) {
             if (finished && !error){
                 if (withButton){
                     [_button setImage:image forState:UIControlStateNormal];

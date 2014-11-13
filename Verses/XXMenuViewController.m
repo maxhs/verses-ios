@@ -56,13 +56,13 @@
     manager = [delegate manager];
     dynamicsViewController = [delegate dynamicsDrawerViewController];
     [self.view setBackgroundColor:[UIColor clearColor]];
- 
     self.tableView.backgroundColor = [UIColor clearColor];
     self.tableView.separatorColor = [UIColor colorWithWhite:1.0 alpha:0.025];
 
     searching = NO;
     [self.searchBar setPlaceholder:@"Search stories"];
     self.tableView.tableHeaderView = self.searchBar;
+    
     _monthFormatter = [[NSDateFormatter alloc] init];
     [_monthFormatter setLocale:[NSLocale currentLocale]];
     [_monthFormatter setDateFormat:@"MMM d"];
@@ -165,7 +165,7 @@
 }
 
 - (void)viewDidAppear:(BOOL)animated {
-    NSPredicate *predicate = [NSPredicate predicateWithFormat:@"draft == %@ and inviteOnly == %@",[NSNumber numberWithBool:NO],[NSNumber numberWithBool:NO]];
+    NSPredicate *predicate = [NSPredicate predicateWithFormat:@"draft == %@ and inviteOnly == %@",@NO,@NO];
     _searchResults = [Story MR_findAllWithPredicate:predicate inContext:[NSManagedObjectContext MR_defaultContext]].mutableCopy;
     _filteredResults = [NSMutableArray arrayWithArray:_searchResults];
 }
@@ -702,7 +702,7 @@
         }
     }
     [[NSManagedObjectContext MR_defaultContext] MR_saveToPersistentStoreWithCompletion:^(BOOL success, NSError *error) {
-        NSPredicate *predicate = [NSPredicate predicateWithFormat:@"draft == %@ and inviteOnly == %@",[NSNumber numberWithBool:NO],[NSNumber numberWithBool:NO]];
+        NSPredicate *predicate = [NSPredicate predicateWithFormat:@"draft == %@ and inviteOnly == %@",@NO,@NO];
         _searchResults = [Story MR_findAllWithPredicate:predicate inContext:[NSManagedObjectContext MR_defaultContext]].mutableCopy;
     }];
 }

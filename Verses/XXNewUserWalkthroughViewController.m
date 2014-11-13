@@ -61,7 +61,7 @@
 
 - (void)viewDidLoad
 {
-    if (UIInterfaceOrientationIsPortrait([[UIApplication sharedApplication] statusBarOrientation])){
+    if (UIInterfaceOrientationIsPortrait([[UIApplication sharedApplication] statusBarOrientation]) || [[[UIDevice currentDevice] systemVersion] floatValue] >= 8.f){
         width = screenWidth();
         height = screenHeight();
     } else {
@@ -141,7 +141,7 @@
     
     UILabel *descriptionLabel = [[UILabel alloc] initWithFrame:CGRectMake(width/12, height/3, width*5/6, height/3)];
     [descriptionLabel setAutoresizingMask:UIViewAutoresizingFlexibleWidth];
-    [descriptionLabel setFont:[UIFont fontWithName:kDesyrel size:33]];
+    [descriptionLabel setFont:[UIFont fontWithName:kTrashHand size:33]];
     [descriptionLabel setTextColor:[UIColor whiteColor]];
     [descriptionLabel setText:@"Read, write, and discover great stories."];
     [descriptionLabel setTextAlignment:NSTextAlignmentCenter];

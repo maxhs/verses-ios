@@ -91,7 +91,7 @@
     }
     self.navigationItem.rightBarButtonItem = backButton;
     
-    if (UIInterfaceOrientationIsPortrait(self.interfaceOrientation)){
+    if (UIInterfaceOrientationIsPortrait(self.interfaceOrientation) || [[[UIDevice currentDevice] systemVersion] floatValue] >= 8.f){
         width = screenWidth();
         height = screenHeight();
     } else {
@@ -180,7 +180,7 @@
         [_titleTextField setTextColor:textColor];
     }
     
-    if (_mystery || [_story.inviteOnly isEqualToNumber:[NSNumber numberWithBool:YES]]) {
+    if (_mystery || [_story.inviteOnly isEqualToNumber:@YES]) {
         [publishButton setTitle:@"   Share   "];
     }
     navBarShadowView.hidden = YES;
@@ -208,7 +208,7 @@
 }
 
 - (void)draftSwitchTapped:(UISwitch*)dSwitch {
-    if (_mystery || [_story.inviteOnly isEqualToNumber:[NSNumber numberWithBool:YES]]) {
+    if (_mystery || [_story.inviteOnly isEqualToNumber:@YES]) {
         [publishButton setTitle:@"   Share   "];
     } else {
         [publishButton setTitle:@"   Publish   "];
@@ -217,7 +217,7 @@
     [_story setDraft:[NSNumber numberWithBool:dSwitch.isOn]];
     if (_contribution && ![_contribution.identifier isEqualToNumber:[NSNumber numberWithInt:0]]){
         self.navigationItem.leftBarButtonItems = @[saveButton,optionsButton];
-    } else if ([_story.draft isEqualToNumber:[NSNumber numberWithBool:YES]]){
+    } else if ([_story.draft isEqualToNumber:@YES]){
         self.navigationItem.leftBarButtonItems = @[saveButton,optionsButton];
     } else {
         if ([_story.publishedDate compare:[[NSDate alloc] initWithTimeIntervalSince1970:0]] == NSOrderedSame || [_story.publishedDate isEqual:[NSNumber numberWithInt:0]]){
@@ -242,11 +242,11 @@
         [self setupContributionBooleans];
     } else if (!_story){
         _story = [Story MR_createInContext:[NSManagedObjectContext MR_defaultContext]];
-        _story.draft = [NSNumber numberWithBool:YES];
-        _story.inviteOnly = [NSNumber numberWithBool:YES];
+        _story.draft = @YES;
+        _story.inviteOnly = @YES;
         [_story addUser:_currentUser];
         _story.owner = _currentUser;
-        if (_mystery) _story.mystery = [NSNumber numberWithBool:YES];
+        if (_mystery) _story.mystery = @YES;
         if ([[NSUserDefaults standardUserDefaults] boolForKey:kDarkBackground]){
             [_titleTextField setText:kTitlePlaceholder];
             [_titleTextField setTextColor:[UIColor colorWithWhite:1 alpha:.3]];
@@ -254,7 +254,7 @@
             [_titleTextField setPlaceholder:kTitlePlaceholder];
         }
         Contribution *firstContribution = [Contribution MR_createInContext:[NSManagedObjectContext MR_defaultContext]];
-        [firstContribution setAllowFeedback:[NSNumber numberWithBool:NO]];
+        [firstContribution setAllowFeedback:@NO];
         [_story addContribution:firstContribution];
         [self.deleteButton setHidden:YES];
         
@@ -268,7 +268,7 @@
         [self setupStoryBooleans];
     }
 
-    if ([_story.draft isEqualToNumber:[NSNumber numberWithBool:YES]]){
+    if ([_story.draft isEqualToNumber:@YES]){
         self.navigationItem.leftBarButtonItems = @[saveButton,optionsButton];
     } else {
         if ([_story.publishedDate compare:[[NSDate alloc] initWithTimeIntervalSince1970:0]] == NSOrderedSame){
@@ -322,29 +322,29 @@
 
 - (void)setupStoryBooleans {
     if (!_contribution){
-        if ([_story.draft isEqualToNumber:[NSNumber numberWithBool:YES]]){
+        if ([_story.draft isEqualToNumber:@YES]){
             [self.draftSwitch setOn:YES animated:NO];
         } else {
             [self.draftSwitch setOn:NO animated:NO];
         }
         
-        if ([_story.joinable isEqualToNumber:[NSNumber numberWithBool:YES]]){
+        if ([_story.joinable isEqualToNumber:@YES]){
             [self.joinableSwitch setOn:YES animated:NO];
         } else {
             [self.joinableSwitch setOn:NO animated:NO];
         }
-        if ([_story.mystery isEqualToNumber:[NSNumber numberWithBool:YES]] || _mystery){
-            _story.mystery = [NSNumber numberWithBool:YES];
+        if ([_story.mystery isEqualToNumber:@YES] || _mystery){
+            _story.mystery = @YES;
             [self.slowRevealSwitch setOn:YES animated:NO];
         } else {
             [self.slowRevealSwitch setOn:NO animated:NO];
         }
-        if ([_story.inviteOnly  isEqualToNumber:[NSNumber numberWithBool:YES]]){
+        if ([_story.inviteOnly  isEqualToNumber:@YES]){
             [self.inviteOnlySwitch setOn:YES animated:NO];
         } else {
             [self.inviteOnlySwitch setOn:NO animated:NO];
         }
-        if ([[(Contribution*)_story.contributions.lastObject allowFeedback] isEqualToNumber:[NSNumber numberWithBool:YES]]){
+        if ([[(Contribution*)_story.contributions.lastObject allowFeedback] isEqualToNumber:@YES]){
             [self.feedbackSwitch setOn:YES animated:NO];
         } else {
             [self.feedbackSwitch setOn:NO animated:NO];
@@ -362,12 +362,12 @@
     [_joinableLabel setHidden:YES];
     [_joinableSwitch setHidden:YES];
     
-    if ([_contribution.allowFeedback isEqualToNumber:[NSNumber numberWithBool:YES]]){
+    if ([_contribution.allowFeedback isEqualToNumber:@YES]){
         [self.feedbackSwitch setOn:YES animated:NO];
     } else {
         [self.feedbackSwitch setOn:NO animated:NO];
     }
-    if ([_contribution.draft isEqualToNumber:[NSNumber numberWithBool:YES]]){
+    if ([_contribution.draft isEqualToNumber:@YES]){
         [self.draftSwitch setOn:YES animated:NO];
     } else {
         [self.draftSwitch setOn:NO animated:NO];
@@ -700,9 +700,9 @@
     if (_story.contributions.count == 1 || (_contribution && ![_contribution.identifier isEqualToNumber:[NSNumber numberWithInt:0]])){
         if (_story.contributions.count == 1) {
             if (self.inviteOnlySwitch.isOn){
-                [contributionParameters setObject:[NSNumber numberWithBool:YES] forKey:@"invite_only"];
+                [contributionParameters setObject:@YES forKey:@"invite_only"];
             } else {
-                [contributionParameters setObject:[NSNumber numberWithBool:NO] forKey:@"invite_only"];
+                [contributionParameters setObject:@NO forKey:@"invite_only"];
             }
         }
         
@@ -722,34 +722,34 @@
     }
     
     if (self.draftSwitch.isOn){
-        [contributionParameters setObject:[NSNumber numberWithBool:YES] forKey:@"draft"];
-        [storyParameters setObject:[NSNumber numberWithBool:YES] forKey:@"draft"];
+        [contributionParameters setObject:@YES forKey:@"draft"];
+        [storyParameters setObject:@YES forKey:@"draft"];
     } else {
-        [contributionParameters setObject:[NSNumber numberWithBool:NO] forKey:@"draft"];
-        [storyParameters setObject:[NSNumber numberWithBool:NO] forKey:@"draft"];
+        [contributionParameters setObject:@NO forKey:@"draft"];
+        [storyParameters setObject:@NO forKey:@"draft"];
     }
     
     if (self.joinableSwitch.isOn){
-        [storyParameters setObject:[NSNumber numberWithBool:YES] forKey:@"joinable"];
+        [storyParameters setObject:@YES forKey:@"joinable"];
     } else {
-        [storyParameters setObject:[NSNumber numberWithBool:NO] forKey:@"joinable"];
+        [storyParameters setObject:@NO forKey:@"joinable"];
     }
     
     if (self.feedbackSwitch.isOn){
-        [contributionParameters setObject:[NSNumber numberWithBool:YES] forKey:@"allow_feedback"];
+        [contributionParameters setObject:@YES forKey:@"allow_feedback"];
     } else {
-        [contributionParameters setObject:[NSNumber numberWithBool:NO] forKey:@"allow_feedback"];
+        [contributionParameters setObject:@NO forKey:@"allow_feedback"];
     }
     
     if (self.inviteOnlySwitch.isOn){
-        [storyParameters setObject:[NSNumber numberWithBool:YES] forKey:@"invite_only"];
+        [storyParameters setObject:@YES forKey:@"invite_only"];
     } else {
-        [storyParameters setObject:[NSNumber numberWithBool:NO] forKey:@"invite_only"];
+        [storyParameters setObject:@NO forKey:@"invite_only"];
     }
     if (self.slowRevealSwitch.isOn){
-        [storyParameters setObject:[NSNumber numberWithBool:YES] forKey:@"mystery"];
+        [storyParameters setObject:@YES forKey:@"mystery"];
     } else {
-        [storyParameters setObject:[NSNumber numberWithBool:NO] forKey:@"mystery"];
+        [storyParameters setObject:@NO forKey:@"mystery"];
     }
     if (_story.users.count){
         NSMutableArray *users = [NSMutableArray array];
@@ -886,32 +886,32 @@
     }
     
     if (self.draftSwitch.isOn){
-        _story.draft = [NSNumber numberWithBool:YES];
+        _story.draft = @YES;
     } else {
-        _story.draft = [NSNumber numberWithBool:NO];
+        _story.draft = @NO;
     }
     
     if (self.inviteOnlySwitch.isOn){
-        _story.inviteOnly = [NSNumber numberWithBool:YES];
+        _story.inviteOnly = @YES;
     } else {
-        _story.inviteOnly = [NSNumber numberWithBool:NO];
+        _story.inviteOnly = @NO;
     }
     
     if (self.joinableSwitch.isOn){
-        _story.joinable = [NSNumber numberWithBool:YES];
+        _story.joinable = @YES;
     } else {
-        _story.joinable = [NSNumber numberWithBool:NO];
+        _story.joinable = @NO;
     }
     
     if (self.slowRevealSwitch.isOn){
-        _story.mystery = [NSNumber numberWithBool:YES];
+        _story.mystery = @YES;
     } else {
-        _story.mystery = [NSNumber numberWithBool:NO];
+        _story.mystery = @NO;
     }
     if (self.feedbackSwitch.isOn){
-        [(Contribution*)_story.contributions.lastObject setAllowFeedback:[NSNumber numberWithBool:YES]];
+        [(Contribution*)_story.contributions.lastObject setAllowFeedback:@YES];
     } else {
-        [(Contribution*)_story.contributions.lastObject setAllowFeedback:[NSNumber numberWithBool:NO]];
+        [(Contribution*)_story.contributions.lastObject setAllowFeedback:@NO];
     }
 }
 
