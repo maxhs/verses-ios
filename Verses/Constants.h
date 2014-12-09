@@ -17,9 +17,9 @@ static inline CGFloat height(UIView *view) { return view.frame.size.height; }
 #define OUTLINE ((int) 22)
 #define kSeparatorTag 21
 #define kContributorViewTag 2376
-#define kBaseUrl @"https://www.writeverses.com"
-#define kAPIBaseUrl @"https://www.writeverses.com/api/v1"
-#define kTermsUrl @"https://www.writeverses.com/terms"
+#define kBaseUrl @"https://writeverses.com"
+#define kAPIBaseUrl @"https://writeverses.com/api/v1"
+#define kTermsUrl @"https://writeverses.com/terms"
 #define kUrlScheme @"verses"
 
 #define MIXPANEL_TOKEN @"8184fc9baafab30a5c51cceefb90e2d0"
