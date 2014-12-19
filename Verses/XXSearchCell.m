@@ -7,6 +7,7 @@
 //
 
 #import "XXSearchCell.h"
+#import "Constants.h"
 
 @implementation XXSearchCell
 

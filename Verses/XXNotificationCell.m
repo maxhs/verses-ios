@@ -8,6 +8,7 @@
 
 #import "XXNotificationCell.h"
 #import <SDWebImage/UIButton+WebCache.h>
+#import "Constants.h"
 
 @implementation XXNotificationCell
 

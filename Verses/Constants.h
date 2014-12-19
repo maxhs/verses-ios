@@ -6,6 +6,10 @@
 //  Copyright (c) 2013 Verses. All rights reserved.
 //
 
+#import <UIKit/UIKit.h>
+#import "UIFontDescriptor+CrimsonText.h"
+#import "UIFontDescriptor+SourceSansPro.h"
+
 #ifndef Verses_Constants_h
 #define Verses_Constants_h
 
@@ -41,6 +45,10 @@ static inline CGFloat height(UIView *view) { return view.frame.size.height; }
 #define kExistingUserWrite @"existingUserWrite"
 #define kHasSeenGuideView @"hasSeenGuideView"
 #define kAlreadyDestroyed @"Already destroyed"
+#define kIncorrectPassword @"Incorrect password"
+#define kUserAlreadyExists @"User already exists"
+#define kNoEmail @"No email"
+#define kPenNameTaken @"Pen name taken"
 
 #define kUserDefaultsId @"userId"
 #define kUserDefaultsPassword @"password"
@@ -52,6 +60,7 @@ static inline CGFloat height(UIView *view) { return view.frame.size.height; }
 #define kUserDefaultsPicLarge @"pic_large_url"
 #define kUserDefaultsPicMedium @"pic_medium_url"
 #define kUserDefaultsPicSmall @"pic_small_url"
+#define kUserDefaultsMobileToken @"mobileToken"
 #define kUserDefaultsDeviceToken @"deviceToken"
 
 #define kSeparatorColor [UIColor colorWithWhite:.77 alpha:.23]

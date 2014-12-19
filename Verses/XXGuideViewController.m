@@ -6,6 +6,7 @@
 //  Copyright (c) 2014 Verses. All rights reserved.
 //
 
+#import "XXAppDelegate.h"
 #import "XXGuideViewController.h"
 #import "XXSlotCell.h"
 #import "XXWriteViewController.h"
@@ -388,7 +389,7 @@
             [cell.guideButton setTitle:@"Writing Circles" forState:UIControlStateNormal];
             [cell.guideButton addTarget:self action:@selector(goToCircles) forControlEvents:UIControlEventTouchUpInside];
             if (_circleAlertCount > 0){
-                [cell.alertLabel setText:[NSString stringWithFormat:@"%d",_circleAlertCount]];
+                [cell.alertLabel setText:[NSString stringWithFormat:@"%ld",(long)_circleAlertCount]];
                                 CGFloat alertWidth;
                 if (_circleAlertCount > 999){
                     alertWidth = 33;

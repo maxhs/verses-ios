@@ -7,6 +7,7 @@
 //
 
 #import "XXSettingsCell.h"
+#import "Constants.h"
 
 @implementation XXSettingsCell
 

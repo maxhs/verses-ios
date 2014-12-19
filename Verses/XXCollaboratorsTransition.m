@@ -7,6 +7,8 @@
 //
 
 #import "XXCollaboratorsTransition.h"
+#import <UIKit/UIKit.h>
+#import "Constants.h"
 
 @implementation XXCollaboratorsTransition
 - (NSTimeInterval)transitionDuration:(id <UIViewControllerContextTransitioning>)transitionContext {

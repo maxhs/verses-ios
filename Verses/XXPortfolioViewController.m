@@ -6,6 +6,7 @@
 //  Copyright (c) 2014 Verses. All rights reserved.
 //
 
+#import "XXAppDelegate.h"
 #import "XXPortfolioViewController.h"
 #import "Story+helper.h"
 #import "XXStoryCell.h"
@@ -257,7 +258,7 @@
 - (void)loadMore {
     loading = YES;
     Story *lastStory = stories.lastObject;
-    int currentCount = stories.count;
+    NSUInteger currentCount = stories.count;
     if (lastStory){
         [manager GET:[NSString stringWithFormat:@"%@/stories/portfolio",kAPIBaseUrl] parameters:@{@"before_date":[NSNumber numberWithDouble:[lastStory.updatedDate timeIntervalSince1970]], @"count":@"10", @"user_id":[[NSUserDefaults standardUserDefaults] objectForKey:kUserDefaultsId]} success:^(AFHTTPRequestOperation *operation, id responseObject) {
             //NSLog(@"Loaded more portfolio response: %@",responseObject);
@@ -274,13 +275,13 @@
             }
             
             NSMutableArray *indexesToInsert = [NSMutableArray array];
-            for (int i = currentCount; i < newStoryArray.count+currentCount; i++){
+            for (NSUInteger i = currentCount; i < newStoryArray.count+currentCount; i++){
                 [indexesToInsert addObject:[NSIndexPath indexPathForRow:i inSection:0]];
             }
             
             if ([(NSArray*)[responseObject objectForKey:@"stories"] count] < 10) {
                 canLoadMore = NO;
-                NSLog(@"Can't load more, we now have %i portfolio stories", stories.count);
+                NSLog(@"Can't load more, we now have %lu portfolio stories", (unsigned long)stories.count);
             }
             [ProgressHUD dismiss];
             loading = NO;
@@ -300,7 +301,7 @@
 - (void)loadMoreDrafts {
     loading = YES;
     Story *lastStory = stories.lastObject;
-    int currentCount = stories.count;
+    NSUInteger currentCount = stories.count;
     if (lastStory){
         [manager GET:[NSString stringWithFormat:@"%@/stories/portfolio",kAPIBaseUrl] parameters:@{@"before_date":[NSNumber numberWithDouble:[lastStory.updatedDate timeIntervalSince1970]], @"count":@"10", @"user_id":[[NSUserDefaults standardUserDefaults] objectForKey:kUserDefaultsId]} success:^(AFHTTPRequestOperation *operation, id responseObject) {
             //NSLog(@"loaded more of draft response: %@",responseObject);
@@ -317,13 +318,13 @@
             }
             
             NSMutableArray *indexesToInsert = [NSMutableArray array];
-            for (int i = currentCount; i < newStoryArray.count+currentCount; i++){
+            for (NSUInteger i = currentCount; i < newStoryArray.count+currentCount; i++){
                 [indexesToInsert addObject:[NSIndexPath indexPathForRow:i inSection:0]];
             }
             
             if ([(NSArray*)[responseObject objectForKey:@"stories"] count] < 10) {
                 canLoadMoreDrafts = NO;
-                NSLog(@"can't load more, we now have %i of my stories", drafts.count);
+                NSLog(@"can't load more, we now have %lu of my stories", (unsigned long)drafts.count);
             }
             [ProgressHUD dismiss];
             loading = NO;

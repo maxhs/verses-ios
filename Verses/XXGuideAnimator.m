@@ -7,6 +7,8 @@
 //
 
 #import "XXGuideAnimator.h"
+#import <UIKit/UIKit.h>
+#import "Constants.h"
 
 @implementation XXGuideAnimator
 

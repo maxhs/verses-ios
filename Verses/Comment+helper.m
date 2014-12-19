@@ -8,6 +8,7 @@
 
 #import "Comment+helper.h"
 #import "User+helper.h"
+#import <MagicalRecord/CoreData+MagicalRecord.h>
 
 @implementation Comment (helper)
 - (void)populateFromDict:(NSDictionary*)dictionary {

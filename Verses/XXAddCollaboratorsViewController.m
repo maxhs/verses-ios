@@ -6,6 +6,7 @@
 //  Copyright (c) 2014 Verses. All rights reserved.
 //
 
+#import "XXAppDelegate.h"
 #import "XXAddCollaboratorsViewController.h"
 #import <AddressBook/AddressBook.h>
 #import "XXAddressBookContactCell.h"

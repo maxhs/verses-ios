@@ -7,6 +7,8 @@
 //
 
 #import "XXBookmarkCell.h"
+#import "Story+helper.h"
+#import "Constants.h"
 
 @implementation XXBookmarkCell
 

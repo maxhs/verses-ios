@@ -5,7 +5,7 @@
 //  Created by Max Haines-Stiles on 6/28/14.
 //  Copyright (c) 2014 Verses. All rights reserved.
 //
-
+#import "XXAppDelegate.h"
 #import "XXManageCircleViewController.h"
 #import "Circle+helper.h"
 #import "XXNewCircleCell.h"

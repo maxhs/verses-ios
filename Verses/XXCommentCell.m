@@ -6,6 +6,7 @@
 //  Copyright (c) 2014 Verses. All rights reserved.
 //
 
+#import "Constants.h"
 #import "XXCommentCell.h"
 
 @implementation XXCommentCell

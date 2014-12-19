@@ -6,6 +6,7 @@
 //  Copyright (c) 2013 Verses. All rights reserved.
 //
 
+#import "XXAppDelegate.h"
 #import "XXStoryViewController.h"
 #import "XXStoryInfoViewController.h"
 #import "XXStoryCell.h"
@@ -1085,8 +1086,8 @@
 }
 
 - (void)loadPage:(NSInteger)newPage{
-    if (multiPage && newPage > 0 && ![visiblePages containsObject:[NSNumber numberWithInt:newPage]]){
-        NSLog(@"attributed page count: %d, new page: %d",_attributedPages.count, newPage);
+    if (multiPage && newPage > 0 && ![visiblePages containsObject:[NSNumber numberWithInteger:newPage]]){
+        NSLog(@"attributed page count: %lu, new page: %ld",(unsigned long)_attributedPages.count, (long)newPage);
         XXTextView *textView;
         if (_attributedPages.count > newPage){
             NSLog(@"object pulled from attributed pages: %@",[_attributedPages objectAtIndex:newPage-1]);
@@ -1134,19 +1135,19 @@
         [textView setTag:newPage];
         [_scrollView addSubview:textView];
 
-        [visiblePages addObject:[NSNumber numberWithInt:newPage]];
+        [visiblePages addObject:[NSNumber numberWithInteger:newPage]];
         //NSLog(@"visible pages: %d for page: %d",visiblePages.count,newPage);
     }
 }
 
 - (void)removeNonVisible {
-    NSLog(@"removing non visible textviews, current page is: %d",page);
+    NSLog(@"removing non visible textviews, current page is: %ld",(long)page);
     for (id view in _scrollView.subviews) {
         if ([view isKindOfClass:[XXTextView class]]){
             XXTextView *textView = (XXTextView*)view;
             if (textView.tag != page && textView.tag != page-1 && textView.tag != page+1 ){
                 [view removeFromSuperview];
-                [visiblePages removeObject:[NSNumber numberWithInt:textView.tag]];
+                [visiblePages removeObject:[NSNumber numberWithInteger:textView.tag]];
             }
         }
     }

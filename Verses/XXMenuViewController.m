@@ -6,6 +6,7 @@
 //  Copyright (c) 2013 Verses. All rights reserved.
 //
 
+#import "XXAppDelegate.h"
 #import "XXMenuViewController.h"
 #import "XXLoginController.h"
 #import "XXNoRotateNavController.h"
@@ -242,7 +243,7 @@
                 
                 if (count < 30) {
                     canLoadMore = NO;
-                    NSLog(@"Can't load more, we now have %i notifications", currentUser.notifications.count);
+                    NSLog(@"Can't load more, we now have %lu notifications", (unsigned long)currentUser.notifications.count);
                 }
                 [ProgressHUD dismiss];
                 loading = NO;

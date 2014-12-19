@@ -156,7 +156,7 @@
         NSPredicate *ownerPredicate = [NSPredicate predicateWithFormat:@"ownerId != %@",[[NSUserDefaults standardUserDefaults] objectForKey:kUserDefaultsId]];
         NSPredicate *compoundPredicate = [NSCompoundPredicate andPredicateWithSubpredicates:@[userPredicate,ownerPredicate]];
         _sharedStories = [Story MR_findAllSortedBy:@"updatedDate" ascending:NO withPredicate:compoundPredicate inContext:[NSManagedObjectContext MR_defaultContext]].mutableCopy;
-        NSLog(@"total shared stories count: %d",_sharedStories.count);
+        NSLog(@"total shared stories count: %lu",(unsigned long)_sharedStories.count);
     } else if (_trending){
         if (_trendingStories.count) [_trendingStories removeAllObjects];
         NSPredicate *predicate = [NSPredicate predicateWithFormat:@"trendingCount != %@ and publishedDate != %@",[NSNumber numberWithInt:0], [NSDate dateWithTimeIntervalSince1970:0]];
@@ -561,10 +561,10 @@
     if (lastStory){
         [manager GET:[NSString stringWithFormat:@"%@/stories",kAPIBaseUrl] parameters:@{@"before_date":[NSNumber numberWithDouble:[lastStory.publishedDate timeIntervalSince1970]], @"count":@"10"} success:^(AFHTTPRequestOperation *operation, id responseObject) {
             //NSLog(@"more stories response: %@",responseObject);
-            int currentCount = _stories.count;
+            NSUInteger currentCount = _stories.count;
             NSArray *newStories = [self updateLocalStories:[responseObject objectForKey:@"stories"]];
             NSMutableArray *indexesToInsert = [NSMutableArray array];
-            for (int i = currentCount; i < newStories.count+currentCount; i++){
+            for (NSInteger i = currentCount; i < newStories.count+currentCount; i++){
                 [indexesToInsert addObject:[NSIndexPath indexPathForRow:i inSection:0]];
             }
             if (newStories.count < 10) {
@@ -594,15 +594,15 @@
     if (lastStory){
         [manager GET:[NSString stringWithFormat:@"%@/stories/featured",kAPIBaseUrl] parameters:@{@"before_date":[NSNumber numberWithDouble:[lastStory.updatedDate timeIntervalSince1970]], @"count":@"10"} success:^(AFHTTPRequestOperation *operation, id responseObject) {
             //NSLog(@"more featured stories response: %@",responseObject);
-            int currentCount = _featuredStories.count;
+            NSUInteger currentCount = _featuredStories.count;
             NSArray *newStories = [self updateLocalStories:[responseObject objectForKey:@"stories"]];
             NSMutableArray *indexesToInsert = [NSMutableArray array];
-            for (int i = currentCount; i < newStories.count+currentCount; i++){
+            for (NSUInteger i = currentCount; i < newStories.count+currentCount; i++){
                 [indexesToInsert addObject:[NSIndexPath indexPathForRow:i inSection:0]];
             }
             if (newStories.count < 10) {
                 canLoadMoreFeatured = NO;
-                NSLog(@"Can't load more featured, we now have %i stories.", _featuredStories.count);
+                NSLog(@"Can't load more featured, we now have %lu stories.", (unsigned long)_featuredStories.count);
             }
             
             if (self.tableView.numberOfSections){
@@ -657,16 +657,16 @@
     if (lastStory){
         [manager GET:[NSString stringWithFormat:@"%@/stories/shared",kAPIBaseUrl] parameters:@{@"before_date":[NSNumber numberWithDouble:[lastStory.updatedDate timeIntervalSince1970]], @"count":@"10",@"user_id":[[NSUserDefaults standardUserDefaults] objectForKey:kUserDefaultsId]} success:^(AFHTTPRequestOperation *operation, id responseObject) {
             //NSLog(@"more shared stories response: %@",responseObject);
-            int currentCount = _sharedStories.count;
+            NSUInteger currentCount = _sharedStories.count;
             NSArray *newStories = [self updateLocalStories:[responseObject objectForKey:@"stories"]];
             NSMutableArray *indexesToInsert = [NSMutableArray array];
-            for (int i = currentCount; i < newStories.count + currentCount; i++){
+            for (NSUInteger i = currentCount; i < newStories.count + currentCount; i++){
                 [indexesToInsert addObject:[NSIndexPath indexPathForRow:i inSection:0]];
             }
             
             if (newStories.count < 10) {
                 canLoadMoreShared = NO;
-                NSLog(@"can't load more shared, we now have %i stories", _sharedStories.count);
+                NSLog(@"can't load more shared, we now have %lu stories", (unsigned long)_sharedStories.count);
             }
             if (newStories.count){
                 if (self.tableView.numberOfSections > 0){

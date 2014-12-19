@@ -8,14 +8,8 @@
 
 #import <Foundation/Foundation.h>
 #import <CoreData/CoreData.h>
-#import "Photo+helper.h"
-#import "Notification+helper.h"
-#import "Bookmark+helper.h"
-#import "Story+helper.h"
-#import "Circle+helper.h"
-#import "Contribution+helper.h"
-#import "Comment+helper.h"
-#import "Feedback+helper.h"
+
+@class Feedback, Contribution, Photo, Notification, Bookmark, Story, Circle, Contribution, Comment;
 
 @interface User : NSManagedObject
 
@@ -25,6 +19,7 @@
 @property (nonatomic, retain) NSString * dayJob;
 @property (nonatomic, retain) NSString * email;
 @property (nonatomic, retain) NSString * phone;
+@property (nonatomic, retain) NSString * mobileToken;
 @property (nonatomic, retain) NSString * firstName;
 @property (nonatomic, retain) NSNumber * identifier;
 @property (nonatomic, retain) NSString * lastName;

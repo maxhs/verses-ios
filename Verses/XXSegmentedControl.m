@@ -7,6 +7,7 @@
 //
 
 #import "XXSegmentedControl.h"
+#import "Constants.h"
 
 @interface XXSegmentedControl () {
     BOOL _settingUp;

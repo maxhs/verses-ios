@@ -7,6 +7,7 @@
 //
 
 #import "XXSlotCell.h"
+#import "Constants.h"
 
 @implementation XXSlotCell {
     CGFloat width;

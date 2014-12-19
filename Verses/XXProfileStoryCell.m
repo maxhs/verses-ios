@@ -7,6 +7,8 @@
 //
 
 #import "XXProfileStoryCell.h"
+#import "Story+helper.h"
+#import "Constants.h"
 
 @implementation XXProfileStoryCell
 

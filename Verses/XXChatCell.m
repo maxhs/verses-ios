@@ -9,6 +9,8 @@
 #import "XXChatCell.h"
 #import "XXTextStorage.h"
 #import <SDWebImage/UIButton+WebCache.h>
+#import "Constants.h"
+#import "User+helper.h"
 
 @interface XXChatCell()
 

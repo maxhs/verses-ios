@@ -6,6 +6,7 @@
 //  Copyright (c) 2014 Verses. All rights reserved.
 //
 
+#import "XXAppDelegate.h"
 #import "XXCircleDetailViewController.h"
 #import "XXChatCell.h"
 #import "XXCircleDetailsCell.h"
@@ -53,7 +54,7 @@
     if (_circle.stories.count == 1){
         storyCount = @"1 Story";
     } else {
-        storyCount = [NSString stringWithFormat:@"%i Stories",_circle.stories.count];
+        storyCount = [NSString stringWithFormat:@"%lu Stories",(unsigned long)_circle.stories.count];
     }
     _circleControl = [[XXSegmentedControl alloc] initWithItems:@[@"Back",storyCount,@"Details",@"Chat"]];
     _circleControl.delegate = self;
@@ -131,7 +132,7 @@
             if (_stories.count == 1){
                 storyCount = @"1 Story";
             } else {
-                storyCount = [NSString stringWithFormat:@"%i Stories",_stories.count];
+                storyCount = [NSString stringWithFormat:@"%lu Stories",(unsigned long)_stories.count];
             }
             
             [_circleControl setTitle:storyCount withImage:nil forSegmentAtIndex:1];

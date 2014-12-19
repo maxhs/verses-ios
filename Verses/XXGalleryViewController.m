@@ -6,6 +6,7 @@
 //  Copyright (c) 2014 Verses. All rights reserved.
 //
 
+#import "XXAppDelegate.h"
 #import "XXGalleryViewController.h"
 #import "Photo+helper.h"
 #import "XXPhotoCollectionCell.h"

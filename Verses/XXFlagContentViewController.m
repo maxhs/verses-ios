@@ -6,10 +6,12 @@
 //  Copyright (c) 2014 Verses. All rights reserved.
 //
 
+#import "XXAppDelegate.h"
 #import "XXFlagContentViewController.h"
 #import "XXAlert.h"
 #import "XXLoginController.h"
 #import "XXNoRotateNavController.h"
+#import "Constants.h"
 
 @interface XXFlagContentViewController () {
     UIBarButtonItem *backButton;

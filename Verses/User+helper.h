@@ -7,6 +7,13 @@
 //
 
 #import "User.h"
+#import "Photo+helper.h"
+#import "Notification+helper.h"
+#import "Bookmark+helper.h"
+#import "Story+helper.h"
+#import "Circle+helper.h"
+#import "Contribution+helper.h"
+#import "Feedback+helper.h"
 
 @interface User (helper)
 - (void)populateFromDict:(NSDictionary*)dict;

@@ -7,6 +7,8 @@
 //
 
 #import "XXWebViewController.h"
+#import "Utilities.h"
+#import "ProgressHUD.h"
 
 @interface XXWebViewController () {
     UIBarButtonItem *backButton;

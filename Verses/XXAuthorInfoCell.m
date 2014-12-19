@@ -7,6 +7,7 @@
 //
 
 #import "XXAuthorInfoCell.h"
+#import "Constants.h"
 #import <SDWebImage/UIButton+WebCache.h>
 
 @implementation XXAuthorInfoCell

@@ -6,6 +6,7 @@
 //  Copyright (c) 2014 Verses. All rights reserved.
 //
 
+#import "XXAppDelegate.h"
 #import "XXProfileCell.h"
 #import "UIImage+ImageEffects.h"
 #import <SDWebImage/UIButton+WebCache.h>
@@ -135,7 +136,7 @@
 
 - (void)subscribe:(UIButton*)button{
     if ([[NSUserDefaults standardUserDefaults] objectForKey:kUserDefaultsId]){
-        [[(XXAppDelegate*)[UIApplication sharedApplication].delegate manager] POST:[NSString stringWithFormat:@"%@/users/%d/subscribe",kAPIBaseUrl,button.tag] parameters:@{@"user_id":[[NSUserDefaults standardUserDefaults] objectForKey:kUserDefaultsId]} success:^(AFHTTPRequestOperation *operation, id responseObject) {
+        [[(XXAppDelegate*)[UIApplication sharedApplication].delegate manager] POST:[NSString stringWithFormat:@"%@/users/%ld/subscribe",kAPIBaseUrl,(long)button.tag] parameters:@{@"user_id":[[NSUserDefaults standardUserDefaults] objectForKey:kUserDefaultsId]} success:^(AFHTTPRequestOperation *operation, id responseObject) {
             if ([responseObject objectForKey:@"success"]){
                 [_subscribeButton setTitle:@"Unsubscribe" forState:UIControlStateNormal];
                 [_subscribeButton removeTarget:nil action:NULL forControlEvents:UIControlEventAllEvents];
@@ -152,7 +153,7 @@
 
 - (void)unsubscribe:(UIButton*)button{
     if ([[NSUserDefaults standardUserDefaults] objectForKey:kUserDefaultsId]){
-        [[(XXAppDelegate*)[UIApplication sharedApplication].delegate manager] POST:[NSString stringWithFormat:@"%@/users/%d/unsubscribe",kAPIBaseUrl,button.tag] parameters:@{@"user_id":[[NSUserDefaults standardUserDefaults] objectForKey:kUserDefaultsId]} success:^(AFHTTPRequestOperation *operation, id responseObject) {
+        [[(XXAppDelegate*)[UIApplication sharedApplication].delegate manager] POST:[NSString stringWithFormat:@"%@/users/%ld/unsubscribe",kAPIBaseUrl,(long)button.tag] parameters:@{@"user_id":[[NSUserDefaults standardUserDefaults] objectForKey:kUserDefaultsId]} success:^(AFHTTPRequestOperation *operation, id responseObject) {
             if ([responseObject objectForKey:@"success"]){
                 [_subscribeButton setTitle:@"Subscribe" forState:UIControlStateNormal];
                 [_subscribeButton removeTarget:nil action:NULL forControlEvents:UIControlEventAllEvents];

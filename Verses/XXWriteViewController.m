@@ -6,6 +6,7 @@
 //  Copyright (c) 2013 Verses. All rights reserved.
 //
 
+#import "XXAppDelegate.h"
 #import "XXWriteViewController.h"
 #import "XXWritingCell.h"
 #import "XXWritingTitleCell.h"
@@ -583,7 +584,7 @@
                         }];
             }
             else {
-                NSLog(@"saved image failed.\nerror code %i\n%@", error.code, [error localizedDescription]);
+                NSLog(@"saved image failed.\nerror code %li\n%@", (long)error.code, [error localizedDescription]);
             }
         }];
     }
@@ -1099,7 +1100,7 @@
 }
 
 - (void)reload:(UIButton*)button {
-    NSLog(@"should be reloading story with section at index: %d",button.tag);
+    NSLog(@"should be reloading story with section at index: %ld",(long)button.tag);
     //[self resetStoryBody];
     
     if (button.tag > 0){

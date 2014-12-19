@@ -9,7 +9,7 @@
 #import <Foundation/Foundation.h>
 #import <CoreData/CoreData.h>
 
-@class Contribution, Story;
+@class Contribution, Story, User;
 
 @interface Bookmark : NSManagedObject
 

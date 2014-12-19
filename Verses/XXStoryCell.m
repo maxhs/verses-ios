@@ -7,6 +7,7 @@
 //
 
 #import "XXStoryCell.h"
+#import "Constants.h"
 #import "Photo+helper.h"
 #import <SDWebImage/UIButton+WebCache.h>
 #import <DTCoreText/DTCoreText.h>

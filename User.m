@@ -15,6 +15,7 @@
 @dynamic bio;
 @dynamic dayJob;
 @dynamic email;
+@dynamic mobileToken;
 @dynamic phone;
 @dynamic firstName;
 @dynamic identifier;

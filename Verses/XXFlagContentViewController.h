@@ -7,6 +7,7 @@
 //
 
 #import <UIKit/UIKit.h>
+#import "Story+helper.h"
 
 @interface XXFlagContentViewController : UIViewController <UITableViewDataSource, UITableViewDelegate>
 @property (weak, nonatomic) IBOutlet UITableView *tableView;

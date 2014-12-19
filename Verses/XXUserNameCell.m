@@ -8,6 +8,7 @@
 
 #import "XXUserNameCell.h"
 #import <SDWebImage/UIButton+WebCache.h>
+#import "Constants.h"
 
 @implementation XXUserNameCell
 
@@ -31,7 +32,7 @@
     [self.nameLabel setText:user.penName];
     [self.nameLabel setFont:[UIFont fontWithName:kSourceSansProSemibold size:18]];
     [self.nameLabel setTextColor:[UIColor whiteColor]];
-    [self.storyLabel setText:[NSString stringWithFormat:@"%@ stories  |  %d contacts",user.storyCount,user.contacts.count]];
+    [self.storyLabel setText:[NSString stringWithFormat:@"%@ stories  |  %lu contacts",user.storyCount,(unsigned long)user.contacts.count]];
     [self.storyLabel setFont:[UIFont fontWithName:kSourceSansProRegular size:14]];
     
 

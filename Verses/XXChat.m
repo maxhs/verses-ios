@@ -7,6 +7,7 @@
 //
 
 #import "XXChat.h"
+#import "Constants.h"
 
 @interface XXChat ()
 

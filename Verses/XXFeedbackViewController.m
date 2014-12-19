@@ -6,6 +6,7 @@
 //  Copyright (c) 2014 Verses. All rights reserved.
 //
 
+#import "XXAppDelegate.h"
 #import "XXFeedbackViewController.h"
 #import "XXFeedbackCell.h"
 #import "Feedback.h"

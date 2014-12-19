@@ -7,6 +7,7 @@
 //
 
 #import "XXLeaveFeedbackCell.h"
+#import "Constants.h"
 
 @implementation XXLeaveFeedbackCell
 

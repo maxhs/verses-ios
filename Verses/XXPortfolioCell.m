@@ -12,6 +12,7 @@
 #import <DTCoreText/DTCoreText.h>
 #import "UIImage+ImageEffects.h"
 #import "XXTextStorage.h"
+#import "Constants.h"
 
 @implementation XXPortfolioCell {
     UITapGestureRecognizer *tapGesture;

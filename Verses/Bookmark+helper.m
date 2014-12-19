@@ -8,6 +8,7 @@
 
 #import "Bookmark+helper.h"
 #import "User+helper.h"
+#import <MagicalRecord/CoreData+MagicalRecord.h>
 
 @implementation Bookmark (helper)
 - (void)populateFromDict:(NSDictionary*)dictionary {

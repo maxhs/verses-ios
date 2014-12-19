@@ -7,6 +7,7 @@
 //
 
 #import "XXAddressBookContactCell.h"
+#import "Constants.h"
 
 @implementation XXAddressBookContactCell
 

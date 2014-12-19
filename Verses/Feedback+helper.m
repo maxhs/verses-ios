@@ -9,6 +9,7 @@
 #import "Feedback+helper.h"
 #import "User+helper.h"
 #import "Comment+helper.h"
+#import <MagicalRecord/CoreData+MagicalRecord.h>
 
 @implementation Feedback (helper)
 - (void)populateFromDict:(NSDictionary*)dictionary {

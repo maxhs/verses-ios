@@ -7,8 +7,7 @@
 //
 
 #import "XXTextView.h"
-#import "UIFontDescriptor+CrimsonText.h"
-#import "UIFontDescriptor+SourceSansPro.h"
+#import "Constants.h"
 
 @implementation XXTextView {
     NSString *_selectedText;

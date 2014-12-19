@@ -17,6 +17,9 @@
     if ([dictionary objectForKey:@"pen_name"] && [dictionary objectForKey:@"pen_name"] != [NSNull null]) {
         self.penName = [dictionary objectForKey:@"pen_name"];
     }
+    if ([dictionary objectForKey:@"mobile_token"] && [dictionary objectForKey:@"mobile_token"] != [NSNull null]) {
+        self.mobileToken = [dictionary objectForKey:@"mobile_token"];
+    }
     if ([dictionary objectForKey:@"first_name"] && [dictionary objectForKey:@"first_name"] != [NSNull null]) {
         self.firstName = [dictionary objectForKey:@"first_name"];
     }

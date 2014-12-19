@@ -7,6 +7,7 @@
 //
 
 #import <UIKit/UIKit.h>
+#import "User+helper.h"
 
 @interface XXCirclesViewController : UIViewController <UITableViewDataSource, UITableViewDelegate>
 

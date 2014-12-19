@@ -21,7 +21,7 @@
 
 static NSString * const kShakeAnimationKey = @"XXShakeItNow";
 
-@interface XXLoginController () <UITextFieldDelegate, UIAlertViewDelegate,UIViewControllerTransitioningDelegate> {
+@interface XXLoginController () <UITextFieldDelegate, UIAlertViewDelegate,UIViewControllerTransitioningDelegate,XXLoginDelegate> {
     AFHTTPRequestOperationManager *manager;
     XXAppDelegate *delegate;
     CGRect screen;
@@ -52,8 +52,9 @@ static NSString * const kShakeAnimationKey = @"XXShakeItNow";
 {
     [super viewDidLoad];
     screen = [UIScreen mainScreen].bounds;
-	manager = [AFHTTPRequestOperationManager manager];
     delegate = (XXAppDelegate *)[[UIApplication sharedApplication] delegate];
+    delegate.loginDelegate = self;
+    manager = delegate.manager;
     [self.emailTextField setFont:[UIFont fontWithName:kSourceSansProLight size:18]];
     [self.passwordTextField setFont:[UIFont fontWithName:kSourceSansProLight size:18]];
     [self.registerEmailTextField setFont:[UIFont fontWithName:kSourceSansProLight size:18]];
@@ -420,91 +421,27 @@ static NSString * const kShakeAnimationKey = @"XXShakeItNow";
             [parameters setObject:[[NSUserDefaults standardUserDefaults] objectForKey:kUserDefaultsDeviceToken] forKey:@"device_token"];
         }
 
-        [manager POST:[NSString stringWithFormat:@"%@/sessions", kAPIBaseUrl] parameters:@{@"user":parameters} success:^(AFHTTPRequestOperation *operation, id responseObject) {
-            
-            [self askForPushPermissions];
-            
-            //NSLog(@"success logging in: %@",responseObject);
-            NSPredicate *predicate = [NSPredicate predicateWithFormat:@"identifier == %@",[[responseObject objectForKey:@"user"] objectForKey:@"id"]];\
-            User *currentUser = [User MR_findFirstWithPredicate:predicate inContext:[NSManagedObjectContext MR_defaultContext]];
-            if (!currentUser) {
-                currentUser = [User MR_createInContext:[NSManagedObjectContext MR_defaultContext]];
-            }
-            [currentUser populateFromDict:[responseObject objectForKey:@"user"]];
-            
-            //the only purpose of this user was to store the background image. get rid of it now
-            User *blankUser = [User MR_findFirstByAttribute:@"identifier" withValue:[NSNumber numberWithInt:0] inContext:[NSManagedObjectContext MR_defaultContext]];
-            if (blankUser){
-                if (blankUser.backgroundImageView){
-                    currentUser.backgroundImageView = blankUser.backgroundImageView;
-                }
-                [blankUser MR_deleteInContext:[NSManagedObjectContext MR_defaultContext]];
-            }
-            if (currentUser.backgroundUrl.length){
-                [[[SDWebImageManager sharedManager] imageCache] clearDisk];
-                [[SDWebImageManager sharedManager] downloadImageWithURL:[NSURL URLWithString:currentUser.backgroundUrl] options:0 progress:^(NSInteger receivedSize, NSInteger expectedSize) {
-                    
-                } completed:^(UIImage *image, NSError *error, SDImageCacheType cacheType, BOOL finished, NSURL *imageURL) {
-
-                    currentUser.backgroundImageView = [[UIImageView alloc] initWithFrame:[UIScreen mainScreen].bounds];
-                    [currentUser.backgroundImageView setImage:image];
-                    [currentUser.backgroundImageView setContentMode:UIViewContentModeScaleAspectFill];
-                    [(UIImageView*)currentUser.backgroundImageView setClipsToBounds:YES];
-                    [[(XXAppDelegate*)[UIApplication sharedApplication].delegate windowBackground] setImage:image];
-                }];
-            }
-            
-            [[NSManagedObjectContext MR_defaultContext] MR_saveToPersistentStoreWithCompletion:^(BOOL success, NSError *error) {
-                delegate.currentUser = currentUser;
-                [[NSUserDefaults standardUserDefaults] setObject:currentUser.identifier forKey:kUserDefaultsId];
-                [[NSUserDefaults standardUserDefaults] setObject:currentUser.email forKey:kUserDefaultsEmail];
-                [[NSUserDefaults standardUserDefaults] setObject:currentUser.penName forKey:kUserDefaultsPenName];
-                [[NSUserDefaults standardUserDefaults] synchronize];
-                
-                //not sure if we need this one anymore since we got rid of the slot view in favor of the collectionview
-                //[[NSNotificationCenter defaultCenter] postNotificationName:@"ReloadGuide" object:nil];
-                [[NSNotificationCenter defaultCenter] postNotificationName:@"ReloadMenu" object:nil];
-                [self cancel];
-            }];
-            
-        } failure:^(AFHTTPRequestOperation *operation, NSError *error) {
-            [ProgressHUD dismiss];
-            NSLog(@"Response string: %@",operation.responseString);
-            if (operation.response.statusCode == 401) {
-                if ([operation.responseString isEqualToString:@"Incorrect password"]){
-                    [self addShakeAnimationForView:self.passwordTextField withDuration:.77];
-                    [self addShakeAnimationForView:self.registerPasswordTextField withDuration:.77];
-                
-                } else if ([operation.responseString isEqualToString:@"User already exists"]) {
-                    [self addShakeAnimationForView:self.registerEmailTextField withDuration:.77];
-                    [self alert:@"An account with that email address already exists."];
-    
-                } else if ([operation.responseString isEqualToString:@"No email"]) {
-                    [self addShakeAnimationForView:self.emailTextField withDuration:.77];
-                    //[self alert:@"Sorry, but we couldn't find an account for that email address."];
-                } else if ([operation.responseString isEqualToString:@"Pen name taken"]) {
-                    
-                    [self alert:@"Sorry, but that pen name has already been taken."];
-                    [self addShakeAnimationForView:self.registerPenNameTextField withDuration:.77];
-                
-                } else {
-                    [[[UIAlertView alloc] initWithTitle:@"Uh oh" message:@"Something went wrong while trying to log you in." delegate:self cancelButtonTitle:@"Okay" otherButtonTitles:nil] show];
-                }
-            } else {
-                [[[UIAlertView alloc] initWithTitle:@"Sorry" message:@"Something went wrong while trying to log you in." delegate:self cancelButtonTitle:@"Okay" otherButtonTitles:nil] show];
-            }
-        }];
+        [delegate connect:parameters withLoginUI:YES];
     }
 }
 
-- (void)askForPushPermissions {
-    //only ask for push notifications when a user has successfully logged in
-    if ([[[UIDevice currentDevice] systemVersion] floatValue] >= 8.f){
-        [[UIApplication sharedApplication] registerUserNotificationSettings:[UIUserNotificationSettings settingsForTypes:(UIUserNotificationTypeSound | UIUserNotificationTypeAlert | UIUserNotificationTypeBadge) categories:nil]];
-        [[UIApplication sharedApplication] registerForRemoteNotifications];
-    } else {
-        [[UIApplication sharedApplication] registerForRemoteNotificationTypes:(UIRemoteNotificationTypeAlert | UIRemoteNotificationTypeBadge | UIRemoteNotificationTypeSound)];
-    }
+- (void)incorrectEmail {
+    [self addShakeAnimationForView:self.emailTextField withDuration:.77];
+}
+
+- (void)incorrectPassword {
+    [self addShakeAnimationForView:self.passwordTextField withDuration:.77];
+    [self addShakeAnimationForView:self.registerPasswordTextField withDuration:.77];
+}
+
+- (void)penNameTaken {
+    [self alert:@"Sorry, but that pen name has already been taken."];
+    [self addShakeAnimationForView:self.registerPenNameTextField withDuration:.77];
+}
+
+- (void)userAlreadyExists {
+    [self addShakeAnimationForView:self.registerEmailTextField withDuration:.77];
+    [self alert:@"An account with that email address already exists."];
 }
 
 - (void)alert:(NSString*)alert {
@@ -513,6 +450,10 @@ static NSString * const kShakeAnimationKey = @"XXShakeItNow";
     dispatch_after(popTime, dispatch_get_main_queue(), ^(void){
         [XXAlert show:alert withTime:2.f];
     });
+}
+
+- (void)loginSuccessful {
+    [self cancel];
 }
 
 - (IBAction)cancel{

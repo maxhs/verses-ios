@@ -7,6 +7,7 @@
 //
 
 #import "XXCircleCell.h"
+#import "Constants.h"
 
 @implementation XXCircleCell
 

@@ -7,6 +7,8 @@
 //
 
 #import "XXWritingTitleCell.h"
+#import "Story+helper.h"
+#import "Constants.h"
 
 @implementation XXWritingTitleCell
 

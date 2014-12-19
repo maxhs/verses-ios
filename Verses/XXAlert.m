@@ -7,10 +7,13 @@
 //
 
 #import "XXAlert.h"
+#import "Constants.h"
 #import "UIImage+ImageEffects.h"
 
 @interface XXAlert () {
     CGFloat dismissTime;
+    CGFloat width;
+    CGFloat height;
 }
 @end
 
@@ -18,41 +21,34 @@
 
 @synthesize window, background, label;
 
-+ (XXAlert *)shared
-{
++ (XXAlert *)shared {
 	static dispatch_once_t once = 0;
 	static XXAlert *alert;
 	dispatch_once(&once, ^{ alert = [[XXAlert alloc] init]; });
 	return alert;
 }
 
-+ (void)dismiss
-{
++ (void)dismiss {
 	[[self shared] hideAlert];
 }
 
-+ (void)show:(NSString *)status withTime:(CGFloat)time
-{
++ (void)show:(NSString *)status withTime:(CGFloat)time {
 	[[self shared] make:status spin:YES hide:NO withTime:time];
 }
 
-+ (void)show:(NSString *)status withTime:(CGFloat)time andOffset:(CGPoint)centerOffset
-{
++ (void)show:(NSString *)status withTime:(CGFloat)time andOffset:(CGPoint)centerOffset {
 	[[self shared] make:status spin:YES hide:NO withTime:time];
 }
 
-+ (void)showSuccess:(NSString *)status
-{
++ (void)showSuccess:(NSString *)status {
 	//[[self shared] make:status imgage:HUD_IMAGE_SUCCESS spin:NO hide:YES];
 }
 
-+ (void)showError:(NSString *)status
-{
++ (void)showError:(NSString *)status {
 	//[[self shared] make:status imgage:HUD_IMAGE_ERROR spin:NO hide:YES];
 }
 
-- (id)init
-{
+- (id)init {
 	self = [super initWithFrame:[[UIScreen mainScreen] bounds]];
 	id<UIApplicationDelegate> delegate = [[UIApplication sharedApplication] delegate];
 	if ([delegate respondsToSelector:@selector(window)])
@@ -63,8 +59,7 @@
 	return self;
 }
 
-- (void)make:(NSString *)status spin:(BOOL)spin hide:(BOOL)hide withTime:(CGFloat)time
-{
+- (void)make:(NSString *)status spin:(BOOL)spin hide:(BOOL)hide withTime:(CGFloat)time {
 	dismissTime = time;
     [self create];
 	label.text = status;
@@ -73,10 +68,8 @@
 	[self showAlert];
 }
 
-- (void)create
-{
-	if (background == nil)
-	{
+- (void)create {
+	if (background == nil) {
         background = [[UIImageView alloc] initWithImage:[self blurredSnapshot]];
         [background setAutoresizingMask:UIViewAutoresizingFlexibleWidth];
         [background setFrame:self.window.frame];
@@ -84,8 +77,7 @@
         [self addSubview:background];
 	}
 
-	if (label == nil)
-	{
+	if (label == nil) {
 		label = [[UILabel alloc] initWithFrame:CGRectZero];
         if ([[NSUserDefaults standardUserDefaults] boolForKey:kDarkBackground]){
             label.font = [UIFont fontWithName:kSourceSansProRegular size:20];
@@ -104,13 +96,17 @@
 }
 
 -(UIImage *)blurredSnapshot {
-    if (UIInterfaceOrientationIsPortrait([[UIApplication sharedApplication] statusBarOrientation])){
-        UIGraphicsBeginImageContextWithOptions([UIScreen mainScreen].bounds.size, NO, self.window.screen.scale);
-        [self.window drawViewHierarchyInRect:self.window.frame afterScreenUpdates:YES];
+    
+    if ([[[UIDevice currentDevice] systemVersion] floatValue] >= 8.f || UIInterfaceOrientationIsPortrait([[UIApplication sharedApplication] statusBarOrientation])){
+        width = screenWidth();
+        height = screenHeight();
     } else {
-        UIGraphicsBeginImageContextWithOptions(CGSizeMake(screenHeight(), screenWidth()), NO, self.window.screen.scale);
-        [self.window drawViewHierarchyInRect:CGRectMake(0, 0, screenHeight(), screenWidth()) afterScreenUpdates:YES];
+        width = screenHeight();
+        height = screenWidth();
     }
+    
+    UIGraphicsBeginImageContextWithOptions(CGSizeMake(width, height), NO, self.window.screen.scale);
+    [self.window drawViewHierarchyInRect:CGRectMake(0, 0, width, height) afterScreenUpdates:NO];
     
     UIImage *snapshotImage = UIGraphicsGetImageFromCurrentImageContext();
     UIImage *blurredSnapshotImage;
@@ -123,22 +119,20 @@
     return blurredSnapshotImage;
 }
 
-- (void)rotate:(NSNotification *)notification
-{
+- (void)rotate:(NSNotification *)notification {
 	[self orient];
 }
 
-- (void)orient
-{
+- (void)orient {
 	CGFloat rotate = 0.f;
-	//---------------------------------------------------------------------------------------------------------------------------------------------
+    
 	UIInterfaceOrientation orient = [[UIApplication sharedApplication] statusBarOrientation];
-	//---------------------------------------------------------------------------------------------------------------------------------------------
+    
 	if (orient == UIInterfaceOrientationPortrait)			rotate = 0.0;
 	if (orient == UIInterfaceOrientationPortraitUpsideDown)	rotate = M_PI;
 	if (orient == UIInterfaceOrientationLandscapeLeft)		rotate = - M_PI_2;
 	if (orient == UIInterfaceOrientationLandscapeRight)		rotate = + M_PI_2;
-	//---------------------------------------------------------------------------------------------------------------------------------------------
+    
 	background.transform = CGAffineTransformMakeRotation(rotate);
 }
 
@@ -157,8 +151,7 @@
 }
 
 - (void)hideAlert {
-	if (self.alpha == 1)
-	{
+	if (self.alpha == 1) {
 		NSUInteger options = UIViewAnimationOptionAllowUserInteraction | UIViewAnimationCurveEaseIn;
 		[UIView animateWithDuration:0.3 delay:0 options:options animations:^{
 			background.alpha = 0;
@@ -169,15 +162,13 @@
 	}
 }
 
-- (void)destroy
-{
+- (void)destroy {
 	[[NSNotificationCenter defaultCenter] removeObserver:self name:UIDeviceOrientationDidChangeNotification object:nil];
 	[label removeFromSuperview];	label = nil;
 	[background removeFromSuperview];	background = nil;
 }
 
-- (void)timedHide
-{
+- (void)timedHide {
 	@autoreleasepool
 	{
 		double length = label.text.length;

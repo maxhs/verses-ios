@@ -6,10 +6,12 @@
 //  Copyright (c) 2014 Verses. All rights reserved.
 //
 
+#import "XXAppDelegate.h"
 #import "XXAddFeedbackViewController.h"
 #import "XXLeaveFeedbackCell.h"
 #import "XXLoginController.h"
 #import "XXAlert.h"
+#import "Constants.h"
 
 @interface XXAddFeedbackViewController () {
     UITextView *feedbackTextView;

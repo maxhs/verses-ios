@@ -7,6 +7,7 @@
 //
 
 #import <UIKit/UIKit.h>
+#import "Circle+helper.h"
 
 @interface XXManageCircleViewController : UIViewController <UITableViewDataSource, UITableViewDelegate>
 

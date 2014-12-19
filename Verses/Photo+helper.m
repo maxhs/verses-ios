@@ -7,6 +7,8 @@
 //
 
 #import "Photo+helper.h"
+#import <MagicalRecord/CoreData+MagicalRecord.h>
+#import "Contribution+helper.h"
 
 @implementation Photo (helper)
 - (void)populateFromDict:(NSDictionary*)dictionary {

@@ -28,6 +28,7 @@
     XXStoriesViewController *welcome;
     NSTimer *timer;
 }
+
 @property (nonatomic, strong) UIImageView *defaultBackground;
 @end
 
@@ -38,15 +39,10 @@
 @synthesize currentUser = _currentUser;
 @synthesize windowBackground = _windowBackground;
 
-- (BOOL)application:(UIApplication *)application didFinishLaunchingWithOptions:(NSDictionary *)launchOptions
-{
-    
-    [self customizeAppearance];
-    
+- (BOOL)application:(UIApplication *)application didFinishLaunchingWithOptions:(NSDictionary *)launchOptions {
     [MagicalRecord setShouldDeleteStoreOnModelMismatch:YES];
     [MagicalRecord setupAutoMigratingCoreDataStack];
     
-    //[[Crashlytics sharedInstance] setDebugMode:YES];
     [Crashlytics startWithAPIKey:@"5c452a0455dfb4bdd2ee98051181f661006365a4"];
     [Mixpanel sharedInstanceWithToken:MIXPANEL_TOKEN];
     
@@ -67,8 +63,12 @@
         }
     }];
     
-    if ([[NSUserDefaults standardUserDefaults] objectForKey:kUserDefaultsId]){
-        _currentUser = [User MR_findFirstByAttribute:@"identifier" withValue:[[NSUserDefaults standardUserDefaults] objectForKey:kUserDefaultsId] inContext:[NSManagedObjectContext MR_defaultContext]];
+    [self customizeAppearance];
+    
+    if ([[NSUserDefaults standardUserDefaults] objectForKey:kUserDefaultsMobileToken]){
+        NSMutableDictionary *parameters = [NSMutableDictionary dictionaryWithObject:[[NSUserDefaults standardUserDefaults] objectForKey:kUserDefaultsMobileToken] forKey:@"mobile_token"];
+        [self connect:parameters withLoginUI:NO];
+        NSLog(@"Auto log in from app delegate");
     } else {
         _currentUser = [User MR_findFirstByAttribute:@"identifier" withValue:[NSNumber numberWithInt:0] inContext:[NSManagedObjectContext MR_defaultContext]];
         
@@ -111,10 +111,9 @@
     
     if (launchOptions != nil && [launchOptions objectForKey:UIApplicationLaunchOptionsRemoteNotificationKey]){
         NSDictionary* dictionary = [launchOptions objectForKey:UIApplicationLaunchOptionsRemoteNotificationKey];
-        if (dictionary != nil) {
-            //NSLog(@"dictionary: %@",dictionary);
-            [self redirect:dictionary];
-        }
+        
+        if (dictionary != nil) [self redirect:dictionary];
+    
     } else {
         [self.window addSubview:self.defaultBackground];
         [self.window sendSubviewToBack:self.defaultBackground];
@@ -148,8 +147,7 @@
 
 #pragma mark - XXAppDelegate
 
-- (UIImageView *)defaultBackground
-{
+- (UIImageView *)defaultBackground {
     if (!_defaultBackground) {
         if (IDIOM == IPAD){
             if (UIInterfaceOrientationIsPortrait([[UIApplication sharedApplication] statusBarOrientation])){
@@ -184,32 +182,19 @@
         }
     }
     
-    if ([[NSUserDefaults standardUserDefaults] boolForKey:kDarkBackground]){
-        [_windowBackground setAlpha:.14];
-    } else {
-        [_windowBackground setAlpha:1];
-    }
+    [[NSUserDefaults standardUserDefaults] boolForKey:kDarkBackground] ? [_windowBackground setAlpha:.14] : [_windowBackground setAlpha:1];
     
     [_windowBackground setContentMode:UIViewContentModeScaleAspectFill];
     [self.window addSubview:_windowBackground];
     [self.window sendSubviewToBack:_windowBackground];
 }
 
--(UIImage *)blurredSnapshot {
-    UIGraphicsBeginImageContextWithOptions([UIScreen mainScreen].bounds.size, NO, self.window.screen.scale);
-    [self.window drawViewHierarchyInRect:self.window.frame afterScreenUpdates:NO];
-    UIImage *snapshotImage = UIGraphicsGetImageFromCurrentImageContext();
-    UIImage *blurredSnapshotImage = [snapshotImage applyBlurWithRadius:20 blurType:BOXFILTER tintColor:[UIColor colorWithWhite:1 alpha:.6] saturationDeltaFactor:1.8 maskImage:nil];
-    UIGraphicsEndImageContext();
-    return blurredSnapshotImage;
-}
-
 - (void)customizeAppearance {
-    for (NSString* family in [UIFont familyNames]){
+    /*for (NSString* family in [UIFont familyNames]){
         NSLog(@"%@", family);
         for (NSString* name in [UIFont fontNamesForFamilyName: family])
             NSLog(@"  %@", name);
-    }
+    }*/
     
     [[UITextField appearanceWhenContainedIn:[UISearchBar class], nil] setTextColor:[UIColor whiteColor]];
     [[UIButton appearanceWhenContainedIn:[UISearchBar class], nil] setTitleColor:[UIColor whiteColor] forState:UIControlStateNormal];
@@ -343,8 +328,7 @@
 - (BOOL)application:(UIApplication *)application
             openURL:(NSURL *)url
   sourceApplication:(NSString *)sourceApplication
-         annotation:(id)annotation
-{
+         annotation:(id)annotation {
     NSLog(@"open url: %@",url);
     if ([[url scheme] isEqualToString:kUrlScheme]) {
         if ([[url query] length]) {
@@ -384,81 +368,138 @@
     return dict;
 }
 
-- (void)application:(UIApplication*)application didRegisterForRemoteNotificationsWithDeviceToken:(NSData*)deviceToken
-{
-    //[Flurry logEvent:@"Registered For Remote Notifications"];
+- (void)connect:(NSDictionary*)parameters withLoginUI:(BOOL)showUI {
+    [_manager POST:[NSString stringWithFormat:@"%@/sessions",kAPIBaseUrl] parameters:@{@"user":parameters} success:^(AFHTTPRequestOperation *operation, id responseObject) {
+        NSLog(@"Success logging in from app delegate: %@",responseObject);
+        [self askForPushPermissions];
+        
+        //NSLog(@"success logging in: %@",responseObject);
+        NSPredicate *predicate = [NSPredicate predicateWithFormat:@"identifier == %@",[[responseObject objectForKey:@"user"] objectForKey:@"id"]];\
+        User *currentUser = [User MR_findFirstWithPredicate:predicate inContext:[NSManagedObjectContext MR_defaultContext]];
+        if (!currentUser) {
+            currentUser = [User MR_createInContext:[NSManagedObjectContext MR_defaultContext]];
+        }
+        [currentUser populateFromDict:[responseObject objectForKey:@"user"]];
+        
+        //the only purpose of this user was to store the background image. get rid of it now
+        User *blankUser = [User MR_findFirstByAttribute:@"identifier" withValue:[NSNumber numberWithInt:0] inContext:[NSManagedObjectContext MR_defaultContext]];
+        if (blankUser){
+            if (blankUser.backgroundImageView){
+                currentUser.backgroundImageView = blankUser.backgroundImageView;
+            }
+            [blankUser MR_deleteInContext:[NSManagedObjectContext MR_defaultContext]];
+        }
+        if (currentUser.backgroundUrl.length){
+            [[[SDWebImageManager sharedManager] imageCache] clearDisk];
+            [[SDWebImageManager sharedManager] downloadImageWithURL:[NSURL URLWithString:currentUser.backgroundUrl] options:0 progress:^(NSInteger receivedSize, NSInteger expectedSize) {
+                
+            } completed:^(UIImage *image, NSError *error, SDImageCacheType cacheType, BOOL finished, NSURL *imageURL) {
+                
+                currentUser.backgroundImageView = [[UIImageView alloc] initWithFrame:[UIScreen mainScreen].bounds];
+                [currentUser.backgroundImageView setImage:image];
+                [currentUser.backgroundImageView setContentMode:UIViewContentModeScaleAspectFill];
+                [(UIImageView*)currentUser.backgroundImageView setClipsToBounds:YES];
+                [_windowBackground setImage:image];
+            }];
+        }
+        
+        [[NSManagedObjectContext MR_defaultContext] MR_saveToPersistentStoreWithCompletion:^(BOOL success, NSError *error) {
+            _currentUser = currentUser;
+            [self setUserDefaults:currentUser];
+            //not sure if we need this one anymore since we got rid of the slot view in favor of the collectionview
+            //[[NSNotificationCenter defaultCenter] postNotificationName:@"ReloadGuide" object:nil];
+            [[NSNotificationCenter defaultCenter] postNotificationName:@"ReloadMenu" object:nil];
+        }];
+        
+        
+    } failure:^(AFHTTPRequestOperation *operation, NSError *error) {
+        
+        NSLog(@"Failed to log in from appdelegate. Here's the response string: %@",operation.responseString);
+        if (showUI) [ProgressHUD dismiss];
+        
+        if (operation.response.statusCode == 401) {
+            if ([operation.responseString isEqualToString:kIncorrectPassword]){
+                if (self.loginDelegate && [self.loginDelegate respondsToSelector:@selector(incorrectPassword)]) {
+                    [self.loginDelegate incorrectPassword];
+                }
+            } else if ([operation.responseString isEqualToString:kUserAlreadyExists]) {
+                if (self.loginDelegate && [self.loginDelegate respondsToSelector:@selector(userAlreadyExists)]) {
+                    [self.loginDelegate userAlreadyExists];
+                }
+            } else if ([operation.responseString isEqualToString:kNoEmail]) {
+                if (self.loginDelegate && [self.loginDelegate respondsToSelector:@selector(incorrectEmail)]) {
+                    [self.loginDelegate incorrectEmail];
+                }
+            } else if ([operation.responseString isEqualToString:kPenNameTaken]) {
+                if (self.loginDelegate && [self.loginDelegate respondsToSelector:@selector(penNameTaken)]) {
+                    [self.loginDelegate penNameTaken];
+                }
+            } else {
+                [[[UIAlertView alloc] initWithTitle:@"Uh oh" message:@"Something went wrong while trying to log you in." delegate:self cancelButtonTitle:@"Okay" otherButtonTitles:nil] show];
+            }
+        } else {
+            [[[UIAlertView alloc] initWithTitle:@"Sorry" message:@"Something went wrong while trying to log you in." delegate:self cancelButtonTitle:@"Okay" otherButtonTitles:nil] show];
+        }
+    }];
+}
+
+- (void)askForPushPermissions {
+    //only ask for push notifications when a user has successfully logged in
+    if ([[[UIDevice currentDevice] systemVersion] floatValue] >= 8.f){
+        [[UIApplication sharedApplication] registerUserNotificationSettings:[UIUserNotificationSettings settingsForTypes:(UIUserNotificationTypeSound | UIUserNotificationTypeAlert | UIUserNotificationTypeBadge) categories:nil]];
+        [[UIApplication sharedApplication] registerForRemoteNotifications];
+    } else {
+        [[UIApplication sharedApplication] registerForRemoteNotificationTypes:(UIRemoteNotificationTypeAlert | UIRemoteNotificationTypeBadge | UIRemoteNotificationTypeSound)];
+    }
+}
+
+- (void)setUserDefaults:(User*)user {
+    [[NSUserDefaults standardUserDefaults] setObject:user.identifier forKey:kUserDefaultsId];
+    [[NSUserDefaults standardUserDefaults] setObject:user.email forKey:kUserDefaultsEmail];
+    [[NSUserDefaults standardUserDefaults] setObject:user.mobileToken forKey:kUserDefaultsMobileToken];
+    [[NSUserDefaults standardUserDefaults] setObject:user.penName forKey:kUserDefaultsPenName];
+    [[NSUserDefaults standardUserDefaults] synchronize];
+}
+
+- (void)application:(UIApplication*)application didRegisterForRemoteNotificationsWithDeviceToken:(NSData*)deviceToken {
     [[NSUserDefaults standardUserDefaults] setObject:deviceToken forKey:kUserDefaultsDeviceToken];
     [[NSUserDefaults standardUserDefaults] synchronize];
     //NSLog(@"device token: %@",[[NSUserDefaults standardUserDefaults] objectForKey:kUserDefaultsDeviceToken]);
 }
 
-- (void)application:(UIApplication*)application didFailToRegisterForRemoteNotificationsWithError:(NSError*)error
-{
+- (void)application:(UIApplication*)application didFailToRegisterForRemoteNotificationsWithError:(NSError*)error {
     //[Flurry logEvent:@"Rejected Remote Notifications"];
 }
 
-- (void)applicationWillResignActive:(UIApplication *)application
-{
+- (void)applicationWillResignActive:(UIApplication *)application {
     // Sent when the application is about to move from active to inactive state. This can occur for certain types of temporary interruptions (such as an incoming phone call or SMS message) or when the user quits the application and it begins the transition to the background state.
     // Use this method to pause ongoing tasks, disable timers, and throttle down OpenGL ES frame rates. Games should use this method to pause the game.
 }
 
-- (void)applicationDidEnterBackground:(UIApplication *)application
-{
+- (void)applicationDidEnterBackground:(UIApplication *)application {
     // Use this method to release shared resources, save user data, invalidate timers, and store enough application state information to restore your application to its current state in case it is terminated later. 
     // If your application supports background execution, this method is called instead of applicationWillTerminate: when the user quits.
 }
 
-- (void)applicationWillEnterForeground:(UIApplication *)application
-{
+- (void)applicationWillEnterForeground:(UIApplication *)application {
     // Called as part of the transition from the background to the inactive state; here you can undo many of the changes made on entering the background.
 }
 
-- (void)applicationDidBecomeActive:(UIApplication *)application
-{
+- (void)applicationDidBecomeActive:(UIApplication *)application {
     if (!_currentUser && [[NSUserDefaults standardUserDefaults] objectForKey:kUserDefaultsId]){
         _currentUser = [User MR_findFirstByAttribute:@"identifier" withValue:[[NSUserDefaults standardUserDefaults] objectForKey:kUserDefaultsId] inContext:[NSManagedObjectContext MR_defaultContext]];
     }
     // Restart any tasks that were paused (or not yet started) while the application was inactive. If the application was previously in the background, optionally refresh the user interface.
-    
-    //refresh user data by signing them in again
-    /*if ([[NSUserDefaults standardUserDefaults] objectForKey:kUserDefaultsId]){
-        NSMutableDictionary *parameters = [NSMutableDictionary dictionary];
-        [parameters setObject:[[NSUserDefaults standardUserDefaults] objectForKey:kUserDefaultsEmail] forKey:@"email"];
-        if ([[NSUserDefaults standardUserDefaults] objectForKey:kUserDefaultsDeviceToken]){
-            [parameters setObject:[[NSUserDefaults standardUserDefaults] objectForKey:kUserDefaultsDeviceToken] forKey:@"device_token"];
-        }
-        
-        if ([[NSUserDefaults standardUserDefaults] objectForKey:kUserDefaultsPassword]) {
-            [parameters setObject:[[NSUserDefaults standardUserDefaults] objectForKey:kUserDefaultsPassword] forKey:@"password"];
-            [[AFHTTPRequestOperationManager manager] POST:[NSString stringWithFormat:@"%@/sessions", kAPIBaseUrl] parameters:@{@"user":parameters} success:^(AFHTTPRequestOperation *operation, id responseObject) {
-                //NSLog(@"success logging in from app delegate: %@",responseObject);
-                
-                NSManagedObjectContext *defaultContext = [NSManagedObjectContext MR_defaultContext];
-                NSPredicate *predicate = [NSPredicate predicateWithFormat:@"identifier == %@", [[responseObject objectForKey:@"user"] objectForKey:@"id"]];
-                _currentUser = [User MR_findFirstWithPredicate:predicate inContext:defaultContext];
-                if (!_currentUser) {
-                    _currentUser = [User MR_createInContext:defaultContext];
-                }
-                [_currentUser populateFromDict:[responseObject objectForKey:@"user"]];
-                
-                [[NSUserDefaults standardUserDefaults] setObject:_currentUser.identifier forKey:kUserDefaultsId];
-                [[NSUserDefaults standardUserDefaults] setObject:_currentUser.authToken forKey:kUserDefaultsAuthToken];
-                [[NSUserDefaults standardUserDefaults] setObject:_currentUser.penName forKey:kUserDefaultsPenName];
-                [[NSUserDefaults standardUserDefaults] setObject:_currentUser.picSmall forKey:kUserDefaultsPicSmall];
-                [[NSUserDefaults standardUserDefaults] setObject:_currentUser.picLarge forKey:kUserDefaultsPicLarge];
-                [[NSUserDefaults standardUserDefaults] synchronize];
-                
-                [defaultContext MR_saveToPersistentStoreWithCompletion:^(BOOL success, NSError *error) {
-                    NSLog(@"Saving user to persistent store: %u",success);
-                }];
-            } failure:^(AFHTTPRequestOperation *operation, NSError *error) {
-                //NSLog(@"Failure logging in from app delegate: %@",error.description);
-            }];
-        }
-    }*/
 }
 
+-(UIImage *)blurredSnapshot {
+    UIGraphicsBeginImageContextWithOptions([UIScreen mainScreen].bounds.size, NO, self.window.screen.scale);
+    [self.window drawViewHierarchyInRect:self.window.frame afterScreenUpdates:NO];
+    UIImage *snapshotImage = UIGraphicsGetImageFromCurrentImageContext();
+    UIImage *blurredSnapshotImage = [snapshotImage applyBlurWithRadius:20 blurType:BOXFILTER tintColor:[UIColor colorWithWhite:1 alpha:.6] saturationDeltaFactor:1.8 maskImage:nil];
+    UIGraphicsEndImageContext();
+    return blurredSnapshotImage;
+}
 
 - (void)offlineNotification {
     [[[UIAlertView alloc] initWithTitle:@"Offline" message:@"Your device appears to be offline." delegate:nil cancelButtonTitle:@"Okay" otherButtonTitles:nil] show];
@@ -475,8 +516,7 @@
     }
 }
 
-- (void)applicationWillTerminate:(UIApplication *)application
-{
+- (void)applicationWillTerminate:(UIApplication *)application {
     [MagicalRecord cleanUp];
 }
 

@@ -7,6 +7,7 @@
 //
 
 #import "XXDraftCell.h"
+#import "Constants.h"
 
 @implementation XXDraftCell
 

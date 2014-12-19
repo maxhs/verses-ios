@@ -7,6 +7,8 @@
 //
 
 #import "XXCircleNotificationCell.h"
+#import "Constants.h"
+#import "User+helper.h"
 
 @implementation XXCircleNotificationCell
 

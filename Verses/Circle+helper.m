@@ -7,6 +7,8 @@
 //
 
 #import "Circle+helper.h"
+#import <MagicalRecord/CoreData+MagicalRecord.h>
+#import "Constants.h"
 
 @implementation Circle (helper)
 - (void)update:(NSDictionary*)dictionary {

@@ -6,6 +6,7 @@
 //  Copyright (c) 2014 Verses. All rights reserved.
 //
 
+#import "XXAppDelegate.h"
 #import "XXCirclesViewController.h"
 #import "XXCircleCell.h"
 #import "Circle.h"
@@ -298,13 +299,13 @@
 }
 
 - (void)tableView:(UITableView *)tableView didSelectRowAtIndexPath:(NSIndexPath *)indexPath {
-    NSLog(@"indexPath section %d, row %d, and cricles count: %d",indexPath.section, indexPath.row, _currentUser.circles.count);
+    NSLog(@"indexPath section %ld, row %ld, and cricles count: %lu",(long)indexPath.section, (long)indexPath.row, (unsigned long)_currentUser.circles.count);
     if (_currentUser.circles.count && indexPath.section == 0){
         if (_currentUser.circles.count > indexPath.row){
             Circle *circle = [_currentUser.circles objectAtIndex:indexPath.row];
             if (circle.unreadCommentCount.intValue > 0 || [circle.fresh isEqualToNumber:@YES]){
                 circle.unreadCommentCount = 0;
-                circle.fresh = NO;
+                circle.fresh = @NO;
                 //[self.tableView beginUpdates];
                 [self.tableView reloadRowsAtIndexPaths:@[indexPath] withRowAnimation:UITableViewRowAnimationNone];
                 //[self.tableView endUpdates];

@@ -8,6 +8,7 @@
 
 #import "Contribution+helper.h"
 #import "User+helper.h"
+#import <MagicalRecord/CoreData+MagicalRecord.h>
 
 @implementation Contribution (helper)
 - (void)populateFromDict:(NSDictionary*)dictionary {

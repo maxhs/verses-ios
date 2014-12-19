@@ -11,8 +11,8 @@
 #import "Photo+helper.h"
 #import "Contribution+helper.h"
 #import <DTCoreText/DTCoreText.h>
-#import "UIFontDescriptor+CrimsonText.h"
-#import "UIFontDescriptor+SourceSansPro.h"
+#import "Constants.h"
+#import <MagicalRecord/CoreData+MagicalRecord.h>
 
 @implementation Story (helper)
 - (void)populateFromDict:(NSDictionary*)dictionary {

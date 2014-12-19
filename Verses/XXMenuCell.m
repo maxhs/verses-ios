@@ -7,6 +7,7 @@
 //
 
 #import "XXMenuCell.h"
+#import "Constants.h"
 
 @implementation XXMenuCell
 
@@ -46,7 +47,7 @@
         [_alertLabel setHidden:YES];
         [_alertLabel setAlpha:0.0];
     } else {
-        [_alertLabel setText:[NSString stringWithFormat:@"%d",alertCount]];
+        [_alertLabel setText:[NSString stringWithFormat:@"%ld",(long)alertCount]];
         labelRect = [@"Writing Circles" boundingRectWithSize:_menuLabel.frame.size options:NSStringDrawingUsesLineFragmentOrigin attributes:@{NSFontAttributeName:_menuLabel.font} context:nil];
 
         CGFloat alertWidth;

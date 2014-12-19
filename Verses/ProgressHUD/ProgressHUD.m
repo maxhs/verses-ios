@@ -20,6 +20,7 @@
 // THE SOFTWARE.
 
 #import "ProgressHUD.h"
+#import "Constants.h"
 
 @implementation ProgressHUD
 

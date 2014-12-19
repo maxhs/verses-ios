@@ -7,6 +7,8 @@
 //
 
 #import "XXContactCell.h"
+#import "User+helper.h"
+#import "Constants.h"
 
 @implementation XXContactCell
 

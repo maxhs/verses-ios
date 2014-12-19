@@ -6,6 +6,7 @@
 //  Copyright (c) 2014 Verses. All rights reserved.
 //
 
+#import <MagicalRecord/CoreData+MagicalRecord.h>
 #import "Notification+helper.h"
 #import "Circle+helper.h"
 
