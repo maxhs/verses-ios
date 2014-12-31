@@ -278,7 +278,7 @@
         }
         cell.selectionStyle = UITableViewCellSelectionStyleNone;
         
-        [cell.textField setFont:[UIFont fontWithName:kSourceSansProRegular size:16]];
+        [cell.textField setFont:[UIFont fontWithName:kSourceSansPro size:16]];
         cell.textField.placeholder = kAddCollaboratorPlaceholder;
         emailTextField = cell.textField;
         UIView *paddingView = [[UIView alloc] initWithFrame:CGRectMake(0, 0, 5, 20)];
@@ -297,7 +297,7 @@
         }
         
         [cell.createButton setTitleColor:textColor forState:UIControlStateNormal];
-        [cell.createButton.titleLabel setFont:[UIFont fontWithName:kSourceSansProRegular size:17]];
+        [cell.createButton.titleLabel setFont:[UIFont fontWithName:kSourceSansPro size:17]];
         [cell.createButton addTarget:self action:@selector(addEmail) forControlEvents:UIControlEventTouchUpInside];
         return cell;
     } else {

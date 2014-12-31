@@ -1,12 +1,12 @@
 //
-//  XXLoginController.m
+//  XXLoginViewController.m
 //  Verses
 //
 //  Created by Max Haines-Stiles on 10/7/13.
 //  Copyright (c) 2013 Verses. All rights reserved.
 //
 
-#import "XXLoginController.h"
+#import "XXLoginViewController.h"
 #import "Constants.h"
 #import "XXAppDelegate.h"
 #import "XXProgress.h"
@@ -21,7 +21,7 @@
 
 static NSString * const kShakeAnimationKey = @"XXShakeItNow";
 
-@interface XXLoginController () <UITextFieldDelegate, UIAlertViewDelegate,UIViewControllerTransitioningDelegate,XXLoginDelegate> {
+@interface XXLoginViewController () <UITextFieldDelegate, UIAlertViewDelegate,UIViewControllerTransitioningDelegate,XXLoginDelegate> {
     AFHTTPRequestOperationManager *manager;
     XXAppDelegate *delegate;
     CGRect screen;
@@ -30,6 +30,7 @@ static NSString * const kShakeAnimationKey = @"XXShakeItNow";
     CGRect originalLogoFrame;
     CGFloat keyboardHeight;
     BOOL smallFormFactor;
+    UIColor *textColor;
     NSArray *views;
     NSUInteger completedAnimations;
     void (^completionBlock)();
@@ -37,10 +38,9 @@ static NSString * const kShakeAnimationKey = @"XXShakeItNow";
 
 @end
 
-@implementation XXLoginController
+@implementation XXLoginViewController
 
-- (id)initWithNibName:(NSString *)nibNameOrNil bundle:(NSBundle *)nibBundleOrNil
-{
+- (id)initWithNibName:(NSString *)nibNameOrNil bundle:(NSBundle *)nibBundleOrNil {
     self = [super initWithNibName:nibNameOrNil bundle:nibBundleOrNil];
     if (self) {
         // Custom initialization
@@ -48,8 +48,7 @@ static NSString * const kShakeAnimationKey = @"XXShakeItNow";
     return self;
 }
 
-- (void)viewDidLoad
-{
+- (void)viewDidLoad {
     [super viewDidLoad];
     screen = [UIScreen mainScreen].bounds;
     delegate = (XXAppDelegate *)[[UIApplication sharedApplication] delegate];
@@ -61,18 +60,13 @@ static NSString * const kShakeAnimationKey = @"XXShakeItNow";
     [self.registerPasswordTextField setFont:[UIFont fontWithName:kSourceSansProLight size:18]];
     [self.registerPenNameTextField setFont:[UIFont fontWithName:kSourceSansProLight size:18]];
     
-    [self textFieldTreatment:self.emailTextField];
-    [self textFieldTreatment:self.passwordTextField];
-    [self textFieldTreatment:self.registerPasswordTextField];
-    [self textFieldTreatment:self.registerEmailTextField];
-    [self textFieldTreatment:self.registerPenNameTextField];
-    
-    [self.loginButton.titleLabel setFont:[UIFont fontWithName:kSourceSansProLight size:21]];
-    [self.loginButton setTitleColor:[UIColor blackColor] forState:UIControlStateNormal];
+    [self.loginButton.titleLabel setFont:[UIFont fontWithDescriptor:[UIFontDescriptor preferredCustomFontForTextStyle:UIFontTextStyleSubheadline forFont:kSourceSansProLight] size:0]];
+    [self.loginButton setBackgroundColor:[UIColor clearColor]];
     originalLoginButtonFrame = self.loginButton.frame;
     
-    [self.signupButton.titleLabel setFont:[UIFont fontWithName:kSourceSansProLight size:21]];
-    [self.signupButton setTitleColor:[UIColor blackColor] forState:UIControlStateNormal];
+    [self.signupButton.titleLabel setFont:[UIFont fontWithDescriptor:[UIFontDescriptor preferredCustomFontForTextStyle:UIFontTextStyleSubheadline forFont:kSourceSansProLight] size:0]];
+    [self.signupButton setBackgroundColor:[UIColor clearColor]];
+    
     originalSignupButtonFrame = self.signupButton.frame;
     
     originalLogoFrame = self.logo.frame;
@@ -80,12 +74,10 @@ static NSString * const kShakeAnimationKey = @"XXShakeItNow";
     if (IDIOM == IPAD){
         self.signupButton.layer.cornerRadius = 14.f;
         self.signupButton.layer.backgroundColor = [UIColor clearColor].CGColor;
-        [self.signupButton setBackgroundColor:[UIColor whiteColor]];
         self.signupButton.layer.rasterizationScale = [UIScreen mainScreen].scale;
         self.signupButton.layer.shouldRasterize = YES;
         self.loginButton.layer.cornerRadius = 14.f;
         self.loginButton.layer.backgroundColor = [UIColor clearColor].CGColor;
-        [self.loginButton setBackgroundColor:[UIColor whiteColor]];
         self.loginButton.layer.rasterizationScale = [UIScreen mainScreen].scale;
         self.loginButton.layer.shouldRasterize = YES;
     } else if (screen.size.height != 568){
@@ -101,11 +93,18 @@ static NSString * const kShakeAnimationKey = @"XXShakeItNow";
     self.loginContainer.transform = CGAffineTransformMakeTranslation(2*screen.size.width, 0);
     self.signupContainer.transform = CGAffineTransformMakeTranslation(-2*screen.size.width, 0);
     
-    [self.forgotPasswordButton.titleLabel setFont:[UIFont fontWithName:kSourceSansProLight size:16]];
-    [self.termsButton.titleLabel setFont:[UIFont fontWithName:kSourceSansProLight size:14]];
-    [self.termsButton.titleLabel setTextColor:[UIColor lightGrayColor]];
-    NSMutableAttributedString *termsString = [[NSMutableAttributedString alloc] initWithString:@"By continuing, you agree to our " attributes:nil];
-    NSMutableAttributedString *linkString = [[NSMutableAttributedString alloc] initWithString:@"Terms of Service" attributes:@{NSUnderlineStyleAttributeName:[NSNumber numberWithInt:NSUnderlineStyleSingle]}];
+    [self.forgotPasswordButton.titleLabel setFont:[UIFont fontWithDescriptor:[UIFontDescriptor preferredCustomFontForTextStyle:UIFontTextStyleBody forFont:kSourceSansProLight] size:0]];
+    [self.termsButton.titleLabel setFont:[UIFont fontWithDescriptor:[UIFontDescriptor preferredCustomFontForTextStyle:UIFontTextStyleCaption1 forFont:kSourceSansProLight] size:0]];
+    
+    
+    if ([[NSUserDefaults standardUserDefaults] boolForKey:kDarkBackground]){
+        textColor = [UIColor whiteColor];
+    } else {
+        textColor = [UIColor blackColor];
+    }
+    
+    NSMutableAttributedString *termsString = [[NSMutableAttributedString alloc] initWithString:@"By continuing, you agree to our " attributes:@{NSForegroundColorAttributeName:textColor}];
+    NSMutableAttributedString *linkString = [[NSMutableAttributedString alloc] initWithString:@"Terms of Service" attributes:@{NSUnderlineStyleAttributeName:[NSNumber numberWithInt:NSUnderlineStyleSingle],NSForegroundColorAttributeName:textColor}];
     [termsString appendAttributedString:linkString];
     self.termsButton.titleLabel.numberOfLines = 0;
     self.termsButton.titleLabel.textAlignment = NSTextAlignmentCenter;
@@ -122,12 +121,38 @@ static NSString * const kShakeAnimationKey = @"XXShakeItNow";
 - (void)viewWillAppear:(BOOL)animated {
     [super viewWillAppear:animated];
     [[UIApplication sharedApplication] setStatusBarHidden:YES withAnimation:UIStatusBarAnimationFade];
+    
+    if ([[NSUserDefaults standardUserDefaults] boolForKey:kDarkBackground]){
+        [self.view setBackgroundColor:[UIColor clearColor]];
+        [self textFieldTreatment:self.emailTextField withDarkBackground:YES];
+        [self textFieldTreatment:self.passwordTextField withDarkBackground:YES];
+        [self textFieldTreatment:self.registerEmailTextField withDarkBackground:YES];
+        [self textFieldTreatment:self.registerPenNameTextField withDarkBackground:YES];
+        [self textFieldTreatment:self.registerPasswordTextField withDarkBackground:YES];
+        [self.signupButton setTitleColor:[UIColor whiteColor] forState:UIControlStateNormal];
+        [self.loginButton setTitleColor:[UIColor whiteColor] forState:UIControlStateNormal];
+        [self.forgotPasswordButton setTitleColor:[UIColor whiteColor] forState:UIControlStateNormal];
+        [self.logo setImage:[UIImage imageNamed:@"logoWhite"]];
+        [self.cancelButton setImage:[UIImage imageNamed:@"whiteX"] forState:UIControlStateNormal];
+    } else {
+        [self.view setBackgroundColor:[UIColor whiteColor]];
+        [self textFieldTreatment:self.emailTextField withDarkBackground:NO];
+        [self textFieldTreatment:self.passwordTextField withDarkBackground:NO];
+        [self textFieldTreatment:self.registerEmailTextField withDarkBackground:NO];
+        [self textFieldTreatment:self.registerPenNameTextField withDarkBackground:NO];
+        [self textFieldTreatment:self.registerPasswordTextField withDarkBackground:NO];
+        [self.signupButton setTitleColor:[UIColor blackColor] forState:UIControlStateNormal];
+        [self.loginButton setTitleColor:[UIColor blackColor] forState:UIControlStateNormal];
+        [self.forgotPasswordButton setTitleColor:[UIColor blackColor] forState:UIControlStateNormal];
+        [self.logo setImage:[UIImage imageNamed:@"logo"]];
+        [self.cancelButton setImage:[UIImage imageNamed:@"blackX"] forState:UIControlStateNormal];
+    }
 }
 
 - (void)termsWebView {
     XXWebViewController *webViewVC = [[self storyboard] instantiateViewControllerWithIdentifier:@"WebView"];
     UINavigationController *nav = [[UINavigationController alloc] initWithRootViewController:webViewVC];
-    [webViewVC setUrlString:kTermsUrl];
+    [webViewVC setUrlString:[NSString stringWithFormat:@"%@/terms",kBaseUrl]];
     [webViewVC setTitle:@"Terms of Service"];
     [self presentViewController:nav animated:YES completion:^{
         
@@ -141,8 +166,21 @@ static NSString * const kShakeAnimationKey = @"XXShakeItNow";
     keyboardHeight = keyboardFrame.size.height;
 }
 
-- (void)textFieldTreatment:(UITextField*)textField {
-    textField.layer.borderColor = [UIColor colorWithWhite:0 alpha:.07].CGColor;
+- (void)textFieldTreatment:(UITextField*)textField withDarkBackground:(BOOL)dark {
+    if (dark){
+        textField.layer.borderColor = [UIColor colorWithWhite:1 alpha:.07].CGColor;
+        [textField setTextColor:[UIColor whiteColor]];
+        [textField setKeyboardAppearance:UIKeyboardAppearanceDark];
+        [textField setTintColor:[UIColor whiteColor]];
+        [textField setBackgroundColor:[UIColor colorWithWhite:1 alpha:.1]];
+    } else {
+        textField.layer.borderColor = [UIColor colorWithWhite:0 alpha:.07].CGColor;
+        [textField setTextColor:[UIColor blackColor]];
+        [textField setKeyboardAppearance:UIKeyboardAppearanceDefault];
+        [textField setTintColor:kElectricBlue];
+        [textField setBackgroundColor:[UIColor clearColor]];
+    }
+    
     textField.layer.borderWidth = .25f;
     textField.layer.cornerRadius = 4.f;
     UIView *paddingView = [[UIView alloc] initWithFrame:CGRectMake(0, 0, 7, 20)];
@@ -235,12 +273,26 @@ static NSString * const kShakeAnimationKey = @"XXShakeItNow";
         [self.signupButton setFrame:originalSignupButtonFrame];
         self.loginContainer.transform = CGAffineTransformMakeTranslation(2*screen.size.width, 0);
         self.signupContainer.transform = CGAffineTransformMakeTranslation(-2*screen.size.width, 0);
-        [self.signupButton setBackgroundColor:[UIColor whiteColor]];
+        
         self.signupButton.layer.borderColor = [UIColor blackColor].CGColor;
         [self.signupButton setTitleColor:[UIColor blackColor] forState:UIControlStateNormal];
-        [self.loginButton setBackgroundColor:[UIColor whiteColor]];
-        self.loginButton.layer.borderColor = [UIColor blackColor].CGColor;
-        [self.loginButton setTitleColor:[UIColor blackColor] forState:UIControlStateNormal];
+        if ([[NSUserDefaults standardUserDefaults] boolForKey:kDarkBackground]){
+            [self.loginButton setBackgroundColor:[UIColor clearColor]];
+            [self.signupButton setBackgroundColor:[UIColor clearColor]];
+            self.loginButton.layer.borderColor = [UIColor whiteColor].CGColor;
+            [self.loginButton setTitleColor:[UIColor whiteColor] forState:UIControlStateNormal];
+            self.signupButton.layer.borderColor = [UIColor whiteColor].CGColor;
+            [self.signupButton setTitleColor:[UIColor whiteColor] forState:UIControlStateNormal];
+        } else {
+            [self.loginButton setBackgroundColor:[UIColor whiteColor]];
+            [self.signupButton setBackgroundColor:[UIColor whiteColor]];
+            self.loginButton.layer.borderColor = [UIColor blackColor].CGColor;
+            [self.loginButton setTitleColor:[UIColor blackColor] forState:UIControlStateNormal];
+            self.signupButton.layer.borderColor = [UIColor blackColor].CGColor;
+            [self.signupButton setTitleColor:[UIColor blackColor] forState:UIControlStateNormal];
+        }
+        
+        
         self.logo.transform = CGAffineTransformIdentity;
         self.forgotPasswordButton.transform = CGAffineTransformIdentity;
         [_cancelButton setAlpha:1.0];
@@ -281,6 +333,9 @@ static NSString * const kShakeAnimationKey = @"XXShakeItNow";
     UIAlertView *forgotAlert = [[UIAlertView alloc] initWithTitle:nil message:@"Enter your email:" delegate:self cancelButtonTitle:@"Cancel" otherButtonTitles:@"Submit", nil];
     forgotAlert.alertViewStyle = UIAlertViewStylePlainTextInput;
     [[forgotAlert textFieldAtIndex:0] setKeyboardType:UIKeyboardTypeEmailAddress];
+    if ([[NSUserDefaults standardUserDefaults] boolForKey:kDarkBackground]){
+        [[forgotAlert textFieldAtIndex:0] setKeyboardAppearance:UIKeyboardAppearanceDark];
+    }
     [forgotAlert show];
 }
 
@@ -296,7 +351,7 @@ static NSString * const kShakeAnimationKey = @"XXShakeItNow";
 
 - (void)forgotMethod:(NSString*)email {
     [manager POST:[NSString stringWithFormat:@"%@/sessions/forgot_password",kAPIBaseUrl] parameters:@{@"email":email} success:^(AFHTTPRequestOperation *operation, id responseObject) {
-        NSLog(@"success with forgot password method: %@",responseObject);
+        //NSLog(@"success with forgot password method: %@",responseObject);
         NSNumber *response = (NSNumber *)[responseObject objectForKey: @"success"];
         if([response boolValue] == YES){
            [[[UIAlertView alloc] initWithTitle:@"Success" message:@"You'll soon receive an email with your freshly reset password." delegate:self cancelButtonTitle:@"Okay" otherButtonTitles:@"Log In", nil] show];
@@ -377,13 +432,20 @@ static NSString * const kShakeAnimationKey = @"XXShakeItNow";
         [self.signupButton setTitleColor:[UIColor whiteColor] forState:UIControlStateNormal];
         [self.signupButton addTarget:self action:@selector(signup) forControlEvents:UIControlEventTouchUpInside];
     } else {
-        [self.loginButton setBackgroundColor:[UIColor whiteColor]];
+        if ([[NSUserDefaults standardUserDefaults] boolForKey:kDarkBackground]){
+            [self.loginButton setBackgroundColor:[UIColor clearColor]];
+            [self.signupButton setBackgroundColor:[UIColor clearColor]];
+        } else {
+            [self.loginButton setBackgroundColor:[UIColor whiteColor]];
+            [self.signupButton setBackgroundColor:[UIColor whiteColor]];
+        }
+        
         self.loginButton.layer.borderColor = [UIColor darkGrayColor].CGColor;
         [self.loginButton removeTarget:nil
                                  action:NULL
                        forControlEvents:UIControlEventAllEvents];
         [self.loginButton setTitleColor:[UIColor blackColor] forState:UIControlStateNormal];
-        [self.signupButton setBackgroundColor:[UIColor whiteColor]];
+        
         self.signupButton.layer.borderColor = [UIColor darkGrayColor].CGColor;
         [self.signupButton removeTarget:nil
                                  action:NULL

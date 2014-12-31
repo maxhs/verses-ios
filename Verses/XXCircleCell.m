@@ -37,7 +37,7 @@
     [_circleName setTextColor:textColor];
     if (circle.titles.length){
         [_infoLabel setText:circle.titles];
-        [_infoLabel setFont:[UIFont fontWithName:kSourceSansProRegular size:15]];
+        [_infoLabel setFont:[UIFont fontWithName:kSourceSansPro size:15]];
         [_infoLabel setTextColor:textColor];
     } else {
         [_infoLabel setText:@"No stories..."];

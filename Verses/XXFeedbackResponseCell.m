@@ -39,8 +39,8 @@
     self.feedbackTextView.layer.cornerRadius = 2.f;
     self.feedbackTextView.clipsToBounds = YES;
     [self.feedbackTextView setFont:[UIFont fontWithName:kSourceSansProLight size:16]];
-    [self.cancelButton.titleLabel setFont:[UIFont fontWithName:kSourceSansProRegular size:15]];
-    [self.sendButton.titleLabel setFont:[UIFont fontWithName:kSourceSansProRegular size:15]];
+    [self.cancelButton.titleLabel setFont:[UIFont fontWithName:kSourceSansPro size:15]];
+    [self.sendButton.titleLabel setFont:[UIFont fontWithName:kSourceSansPro size:15]];
     
     [_cancelButton setHidden:YES];
     [_sendButton setHidden:YES];

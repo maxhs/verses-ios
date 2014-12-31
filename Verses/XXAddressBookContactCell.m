@@ -39,7 +39,7 @@
     } else if ([contactDict objectForKey:@"first_name"]){
         name = [contactDict objectForKey:@"first_name"];
     }
-    [self.textLabel setFont:[UIFont fontWithName:kSourceSansProRegular size:19]];
+    [self.textLabel setFont:[UIFont fontWithName:kSourceSansPro size:19]];
     [self.textLabel setText:name];
     
     NSString *detail;

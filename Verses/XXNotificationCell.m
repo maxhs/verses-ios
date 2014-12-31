@@ -31,9 +31,9 @@
 - (void)configureCell:(Notification*)notification {
     [_messageLabel setText:notification.message];
     if (IDIOM == IPAD){
-        [_messageLabel setFont:[UIFont fontWithName:kSourceSansProRegular size:16]];
+        [_messageLabel setFont:[UIFont fontWithName:kSourceSansPro size:16]];
     } else {
-        [_messageLabel setFont:[UIFont fontWithName:kSourceSansProRegular size:14]];
+        [_messageLabel setFont:[UIFont fontWithName:kSourceSansPro size:14]];
     }
     
     /*Photo *firstPhoto = [notification.photos firstObject];
@@ -51,9 +51,9 @@
         }];
     }*/
     
-    [_monthLabel setFont:[UIFont fontWithName:kSourceSansProRegular size:12]];
+    [_monthLabel setFont:[UIFont fontWithName:kSourceSansPro size:12]];
     
-    [_timeLabel setFont:[UIFont fontWithName:kSourceSansProRegular size:12]];
+    [_timeLabel setFont:[UIFont fontWithName:kSourceSansPro size:12]];
     [UIView animateWithDuration:.25 animations:^{
         [_messageLabel setAlpha:1.0];
         [_timeLabel setAlpha:1.0];

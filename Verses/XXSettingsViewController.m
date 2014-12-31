@@ -12,7 +12,7 @@
 #import "XXSettingsCell.h"
 #import "XXAppDelegate.h"
 #import <MessageUI/MessageUI.h>
-#import "XXLoginController.h"
+#import "XXLoginViewController.h"
 #import <SDWebImage/UIButton+WebCache.h>
 #import <SDWebImage/UIImageView+WebCache.h>
 #import "XXAlert.h"
@@ -124,7 +124,7 @@
         [self synchronizeUserDefaults];
     } failure:^(AFHTTPRequestOperation *operation, NSError *error) {
         if (operation.response.statusCode == 401){
-            XXLoginController *login = [[self storyboard] instantiateViewControllerWithIdentifier:@"Login"];
+            XXLoginViewController *login = [[self storyboard] instantiateViewControllerWithIdentifier:@"Login"];
             [self presentViewController:login animated:YES completion:^{
                 
             }];
@@ -345,7 +345,7 @@
             UITableViewCell *cell = [tableView dequeueReusableCellWithIdentifier:MyIdentifier];
             cell.accessoryType = UITableViewCellAccessoryDisclosureIndicator;
             [cell.textLabel setText:@"Dark background"];
-            [cell.textLabel setFont:[UIFont fontWithName:kSourceSansProRegular size:16]];
+            [cell.textLabel setFont:[UIFont fontWithName:kSourceSansPro size:16]];
             backgroundThemeSwitch = [[UISwitch alloc] init];
             [backgroundThemeSwitch addTarget:self action:@selector(themeSwitch) forControlEvents:UIControlEventValueChanged];
             if ([[NSUserDefaults standardUserDefaults] boolForKey:kDarkBackground]){
@@ -363,7 +363,7 @@
             if (cell == nil) {
                 cell = [[[NSBundle mainBundle] loadNibNamed:@"XXSettingsBackgroundCell" owner:nil options:nil] lastObject];
             }
-            [cell.backgroundImageViewLabel setFont:[UIFont fontWithName:kSourceSansProRegular size:16]];
+            [cell.backgroundImageViewLabel setFont:[UIFont fontWithName:kSourceSansPro size:16]];
             
             if (blurredImage || _currentUser.backgroundImageView){
                 if (blurredImage){
@@ -394,7 +394,7 @@
         static NSString *CellIdentifier = @"PushCell";
         UITableViewCell *cell = [tableView dequeueReusableCellWithIdentifier:CellIdentifier forIndexPath:indexPath];
         cell.textLabel.numberOfLines = 0;
-        [cell.textLabel setFont:[UIFont fontWithName:kSourceSansProRegular size:15]];
+        [cell.textLabel setFont:[UIFont fontWithName:kSourceSansPro size:15]];
         [cell.textLabel setTextColor:textColor];
         switch (indexPath.row) {
             case 0:
@@ -516,7 +516,7 @@
         cell.accessoryView = nil;
         cell.accessoryType = UITableViewCellAccessoryDisclosureIndicator;
         [cell.textLabel setText:@"Send us feedback"];
-        [cell.textLabel setFont:[UIFont fontWithName:kSourceSansProRegular size:16]];
+        [cell.textLabel setFont:[UIFont fontWithName:kSourceSansPro size:16]];
         [cell.textLabel setTextColor:textColor];
         return cell;
     }
@@ -585,9 +585,9 @@
     }
     
     if (IDIOM == IPAD){
-        [headerLabel setFont:[UIFont fontWithName:kSourceSansProRegular size:14]];
+        [headerLabel setFont:[UIFont fontWithName:kSourceSansPro size:14]];
     } else {
-        [headerLabel setFont:[UIFont fontWithName:kSourceSansProRegular size:13]];
+        [headerLabel setFont:[UIFont fontWithName:kSourceSansPro size:13]];
     }
     
     [headerLabel setTextAlignment:NSTextAlignmentCenter];
@@ -607,7 +607,7 @@
         case 4:
             [headerLabel setText:[NSString stringWithFormat:@"VERSION: %@", [[[NSBundle mainBundle] infoDictionary] objectForKey:@"CFBundleShortVersionString"]]];
             [headerLabel setTextColor:[UIColor lightGrayColor]];
-            [headerLabel setFont:[UIFont fontWithName:kSourceSansProRegular size:15]];
+            [headerLabel setFont:[UIFont fontWithName:kSourceSansPro size:15]];
             break;
         default:
             [headerLabel setText:@""];

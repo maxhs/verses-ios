@@ -69,8 +69,8 @@
         [_wordCountLabel setTextColor:[UIColor lightGrayColor]];
     }
     
-    [_draftLabel setFont:[UIFont fontWithName:kSourceSansProRegular size:14]];
-    [_revealLabel setFont:[UIFont fontWithName:kSourceSansProRegular size:14]];
+    [_draftLabel setFont:[UIFont fontWithName:kSourceSansPro size:14]];
+    [_revealLabel setFont:[UIFont fontWithName:kSourceSansPro size:14]];
     [_revealLabel setTextColor:kElectricBlue];
     
     [_titleLabel setText:story.title];

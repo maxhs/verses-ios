@@ -219,7 +219,7 @@
         headerButton.layer.borderWidth = .5f;
         [headerButton setBackgroundColor:[UIColor clearColor]];
         [headerButton setTitle:@"Tap to edit" forState:UIControlStateNormal];
-        [headerButton.titleLabel setFont:[UIFont fontWithName:kSourceSansProRegular size:13]];
+        [headerButton.titleLabel setFont:[UIFont fontWithName:kSourceSansPro size:13]];
         [headerButton addTarget:self action:@selector(editCircle) forControlEvents:UIControlEventTouchUpInside];
         [headerButton setTitleColor:textColor forState:UIControlStateNormal];
         [headerView addSubview:headerButton];
@@ -517,7 +517,7 @@
     if (comment.body.length) {
         
         NSMutableDictionary * attributes = [NSMutableDictionary new];
-        attributes[NSFontAttributeName] = [UIFont fontWithName:kSourceSansProRegular size:15.0f];
+        attributes[NSFontAttributeName] = [UIFont fontWithName:kSourceSansPro size:15.0f];
         attributes[NSStrokeColorAttributeName] = [UIColor darkTextColor];
         
         NSAttributedString * attrStr = [[NSAttributedString alloc] initWithString:comment.body

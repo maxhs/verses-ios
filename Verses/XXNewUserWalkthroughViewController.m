@@ -131,9 +131,9 @@
     UILabel *welcomeLabel = [[UILabel alloc] initWithFrame:CGRectMake(0, 0, width, height/3)];
     [welcomeLabel setAutoresizingMask:UIViewAutoresizingFlexibleWidth];
     if (IDIOM == IPAD){
-        [welcomeLabel setFont:[UIFont fontWithName:kSourceSansProRegular size:57]];
+        [welcomeLabel setFont:[UIFont fontWithName:kSourceSansPro size:57]];
     } else {
-        [welcomeLabel setFont:[UIFont fontWithName:kSourceSansProRegular size:47]];
+        [welcomeLabel setFont:[UIFont fontWithName:kSourceSansPro size:47]];
     }
     [welcomeLabel setTextColor:[UIColor whiteColor]];
     [welcomeLabel setText:@"verses"];
@@ -150,7 +150,7 @@
     
     UILabel *guideLabel = [[UILabel alloc] initWithFrame:CGRectMake(width/6, height*4/5, 150, height/5)];
     [guideLabel setAutoresizingMask:UIViewAutoresizingFlexibleWidth];
-    [guideLabel setFont:[UIFont fontWithName:kSourceSansProRegular size:17]];
+    [guideLabel setFont:[UIFont fontWithName:kSourceSansPro size:17]];
     [guideLabel setTextColor:[UIColor whiteColor]];
     [guideLabel setText:@"Here's a brief guide to getting around."];
     [guideLabel setTextAlignment:NSTextAlignmentLeft];

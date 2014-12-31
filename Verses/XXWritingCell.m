@@ -7,8 +7,8 @@
 //
 
 #import "XXWritingCell.h"
-#import "UIFontDescriptor+CrimsonText.h"
-#import "UIFontDescriptor+SourceSansPro.h"
+#import "UIFontDescriptor+Custom.h"
+#import "UIFontDescriptor+Custom.h"
 
 @implementation XXWritingCell {
 

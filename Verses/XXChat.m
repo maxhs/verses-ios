@@ -50,7 +50,7 @@
         _textView.frame = CGRectMake(5, 6, self.bounds.size.width - 75, 28);
         _textView.delegate = self;
         _textView.layer.cornerRadius = 7;
-        _textView.font = [UIFont fontWithName:kSourceSansProRegular size:16];
+        _textView.font = [UIFont fontWithName:kSourceSansPro size:16];
         
         if ([[NSUserDefaults standardUserDefaults] boolForKey:kDarkBackground]){
             _textView.backgroundColor = [UIColor colorWithWhite:1 alpha:0.f];
@@ -444,7 +444,7 @@
         _placeholderLabel = [[UILabel alloc]initWithFrame:_textView.frame];
         _placeholderLabel.userInteractionEnabled = NO;
         _placeholderLabel.backgroundColor = [UIColor clearColor];
-        _placeholderLabel.font = [UIFont fontWithName:kSourceSansProRegular size:14];
+        _placeholderLabel.font = [UIFont fontWithName:kSourceSansPro size:14];
         _placeholderLabel.textColor = [UIColor lightGrayColor];
         _placeholderLabel.autoresizingMask = UIViewAutoresizingFlexibleBottomMargin | UIViewAutoresizingFlexibleWidth;
         [self insertSubview:_placeholderLabel aboveSubview:_textView];

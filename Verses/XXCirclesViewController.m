@@ -22,6 +22,8 @@
 @interface XXCirclesViewController () <UIViewControllerTransitioningDelegate>{
     AFHTTPRequestOperationManager *manager;
     XXAppDelegate *delegate;
+    CGFloat width;
+    CGFloat height;
     UIColor *textColor;
     UIBarButtonItem *guideButton;
     UIBarButtonItem *contactsButton;
@@ -38,8 +40,7 @@
 @synthesize freshCircles = _freshCircles;
 @synthesize currentUser = _currentUser;
 
-- (void)viewDidLoad
-{
+- (void)viewDidLoad {
     [super viewDidLoad];
     self.title = @"Writing Circles";
     delegate = (XXAppDelegate*)[UIApplication sharedApplication].delegate;
@@ -48,6 +49,14 @@
     [_formatter setLocale:[NSLocale currentLocale]];
     [_formatter setDateStyle:NSDateFormatterMediumStyle];
     [_formatter setTimeStyle:NSDateFormatterShortStyle];
+    
+    if (UIInterfaceOrientationIsPortrait(self.interfaceOrientation) || [[[UIDevice currentDevice] systemVersion] floatValue] >= 8.f){
+        width = screenWidth();
+        height = screenHeight();
+    } else {
+        width = screenHeight();
+        height = screenWidth();
+    }
     
     [self.tableView reloadData];
     loading = YES;
@@ -207,7 +216,7 @@
 
 - (NSInteger)numberOfSectionsInTableView:(UITableView *)tableView
 {
-    if (_currentUser.circles.count == 0 && !loading) self.tableView.rowHeight = screenHeight() - 84;
+    if (_currentUser.circles.count == 0 && !loading) self.tableView.rowHeight = height - 84;
     else self.tableView.rowHeight = 80;
     
     if (loading) return 0;
@@ -233,7 +242,7 @@
         [cell.promptButton addTarget:self action:@selector(newCircle) forControlEvents:UIControlEventTouchUpInside];
         [cell.promptButton setBackgroundColor:[UIColor colorWithWhite:.7 alpha:1]];
         [cell.promptButton.titleLabel setNumberOfLines:0];
-        [cell.promptButton.titleLabel setFont:[UIFont fontWithName:kSourceSansProLight size:20]];
+        [cell.promptButton.titleLabel setFont:[UIFont fontWithDescriptor:[UIFontDescriptor preferredCustomFontForTextStyle:UIFontTextStyleSubheadline forFont:kSourceSansProLight] size:0]];
         [cell.promptButton.titleLabel setTextAlignment:NSTextAlignmentCenter];
         cell.promptButton.contentHorizontalAlignment = UIControlContentHorizontalAlignmentCenter;
         [cell.promptButton setTitleColor:textColor forState:UIControlStateNormal];
@@ -258,7 +267,7 @@
         [cell.infoLabel setText:@""];
         [cell.textLabel setText:@"Add new circle"];
         [cell.textLabel setTextAlignment:NSTextAlignmentCenter];
-        [cell.textLabel setFont:[UIFont fontWithName:kCrimsonItalic size:17]];
+        [cell.textLabel setFont:[UIFont fontWithDescriptor:[UIFontDescriptor preferredCustomFontForTextStyle:UIFontTextStyleBody forFont:kCrimsonItalic] size:0]];
         [cell.textLabel setTextColor:textColor];
         return cell;
     }

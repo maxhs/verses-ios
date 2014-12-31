@@ -62,7 +62,7 @@
         UIButton *deleteButton = [UIButton buttonWithType:UIButtonTypeCustom];
         [deleteButton setFrame:CGRectMake(screenWidth()/2-70, 0, 140, 44)];
         [deleteButton setTitle:@"DELETE CIRCLE" forState:UIControlStateNormal];
-        [deleteButton.titleLabel setFont:[UIFont fontWithName:kSourceSansProRegular size:13]];
+        [deleteButton.titleLabel setFont:[UIFont fontWithName:kSourceSansPro size:13]];
         [deleteButton addTarget:self action:@selector(confirmDeletion) forControlEvents:UIControlEventTouchUpInside];
         [deleteButton setTitleColor:[UIColor redColor] forState:UIControlStateNormal];
         [deleteButton setBackgroundColor:[UIColor clearColor]];
@@ -289,7 +289,7 @@
     [headerLabel setTextColor:textColor];
     [headerLabel setTextAlignment:NSTextAlignmentCenter];
     [headerLabel setBackgroundColor:[UIColor clearColor]];
-    [headerLabel setFont:[UIFont fontWithName:kSourceSansProRegular size:13]];
+    [headerLabel setFont:[UIFont fontWithName:kSourceSansPro size:13]];
     [headerLabel setText:@"MANAGE MEMBERS"];
     [headerView addSubview:headerLabel];
     
@@ -351,7 +351,7 @@
                 [cell.textView setHidden:NO];
                 blurbTextView = cell.textView;
                 [cell.textField setHidden:YES];
-                [cell.textView setFont:[UIFont fontWithName:kSourceSansProRegular size:15]];
+                [cell.textView setFont:[UIFont fontWithName:kSourceSansPro size:15]];
                 break;
             case 2:
                 [cell.textView setHidden:YES];
@@ -360,7 +360,7 @@
                 [cell.textLabel setTextColor:textColor];
                 if ([_circle.publicCircle isEqualToNumber:@YES]){
                     [cell.textLabel setText:@"Circle is public"];
-                    [cell.textLabel setFont:[UIFont fontWithName:kSourceSansProRegular size:16]];
+                    [cell.textLabel setFont:[UIFont fontWithName:kSourceSansPro size:16]];
                 } else {
                     [cell.textLabel setText:@"Circle is not public"];
                     [cell.textLabel setFont:[UIFont fontWithName:kSourceSansProLight size:16]];

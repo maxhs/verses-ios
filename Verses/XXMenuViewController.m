@@ -8,7 +8,7 @@
 
 #import "XXAppDelegate.h"
 #import "XXMenuViewController.h"
-#import "XXLoginController.h"
+#import "XXLoginViewController.h"
 #import "XXNoRotateNavController.h"
 #import "XXUserNameCell.h"
 #import "User+helper.h"
@@ -128,7 +128,7 @@
                 searchTextField.layer.cornerRadius = 14.f;
                 searchTextField.clipsToBounds = YES;
                 searchTextField.attributedPlaceholder = searchPlaceholder;
-                [searchTextField setFont:[UIFont fontWithName:kSourceSansProRegular size:15]];
+                [searchTextField setFont:[UIFont fontWithName:kSourceSansPro size:15]];
                 break;
             }
         }
@@ -143,7 +143,7 @@
                 searchTextField.layer.cornerRadius = 14.f;
                 searchTextField.clipsToBounds = YES;
                 searchTextField.attributedPlaceholder = searchPlaceholder;
-                [searchTextField setFont:[UIFont fontWithName:kSourceSansProRegular size:15]];
+                [searchTextField setFont:[UIFont fontWithName:kSourceSansPro size:15]];
                 break;
             }
         }
@@ -325,7 +325,7 @@
                 cell = [[[NSBundle mainBundle] loadNibNamed:@"XXSearchCell" owner:nil options:nil] lastObject];
             }
             [cell.storyTitle setText:@"No results."];
-            [cell.storyTitle setFont:[UIFont fontWithName:kSourceSansProRegular size:19]];
+            [cell.storyTitle setFont:[UIFont fontWithName:kSourceSansPro size:19]];
             [cell.authorLabel setText:@""];
             [cell.authorLabel setFont:[UIFont fontWithName:kSourceSansProItalic size:15]];
             return cell;
@@ -334,20 +334,12 @@
         if (indexPath.section == 0){
             static NSString *NameCellIdentifier = @"MenuCell";
             XXMenuCell *cell = (XXMenuCell *)[tableView dequeueReusableCellWithIdentifier:NameCellIdentifier];
-            if (cell == nil) {
-                cell = [[[NSBundle mainBundle] loadNibNamed:@"XXMenuCell" owner:nil options:nil] lastObject];
-            }
-            
             [cell configureAlert:0];
-            
-            UIView *selectedBackgroundView = [[UIView alloc] initWithFrame:cell.frame];
-            [selectedBackgroundView setBackgroundColor:[UIColor colorWithWhite:1 alpha:.5]];
-            cell.selectedBackgroundView = selectedBackgroundView;
             
             switch (indexPath.row) {
                 case 0:
                 {
-                    [cell.menuImage setImage:[UIImage imageNamed:@"menuHome"]];
+                    [cell.menuImage setImage:[UIImage imageNamed:@"menuBrowse"]];
                     [cell.menuLabel setText:@"Home"];
                     return cell;
                 }
@@ -439,7 +431,7 @@
 }
 
 - (void)login {
-    XXLoginController *vc = [[self storyboard] instantiateViewControllerWithIdentifier:@"Login"];
+    XXLoginViewController *vc = [[self storyboard] instantiateViewControllerWithIdentifier:@"Login"];
     XXNoRotateNavController *nav = [[XXNoRotateNavController alloc] initWithRootViewController:vc];
     [self presentViewController:nav animated:YES completion:^{
         

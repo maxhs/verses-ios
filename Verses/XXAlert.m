@@ -80,7 +80,7 @@
 	if (label == nil) {
 		label = [[UILabel alloc] initWithFrame:CGRectZero];
         if ([[NSUserDefaults standardUserDefaults] boolForKey:kDarkBackground]){
-            label.font = [UIFont fontWithName:kSourceSansProRegular size:20];
+            label.font = [UIFont fontWithName:kSourceSansPro size:20];
             [label setTextColor:[UIColor whiteColor]];
         } else {
             label.font = [UIFont fontWithName:kSourceSansProLight size:20];

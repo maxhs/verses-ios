@@ -7,8 +7,7 @@
 //
 
 #import <UIKit/UIKit.h>
-#import "UIFontDescriptor+CrimsonText.h"
-#import "UIFontDescriptor+SourceSansPro.h"
+#import "UIFontDescriptor+Custom.h"
 
 #ifndef Verses_Constants_h
 #define Verses_Constants_h
@@ -23,7 +22,8 @@ static inline CGFloat height(UIView *view) { return view.frame.size.height; }
 #define kContributorViewTag 2376
 #define kBaseUrl @"https://writeverses.com"
 #define kAPIBaseUrl @"https://writeverses.com/api/v1"
-#define kTermsUrl @"https://writeverses.com/terms"
+#define kApiLogin @"verses_mobile"
+#define kApiKey @"721efc8ead5fe421291acb94f1625f35"
 #define kUrlScheme @"verses"
 
 #define MIXPANEL_TOKEN @"8184fc9baafab30a5c51cceefb90e2d0"
@@ -89,9 +89,8 @@ static inline CGFloat height(UIView *view) { return view.frame.size.height; }
 #define kSubscription @"subscription"
 
 //Font constants
-
 #define kSourceSansProLight @"SourceSansPro-Light"
-#define kSourceSansProRegular @"SourceSansPro-Regular"
+#define kSourceSansPro @"SourceSansPro-Regular"
 #define kSourceSansProSemibold @"SourceSansPro-Semibold"
 #define kSourceSansProBold @"SourceSansPro-Bold"
 #define kSourceSansProItalic @"SourceSansPro-It"
@@ -103,5 +102,12 @@ static inline CGFloat height(UIView *view) { return view.frame.size.height; }
 #define kLatoLight @"Lato-Light"
 #define kLatoLightItalic @"Lato-LightItalic"
 #define kLatoBold @"Lato-Bold"
+
+
+#define SYSTEM_VERSION_EQUAL_TO(v)                  ([[[UIDevice currentDevice] systemVersion] compare:v options:NSNumericSearch] == NSOrderedSame)
+#define SYSTEM_VERSION_GREATER_THAN(v)              ([[[UIDevice currentDevice] systemVersion] compare:v options:NSNumericSearch] == NSOrderedDescending)
+#define SYSTEM_VERSION_GREATER_THAN_OR_EQUAL_TO(v)  ([[[UIDevice currentDevice] systemVersion] compare:v options:NSNumericSearch] != NSOrderedAscending)
+#define SYSTEM_VERSION_LESS_THAN(v)                 ([[[UIDevice currentDevice] systemVersion] compare:v options:NSNumericSearch] == NSOrderedAscending)
+#define SYSTEM_VERSION_LESS_THAN_OR_EQUAL_TO(v)     ([[[UIDevice currentDevice] systemVersion] compare:v options:NSNumericSearch] != NSOrderedDescending)
 
 #endif

@@ -13,7 +13,7 @@
 #import "XXSearchCell.h"
 #import "XXPortfolioViewController.h"
 #import "XXAlert.h"
-#import "XXLoginController.h"
+#import "XXLoginViewController.h"
 #import "XXStoryViewController.h"
 #import "XXNoRotateNavController.h"
 #import "XXGalleryViewController.h"
@@ -356,7 +356,7 @@
 - (UICollectionViewCell *)collectionView:(UICollectionView *)cv cellForItemAtIndexPath:(NSIndexPath *)indexPath {
     XXGuideCollectionCell *cell = [cv dequeueReusableCellWithReuseIdentifier:@"GuideCell" forIndexPath:indexPath];
     [cell.guideButton setTitleColor:[UIColor whiteColor] forState:UIControlStateNormal];
-    [cell.guideButton.titleLabel setFont:[UIFont fontWithName:kSourceSansProSemibold size:19]];
+    [cell.guideButton.titleLabel setFont:[UIFont fontWithDescriptor:[UIFontDescriptor preferredCustomFontForTextStyle:UIFontTextStyleSubheadline forFont:kSourceSansProSemibold] size:0]];
     cell.guideButton.titleLabel.numberOfLines = 0;
     [cell.guideButton.titleLabel setTextAlignment:NSTextAlignmentCenter];
     [cell.imageView addMotionEffect:motion];
@@ -370,7 +370,7 @@
     switch (indexPath.item) {
         //left column
         case 0:
-            [cell.imageView setImage:[UIImage imageNamed:@"menuHome"]];
+            [cell.imageView setImage:[UIImage imageNamed:@"menuBrowse"]];
             [cell.guideButton setTitle:@"Browse" forState:UIControlStateNormal];
             [cell.guideButton addTarget:self action:@selector(goBrowse) forControlEvents:UIControlEventTouchUpInside];
             break;
@@ -421,7 +421,7 @@
             [cell.guideButton addTarget:self action:@selector(goShared) forControlEvents:UIControlEventTouchUpInside];
             break;
         case 10:
-            [cell.imageView setImage:[UIImage imageNamed:@"menuPhotos"]];
+            [cell.imageView setImage:[UIImage imageNamed:@"menuCamera"]];
             [cell.guideButton setTitle:@"Photo Gallery" forState:UIControlStateNormal];
             [cell.guideButton addTarget:self action:@selector(goGallery) forControlEvents:UIControlEventTouchUpInside];
             break;
@@ -437,7 +437,7 @@
             [cell.guideButton addTarget:self action:@selector(goSlowReveal) forControlEvents:UIControlEventTouchUpInside];
             break;
         case 5:
-            [cell.imageView setImage:[UIImage imageNamed:@"menuDrafts"]];
+            [cell.imageView setImage:[UIImage imageNamed:@"menuPencil"]];
             [cell.guideButton setTitle:@"Drafts" forState:UIControlStateNormal];
             [cell.guideButton addTarget:self action:@selector(goToDrafts) forControlEvents:UIControlEventTouchUpInside];
             break;
@@ -486,7 +486,7 @@
                 searchTextField.layer.cornerRadius = 14.f;
                 searchTextField.clipsToBounds = YES;
                 searchTextField.attributedPlaceholder = searchPlaceholder;
-                [searchTextField setFont:[UIFont fontWithName:kSourceSansProRegular size:16]];
+                [searchTextField setFont:[UIFont fontWithDescriptor:[UIFontDescriptor preferredCustomFontForTextStyle:UIFontTextStyleBody forFont:kSourceSansPro] size:0]];
                 break;
             }
         }
@@ -599,7 +599,7 @@
         [cell.storyTitle setText:@"No results."];
         [cell.authorLabel setText:@""];
         //[cell.authorLabel setText:@"Tap to search again..."];
-        [cell.authorLabel setFont:[UIFont fontWithName:kSourceSansProItalic size:15]];
+        [cell.authorLabel setFont:[UIFont fontWithDescriptor:[UIFontDescriptor preferredCustomFontForTextStyle:UIFontTextStyleBody forFont:kSourceSansProItalic] size:0]];
         return cell;
     }
     /*} else {
@@ -798,7 +798,7 @@
 
 - (void)login {
     [[UIApplication sharedApplication] setStatusBarHidden:YES withAnimation:UIStatusBarAnimationFade];
-    XXLoginController *login = [[self storyboard] instantiateViewControllerWithIdentifier:@"Login"];
+    XXLoginViewController *login = [[self storyboard] instantiateViewControllerWithIdentifier:@"Login"];
     XXNoRotateNavController *nav = [[XXNoRotateNavController alloc] initWithRootViewController:login];
     [delegate.dynamicsDrawerViewController setPaneViewController:nav];
     [self.presentingViewController dismissViewControllerAnimated:YES completion:nil];

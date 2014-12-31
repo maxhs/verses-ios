@@ -7,7 +7,7 @@
 //
 
 #import "XXNoRotateNavController.h"
-#import "XXLoginController.h"
+#import "XXLoginViewController.h"
 #import "XXNewUserWalkthroughViewController.h"
 
 @interface XXNoRotateNavController ()
@@ -25,21 +25,19 @@
     return self;
 }
 
-- (void)viewDidLoad
-{
+- (void)viewDidLoad {
     [super viewDidLoad];
     [self setNavigationBarHidden:YES];
 }
 
-- (void)didReceiveMemoryWarning
-{
+- (void)didReceiveMemoryWarning {
     [super didReceiveMemoryWarning];
     // Dispose of any resources that can be recreated.
 }
 
 - (BOOL)shouldAutorotate {
     id currentViewController = self.topViewController;
-    if ([currentViewController isKindOfClass:[XXLoginController class]] || [currentViewController isKindOfClass:[XXNewUserWalkthroughViewController class]]){
+    if ([currentViewController isKindOfClass:[XXLoginViewController class]] || [currentViewController isKindOfClass:[XXNewUserWalkthroughViewController class]]){
         return NO;
     } else {
         return YES;

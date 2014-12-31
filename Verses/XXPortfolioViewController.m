@@ -98,7 +98,7 @@
         }
     }
     
-    [_moreButton.titleLabel setFont:[UIFont fontWithName:kSourceSansProRegular size:15]];
+    [_moreButton.titleLabel setFont:[UIFont fontWithName:kSourceSansPro size:15]];
 }
 
 - (void)removeStory:(NSNotification*)notification {
@@ -152,7 +152,7 @@
         for (id subview in [self.searchBar.subviews.firstObject subviews]){
             if ([subview isKindOfClass:[UITextField class]]){
                 [(UITextField*)subview setKeyboardAppearance:UIKeyboardAppearanceDark];
-                [(UITextField*)subview setFont:[UIFont fontWithName:kSourceSansProRegular size:15]];
+                [(UITextField*)subview setFont:[UIFont fontWithName:kSourceSansPro size:15]];
                 break;
             }
         }
@@ -164,7 +164,7 @@
         for (id subview in [self.searchBar.subviews.firstObject subviews]){
             if ([subview isKindOfClass:[UITextField class]]){
                 [(UITextField*)subview setTextColor:[UIColor blackColor]];
-                [(UITextField*)subview setFont:[UIFont fontWithName:kSourceSansProRegular size:15]];
+                [(UITextField*)subview setFont:[UIFont fontWithName:kSourceSansPro size:15]];
                 [(UITextField*)subview setKeyboardAppearance:UIKeyboardAppearanceDefault];
             }
         }

@@ -1,5 +1,5 @@
 //
-//  XXLoginController.h
+//  XXLoginViewController.h
 //  Verses
 //
 //  Created by Max Haines-Stiles on 10/7/13.
@@ -9,7 +9,7 @@
 #import <UIKit/UIKit.h>
 #import "User.h"
 
-@interface XXLoginController : UIViewController
+@interface XXLoginViewController : UIViewController
 @property (strong, nonatomic) IBOutlet UITextField *emailTextField;
 @property (strong, nonatomic) IBOutlet UITextField *passwordTextField;
 @property (strong, nonatomic) IBOutlet UITextField *registerEmailTextField;

@@ -163,7 +163,7 @@
 	{
 		label = [[UILabel alloc] initWithFrame:CGRectZero];
         if ([[NSUserDefaults standardUserDefaults] boolForKey:kDarkBackground]){
-            label.font = [UIFont fontWithName:kSourceSansProRegular size:18];
+            label.font = [UIFont fontWithName:kSourceSansPro size:18];
         } else {
             label.font = [UIFont fontWithName:@"SourceSansPro-Light" size:17];
         }

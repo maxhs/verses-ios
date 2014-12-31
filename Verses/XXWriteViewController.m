@@ -19,8 +19,7 @@
 #import "XXPortfolioViewController.h"
 #import "Circle+helper.h"
 #import <DTCoreText/DTCoreText.h>
-#import "UIFontDescriptor+CrimsonText.h"
-#import "UIFontDescriptor+SourceSansPro.h"
+#import "UIFontDescriptor+Custom.h"
 #import "XXAlert.h"
 #import "XXGuideInteractor.h"
 #import "XXGuideViewController.h"
@@ -1006,7 +1005,7 @@
         }
         if (!storyBody.length) storyBody = kStoryPlaceholder;
         
-        NSDictionary* attributes = @{NSFontAttributeName:[UIFont fontWithDescriptor:[UIFontDescriptor preferredCrimsonTextFontDescriptorWithTextStyle:UIFontTextStyleBody] size:0],
+        NSDictionary* attributes = @{NSFontAttributeName:[UIFont fontWithDescriptor:[UIFontDescriptor preferredCustomFontForTextStyle:UIFontTextStyleBody forFont:kSourceSansPro] size:0],
                                      NSForegroundColorAttributeName : textColor,
                                      NSDocumentTypeDocumentAttribute:NSHTMLTextDocumentType,
                                      };
@@ -1088,7 +1087,7 @@
             [loadMoreButton setTag:1];
             [loadMoreButton setFrame:CGRectMake(0, offset, width, 88)];
             [loadMoreButton setTitle:@"Load more..." forState:UIControlStateNormal];
-            [loadMoreButton.titleLabel setFont:[UIFont fontWithName:kSourceSansProRegular size:20]];
+            [loadMoreButton.titleLabel setFont:[UIFont fontWithName:kSourceSansPro size:20]];
             [loadMoreButton addTarget:self action:@selector(reload:) forControlEvents:UIControlEventTouchUpInside];
             [loadMoreButton setTitleColor:textColor forState:UIControlStateNormal];
             [_scrollView addSubview:loadMoreButton];
@@ -1107,7 +1106,7 @@
         loadPreviousButton = [UIButton buttonWithType:UIButtonTypeCustom];
         [loadPreviousButton setFrame:CGRectMake(0, 0, screenWidth(), 88)];
         [loadPreviousButton setTitle:@"Load previous..." forState:UIControlStateNormal];
-        [loadPreviousButton.titleLabel setFont:[UIFont fontWithName:kSourceSansProRegular size:20]];
+        [loadPreviousButton.titleLabel setFont:[UIFont fontWithName:kSourceSansPro size:20]];
         [loadPreviousButton setTag:button.tag-1];
         [loadPreviousButton addTarget:self action:@selector(reload:) forControlEvents:UIControlEventTouchUpInside];
         [loadPreviousButton setTitleColor:textColor forState:UIControlStateNormal];
@@ -1254,7 +1253,7 @@
     
     if (italicsSelected) {
         NSMutableAttributedString *attrString = [_bodyTextView.textStorage attributedSubstringFromRange:[self selectedRangeForText:_selectedRange]].mutableCopy;
-        [attrString addAttribute:NSFontAttributeName value:[UIFont fontWithDescriptor:[[UIFontDescriptor preferredSourceSansProFontDescriptorWithTextStyle:UIFontTextStyleBody] fontDescriptorWithSymbolicTraits:UIFontDescriptorTraitItalic] size:0] range:NSMakeRange((0), attrString.length)];
+        [attrString addAttribute:NSFontAttributeName value:[UIFont fontWithDescriptor:[[UIFontDescriptor preferredCustomFontForTextStyle:UIFontTextStyleBody forFont:kSourceSansPro] fontDescriptorWithSymbolicTraits:UIFontDescriptorTraitItalic] size:0] range:NSMakeRange((0), attrString.length)];
     }
 }
 
@@ -1269,7 +1268,7 @@
     
     if (boldSelected){
         NSMutableAttributedString *attrString = [_bodyTextView.textStorage attributedSubstringFromRange:[self selectedRangeForText:_selectedRange]].mutableCopy;
-        [attrString addAttribute:NSFontAttributeName value:[UIFont fontWithDescriptor:[[UIFontDescriptor preferredSourceSansProFontDescriptorWithTextStyle:UIFontTextStyleBody] fontDescriptorWithSymbolicTraits:UIFontDescriptorTraitBold] size:0] range:NSMakeRange((0), attrString.length)];
+        [attrString addAttribute:NSFontAttributeName value:[UIFont fontWithDescriptor:[[UIFontDescriptor preferredCustomFontForTextStyle:UIFontTextStyleBody forFont:kSourceSansPro] fontDescriptorWithSymbolicTraits:UIFontDescriptorTraitBold] size:0] range:NSMakeRange((0), attrString.length)];
     }
 }
 
@@ -1293,13 +1292,13 @@
         
         [attrString beginEditing];
         if (fontSize < 25.f){
-            [attrString addAttribute:NSFontAttributeName value:[UIFont fontWithDescriptor:[[UIFontDescriptor preferredSourceSansProFontDescriptorWithTextStyle:UIFontTextStyleSubheadline] fontDescriptorWithSymbolicTraits:UIFontDescriptorTraitBold] size:0] range:NSMakeRange((0), attrString.length)];
+            [attrString addAttribute:NSFontAttributeName value:[UIFont fontWithDescriptor:[[UIFontDescriptor preferredCustomFontForTextStyle:UIFontTextStyleSubheadline forFont:kSourceSansPro] fontDescriptorWithSymbolicTraits:UIFontDescriptorTraitBold] size:0] range:NSMakeRange((0), attrString.length)];
             [_bodyTextView.textStorage replaceCharactersInRange:selectionRange withAttributedString:attrString];
         } else if (fontSize > 25.f && fontSize < 30.f){
-            [attrString addAttribute:NSFontAttributeName value:[UIFont fontWithDescriptor:[[UIFontDescriptor preferredSourceSansProFontDescriptorWithTextStyle:UIFontTextStyleHeadline] fontDescriptorWithSymbolicTraits:UIFontDescriptorTraitBold] size:0] range:NSMakeRange((0), attrString.length)];
+            [attrString addAttribute:NSFontAttributeName value:[UIFont fontWithDescriptor:[[UIFontDescriptor preferredCustomFontForTextStyle:UIFontTextStyleHeadline forFont:kSourceSansPro] fontDescriptorWithSymbolicTraits:UIFontDescriptorTraitBold] size:0] range:NSMakeRange((0), attrString.length)];
             [_bodyTextView.textStorage replaceCharactersInRange:selectionRange withAttributedString:attrString];
         } else {
-            [attrString addAttribute:NSFontAttributeName value:[UIFont fontWithDescriptor:[UIFontDescriptor preferredCrimsonTextFontDescriptorWithTextStyle:UIFontTextStyleBody] size:0] range:NSMakeRange((0), attrString.length)];
+            [attrString addAttribute:NSFontAttributeName value:[UIFont fontWithDescriptor:[UIFontDescriptor preferredCustomFontForTextStyle:UIFontTextStyleBody forFont:kSourceSansPro] size:0] range:NSMakeRange((0), attrString.length)];
             [_bodyTextView.textStorage replaceCharactersInRange:selectionRange withAttributedString:attrString];
         }
         
@@ -1313,7 +1312,7 @@
         NSMutableAttributedString *attrString = [_bodyTextView.textStorage attributedSubstringFromRange:[self selectedRangeForText:_selectedRange]].mutableCopy;
         
         [attrString beginEditing];
-        [attrString addAttribute:NSFontAttributeName value:[UIFont fontWithDescriptor:[UIFontDescriptor preferredCrimsonTextFontDescriptorWithTextStyle:UIFontTextStyleFootnote] size:0] range:NSMakeRange((0), attrString.length)];
+        [attrString addAttribute:NSFontAttributeName value:[UIFont fontWithDescriptor:[UIFontDescriptor preferredCustomFontForTextStyle:UIFontTextStyleFootnote forFont:kCrimsonRoman] size:0] range:NSMakeRange((0), attrString.length)];
         [_bodyTextView.textStorage replaceCharactersInRange:selectionRange withAttributedString:attrString];
         
         [attrString endEditing];
@@ -1407,7 +1406,7 @@
 
 - (void)setupView {
     originalDoneRect = _doneOptionsButton.frame;
-    [_doneOptionsButton.titleLabel setFont:[UIFont fontWithName:kSourceSansProRegular size:15]];
+    [_doneOptionsButton.titleLabel setFont:[UIFont fontWithName:kSourceSansPro size:15]];
     _doneOptionsButton.layer.borderColor = [UIColor darkGrayColor].CGColor;
     _doneOptionsButton.layer.cornerRadius = 14.f;
     [_doneOptionsButton.layer setBackgroundColor:[UIColor clearColor].CGColor];
@@ -1415,7 +1414,7 @@
     _doneOptionsButton.layer.rasterizationScale = [UIScreen mainScreen].scale;
     _doneOptionsButton.layer.shouldRasterize = YES;
     
-    [_deleteButton.titleLabel setFont:[UIFont fontWithName:kSourceSansProRegular size:15]];
+    [_deleteButton.titleLabel setFont:[UIFont fontWithName:kSourceSansPro size:15]];
     [_deleteButton setTitleColor:[UIColor redColor] forState:UIControlStateNormal];
     _deleteButton.layer.borderColor = [UIColor redColor].CGColor;
     _deleteButton.layer.cornerRadius = 14.f;
@@ -1424,7 +1423,7 @@
     _deleteButton.layer.rasterizationScale = [UIScreen mainScreen].scale;
     _deleteButton.layer.shouldRasterize = YES;
     
-    [_collaborateButton.titleLabel setFont:[UIFont fontWithName:kSourceSansProRegular size:15]];
+    [_collaborateButton.titleLabel setFont:[UIFont fontWithName:kSourceSansPro size:15]];
     _collaborateButton.layer.borderColor = [UIColor darkGrayColor].CGColor;
     _collaborateButton.layer.cornerRadius = 14.f;
     [_collaborateButton.layer setBackgroundColor:[UIColor clearColor].CGColor];

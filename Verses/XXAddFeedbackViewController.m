@@ -9,7 +9,7 @@
 #import "XXAppDelegate.h"
 #import "XXAddFeedbackViewController.h"
 #import "XXLeaveFeedbackCell.h"
-#import "XXLoginController.h"
+#import "XXLoginViewController.h"
 #import "XXAlert.h"
 #import "Constants.h"
 
@@ -137,7 +137,7 @@
         }
         
         [textView setTextColor:_textColor];
-        [textView setFont:[UIFont fontWithName:kSourceSansProRegular size:17]];
+        [textView setFont:[UIFont fontWithName:kSourceSansPro size:17]];
     }];
     
     if ([textView.text isEqualToString:kFeedbackPlaceholder]) {
@@ -194,7 +194,7 @@
             }];
         }
     } else {
-        XXLoginController *vc = [[self storyboard] instantiateViewControllerWithIdentifier:@"Login"];
+        XXLoginViewController *vc = [[self storyboard] instantiateViewControllerWithIdentifier:@"Login"];
         [self presentViewController:vc animated:YES completion:^{
             [XXAlert show:@"You'll need to log in to leave feedback" withTime:2.7f];
         }];

@@ -7,8 +7,7 @@
 //
 
 #import "XXTextStorage.h"
-#import "UIFontDescriptor+CrimsonText.h"
-#import "UIFontDescriptor+SourceSansPro.h"
+#import "Constants.h"
 
 @implementation XXTextStorage {
     NSMutableAttributedString *_storage;
@@ -71,7 +70,7 @@
     NSDictionary* italicAttributes = [self createAttributesForFontStyle:UIFontTextStyleBody withTrait:UIFontDescriptorTraitItalic];
     NSDictionary* strikeThroughAttributes = @{ NSStrikethroughStyleAttributeName : @1};
     //NSDictionary* redTextAttributes = @{ NSForegroundColorAttributeName : [UIColor redColor]};
-    NSDictionary* headingAttributes = @{NSFontAttributeName : [UIFont fontWithDescriptor:[UIFontDescriptor preferredSourceSansProFontDescriptorWithTextStyle:UIFontTextStyleHeadline] size:0]};
+    NSDictionary* headingAttributes = @{NSFontAttributeName : [UIFont fontWithDescriptor:[UIFontDescriptor preferredCustomFontForTextStyle:UIFontTextStyleHeadline forFont:kSourceSansPro] size:0]};
     
     // construct a dictionary of replacements based on regexes
     _replacements = @{
@@ -115,7 +114,7 @@
 
 - (NSDictionary*)createAttributesForFontStyle:(NSString*)style
                                     withTrait:(uint32_t)trait {
-    UIFontDescriptor *fontDescriptor = [UIFontDescriptor preferredCrimsonTextFontDescriptorWithTextStyle:UIFontTextStyleBody];
+    UIFontDescriptor *fontDescriptor = [UIFontDescriptor preferredCustomFontForTextStyle:UIFontTextStyleBody forFont:kCrimsonRoman];
     UIFontDescriptor *descriptorWithTrait = [fontDescriptor fontDescriptorWithSymbolicTraits:trait];
     
     UIFont* font =  [UIFont fontWithDescriptor:descriptorWithTrait size: 0.0];

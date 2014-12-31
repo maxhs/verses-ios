@@ -22,7 +22,7 @@
 }
 
 - (void)awakeFromNib {
-    [self.notificationLabel setFont:[UIFont fontWithName:kSourceSansProRegular size:15]];
+    [self.notificationLabel setFont:[UIFont fontWithName:kSourceSansPro size:15]];
     [self.timestamp setFont:[UIFont fontWithName:kSourceSansProLight size:13]];
 }
 

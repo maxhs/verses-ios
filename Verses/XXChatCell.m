@@ -58,7 +58,7 @@ static int minimumHeight = 30;
             _textLabel = [UILabel new];
             _textLabel.layer.rasterizationScale = [UIScreen mainScreen].scale;
             _textLabel.layer.shouldRasterize = YES;
-            _textLabel.font = [UIFont fontWithName:kSourceSansProRegular size:15.0f];
+            _textLabel.font = [UIFont fontWithName:kSourceSansPro size:15.0f];
             _textLabel.textColor = [UIColor darkTextColor];
             _textLabel.numberOfLines = 0;
             _textLabel.autoresizingMask = UIViewAutoresizingFlexibleWidth;
@@ -68,7 +68,7 @@ static int minimumHeight = 30;
         
         if (!_timestamp) {
             _timestamp = [UILabel new];
-            _timestamp.font = [UIFont fontWithName:kSourceSansProRegular size:10.f];
+            _timestamp.font = [UIFont fontWithName:kSourceSansPro size:10.f];
             _timestamp.textColor = [UIColor lightGrayColor];
             _timestamp.numberOfLines = 0;
             [self.contentView addSubview:_timestamp];

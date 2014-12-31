@@ -14,7 +14,7 @@
 #import "XXAuthorInfoCell.h"
 #import "XXStoryViewController.h"
 #import "XXWriteViewController.h"
-#import "XXLoginController.h"
+#import "XXLoginViewController.h"
 #import "XXNoRotateNavController.h"
 #import "XXProfileViewController.h"
 #import "Feedback+helper.h"
@@ -354,7 +354,7 @@
             [textView setBackgroundColor:[UIColor colorWithWhite:1 alpha:1]];
             [textView setTextColor:[UIColor blackColor]];
         }
-        [textView setFont:[UIFont fontWithName:kSourceSansProRegular size:17]];
+        [textView setFont:[UIFont fontWithName:kSourceSansPro size:17]];
     }];
     
     if (textView == feedbackTextView){
@@ -557,7 +557,7 @@
 
 - (void)alertView:(UIAlertView *)alertView clickedButtonAtIndex:(NSInteger)buttonIndex {
     if ([[alertView buttonTitleAtIndex:buttonIndex] isEqualToString:@"Login"]){
-        XXLoginController *login = [[self storyboard] instantiateViewControllerWithIdentifier:@"Login"];
+        XXLoginViewController *login = [[self storyboard] instantiateViewControllerWithIdentifier:@"Login"];
         XXNoRotateNavController *nav = [[XXNoRotateNavController alloc] initWithRootViewController:login];
         [self presentViewController:nav animated:YES completion:^{
             

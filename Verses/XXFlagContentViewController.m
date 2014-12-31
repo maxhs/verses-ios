@@ -9,7 +9,7 @@
 #import "XXAppDelegate.h"
 #import "XXFlagContentViewController.h"
 #import "XXAlert.h"
-#import "XXLoginController.h"
+#import "XXLoginViewController.h"
 #import "XXNoRotateNavController.h"
 #import "Constants.h"
 
@@ -91,7 +91,7 @@
     /*if (cell == nil) {
         cell = [[[NSBundle mainBundle] loadNibNamed:@"XXLeaveFeedbackCell" owner:nil options:nil] lastObject];
     }*/
-    [cell.textLabel setFont:[UIFont fontWithName:kSourceSansProRegular size:17]];
+    [cell.textLabel setFont:[UIFont fontWithName:kSourceSansPro size:17]];
     [cell.textLabel setTextAlignment:NSTextAlignmentCenter];
     switch (indexPath.row) {
         case 0:
@@ -130,7 +130,7 @@
     switch (indexPath.row) {
         case 0:
         {
-            XXLoginController *vc = [[self storyboard] instantiateViewControllerWithIdentifier:@"Login"];
+            XXLoginViewController *vc = [[self storyboard] instantiateViewControllerWithIdentifier:@"Login"];
             XXNoRotateNavController *nav = [[XXNoRotateNavController alloc] initWithRootViewController:vc];
             return [self presentViewController:nav animated:YES completion:^{
                 [XXAlert show:@"Please log in to remove content that is not otherwise objectionable." withTime:3.f];

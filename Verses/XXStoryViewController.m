@@ -18,8 +18,8 @@
 #import "XXStoriesViewController.h"
 #import "XXWriteViewController.h"
 #import "Feedback+helper.h"
-#import "UIFontDescriptor+CrimsonText.h"
-#import "UIFontDescriptor+SourceSansPro.h"
+#import "UIFontDescriptor+Custom.h"
+#import "UIFontDescriptor+Custom.h"
 #import "XXTextView.h"
 #import "XXAddFeedbackViewController.h"
 #import "XXFeedbackTransition.h"
@@ -27,7 +27,7 @@
 #import "XXProfileViewController.h"
 #import "XXFlagContentViewController.h"
 #import "XXNoRotateNavController.h"
-#import "XXLoginController.h"
+#import "XXLoginViewController.h"
 #import <Mixpanel/Mixpanel.h>
 #import "XXAlert.h"
 
@@ -54,7 +54,6 @@
     UIColor *textColor;
     BOOL canLoadMore;
     BOOL loading;
-
     BOOL signedIn;
     CGFloat textSize;
     CGRect titleFrame;
@@ -95,22 +94,13 @@
 {
     self.automaticallyAdjustsScrollViewInsets = NO;
     orientation = self.interfaceOrientation;
+    
     if (UIInterfaceOrientationIsPortrait(orientation) || [[[UIDevice currentDevice] systemVersion] floatValue] >= 8.f){
         width = screenWidth();
         height = screenHeight();
-        if (IDIOM == IPAD){
-            keyboardHeight = 264;
-        } else {
-            keyboardHeight = 216;
-        }
     } else {
         width = screenHeight();
         height = screenWidth();
-        if (IDIOM == IPAD){
-            keyboardHeight = 352;
-        } else {
-            keyboardHeight = 216;
-        }
     }
     if (IDIOM == IPAD){
         rowHeight = height/3;
@@ -162,10 +152,7 @@
     
     [self showControls];
     
-    [[NSNotificationCenter defaultCenter] addObserver:self
-                                             selector:@selector(willShowKeyboard:)
-                                                 name:UIKeyboardWillShowNotification object:nil];
-    
+    [self registerForKeyboardNotifications];
     [[NSNotificationCenter defaultCenter] addObserver:self
                                              selector:@selector(addFeedback:)
                                                  name:@"AddFeedback" object:nil];
@@ -252,7 +239,7 @@
 
 - (void)alertView:(UIAlertView *)alertView clickedButtonAtIndex:(NSInteger)buttonIndex {
     if ([[alertView buttonTitleAtIndex:buttonIndex] isEqualToString:@"Login"]){
-        XXLoginController *vc = [[self storyboard] instantiateViewControllerWithIdentifier:@"Login"];
+        XXLoginViewController *vc = [[self storyboard] instantiateViewControllerWithIdentifier:@"Login"];
         XXNoRotateNavController *nav = [[XXNoRotateNavController alloc] initWithRootViewController:vc];
         [self presentViewController:nav animated:YES completion:nil];
     }
@@ -627,7 +614,7 @@
     paragraphStyle.lineSpacing = 3.f;
     paragraphStyle.paragraphSpacing = 21.f;
     
-    NSDictionary* attributes = @{/*NSFontAttributeName:[UIFont fontWithDescriptor:[UIFontDescriptor preferredCrimsonTextFontDescriptorWithTextStyle:UIFontTextStyleBody] size:0],*/
+    NSDictionary* attributes = @{/*NSFontAttributeName:[UIFont fontWithDescriptor:[UIFontDescriptor preferredCustomFontForStyle:UIFontTextStyleBody forFont:kSourceSansPro] size:0],*/
                                  NSParagraphStyleAttributeName : paragraphStyle,
                                  NSDocumentTypeDocumentAttribute:NSHTMLTextDocumentType,
                                  };
@@ -653,19 +640,19 @@
     [attributedContributionBody enumerateAttributesInRange:NSMakeRange(0, attributedContributionBody.length) options:NSAttributedStringEnumerationLongestEffectiveRangeNotRequired usingBlock:^(NSDictionary *attrs, NSRange range, BOOL *stop) {
         
         if ([[attrs objectForKey:@"DTHeaderLevel"]  isEqual: @1]){
-            [attributedContributionBody addAttribute:NSFontAttributeName value:[UIFont fontWithDescriptor:[[UIFontDescriptor preferredSourceSansProFontDescriptorWithTextStyle:UIFontTextStyleHeadline] fontDescriptorWithSymbolicTraits:UIFontDescriptorTraitBold] size:0] range:range];
+            [attributedContributionBody addAttribute:NSFontAttributeName value:[UIFont fontWithDescriptor:[UIFontDescriptor preferredCustomFontForTextStyle:UIFontTextStyleHeadline forFont:kSourceSansPro] size:0] range:range];
             NSMutableParagraphStyle *centerStyle = [[NSMutableParagraphStyle alloc] init];
             centerStyle.paragraphSpacing = header1spacing;
             [attributedContributionBody addAttribute:NSParagraphStyleAttributeName value:centerStyle range:range];
             contributionOffset += header1spacing;
         } else if ([[attrs objectForKey:@"DTHeaderLevel"]  isEqual: @2] || [[attrs objectForKey:@"DTHeaderLevel"]  isEqual: @3]){
-            [attributedContributionBody addAttribute:NSFontAttributeName value:[UIFont fontWithDescriptor:[[UIFontDescriptor preferredSourceSansProFontDescriptorWithTextStyle:UIFontTextStyleSubheadline] fontDescriptorWithSymbolicTraits:UIFontDescriptorTraitBold] size:0] range:range];
+            [attributedContributionBody addAttribute:NSFontAttributeName value:[UIFont fontWithDescriptor:[[UIFontDescriptor preferredCustomFontForTextStyle:UIFontTextStyleSubheadline forFont:kSourceSansPro] fontDescriptorWithSymbolicTraits:UIFontDescriptorTraitBold] size:0] range:range];
             NSMutableParagraphStyle *centerStyle = [[NSMutableParagraphStyle alloc] init];
             centerStyle.paragraphSpacing = header2spacing;
             [attributedContributionBody addAttribute:NSParagraphStyleAttributeName value:centerStyle range:range];
             contributionOffset += header2spacing;
         } else if ([[attrs objectForKey:@"DTBlockquote"]  isEqual: @1]){
-            [attributedContributionBody addAttribute:NSFontAttributeName value:[UIFont fontWithDescriptor:[UIFontDescriptor preferredCrimsonTextFontDescriptorWithTextStyle:CrimsonTextBlockquoteStyle] size:0] range:range];
+            [attributedContributionBody addAttribute:NSFontAttributeName value:[UIFont fontWithDescriptor:[UIFontDescriptor preferredCustomFontForTextStyle:UIFontTextStyleBody forFont:kCrimsonRoman] size:0] range:range];
             NSMutableParagraphStyle *centerStyle = [[NSMutableParagraphStyle alloc] init];
             centerStyle.firstLineHeadIndent = 33.f;
             centerStyle.headIndent = 33.f;
@@ -719,7 +706,7 @@
         UILabel *nameLabel = [[UILabel alloc] initWithFrame:CGRectMake(spacer+50, 0, width-50-spacer, 50)];
         [nameLabel setTextColor:textColor];
         [nameLabel setText:[NSString stringWithFormat:@"%@\n%@",contribution.user.penName, [_formatter stringFromDate:contribution.updatedDate]]];
-        [nameLabel setFont:[UIFont fontWithName:kSourceSansProRegular size:13]];
+        [nameLabel setFont:[UIFont fontWithName:kSourceSansPro size:13]];
         [nameLabel setNumberOfLines:0];
         [nameLabel setTag:kSeparatorTag];
         [contributorView addSubview:nameLabel];
@@ -813,7 +800,7 @@
             UILabel *nameLabel = [[UILabel alloc] initWithFrame:CGRectMake(spacer+50, 0, width-50-spacer, 50)];
             [nameLabel setTextColor:textColor];
             [nameLabel setText:[NSString stringWithFormat:@"%@ | %@",contribution.user.penName, [_formatter stringFromDate:contribution.updatedDate]]];
-            [nameLabel setFont:[UIFont fontWithName:kSourceSansProRegular size:14]];
+            [nameLabel setFont:[UIFont fontWithName:kSourceSansPro size:14]];
             [nameLabel setNumberOfLines:0];
             [nameLabel setTag:kSeparatorTag];
             [contributorView addSubview:nameLabel];
@@ -890,15 +877,13 @@
         textSize = 53;
         spacer = 40;
         imageHeight = height/2;
-        [_titleLabel setFont:[UIFont fontWithName:kSourceSansProSemibold size:textSize]];
-        [_authorsLabel setFont:[UIFont fontWithName:kCrimsonRoman size:19]];
     } else {
         imageHeight = height*.7;
         textSize = 37;
         spacer = 14;
-        [_titleLabel setFont:[UIFont fontWithName:kSourceSansProSemibold size:textSize]];
-        [_authorsLabel setFont:[UIFont fontWithName:kCrimsonRoman size:17]];
     }
+    [_titleLabel setFont:[UIFont fontWithDescriptor:[UIFontDescriptor preferredCustomFontForTextStyle:UIFontTextStyleHeadline forFont:kSourceSansProSemibold] size:0]];
+    [_authorsLabel setFont:[UIFont fontWithDescriptor:[UIFontDescriptor preferredCustomFontForTextStyle:UIFontTextStyleBody forFont:kCrimsonRoman] size:0]];
     
     [self drawTitle];
     [self drawAuthors];
@@ -963,7 +948,7 @@
         [addSlowRevealButton setAutoresizingMask:UIViewAutoresizingFlexibleWidth];
         [addSlowRevealButton setFrame:CGRectMake(0, contributionOffset, width, 176)];
         [addSlowRevealButton setTitle:@"Add to slow reveal..." forState:UIControlStateNormal];
-        [addSlowRevealButton.titleLabel setFont:[UIFont fontWithName:kSourceSansProRegular size:19]];
+        [addSlowRevealButton.titleLabel setFont:[UIFont fontWithName:kSourceSansPro size:19]];
         [addSlowRevealButton addTarget:self action:@selector(addToSlowReveal) forControlEvents:UIControlEventTouchUpInside];
         if ([[NSUserDefaults standardUserDefaults] boolForKey:kDarkBackground]){
             [addSlowRevealButton setTitleColor:textColor forState:UIControlStateNormal];
@@ -995,7 +980,7 @@
         [shouldShareButton setAutoresizingMask:UIViewAutoresizingFlexibleWidth];
         [shouldShareButton setFrame:CGRectMake(width/2-41, contributionOffset + 42, 82, 48)];
         [shouldShareButton setTitle:@"Share" forState:UIControlStateNormal];
-        [shouldShareButton.titleLabel setFont:[UIFont fontWithName:kSourceSansProRegular size:16]];
+        [shouldShareButton.titleLabel setFont:[UIFont fontWithName:kSourceSansPro size:16]];
         [shouldShareButton addTarget:self action:@selector(showActivityView) forControlEvents:UIControlEventTouchUpInside];
         [shouldShareButton setTitleColor:textColor forState:UIControlStateNormal];
         [shouldShareButton.layer setBorderColor:textColor.CGColor];
@@ -1014,7 +999,7 @@
         [flagButton setFrame:CGRectMake(width*.75-41, contributionOffset + 42, 82, 48)];
         [flagButton setTitle:@"Flag" forState:UIControlStateNormal];
         [flagButton.titleLabel setTextAlignment:NSTextAlignmentCenter];
-        [flagButton.titleLabel setFont:[UIFont fontWithName:kSourceSansProRegular size:16]];
+        [flagButton.titleLabel setFont:[UIFont fontWithName:kSourceSansPro size:16]];
         [flagButton addTarget:self action:@selector(flagContent) forControlEvents:UIControlEventTouchUpInside];
         [flagButton setTitleColor:[UIColor lightGrayColor] forState:UIControlStateNormal];
         [flagButton setTitleColor:textColor forState:UIControlStateNormal];
@@ -1185,7 +1170,7 @@
         
         [self presentViewController:vc animated:YES completion:nil];
     } else {
-        XXLoginController *vc = [[self storyboard] instantiateViewControllerWithIdentifier:@"Login"];
+        XXLoginViewController *vc = [[self storyboard] instantiateViewControllerWithIdentifier:@"Login"];
         [self presentViewController:vc animated:YES completion:^{
             [XXAlert show:@"You'll need to log in before leaving feedback" withTime:2.7f];
         }];
@@ -1210,7 +1195,7 @@
     [publishButton setFrame:CGRectMake(width-100, addSlowRevealButton.frame.origin.y, 88, 68)];
     [publishButton setTitle:@"Add" forState:UIControlStateNormal];
     [publishButton setTitleColor:kElectricBlue forState:UIControlStateNormal];
-    [publishButton.titleLabel setFont:[UIFont fontWithName:kSourceSansProRegular size:16]];
+    [publishButton.titleLabel setFont:[UIFont fontWithName:kSourceSansPro size:16]];
     [publishButton addTarget:self action:@selector(publishContribution) forControlEvents:UIControlEventTouchUpInside];
     [self.scrollView addSubview:publishButton];
     
@@ -1218,7 +1203,7 @@
     [cancelButton setFrame:CGRectMake(10, addSlowRevealButton.frame.origin.y, 88, 68)];
     [cancelButton setTitle:@"Cancel" forState:UIControlStateNormal];
     [cancelButton setTitleColor:kElectricBlue forState:UIControlStateNormal];
-    [cancelButton.titleLabel setFont:[UIFont fontWithName:kSourceSansProRegular size:16]];
+    [cancelButton.titleLabel setFont:[UIFont fontWithName:kSourceSansPro size:16]];
     [cancelButton addTarget:self action:@selector(doneEditing) forControlEvents:UIControlEventTouchUpInside];
     [self.scrollView addSubview:cancelButton];
 }
@@ -1264,7 +1249,7 @@
             }];
         }
     } else {
-        XXLoginController *vc = [[self storyboard] instantiateViewControllerWithIdentifier:@"Login"];
+        XXLoginViewController *vc = [[self storyboard] instantiateViewControllerWithIdentifier:@"Login"];
         [self presentViewController:vc animated:YES completion:^{
             [XXAlert show:@"Please login before publishing" withTime:2.7f];
         }];
@@ -1283,7 +1268,7 @@
         addSlowRevealButton = [UIButton buttonWithType:UIButtonTypeCustom];
         [addSlowRevealButton setFrame:CGRectMake(0, contributionOffset, width, 176)];
         [addSlowRevealButton setTitle:@"Add to slow reveal..." forState:UIControlStateNormal];
-        [addSlowRevealButton.titleLabel setFont:[UIFont fontWithName:kSourceSansProRegular size:20]];
+        [addSlowRevealButton.titleLabel setFont:[UIFont fontWithName:kSourceSansPro size:20]];
         [addSlowRevealButton addTarget:self action:@selector(addToSlowReveal) forControlEvents:UIControlEventTouchUpInside];
         if ([[NSUserDefaults standardUserDefaults] boolForKey:kDarkBackground]){
             [addSlowRevealButton setTitleColor:textColor forState:UIControlStateNormal];
@@ -1382,13 +1367,13 @@
         
         [attrString beginEditing];
         if (fontSize < 25.f){
-            [attrString addAttribute:NSFontAttributeName value:[UIFont fontWithDescriptor:[[UIFontDescriptor preferredSourceSansProFontDescriptorWithTextStyle:UIFontTextStyleSubheadline] fontDescriptorWithSymbolicTraits:UIFontDescriptorTraitBold] size:0] range:NSMakeRange((0), attrString.length)];
+            [attrString addAttribute:NSFontAttributeName value:[UIFont fontWithDescriptor:[[UIFontDescriptor preferredCustomFontForTextStyle:UIFontTextStyleSubheadline forFont:kSourceSansPro] fontDescriptorWithSymbolicTraits:UIFontDescriptorTraitBold] size:0] range:NSMakeRange((0), attrString.length)];
             [newContributionTextView.textStorage replaceCharactersInRange:selectionRange withAttributedString:attrString];
         } else if (fontSize > 25.f && fontSize < 30.f){
-            [attrString addAttribute:NSFontAttributeName value:[UIFont fontWithDescriptor:[[UIFontDescriptor preferredSourceSansProFontDescriptorWithTextStyle:UIFontTextStyleHeadline] fontDescriptorWithSymbolicTraits:UIFontDescriptorTraitBold] size:0] range:NSMakeRange((0), attrString.length)];
+            [attrString addAttribute:NSFontAttributeName value:[UIFont fontWithDescriptor:[[UIFontDescriptor preferredCustomFontForTextStyle:UIFontTextStyleHeadline forFont:kSourceSansPro] fontDescriptorWithSymbolicTraits:UIFontDescriptorTraitBold] size:0] range:NSMakeRange((0), attrString.length)];
             [newContributionTextView.textStorage replaceCharactersInRange:selectionRange withAttributedString:attrString];
         } else {
-            [attrString addAttribute:NSFontAttributeName value:[UIFont fontWithDescriptor:[UIFontDescriptor preferredCrimsonTextFontDescriptorWithTextStyle:UIFontTextStyleBody] size:0] range:NSMakeRange((0), attrString.length)];
+            [attrString addAttribute:NSFontAttributeName value:[UIFont fontWithDescriptor:[UIFontDescriptor preferredCustomFontForTextStyle:UIFontTextStyleBody forFont:kSourceSansPro] size:0] range:NSMakeRange((0), attrString.length)];
             [newContributionTextView.textStorage replaceCharactersInRange:selectionRange withAttributedString:attrString];
         }
         
@@ -1402,7 +1387,7 @@
         NSMutableAttributedString *attrString = [newContributionTextView.textStorage attributedSubstringFromRange:[self selectedRangeForText:_selectedRange]].mutableCopy;
         
         [attrString beginEditing];
-        [attrString addAttribute:NSFontAttributeName value:[UIFont fontWithDescriptor:[UIFontDescriptor preferredCrimsonTextFontDescriptorWithTextStyle:UIFontTextStyleFootnote] size:0] range:NSMakeRange((0), attrString.length)];
+        [attrString addAttribute:NSFontAttributeName value:[UIFont fontWithDescriptor:[UIFontDescriptor preferredCustomFontForTextStyle:UIFontTextStyleFootnote forFont:kCrimsonRoman] size:0] range:NSMakeRange((0), attrString.length)];
         [newContributionTextView.textStorage replaceCharactersInRange:selectionRange withAttributedString:attrString];
         
         [attrString endEditing];
@@ -1428,10 +1413,44 @@
 
 }
 
--(void)willShowKeyboard:(NSNotification*)notification {
+- (void)registerForKeyboardNotifications {
+    [[NSNotificationCenter defaultCenter] addObserver:self
+                                             selector:@selector(keyboardWillShow:)
+                                                 name:UIKeyboardWillShowNotification object:nil];
+    
+    [[NSNotificationCenter defaultCenter] addObserver:self
+                                             selector:@selector(keyboardWillHide:)
+                                                 name:UIKeyboardWillHideNotification object:nil];
+}
+
+- (void)keyboardWillShow:(NSNotification *)notification {
+    NSDictionary* info = [notification userInfo];
+    NSTimeInterval duration = [info[UIKeyboardAnimationDurationUserInfoKey] doubleValue];
+    UIViewAnimationOptions curve = [info[UIKeyboardAnimationDurationUserInfoKey] unsignedIntegerValue];
     NSDictionary* keyboardInfo = [notification userInfo];
     NSValue* keyboardFrameBegin = [keyboardInfo valueForKey:UIKeyboardFrameBeginUserInfoKey];
     keyboardHeight = [keyboardFrameBegin CGRectValue].size.height;
+    
+    [UIView animateWithDuration:duration
+                          delay:0
+                        options:curve | UIViewAnimationOptionBeginFromCurrentState
+                     animations:^{
+                         
+                     }
+                     completion:nil];
+}
+
+- (void)keyboardWillHide:(NSNotification *)notification {
+    NSDictionary* info = [notification userInfo];
+    NSTimeInterval duration = [info[UIKeyboardAnimationDurationUserInfoKey] doubleValue];
+    UIViewAnimationOptions curve = [info[UIKeyboardAnimationDurationUserInfoKey] unsignedIntegerValue];
+    [UIView animateWithDuration:duration
+                          delay:0
+                        options:curve | UIViewAnimationOptionBeginFromCurrentState
+                     animations:^{
+                         
+                     }
+                     completion:nil];
 }
 
 -(UIImage *)blurredSnapshot:(BOOL)light {

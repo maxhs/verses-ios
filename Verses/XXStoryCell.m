@@ -11,7 +11,7 @@
 #import "Photo+helper.h"
 #import <SDWebImage/UIButton+WebCache.h>
 #import <DTCoreText/DTCoreText.h>
-#import "UIFontDescriptor+CrimsonText.h"
+#import "UIFontDescriptor+Custom.h"
 #import "UIImage+ImageEffects.h"
 #import <SDWebImage/UIImageView+WebCache.h>
 
@@ -63,8 +63,8 @@
     [_separatorView setBackgroundColor:kSeparatorColor];
     [_titleLabel setFont:[UIFont fontWithName:kSourceSansProSemibold size:33]];
     
-    [_countLabel setFont:[UIFont fontWithName:kSourceSansProRegular size:15]];
-    [_authorLabel setFont:[UIFont fontWithName:kSourceSansProRegular size:15]];
+    [_countLabel setFont:[UIFont fontWithName:kSourceSansPro size:15]];
+    [_authorLabel setFont:[UIFont fontWithName:kSourceSansPro size:15]];
     
     [_titleLabel setAlpha:0.0];
     [_authorLabel setAlpha:0.0];

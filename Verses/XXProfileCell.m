@@ -75,7 +75,7 @@
             [_subscribeButton addTarget:self action:@selector(subscribe:) forControlEvents:UIControlEventTouchUpInside];
         }
         [_subscribeButton setHidden:NO];
-        [_subscribeButton.titleLabel setFont:[UIFont fontWithName:kSourceSansProRegular size:14]];
+        [_subscribeButton.titleLabel setFont:[UIFont fontWithName:kSourceSansPro size:14]];
         
         [_subscribeButton setTitleColor:_locationLabel.textColor forState:UIControlStateNormal];
         [_subscribeButton.layer setBorderColor:_locationLabel.textColor.CGColor];

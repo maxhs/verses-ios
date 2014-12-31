@@ -12,7 +12,7 @@
 #import "XXProfileStoryCell.h"
 #import <SDWebImage/UIButton+WebCache.h>
 #import "XXStoryViewController.h"
-#import "XXLoginController.h"
+#import "XXLoginViewController.h"
 #import "XXStoriesViewController.h"
 
 @interface XXProfileViewController () {
@@ -83,7 +83,7 @@
 }
 
 - (void)showLogin {
-    XXLoginController *vc = [[self storyboard] instantiateViewControllerWithIdentifier:@"Login"];
+    XXLoginViewController *vc = [[self storyboard] instantiateViewControllerWithIdentifier:@"Login"];
     [self presentViewController:vc animated:YES completion:^{
         
     }];

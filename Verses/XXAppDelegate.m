@@ -18,15 +18,12 @@
 #import "XXStoryViewController.h"
 #import "XXProfileViewController.h"
 #import <SDWebImage/UIImageView+WebCache.h>
-#define SYSTEM_VERSION_EQUAL_TO(v)                  ([[[UIDevice currentDevice] systemVersion] compare:v options:NSNumericSearch] == NSOrderedSame)
-#define SYSTEM_VERSION_GREATER_THAN(v)              ([[[UIDevice currentDevice] systemVersion] compare:v options:NSNumericSearch] == NSOrderedDescending)
-#define SYSTEM_VERSION_GREATER_THAN_OR_EQUAL_TO(v)  ([[[UIDevice currentDevice] systemVersion] compare:v options:NSNumericSearch] != NSOrderedAscending)
-#define SYSTEM_VERSION_LESS_THAN(v)                 ([[[UIDevice currentDevice] systemVersion] compare:v options:NSNumericSearch] == NSOrderedAscending)
-#define SYSTEM_VERSION_LESS_THAN_OR_EQUAL_TO(v)     ([[[UIDevice currentDevice] systemVersion] compare:v options:NSNumericSearch] != NSOrderedDescending)
 
 @interface XXAppDelegate () {
     XXStoriesViewController *welcome;
     NSTimer *timer;
+    CGFloat width;
+    CGFloat height;
 }
 
 @property (nonatomic, strong) UIImageView *defaultBackground;
@@ -81,13 +78,8 @@
     self.dynamicsDrawerViewController = (MSDynamicsDrawerViewController *)self.window.rootViewController;
     self.dynamicsDrawerViewController.bounceElasticity = 1.3f;
     self.dynamicsDrawerViewController.gravityMagnitude = 7.f;
-    if (IDIOM == IPAD){
-        [self.dynamicsDrawerViewController setRevealWidth:384.f forDirection:MSDynamicsDrawerDirectionLeft];
-        [self.dynamicsDrawerViewController setRevealWidth:384.f forDirection:MSDynamicsDrawerDirectionRight];
-    } else {
-        [self.dynamicsDrawerViewController setRevealWidth:280.f forDirection:MSDynamicsDrawerDirectionLeft];
-        [self.dynamicsDrawerViewController setRevealWidth:280.f forDirection:MSDynamicsDrawerDirectionRight];
-    }
+    [self.dynamicsDrawerViewController setRevealWidth:screenWidth()*.85f forDirection:MSDynamicsDrawerDirectionLeft];
+    [self.dynamicsDrawerViewController setRevealWidth:screenWidth()*.85f forDirection:MSDynamicsDrawerDirectionRight];
     
     MSDynamicsDrawerScaleStyler *menuScale = [MSDynamicsDrawerScaleStyler styler];
     [menuScale setClosedScale:.23];
@@ -104,6 +96,8 @@
     
     _manager = [[AFHTTPRequestOperationManager manager] initWithBaseURL:[NSURL URLWithString:kAPIBaseUrl]];
     _manager.requestSerializer = [AFJSONRequestSerializer serializer];
+    [_manager.requestSerializer setAuthorizationHeaderFieldWithUsername:kApiLogin password:kApiKey];
+    [_manager.requestSerializer setValue:(IDIOM == IPAD) ? @"2" : @"1" forHTTPHeaderField:@"device_type"];
     
     self.window = [[UIWindow alloc] initWithFrame:[[UIScreen mainScreen] bounds]];
     self.window.rootViewController = self.dynamicsDrawerViewController;
@@ -154,31 +148,27 @@
                 _defaultBackground = [[UIImageView alloc] initWithImage:[UIImage imageNamed:@"iPadDefault"]];
             } else {
                 _defaultBackground = [[UIImageView alloc] initWithImage:[UIImage imageNamed:@"iPadDefault-Landscape"]];
-                [_defaultBackground setBounds:CGRectMake(0, 0, screenHeight(), screenWidth())];
                 CGAffineTransform translation = CGAffineTransformMakeTranslation(-128, 128);
                 CGAffineTransform rotate = CGAffineTransformMakeRotation(RADIANS(90));
                 _defaultBackground.transform = CGAffineTransformConcat(rotate, translation);
             }
-        } else if ([UIScreen mainScreen].bounds.size.height >= 568) {
+        } else if ([UIScreen mainScreen].bounds.size.height == 568) {
             _defaultBackground = [[UIImageView alloc] initWithImage:[UIImage imageNamed:@"Default-568h"]];
         } else {
             _defaultBackground = [[UIImageView alloc] initWithImage:[UIImage imageNamed:@"Default"]];
         }
     }
+    [_defaultBackground setFrame:[UIScreen mainScreen].bounds];
     return _defaultBackground;
 }
 
 - (void)setupWindowBackground {
     if (!_windowBackground) {
+        _windowBackground = [[UIImageView alloc] initWithFrame:[UIScreen mainScreen].bounds];
         if (_currentUser.backgroundImageView) {
-            _windowBackground = [[UIImageView alloc] initWithFrame:[UIScreen mainScreen].bounds];
             [_windowBackground setImage:[(UIImageView*)_currentUser.backgroundImageView image]];
         } else {
-            if (UI_USER_INTERFACE_IDIOM() == UIUserInterfaceIdiomPad){
-                _windowBackground = [[UIImageView alloc] initWithImage:[UIImage imageNamed:@"background_ipad"]];
-            } else {
-                _windowBackground = [[UIImageView alloc] initWithImage:[UIImage imageNamed:@"background"]];
-            }
+            IDIOM == IPAD ? [_windowBackground setImage:[UIImage imageNamed:@"background_ipad"]] : [_windowBackground setImage:[UIImage imageNamed:@"background"]];
         }
     }
     
@@ -212,7 +202,7 @@
     [[UINavigationBar appearanceWhenContainedIn:[XXProfileViewController class], nil] setTranslucent:YES];*/
     
     [[UIBarButtonItem appearance] setTitleTextAttributes:@{
-                                                           NSFontAttributeName : [UIFont fontWithName:kSourceSansProRegular size:17],
+                                                           NSFontAttributeName : [UIFont fontWithName:kSourceSansPro size:17],
                                                            NSShadowAttributeName : clearShadow,
                                                            NSForegroundColorAttributeName : [UIColor blackColor],
                                                            } forState:UIControlStateNormal];
@@ -240,7 +230,7 @@
                                                                NSShadowAttributeName: clearShadow,
                                                                }];
         [[UIBarButtonItem appearance] setTitleTextAttributes:@{
-                                                               NSFontAttributeName : [UIFont fontWithName:kSourceSansProRegular size:17],
+                                                               NSFontAttributeName : [UIFont fontWithName:kSourceSansPro size:17],
                                                                NSShadowAttributeName : clearShadow,
                                                                NSForegroundColorAttributeName : [UIColor whiteColor],
                                                                } forState:UIControlStateNormal];
@@ -258,7 +248,7 @@
                                                                NSShadowAttributeName: clearShadow,
                                                                }];
         [[UIBarButtonItem appearance] setTitleTextAttributes:@{
-                                                               NSFontAttributeName : [UIFont fontWithName:kSourceSansProRegular size:17],
+                                                               NSFontAttributeName : [UIFont fontWithName:kSourceSansPro size:17],
                                                                NSShadowAttributeName : clearShadow,
                                                                NSForegroundColorAttributeName : [UIColor blackColor],
                                                                } forState:UIControlStateNormal];
@@ -290,11 +280,9 @@
     }
 }
 
-- (void)application:(UIApplication *)application didReceiveRemoteNotification:(NSDictionary *)pushMessage
-{
-    //[Flurry logEvent:@"Did Receive Remote Notification"];
+- (void)application:(UIApplication *)application didReceiveRemoteNotification:(NSDictionary *)pushMessage {
     [[Mixpanel sharedInstance] track:@"Just received a push message"];
-    NSLog(@"Received push: %@",pushMessage);
+    //NSLog(@"Received push: %@",pushMessage);
     [self redirect:pushMessage];
 }
 
@@ -468,7 +456,8 @@
 }
 
 - (void)application:(UIApplication*)application didFailToRegisterForRemoteNotificationsWithError:(NSError*)error {
-    //[Flurry logEvent:@"Rejected Remote Notifications"];
+    Mixpanel *mixpanel = [Mixpanel sharedInstance];
+    [mixpanel track:@"Rejected Remote Notifications"];
 }
 
 - (void)applicationWillResignActive:(UIApplication *)application {

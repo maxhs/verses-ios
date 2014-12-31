@@ -16,6 +16,8 @@
 @interface XXBookmarksViewController () <UIAlertViewDelegate, UIViewControllerTransitioningDelegate> {
     AFHTTPRequestOperationManager *manager;
     NSDateFormatter *_formatter;
+    CGFloat width;
+    CGFloat height;
     UIBarButtonItem *backButton;
     UIBarButtonItem *guideButton;
     NSIndexPath *indexPathForDeletion;
@@ -30,8 +32,7 @@
 
 @implementation XXBookmarksViewController
 
-- (void)viewDidLoad
-{
+- (void)viewDidLoad {
     [super viewDidLoad];
     self.title = @"Bookmarks";
     _formatter = [[NSDateFormatter alloc] init];
@@ -40,9 +41,16 @@
     [_formatter setTimeStyle:NSDateFormatterShortStyle];
     self.reloadTheme = NO;
     delegate = (XXAppDelegate*)[UIApplication sharedApplication].delegate;
-    if (delegate.currentUser){
-        currentUser = delegate.currentUser;
+    
+    if (UIInterfaceOrientationIsPortrait(self.interfaceOrientation) || [[[UIDevice currentDevice] systemVersion] floatValue] >= 8.f){
+        width = screenWidth();
+        height = screenHeight();
     } else {
+        width = screenHeight();
+        height = screenWidth();
+    }
+    
+    if ([[NSUserDefaults standardUserDefaults] objectForKey:kUserDefaultsId]){
         currentUser = [User MR_findFirstByAttribute:@"identifier" withValue:[[NSUserDefaults standardUserDefaults] objectForKey:kUserDefaultsId] inContext:[NSManagedObjectContext MR_defaultContext]];
     }
     guideButton = [[UIBarButtonItem alloc] initWithImage:[UIImage imageNamed:@"more"] style:UIBarButtonItemStylePlain target:self action:@selector(showGuide)];
@@ -57,11 +65,6 @@
     manager = delegate.manager;
     [delegate.dynamicsDrawerViewController registerTouchForwardingClass:[XXBookmarkCell class]];
     navBarShadowView = [Utilities findNavShadow:self.navigationController.navigationBar];
-}
-
-- (void)didReceiveMemoryWarning
-{
-    [super didReceiveMemoryWarning];
 }
 
 - (void)back {
@@ -170,8 +173,7 @@
 }
 
 
-- (UITableViewCell *)tableView:(UITableView *)tableView cellForRowAtIndexPath:(NSIndexPath *)indexPath
-{
+- (UITableViewCell *)tableView:(UITableView *)tableView cellForRowAtIndexPath:(NSIndexPath *)indexPath {
     if (currentUser.bookmarks.count){
         XXBookmarkCell *cell = (XXBookmarkCell *)[tableView dequeueReusableCellWithIdentifier:@"BookmarkCell"];
         if (cell == nil) {
@@ -188,11 +190,11 @@
         UITableViewCell *cell = [tableView dequeueReusableCellWithIdentifier:CellIdentifier forIndexPath:indexPath];
         UIButton *nothingButton = [UIButton buttonWithType:UIButtonTypeCustom];
         [nothingButton setTitle:@"You don't have any bookmarks." forState:UIControlStateNormal];
-        [nothingButton.titleLabel setFont:[UIFont fontWithName:kSourceSansProLight size:20]];
+        [nothingButton.titleLabel setFont:[UIFont fontWithDescriptor:[UIFontDescriptor preferredCustomFontForTextStyle:UIFontTextStyleBody forFont:kSourceSansProLight] size:0]];
         [nothingButton setTitleColor:textColor forState:UIControlStateNormal];
         [nothingButton setBackgroundColor:[UIColor clearColor]];
         [cell addSubview:nothingButton];
-        [nothingButton setFrame:CGRectMake(20, 0, screenWidth()-40, screenHeight()-84)];
+        [nothingButton setFrame:CGRectMake(20, 0, width-40, height-84)];
         cell.backgroundView = [[UIView alloc] initWithFrame:cell.frame];
         [cell.backgroundView setBackgroundColor:[UIColor clearColor]];
         [self.tableView setScrollEnabled:NO];
@@ -311,5 +313,9 @@
     [[NSManagedObjectContext MR_defaultContext] MR_saveToPersistentStoreWithCompletion:^(BOOL success, NSError *error) {
         NSLog(@"Saving bookmarks: %u",success);
     }];
+}
+
+- (void)didReceiveMemoryWarning {
+    [super didReceiveMemoryWarning];
 }
 @end

@@ -25,6 +25,7 @@
 #import "Story+helper.h"
 #import "XXNothingCell.h"
 #import "XXGuideAnimator.h"
+#import "XXNoRotateNavController.h"
 
 @interface XXStoriesViewController () <UIScrollViewDelegate, UIViewControllerTransitioningDelegate>{
     AFHTTPRequestOperationManager *manager;
@@ -54,6 +55,7 @@
 
 - (void)viewDidLoad {
     [super viewDidLoad];
+    _ether = YES;
     refreshControl = [[UIRefreshControl alloc] init];
     [refreshControl addTarget:self action:@selector(handleRefresh) forControlEvents:UIControlEventValueChanged];
     [refreshControl setTintColor:[UIColor darkGrayColor]];
@@ -225,6 +227,24 @@
     }
 }
 
+- (void)viewWillTransitionToSize:(CGSize)size withTransitionCoordinator:(id<UIViewControllerTransitionCoordinator>)coordinator {
+    [coordinator animateAlongsideTransition:^(id<UIViewControllerTransitionCoordinatorContext> context){
+         orientation = [[UIApplication sharedApplication] statusBarOrientation];
+        if (UIInterfaceOrientationIsPortrait(orientation) || [[[UIDevice currentDevice] systemVersion] floatValue] >= 8.f){
+            width = screenWidth();
+            height = screenHeight();
+        } else {
+            height = screenWidth();
+            width = screenHeight();
+        }
+        [menuButton setFrame:CGRectMake(width-44, 0, 44, 44)];
+     } completion:^(id<UIViewControllerTransitionCoordinatorContext> context){
+         
+     }];
+    
+    [super viewWillTransitionToSize:size withTransitionCoordinator:coordinator];
+}
+
 - (id<UIViewControllerAnimatedTransitioning>)animationControllerForPresentedController:(UIViewController *)presented
                                                                   presentingController:(UIViewController *)presenting
                                                                       sourceController:(UIViewController *)source {
@@ -270,12 +290,6 @@
     return blurredSnapshotImage;
 }
 
-- (void)didReceiveMemoryWarning
-{
-    [super didReceiveMemoryWarning];
-    // Dispose of any resources that can be recreated.
-}
-
 - (void)loadEtherStories {
     if (!loading){
         loading = YES;
@@ -286,6 +300,7 @@
             [self.tableView reloadData];
         } failure:^(AFHTTPRequestOperation *operation, NSError *error) {
             if (refreshControl.isRefreshing) [refreshControl endRefreshing];
+            [self.tableView reloadData];
             NSLog(@"Failure getting stories from welcome controller: %@",error.description);
             canLoadMore = NO;
             //[[[UIAlertView alloc] initWithTitle:@"Sorry" message:@"Something went wrong while trying to fetch the latest stories. Please pull down to refresh." delegate:nil cancelButtonTitle:@"Okay" otherButtonTitles:nil] show];
@@ -344,16 +359,20 @@
     }];
 }
 
-- (void)write{
+- (void)write {
     if ([[NSUserDefaults standardUserDefaults] objectForKey:kUserDefaultsId]){
         [self performSegueWithIdentifier:@"Write" sender:self];
     } else {
+        NSLog(@"should login");
         [self shouldLogin];
     }
 }
 
 - (void)shouldLogin {
-    [self performSegueWithIdentifier:@"Login" sender:self];
+    XXNoRotateNavController *nav = [[self storyboard] instantiateViewControllerWithIdentifier:@"LoginNav"];
+    [self presentViewController:nav animated:YES completion:^{
+        
+    }];
 }
 
 - (void)willAnimateRotationToInterfaceOrientation:(UIInterfaceOrientation)toInterfaceOrientation duration:(NSTimeInterval)duration {
@@ -372,13 +391,11 @@
 
 #pragma mark - Table view data source
 
-- (NSInteger)numberOfSectionsInTableView:(UITableView *)tableView
-{
+- (NSInteger)numberOfSectionsInTableView:(UITableView *)tableView {
     return 1;
 }
 
-- (NSInteger)tableView:(UITableView *)tableView numberOfRowsInSection:(NSInteger)section
-{
+- (NSInteger)tableView:(UITableView *)tableView numberOfRowsInSection:(NSInteger)section {
     if (_featured){
         return _featuredStories.count;
     } else if (_shared){
@@ -390,15 +407,33 @@
     } else if (_trending) {
         return _trendingStories.count;
     } else if (_ether) {
-        return _stories.count;
+        if (!delegate.connected && _stories.count == 0){
+            return 1;
+        } else {
+            return _stories.count;
+        }
     } else {
         return 0;
     }
 }
 
-- (UITableViewCell *)tableView:(UITableView *)tableView cellForRowAtIndexPath:(NSIndexPath *)indexPath
-{
-    if (_shared && _sharedStories.count == 0){
+- (UITableViewCell *)tableView:(UITableView *)tableView cellForRowAtIndexPath:(NSIndexPath *)indexPath {
+    if (!delegate.connected && _ether && _stories.count == 0){
+        NSLog(@"nope, nothing");
+        XXNothingCell *cell = (XXNothingCell *)[tableView dequeueReusableCellWithIdentifier:@"NothingCell"];
+        if (cell == nil) {
+            cell = [[[NSBundle mainBundle] loadNibNamed:@"XXNothingCell" owner:nil options:nil] lastObject];
+        }
+        [cell.promptButton setTitle:@"It looks like you're offline but don't have any stories downloaded. Sorry about that! You can still write." forState:UIControlStateNormal];
+        [cell.promptButton addTarget:self action:@selector(write) forControlEvents:UIControlEventTouchUpInside];
+        [cell.promptButton.titleLabel setNumberOfLines:0];
+        [cell.promptButton.titleLabel setFont:[UIFont fontWithDescriptor:[UIFontDescriptor preferredCustomFontForTextStyle:UIFontTextStyleSubheadline forFont:kSourceSansProLight] size:0]];
+        [cell.promptButton.titleLabel setTextAlignment:NSTextAlignmentCenter];
+        [cell.promptButton setTitleColor:textColor forState:UIControlStateNormal];
+        [cell.promptButton setBackgroundColor:[UIColor clearColor]];
+    
+        return cell;
+    } else if (_shared && _sharedStories.count == 0){
         XXNothingCell *cell = (XXNothingCell *)[tableView dequeueReusableCellWithIdentifier:@"NothingCell"];
         if (cell == nil) {
             cell = [[[NSBundle mainBundle] loadNibNamed:@"XXNothingCell" owner:nil options:nil] lastObject];
@@ -406,7 +441,7 @@
         [cell.promptButton setTitle:@"Nothing shared just yet.\nTap here to manage your contacts." forState:UIControlStateNormal];
         [cell.promptButton addTarget:self action:@selector(manageCircles) forControlEvents:UIControlEventTouchUpInside];
         [cell.promptButton.titleLabel setNumberOfLines:0];
-        [cell.promptButton.titleLabel setFont:[UIFont fontWithName:kSourceSansProLight size:20]];
+        [cell.promptButton.titleLabel setFont:[UIFont fontWithDescriptor:[UIFontDescriptor preferredCustomFontForTextStyle:UIFontTextStyleSubheadline forFont:kSourceSansProLight] size:0]];
         [cell.promptButton.titleLabel setTextAlignment:NSTextAlignmentCenter];
         [cell.promptButton setTitleColor:textColor forState:UIControlStateNormal];
         [cell.promptButton setBackgroundColor:[UIColor clearColor]];
@@ -669,13 +704,13 @@
                 NSLog(@"can't load more shared, we now have %lu stories", (unsigned long)_sharedStories.count);
             }
             if (newStories.count){
-                if (self.tableView.numberOfSections > 0){
+                /*if (self.tableView.numberOfSections > 0){
                     [self.tableView beginUpdates];
                     [self.tableView insertRowsAtIndexPaths:indexesToInsert withRowAnimation:UITableViewRowAnimationFade];
                     [self.tableView endUpdates];
-                } else {
+                } else {*/
                     [self.tableView reloadData];
-                }
+                //}
             }
             if (refreshControl.isRefreshing) [refreshControl endRefreshing];
         } failure:^(AFHTTPRequestOperation *operation, NSError *error) {
@@ -736,6 +771,8 @@
             [self.tableView setAlpha:0.0];
         }];
         
+    } else if ([segue.identifier isEqualToString:@"Write"]) {
+        NSLog(@"Should be writing");
     }
 }
 
@@ -795,5 +832,10 @@
 
 - (void)viewWillDisappear:(BOOL)animated {
     [super viewWillDisappear:animated];
+}
+
+- (void)didReceiveMemoryWarning {
+    [super didReceiveMemoryWarning];
+    // Dispose of any resources that can be recreated.
 }
 @end

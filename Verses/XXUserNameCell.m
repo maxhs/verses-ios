@@ -33,7 +33,7 @@
     [self.nameLabel setFont:[UIFont fontWithName:kSourceSansProSemibold size:18]];
     [self.nameLabel setTextColor:[UIColor whiteColor]];
     [self.storyLabel setText:[NSString stringWithFormat:@"%@ stories  |  %lu contacts",user.storyCount,(unsigned long)user.contacts.count]];
-    [self.storyLabel setFont:[UIFont fontWithName:kSourceSansProRegular size:14]];
+    [self.storyLabel setFont:[UIFont fontWithName:kSourceSansPro size:14]];
     
 
     self.userPhotoButton.imageView.layer.shouldRasterize = YES;

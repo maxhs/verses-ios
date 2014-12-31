@@ -202,16 +202,16 @@
         [mutableString enumerateAttributesInRange:NSMakeRange(0, mutableString.length) options:NSAttributedStringEnumerationLongestEffectiveRangeNotRequired usingBlock:^(NSDictionary *attrs, NSRange range, BOOL *stop) {
 
             if ([[attrs objectForKey:@"DTHeaderLevel"]  isEqual: @1]){
-                [mutableString addAttribute:NSFontAttributeName value:[UIFont fontWithDescriptor:[[UIFontDescriptor preferredSourceSansProFontDescriptorWithTextStyle:UIFontTextStyleHeadline] fontDescriptorWithSymbolicTraits:UIFontDescriptorTraitBold] size:0] range:range];
+                [mutableString addAttribute:NSFontAttributeName value:[UIFont fontWithDescriptor:[[UIFontDescriptor preferredCustomFontForTextStyle:UIFontTextStyleHeadline forFont:kSourceSansPro] fontDescriptorWithSymbolicTraits:UIFontDescriptorTraitBold] size:0] range:range];
                 NSMutableParagraphStyle *centerStyle = [[NSMutableParagraphStyle alloc] init];
                 [mutableString addAttribute:NSParagraphStyleAttributeName value:centerStyle range:range];
                 
             } else if ([[attrs objectForKey:@"DTHeaderLevel"]  isEqual: @2] || [[attrs objectForKey:@"DTHeaderLevel"]  isEqual: @3]){
-                [mutableString addAttribute:NSFontAttributeName value:[UIFont fontWithDescriptor:[[UIFontDescriptor preferredSourceSansProFontDescriptorWithTextStyle:UIFontTextStyleSubheadline] fontDescriptorWithSymbolicTraits:UIFontDescriptorTraitBold] size:0] range:range];
+                [mutableString addAttribute:NSFontAttributeName value:[UIFont fontWithDescriptor:[[UIFontDescriptor preferredCustomFontForTextStyle:UIFontTextStyleSubheadline forFont:kSourceSansPro] fontDescriptorWithSymbolicTraits:UIFontDescriptorTraitBold] size:0] range:range];
                 
                 
             } else if ([[attrs objectForKey:@"DTBlockquote"]  isEqual: @1]){
-                [mutableString addAttribute:NSFontAttributeName value:[UIFont fontWithDescriptor:[UIFontDescriptor preferredCrimsonTextFontDescriptorWithTextStyle:CrimsonTextBlockquoteStyle] size:0] range:range];
+                [mutableString addAttribute:NSFontAttributeName value:[UIFont fontWithDescriptor:[UIFontDescriptor preferredCustomFontForTextStyle:UIFontTextStyleBody forFont:kCrimsonRoman] size:0] range:range];
                 NSMutableParagraphStyle *centerStyle = [[NSMutableParagraphStyle alloc] init];
                 [mutableString addAttribute:NSParagraphStyleAttributeName value:centerStyle range:range];
             }

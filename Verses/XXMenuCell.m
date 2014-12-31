@@ -20,25 +20,21 @@
     return self;
 }
 
-- (void)awakeFromNib
-{
-    // Initialization code
+- (void)awakeFromNib {
+    UIView *selectedBackgroundView = [[UIView alloc] initWithFrame:self.contentView.frame];
+    [selectedBackgroundView setBackgroundColor:[UIColor colorWithWhite:1 alpha:.5]];
+    self.selectedBackgroundView = selectedBackgroundView;
 }
 
-- (void)setSelected:(BOOL)selected animated:(BOOL)animated
-{
+- (void)setSelected:(BOOL)selected animated:(BOOL)animated {
     [super setSelected:selected animated:animated];
 
     // Configure the view for the selected state
 }
 
 - (void)configureAlert:(NSInteger)alertCount{
-    if (IDIOM == IPAD){
-        [_menuLabel setFont:[UIFont fontWithName:kSourceSansProSemibold size:19]];
-    } else {
-       [_menuLabel setFont:[UIFont fontWithName:kSourceSansProSemibold size:18]];
-    }
-    
+
+    [_menuLabel setFont:[UIFont fontWithDescriptor:[UIFontDescriptor preferredCustomFontForTextStyle:UIFontTextStyleSubheadline forFont:kSourceSansProSemibold] size:0]];
     _menuLabel.layer.rasterizationScale = [UIScreen mainScreen].scale;
     _menuLabel.layer.shouldRasterize = YES;
     

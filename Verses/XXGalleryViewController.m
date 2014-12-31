@@ -65,8 +65,8 @@
     
     sortButton = [UIButton buttonWithType:UIButtonTypeCustom];
     [sortButton setTitle:@"Sort" forState:UIControlStateNormal];
-    [sortButton.titleLabel setFont:[UIFont fontWithName:kSourceSansProRegular size:16]];
-    [_captionButton.titleLabel setFont:[UIFont fontWithName:kSourceSansProRegular size:15]];
+    [sortButton.titleLabel setFont:[UIFont fontWithName:kSourceSansPro size:16]];
+    [_captionButton.titleLabel setFont:[UIFont fontWithName:kSourceSansPro size:15]];
     [_captionButton addTarget:self action:@selector(goToStory:) forControlEvents:UIControlEventTouchUpInside];
     [sortButton addTarget:self action:@selector(sort) forControlEvents:UIControlEventTouchUpInside];
     [sortButton setFrame:CGRectMake(0, 0, 44, 44)];

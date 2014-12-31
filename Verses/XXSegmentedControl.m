@@ -34,9 +34,9 @@
         [self addSubview:_background];
         _selectedSegmentIndex = -1;
         if (IDIOM == IPAD){
-            _font = [UIFont fontWithName:kSourceSansProRegular size:17.0];
+            _font = [UIFont fontWithName:kSourceSansPro size:17.0];
         } else {
-            _font = [UIFont fontWithName:kSourceSansProRegular size:15.0];
+            _font = [UIFont fontWithName:kSourceSansPro size:15.0];
         }
         
         _height = 48.0;
